@@ -2,7 +2,7 @@ import logging
 import re
 from pathlib import Path
 
-from risc0_fuzzer.settings import GLOBAL_FAULT_INJECTION_ENV_KEY
+from risc0_fuzzer.settings import GLOBAL_FAULT_INJECTION_ENV_KEY, CONSTRAINT_TRACE_ENV_KEY
 from risc0_fuzzer.zkvm_repository.fuzzer_utils_crate import create_fuzzer_utils_crate
 from risc0_fuzzer.zkvm_repository.injection_sources import (
     risc0_circuit_rv32im_src_execute_rv32im_rs,
@@ -135,3 +135,25 @@ def risc0_fault_injection(risc0_install_path: Path, commit_or_branch: str):
                         ],
                         flags=re.MULTILINE,
                     )
+
+                    # Special case: Add constraint tracing hook to witgen.h
+                    if element.name == "witgen.h":
+                        replace_in_file(
+                            element.absolute(),
+                            [
+                                (
+                                    r"inline void eqz\(ExecContext& ctx, Val a, const char\* loc\) \{",
+                                    'inline void eqz(ExecContext& ctx, Val a, const char* loc) {\n'
+                                    '  // <----------------------- CONSTRAINT TRACING ----------------------->\n'
+                                    '  static bool first_constraint = true;\n'
+                                    '  if (std::getenv("' + CONSTRAINT_TRACE_ENV_KEY + '") != NULL) {\n'
+                                    '    if (first_constraint) {\n'
+                                    '      printf("<hello_constraint>{\\\\"source\\\\":\\\\"cpp_witgen\\\\", \\\\"message\\\\":\\\\"constraint_hook_active\\\\"}</hello_constraint>\\\\n");\n'
+                                    '      fflush(stdout);\n'
+                                    '      first_constraint = false;\n'
+                                    '    }\n'
+                                    '  }\n'
+                                    '  // <---------------------- END CONSTRAINT TRACING --------------------->',
+                                ),
+                            ],
+                        )

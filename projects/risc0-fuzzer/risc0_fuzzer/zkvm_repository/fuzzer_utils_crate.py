@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from risc0_fuzzer.settings import GLOBAL_FAULT_INJECTION_ENV_KEY
+from risc0_fuzzer.settings import GLOBAL_FAULT_INJECTION_ENV_KEY, CONSTRAINT_TRACE_ENV_KEY
 from zkvm_fuzzer_utils.file import create_file
 
 
@@ -85,6 +85,41 @@ pub fn enable_trace_logging() {
 
 pub fn disable_trace_logging() {
     set_trace_logging(false);
+}
+
+////////////////
+// CONSTRAINT TRACING
+/////////
+
+pub fn is_constraint_tracing() -> bool {
+    env::var("''' + CONSTRAINT_TRACE_ENV_KEY + '''").is_ok()
+}
+
+pub fn set_constraint_tracing(value: bool) {
+    if value {
+        unsafe { env::set_var("''' + CONSTRAINT_TRACE_ENV_KEY + '''", "1"); }
+    } else {
+        unsafe { env::remove_var("''' + CONSTRAINT_TRACE_ENV_KEY + '''"); }
+    }
+}
+
+pub fn enable_constraint_tracing() {
+    set_constraint_tracing(true);
+}
+
+pub fn disable_constraint_tracing() {
+    set_constraint_tracing(false);
+}
+
+/// Print a one-time "hello" message to confirm Rust constraint hook is active
+pub fn hello_constraint_rust() {
+    use std::sync::Once;
+    static ONCE: Once = Once::new();
+    if is_constraint_tracing() {
+        ONCE.call_once(|| {
+            println!("<hello_constraint>{{\\\"source\\\":\\\"rust_fuzzer_utils\\\", \\\"message\\\":\\\"constraint_hook_active\\\"}}</hello_constraint>");
+        });
+    }
 }
 
 pub fn is_injection() -> bool {
