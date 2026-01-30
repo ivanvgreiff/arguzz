@@ -138,6 +138,7 @@ def risc0_fault_injection(risc0_install_path: Path, commit_or_branch: str):
 
                     # Special case: Add constraint tracing hook to witgen.h
                     if element.name == "witgen.h":
+                        # Phase 0: Hello constraint hook (existing)
                         replace_in_file(
                             element.absolute(),
                             [
@@ -154,6 +155,22 @@ def risc0_fault_injection(risc0_install_path: Path, commit_or_branch: str):
                                     '    }\n'
                                     '  }\n'
                                     '  // <---------------------- END CONSTRAINT TRACING --------------------->',
+                                ),
+                            ],
+                        )
+                        # Phase 1: Constraint failure hook - emit tag BEFORE throwing
+                        replace_in_file(
+                            element.absolute(),
+                            [
+                                (
+                                    r"if \(a\.asUInt32\(\)\) \{\s*\n\s*std::stringstream ss;",
+                                    'if (a.asUInt32()) {\n'
+                                    '    // <---- PHASE 1: CONSTRAINT FAILURE TRACING ---->\n'
+                                    '    printf("<constraint_fail>{\\\\"cycle\\\\":%zu, \\\\"loc\\\\":\\\\"%s\\\\", \\\\"value\\\\":%u}</constraint_fail>\\\\n",\n'
+                                    '           ctx.cycle, loc, a.asUInt32());\n'
+                                    '    fflush(stdout);\n'
+                                    '    // <---- END PHASE 1 ---->\n'
+                                    '    std::stringstream ss;',
                                 ),
                             ],
                         )

@@ -21,6 +21,7 @@ from zkvm_fuzzer_utils.common import (
 from zkvm_fuzzer_utils.csvlogger import (
     CircuitDataHelper,
     log_build_csv,
+    log_constraint_failures_csv,
     log_findings_csv,
     log_injection_csv,
     log_normal_csv,
@@ -798,6 +799,37 @@ class CircuitFuzzerBase(FuzzerCore[InstrKind, InjectionKind]):
             == self.outputs_for_execution_with_injection,
             CircuitDataHelper(self.circuits),
         )
+
+        # Phase 1: Log constraint failures if any occurred
+        if trace.has_constraint_failures():
+            # Get injection context for correlation
+            injection_step = ""
+            injection_kind = ""
+            correlated_instruction = ""
+
+            if trace.has_fault_injection():
+                fault = trace.faults[0]
+                injection_step = fault.step
+                injection_kind = fault.kind_as_str
+
+            # Try to correlate the first constraint failure to an instruction
+            first_failure = trace.get_first_constraint_failure()
+            if first_failure:
+                correlated_step = trace.correlate_failure_to_step(first_failure)
+                if correlated_step:
+                    correlated_instruction = correlated_step.instruction_as_str
+
+            log_constraint_failures_csv(
+                self.project_dir,
+                self.fuzzer_id,
+                self.run_id,
+                self.iteration_id,
+                is_injected=True,
+                injection_step=injection_step,
+                injection_kind=injection_kind,
+                constraint_failures=trace.constraint_failures,
+                correlated_instruction=correlated_instruction,
+            )
 
     def get_outputs_from_record(self, record: Record) -> dict[str, str]:
         output = {}

@@ -8,7 +8,7 @@ from zkvm_fuzzer_utils.circil import Circuit
 from zkvm_fuzzer_utils.cmd import ExecStatus
 from zkvm_fuzzer_utils.common import to_clean_quoted_entry, validate_circuits_arguments
 from zkvm_fuzzer_utils.record import Record
-from zkvm_fuzzer_utils.trace import Trace
+from zkvm_fuzzer_utils.trace import ConstraintFailure, Trace
 
 logger = logging.getLogger("fuzzer")
 
@@ -276,6 +276,65 @@ def log_injection_csv(
             f"{injection_instr},"
             f"{original_instr}\n"
         )
+
+
+# ---------------------------------------------------------------------------- #
+
+
+def log_constraint_failures_csv(
+    project_dir: Path,
+    fuzzer_id: UUID,
+    run_id: int,
+    iteration_id: int,
+    is_injected: bool,
+    injection_step: int | str,
+    injection_kind: str,
+    constraint_failures: list[ConstraintFailure],
+    correlated_instruction: str = "",
+):
+    """Logs constraint failures to constraint_failures.csv (Phase 1).
+
+    This function records which constraints failed during witness generation,
+    along with the injection context that caused the failure.
+    """
+    csv_path = project_dir.parent.absolute() / "constraint_failures.csv"
+
+    if not csv_path.is_file():
+        logger.info(f"create log file: {csv_path}")
+        with open(csv_path, "w") as fp:
+            fp.write(
+                "fuzzer_id,"
+                "run_id,"
+                "iteration_id,"
+                "timestamp,"
+                "is_injected,"
+                "injection_step,"
+                "injection_kind,"
+                "fail_cycle,"
+                "fail_loc,"
+                "fail_value,"
+                "correlated_instruction\n"
+            )
+
+    unix_timestamp = int(datetime.now().timestamp())
+
+    with open(csv_path, "a") as fp:
+        for cf in constraint_failures:
+            # Escape the loc string since it may contain special characters
+            escaped_loc = cf.loc.replace('"', '""')
+            fp.write(
+                f"{fuzzer_id},"
+                f"{run_id},"
+                f"{iteration_id},"
+                f"{unix_timestamp},"
+                f"{is_injected},"
+                f"{injection_step},"
+                f"{injection_kind},"
+                f"{cf.cycle},"
+                f'"{escaped_loc}",'
+                f"{cf.value},"
+                f"{correlated_instruction}\n"
+            )
 
 
 # ---------------------------------------------------------------------------- #
