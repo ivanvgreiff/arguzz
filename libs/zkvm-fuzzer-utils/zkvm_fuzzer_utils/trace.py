@@ -100,13 +100,30 @@ class TraceStep(Generic[InstrKind]):
 
 
 class ConstraintFailure:
-    """Represents a constraint that failed during witness generation (Phase 1)."""
+    """Represents a constraint that failed during witness generation (Phase 1.5)."""
     __cycle: int
+    __step: int
+    __pc: int
+    __major: int
+    __minor: int
     __loc: str
     __value: int
 
-    def __init__(self, cycle: int, loc: str, value: int):
+    def __init__(
+        self,
+        cycle: int,
+        step: int,
+        pc: int,
+        major: int,
+        minor: int,
+        loc: str,
+        value: int,
+    ):
         self.__cycle = cycle
+        self.__step = step
+        self.__pc = pc
+        self.__major = major
+        self.__minor = minor
         self.__loc = loc
         self.__value = value
 
@@ -115,7 +132,8 @@ class ConstraintFailure:
 
     def __repr__(self):
         return (
-            f"ConstraintFailure(cycle={self.__cycle}, "
+            f"ConstraintFailure(cycle={self.__cycle}, step={self.__step}, "
+            f"pc={self.__pc}, major={self.__major}, minor={self.__minor}, "
             f'loc="{self.__loc}", value={self.__value})'
         )
 
@@ -123,6 +141,10 @@ class ConstraintFailure:
         if isinstance(other, ConstraintFailure):
             return (
                 self.__cycle == other.__cycle
+                and self.__step == other.__step
+                and self.__pc == other.__pc
+                and self.__major == other.__major
+                and self.__minor == other.__minor
                 and self.__loc == other.__loc
                 and self.__value == other.__value
             )
@@ -130,9 +152,13 @@ class ConstraintFailure:
 
     def __hash__(self) -> int:
         h1 = hash(self.__cycle)
-        h2 = hash(self.__loc)
-        h3 = hash(self.__value)
-        result = h1 * 31 + h2 * 37 + h3 * 41
+        h2 = hash(self.__step)
+        h3 = hash(self.__pc)
+        h4 = hash(self.__major)
+        h5 = hash(self.__minor)
+        h6 = hash(self.__loc)
+        h7 = hash(self.__value)
+        result = h1 * 31 + h2 * 37 + h3 * 41 + h4 * 43 + h5 * 47 + h6 * 53 + h7 * 59
         result ^= result >> 16
         result *= 0x45D9F3B
         result ^= result >> 16
@@ -141,6 +167,22 @@ class ConstraintFailure:
     @property
     def cycle(self) -> int:
         return self.__cycle
+
+    @property
+    def step(self) -> int:
+        return self.__step
+
+    @property
+    def pc(self) -> int:
+        return self.__pc
+
+    @property
+    def major(self) -> int:
+        return self.__major
+
+    @property
+    def minor(self) -> int:
+        return self.__minor
 
     @property
     def loc(self) -> str:
@@ -154,9 +196,13 @@ class ConstraintFailure:
     def from_json(cls, data: str) -> "ConstraintFailure":
         constraint_dict = json.loads(data)
         cycle = int(constraint_dict["cycle"])
+        step = int(constraint_dict.get("step", 0))
+        pc = int(constraint_dict.get("pc", 0))
+        major = int(constraint_dict.get("major", 0))
+        minor = int(constraint_dict.get("minor", 0))
         loc = constraint_dict["loc"]
         value = int(constraint_dict["value"])
-        return ConstraintFailure(cycle, loc, value)
+        return ConstraintFailure(cycle, step, pc, major, minor, loc, value)
 
 
 # ---------------------------------------------------------------------------- #
@@ -358,6 +404,74 @@ class Trace(Generic[InstrKind, InjectionKind]):
         # If no exact match, find nearest preceding step
         preceding = [s for s in self.__steps if s.step <= failure.cycle]
         return max(preceding, key=lambda s: s.step) if preceding else None
+
+    # ---------------------------------------------------------------------------- #
+    #                     Phase 2: Constraint Failure Analysis                     #
+    # ---------------------------------------------------------------------------- #
+
+    def get_primary_failure(self) -> ConstraintFailure | None:
+        """Returns the first (earliest cycle) constraint failure, or None if no failures.
+        
+        This is typically the "root cause" failure - subsequent failures are often
+        cascading effects of corrupted data propagating through the circuit.
+        """
+        if not self.__constraint_failures:
+            return None
+        return min(self.__constraint_failures, key=lambda cf: cf.cycle)
+
+    def get_cascading_failures(self) -> list[ConstraintFailure]:
+        """Returns all failures except the primary (first) one.
+        
+        These are likely caused by corrupted data propagating from the primary failure.
+        Useful for analyzing the "blast radius" of a mutation.
+        """
+        if len(self.__constraint_failures) <= 1:
+            return []
+        primary = self.get_primary_failure()
+        return [cf for cf in self.__constraint_failures if cf != primary]
+
+    def failures_by_loc(self) -> dict[str, list[ConstraintFailure]]:
+        """Groups constraint failures by their location (constraint name).
+        
+        Useful for seeing which constraints were most affected by a mutation.
+        
+        Returns:
+            Dict mapping constraint location string to list of failures at that location.
+        
+        Example:
+            {
+                "MemoryWrite(zirgen/.../mem.zir:99)": [
+                    ConstraintFailure(cycle=17613, ...),
+                    ConstraintFailure(cycle=17614, ...),
+                ],
+                "OtherConstraint(...)": [...],
+            }
+        """
+        result: dict[str, list[ConstraintFailure]] = {}
+        for cf in self.__constraint_failures:
+            if cf.loc not in result:
+                result[cf.loc] = []
+            result[cf.loc].append(cf)
+        return result
+
+    def failure_count_by_loc(self) -> dict[str, int]:
+        """Returns count of failures per constraint location.
+        
+        Example:
+            {"MemoryWrite(...)": 15, "OtherConstraint(...)": 3}
+        """
+        return {loc: len(failures) for loc, failures in self.failures_by_loc().items()}
+
+    def failures_in_cycle_range(self, start: int, end: int) -> list[ConstraintFailure]:
+        """Returns failures within a specific cycle range [start, end).
+        
+        Useful for analyzing failures near a specific point of interest.
+        """
+        return [cf for cf in self.__constraint_failures if start <= cf.cycle < end]
+
+    def total_failure_count(self) -> int:
+        """Returns the total number of constraint failures."""
+        return len(self.__constraint_failures)
 
 
 # ---------------------------------------------------------------------------- #

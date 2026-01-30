@@ -2,7 +2,11 @@ import logging
 import re
 from pathlib import Path
 
-from risc0_fuzzer.settings import GLOBAL_FAULT_INJECTION_ENV_KEY, CONSTRAINT_TRACE_ENV_KEY
+from risc0_fuzzer.settings import (
+    GLOBAL_FAULT_INJECTION_ENV_KEY,
+    CONSTRAINT_TRACE_ENV_KEY,
+    CONSTRAINT_CONTINUE_ENV_KEY,
+)
 from risc0_fuzzer.zkvm_repository.fuzzer_utils_crate import create_fuzzer_utils_crate
 from risc0_fuzzer.zkvm_repository.injection_sources import (
     risc0_circuit_rv32im_src_execute_rv32im_rs,
@@ -158,18 +162,28 @@ def risc0_fault_injection(risc0_install_path: Path, commit_or_branch: str):
                                 ),
                             ],
                         )
-                        # Phase 1: Constraint failure hook - emit tag BEFORE throwing
+                        # Phase 1.5: Enhanced constraint failure hook with step, pc, major, minor
+                        # Phase 2: Constraint continue mode
                         replace_in_file(
                             element.absolute(),
                             [
                                 (
                                     r"if \(a\.asUInt32\(\)\) \{\s*\n\s*std::stringstream ss;",
                                     'if (a.asUInt32()) {\n'
-                                    '    // <---- PHASE 1: CONSTRAINT FAILURE TRACING ---->\n'
-                                    '    printf("<constraint_fail>{\\\\"cycle\\\\":%zu, \\\\"loc\\\\":\\\\"%s\\\\", \\\\"value\\\\":%u}</constraint_fail>\\\\n",\n'
-                                    '           ctx.cycle, loc, a.asUInt32());\n'
+                                    '    // <---- PHASE 1.5: ENHANCED CONSTRAINT FAILURE TRACING ---->\n'
+                                    '    uint32_t step = ctx.preflight.cycles[ctx.cycle].userCycle;\n'
+                                    '    uint32_t pc = ctx.preflight.cycles[ctx.cycle].pc;\n'
+                                    '    uint8_t major = ctx.preflight.cycles[ctx.cycle].major;\n'
+                                    '    uint8_t minor = ctx.preflight.cycles[ctx.cycle].minor;\n'
+                                    '    printf("<constraint_fail>{\\\\"cycle\\\\":%zu, \\\\"step\\\\":%u, \\\\"pc\\\\":%u, \\\\"major\\\\":%u, \\\\"minor\\\\":%u, \\\\"loc\\\\":\\\\"%s\\\\", \\\\"value\\\\":%u}</constraint_fail>\\\\n",\n'
+                                    '           ctx.cycle, step, pc, major, minor, loc, a.asUInt32());\n'
                                     '    fflush(stdout);\n'
-                                    '    // <---- END PHASE 1 ---->\n'
+                                    '    // <---- END PHASE 1.5 ---->\n'
+                                    '    // <---- PHASE 2: CONSTRAINT CONTINUE MODE ---->\n'
+                                    '    if (std::getenv("' + CONSTRAINT_CONTINUE_ENV_KEY + '") != NULL) {\n'
+                                    '      return;  // Continue to next constraint\n'
+                                    '    }\n'
+                                    '    // <---- END PHASE 2 ---->\n'
                                     '    std::stringstream ss;',
                                 ),
                             ],

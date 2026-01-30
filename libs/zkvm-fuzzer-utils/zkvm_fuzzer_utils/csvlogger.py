@@ -292,7 +292,7 @@ def log_constraint_failures_csv(
     constraint_failures: list[ConstraintFailure],
     correlated_instruction: str = "",
 ):
-    """Logs constraint failures to constraint_failures.csv (Phase 1).
+    """Logs constraint failures to constraint_failures.csv (Phase 1.5 / Phase 2).
 
     This function records which constraints failed during witness generation,
     along with the injection context that caused the failure.
@@ -311,6 +311,10 @@ def log_constraint_failures_csv(
                 "injection_step,"
                 "injection_kind,"
                 "fail_cycle,"
+                "fail_step,"
+                "fail_pc,"
+                "fail_major,"
+                "fail_minor,"
                 "fail_loc,"
                 "fail_value,"
                 "correlated_instruction\n"
@@ -331,6 +335,10 @@ def log_constraint_failures_csv(
                 f"{injection_step},"
                 f"{injection_kind},"
                 f"{cf.cycle},"
+                f"{cf.step},"
+                f"{cf.pc},"
+                f"{cf.major},"
+                f"{cf.minor},"
                 f'"{escaped_loc}",'
                 f"{cf.value},"
                 f"{correlated_instruction}\n"

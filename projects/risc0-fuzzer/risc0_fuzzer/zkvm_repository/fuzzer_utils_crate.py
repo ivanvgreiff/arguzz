@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from risc0_fuzzer.settings import GLOBAL_FAULT_INJECTION_ENV_KEY, CONSTRAINT_TRACE_ENV_KEY
+from risc0_fuzzer.settings import (
+    GLOBAL_FAULT_INJECTION_ENV_KEY,
+    CONSTRAINT_TRACE_ENV_KEY,
+    CONSTRAINT_CONTINUE_ENV_KEY,
+)
 from zkvm_fuzzer_utils.file import create_file
 
 
@@ -120,6 +124,30 @@ pub fn hello_constraint_rust() {
             println!("<hello_constraint>{{\\\"source\\\":\\\"rust_fuzzer_utils\\\", \\\"message\\\":\\\"constraint_hook_active\\\"}}</hello_constraint>");
         });
     }
+}
+
+////////////////
+// CONSTRAINT CONTINUE MODE (Phase 2)
+/////////
+
+pub fn is_constraint_continue() -> bool {
+    env::var("''' + CONSTRAINT_CONTINUE_ENV_KEY + '''").is_ok()
+}
+
+pub fn set_constraint_continue(value: bool) {
+    if value {
+        unsafe { env::set_var("''' + CONSTRAINT_CONTINUE_ENV_KEY + '''", "1"); }
+    } else {
+        unsafe { env::remove_var("''' + CONSTRAINT_CONTINUE_ENV_KEY + '''"); }
+    }
+}
+
+pub fn enable_constraint_continue() {
+    set_constraint_continue(true);
+}
+
+pub fn disable_constraint_continue() {
+    set_constraint_continue(false);
 }
 
 pub fn is_injection() -> bool {

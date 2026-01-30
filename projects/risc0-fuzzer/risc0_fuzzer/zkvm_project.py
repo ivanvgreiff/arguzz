@@ -88,7 +88,7 @@ clap = {{ version = "4.0", features = ["derive", "env"] }}
 
 [features]
 default = ["prove"] # ["prove", "heap-embedded-alloc"]
-prove = ["risc0-zkvm/prove"]
+prove = ["risc0-zkvm/prove", "risc0-zkvm/witgen_debug"]
 # heap-embedded-alloc = ["risc0-zkvm-platform/heap-embedded-alloc"]
 """
         )
