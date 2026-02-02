@@ -4,12 +4,121 @@ A4 is a mutation testing strategy that modifies the **PreflightTrace** (executio
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [How A4 Works](#how-a4-works)
-3. [Reproducing the Workflow](#reproducing-the-workflow)
-4. [Detailed Component Explanation](#detailed-component-explanation)
-5. [File Locations](#file-locations)
-6. [Environment Variables](#environment-variables)
+1. [What is Preflight?](#what-is-preflight)
+2. [Overview](#overview)
+3. [How A4 Works](#how-a4-works)
+4. [Reproducing the Workflow](#reproducing-the-workflow)
+5. [Detailed Component Explanation](#detailed-component-explanation)
+6. [File Locations](#file-locations)
+7. [Environment Variables](#environment-variables)
+
+---
+
+## What is Preflight?
+
+### The RISC Zero Proving Pipeline
+
+To understand why A4 mutates the "preflight trace," you need to understand how RISC Zero transforms a program execution into a zero-knowledge proof:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        RISC Zero: Execution → Proof                              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌─────────────┐         ┌─────────────┐         ┌─────────────────────────┐    │
+│  │  EXECUTOR   │         │  PREFLIGHT  │         │   WITNESS GENERATOR     │    │
+│  │             │         │             │         │                         │    │
+│  │ Runs RISC-V │ ──────► │ Re-executes │ ──────► │ Fills constraint matrix │    │
+│  │ program     │ Segment │ & records   │ Trace   │ using trace data        │    │
+│  │             │         │ everything  │         │                         │    │
+│  └─────────────┘         └─────────────┘         └───────────┬─────────────┘    │
+│        │                                                     │                   │
+│        │ Arguzz injects                          A4 mutates  │                   │
+│        │ faults HERE                             trace HERE  │                   │
+│        ▼                                                     ▼                   │
+│  Cascading effects                               ┌─────────────────────────┐    │
+│  propagate through                               │        PROVER           │    │
+│  execution                                       │                         │    │
+│                                                  │ Generates ZK proof from │    │
+│                                                  │ witness matrix          │    │
+│                                                  └─────────────────────────┘    │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Why Does Preflight Exist?
+
+**The Problem:** The ZK circuit needs a complete trace of *every* memory and register access, in exact order, with precise timing information. The Executor doesn't record this—it just runs the program efficiently.
+
+**The Solution:** Preflight "replays" the execution deterministically while recording everything needed for the ZK circuit:
+
+| Phase | What it does | What it produces |
+|-------|--------------|------------------|
+| **Executor** | Runs RISC-V program with real syscalls | `Segment`: memory snapshot + I/O recordings |
+| **Preflight** | Replays segment using recorded I/O | `PreflightTrace`: complete witness data |
+| **Witness Gen** | Evaluates ZK circuit using trace | Witness matrix for proving |
+
+### What's in the PreflightTrace?
+
+The PreflightTrace contains two key arrays that the ZK circuit reads during witness generation:
+
+```
+PreflightTrace {
+    cycles: [                           // One entry per circuit cycle
+        RawPreflightCycle {
+            user_cycle: 198,            // Instruction step number
+            pc: 2144420,                // Program counter (NEXT PC after instruction)
+            major: 0,                   // Instruction category (InsnKind / 8)
+            minor: 7,                   // Instruction within category (InsnKind % 8)
+            txn_idx: 16258,             // Where this cycle's transactions start
+            ...
+        },
+        ...
+    ],
+    
+    txns: [                             // Memory/register transactions
+        RawMemoryTransaction {
+            addr: 536104,               // Memory/register address
+            word: 3147283,              // Value read or written
+            cycle: 33554,               // When this transaction occurred
+            prev_cycle: 23582,          // Previous access to this address
+            ...
+        },
+        ...
+    ]
+}
+```
+
+### How the Circuit Uses the Trace
+
+During witness generation, the circuit code calls extern functions that read from the PreflightTrace:
+
+```cpp
+// Called by circuit to get instruction type for current cycle
+std::array<Val, 2> extern_getMajorMinor(ExecContext& ctx) {
+    uint8_t major = ctx.preflight.cycles[ctx.cycle].major;  // ← Reads from trace!
+    uint8_t minor = ctx.preflight.cycles[ctx.cycle].minor;
+    return {major, minor};
+}
+
+// Called by circuit to read memory/register values
+std::array<Val, 5> extern_getMemoryTxn(ExecContext& ctx, Val addr) {
+    size_t txnIdx = ctx.preflight.cycles[ctx.cycle].txnIdx++;
+    const MemoryTransaction& txn = ctx.preflight.txns[txnIdx];  // ← Reads from trace!
+    return {txn.cycle, txn.prevCycle, txn.word, ...};
+}
+```
+
+### Why A4 Mutates the Preflight Trace
+
+By mutating the PreflightTrace *after* preflight but *before* witness generation, A4 creates controlled inconsistencies that the circuit's constraint checks will detect:
+
+| What we mutate | What constraint catches it |
+|----------------|---------------------------|
+| `cycles[].major/minor` | `VerifyOpcodeF3`: instruction type must match decoded word |
+| `txns[].word` | Memory consistency checks |
+
+This lets us identify exactly which constraint is responsible for catching a particular type of forgery—without the cascading effects that occur when mutating during actual execution.
 
 ---
 
