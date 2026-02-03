@@ -1,0 +1,5 @@
+error: unexpected argument '2' found
+
+Usage: risc0-host [OPTIONS] --in1 <IN1> --in4 <IN4>
+
+For more information, try '--help'.

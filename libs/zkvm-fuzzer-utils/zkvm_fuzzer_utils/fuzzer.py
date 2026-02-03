@@ -829,7 +829,7 @@ class CircuitFuzzerBase(FuzzerCore[InstrKind, InjectionKind]):
                 injection_kind=injection_kind,
                 constraint_failures=trace.constraint_failures,
                 correlated_instruction=correlated_instruction,
-            )
+        )
 
     def get_outputs_from_record(self, record: Record) -> dict[str, str]:
         output = {}

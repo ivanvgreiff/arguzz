@@ -342,7 +342,7 @@ def log_constraint_failures_csv(
                 f'"{escaped_loc}",'
                 f"{cf.value},"
                 f"{correlated_instruction}\n"
-            )
+        )
 
 
 # ---------------------------------------------------------------------------- #
