@@ -1,0 +1,29 @@
+{
+  "arguzz": {
+    "step": 2420,
+    "kind": "INSTR_WORD_MOD",
+    "seed": 12345,
+    "fault": {
+      "pc": 2102020,
+      "info_type": "word",
+      "original_value": 59360531,
+      "mutated_value": 54396691
+    },
+    "failures": 2
+  },
+  "a4": {
+    "step": 2392,
+    "failures": 1
+  },
+  "comparison": {
+    "skipped": false,
+    "skip_reason": null,
+    "common": [
+      "2392:2102024:0:7:VerifyOpcodeF3@inst.zir:97"
+    ],
+    "arguzz_only": [
+      "2392:2102024:0:7:MemoryWrite@mem.zir:99"
+    ],
+    "a4_only": []
+  }
+}

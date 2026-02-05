@@ -9,6 +9,9 @@ This patch adds:
    - COMP_OUT_MOD: Mutate WRITE transaction txns[].word (compute instructions)
    - LOAD_VAL_MOD: Mutate WRITE transaction txns[].word (load instructions)
    - STORE_OUT_MOD: Mutate WRITE transaction txns[].word (store instructions - memory)
+
+Note: PRE_EXEC_PC_MOD is not supported by A4 because the circuit does not read
+PC information from the preflight trace - it computes PC internally.
 """
 
 # The marker to find the injection point

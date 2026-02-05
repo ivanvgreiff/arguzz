@@ -1,0 +1,25 @@
+{
+  "arguzz": {
+    "step": 1079,
+    "kind": "INSTR_WORD_MOD",
+    "seed": 12345,
+    "fault": {
+      "pc": 2100184,
+      "info_type": "word",
+      "original_value": 20631,
+      "mutated_value": 12030615
+    },
+    "failures": 0
+  },
+  "a4": {
+    "step": null,
+    "failures": 0
+  },
+  "comparison": {
+    "skipped": true,
+    "skip_reason": "Arguzz guest crashed: Guest panicked: called `Result::unwrap()` on an `Err` value: KeccakBatcher { claim_state: Digest(dafc1f00ba0700003cfeffffa6ffffff00000000000000000000000000000000), mmr: MerkleMountainAccumulator { peaks: [] }, proof_count: 0 }",
+    "common": [],
+    "arguzz_only": [],
+    "a4_only": []
+  }
+}

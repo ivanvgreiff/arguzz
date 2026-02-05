@@ -1,0 +1,25 @@
+{
+  "arguzz": {
+    "step": 3775,
+    "kind": "COMP_OUT_MOD",
+    "seed": 12345,
+    "fault": {
+      "pc": 2110120,
+      "info_type": "out",
+      "original_value": 28,
+      "mutated_value": 73117852
+    },
+    "failures": 0
+  },
+  "a4": {
+    "step": null,
+    "failures": 0
+  },
+  "comparison": {
+    "skipped": true,
+    "skip_reason": "Arguzz guest crashed: thread 'main' panicked at /root/arguzz/workspace/risc0-modified/risc0/circuit/rv32im/src/execute/rv32im.rs:163:13:",
+    "common": [],
+    "arguzz_only": [],
+    "a4_only": []
+  }
+}

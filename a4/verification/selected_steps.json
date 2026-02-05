@@ -1,0 +1,1194 @@
+{
+  "mode": "COMPREHENSIVE",
+  "categorized_summary": {
+    "INSTR_WORD_MOD": {
+      "Auipc": 107,
+      "AddI": 1155,
+      "Lui": 137,
+      "Add": 89,
+      "Sub": 57,
+      "AndI": 88,
+      "Mul": 4,
+      "OrI": 4,
+      "SllI": 96,
+      "Or": 51,
+      "SltIU": 24,
+      "SrlI": 23,
+      "And": 25,
+      "XorI": 7,
+      "Xor": 3,
+      "SltU": 6
+    },
+    "COMP_OUT_MOD": {
+      "Auipc": 107,
+      "AddI": 1155,
+      "Lui": 137,
+      "JalR": 220,
+      "Add": 89,
+      "Sub": 57,
+      "AndI": 88,
+      "Mul": 4,
+      "OrI": 4,
+      "SllI": 96,
+      "Jal": 38,
+      "Or": 51,
+      "SltIU": 24,
+      "SrlI": 23,
+      "And": 25,
+      "XorI": 7,
+      "Xor": 3,
+      "SltU": 6
+    },
+    "LOAD_VAL_MOD": {
+      "Lw": 509,
+      "LbU": 169,
+      "Lb": 2
+    },
+    "STORE_OUT_MOD": {
+      "Sw": 541,
+      "Sb": 55
+    },
+    "PRE_EXEC_REG_MOD": {
+      "Auipc": 107,
+      "AddI": 1155,
+      "Lui": 137,
+      "Sw": 541,
+      "Lw": 509,
+      "Sb": 55,
+      "Add": 89,
+      "Sub": 57,
+      "AndI": 88,
+      "Mul": 4,
+      "OrI": 4,
+      "SllI": 96,
+      "Or": 51,
+      "SltIU": 24,
+      "SrlI": 23,
+      "And": 25,
+      "LbU": 169,
+      "XorI": 7,
+      "Xor": 3,
+      "SltU": 6,
+      "Lb": 2
+    }
+  },
+  "selected_steps": {
+    "INSTR_WORD_MOD": [
+      {
+        "step": 779,
+        "instruction": "Add",
+        "total_available": 89
+      },
+      {
+        "step": 2384,
+        "instruction": "Add",
+        "total_available": 89
+      },
+      {
+        "step": 3280,
+        "instruction": "Add",
+        "total_available": 89
+      },
+      {
+        "step": 927,
+        "instruction": "AddI",
+        "total_available": 1155
+      },
+      {
+        "step": 1750,
+        "instruction": "AddI",
+        "total_available": 1155
+      },
+      {
+        "step": 2890,
+        "instruction": "AddI",
+        "total_available": 1155
+      },
+      {
+        "step": 2466,
+        "instruction": "And",
+        "total_available": 25
+      },
+      {
+        "step": 3013,
+        "instruction": "And",
+        "total_available": 25
+      },
+      {
+        "step": 3498,
+        "instruction": "And",
+        "total_available": 25
+      },
+      {
+        "step": 2327,
+        "instruction": "AndI",
+        "total_available": 88
+      },
+      {
+        "step": 3064,
+        "instruction": "AndI",
+        "total_available": 88
+      },
+      {
+        "step": 3452,
+        "instruction": "AndI",
+        "total_available": 88
+      },
+      {
+        "step": 1079,
+        "instruction": "Auipc",
+        "total_available": 107
+      },
+      {
+        "step": 2356,
+        "instruction": "Auipc",
+        "total_available": 107
+      },
+      {
+        "step": 3205,
+        "instruction": "Auipc",
+        "total_available": 107
+      },
+      {
+        "step": 559,
+        "instruction": "Lui",
+        "total_available": 137
+      },
+      {
+        "step": 1163,
+        "instruction": "Lui",
+        "total_available": 137
+      },
+      {
+        "step": 2527,
+        "instruction": "Lui",
+        "total_available": 137
+      },
+      {
+        "step": 2382,
+        "instruction": "Mul",
+        "total_available": 4
+      },
+      {
+        "step": 3102,
+        "instruction": "Mul",
+        "total_available": 4
+      },
+      {
+        "step": 3756,
+        "instruction": "Mul",
+        "total_available": 4
+      },
+      {
+        "step": 2347,
+        "instruction": "Or",
+        "total_available": 51
+      },
+      {
+        "step": 2595,
+        "instruction": "Or",
+        "total_available": 51
+      },
+      {
+        "step": 2659,
+        "instruction": "Or",
+        "total_available": 51
+      },
+      {
+        "step": 2401,
+        "instruction": "OrI",
+        "total_available": 4
+      },
+      {
+        "step": 3121,
+        "instruction": "OrI",
+        "total_available": 4
+      },
+      {
+        "step": 3775,
+        "instruction": "OrI",
+        "total_available": 4
+      },
+      {
+        "step": 692,
+        "instruction": "SllI",
+        "total_available": 96
+      },
+      {
+        "step": 2337,
+        "instruction": "SllI",
+        "total_available": 96
+      },
+      {
+        "step": 2623,
+        "instruction": "SllI",
+        "total_available": 96
+      },
+      {
+        "step": 2483,
+        "instruction": "SltIU",
+        "total_available": 24
+      },
+      {
+        "step": 3040,
+        "instruction": "SltIU",
+        "total_available": 24
+      },
+      {
+        "step": 3415,
+        "instruction": "SltIU",
+        "total_available": 24
+      },
+      {
+        "step": 2464,
+        "instruction": "SltU",
+        "total_available": 6
+      },
+      {
+        "step": 2916,
+        "instruction": "SltU",
+        "total_available": 6
+      },
+      {
+        "step": 3495,
+        "instruction": "SltU",
+        "total_available": 6
+      },
+      {
+        "step": 702,
+        "instruction": "SrlI",
+        "total_available": 23
+      },
+      {
+        "step": 2989,
+        "instruction": "SrlI",
+        "total_available": 23
+      },
+      {
+        "step": 3543,
+        "instruction": "SrlI",
+        "total_available": 23
+      },
+      {
+        "step": 785,
+        "instruction": "Sub",
+        "total_available": 57
+      },
+      {
+        "step": 2532,
+        "instruction": "Sub",
+        "total_available": 57
+      },
+      {
+        "step": 3405,
+        "instruction": "Sub",
+        "total_available": 57
+      },
+      {
+        "step": 2462,
+        "instruction": "Xor",
+        "total_available": 3
+      },
+      {
+        "step": 2914,
+        "instruction": "Xor",
+        "total_available": 3
+      },
+      {
+        "step": 3494,
+        "instruction": "Xor",
+        "total_available": 3
+      },
+      {
+        "step": 2420,
+        "instruction": "XorI",
+        "total_available": 7
+      },
+      {
+        "step": 2917,
+        "instruction": "XorI",
+        "total_available": 7
+      },
+      {
+        "step": 3497,
+        "instruction": "XorI",
+        "total_available": 7
+      }
+    ],
+    "COMP_OUT_MOD": [
+      {
+        "step": 779,
+        "instruction": "Add",
+        "total_available": 89
+      },
+      {
+        "step": 2384,
+        "instruction": "Add",
+        "total_available": 89
+      },
+      {
+        "step": 3280,
+        "instruction": "Add",
+        "total_available": 89
+      },
+      {
+        "step": 927,
+        "instruction": "AddI",
+        "total_available": 1155
+      },
+      {
+        "step": 1750,
+        "instruction": "AddI",
+        "total_available": 1155
+      },
+      {
+        "step": 2890,
+        "instruction": "AddI",
+        "total_available": 1155
+      },
+      {
+        "step": 2466,
+        "instruction": "And",
+        "total_available": 25
+      },
+      {
+        "step": 3013,
+        "instruction": "And",
+        "total_available": 25
+      },
+      {
+        "step": 3498,
+        "instruction": "And",
+        "total_available": 25
+      },
+      {
+        "step": 2327,
+        "instruction": "AndI",
+        "total_available": 88
+      },
+      {
+        "step": 3064,
+        "instruction": "AndI",
+        "total_available": 88
+      },
+      {
+        "step": 3452,
+        "instruction": "AndI",
+        "total_available": 88
+      },
+      {
+        "step": 1079,
+        "instruction": "Auipc",
+        "total_available": 107
+      },
+      {
+        "step": 2356,
+        "instruction": "Auipc",
+        "total_available": 107
+      },
+      {
+        "step": 3205,
+        "instruction": "Auipc",
+        "total_available": 107
+      },
+      {
+        "step": 926,
+        "instruction": "Jal",
+        "total_available": 38
+      },
+      {
+        "step": 1950,
+        "instruction": "Jal",
+        "total_available": 38
+      },
+      {
+        "step": 2798,
+        "instruction": "Jal",
+        "total_available": 38
+      },
+      {
+        "step": 973,
+        "instruction": "JalR",
+        "total_available": 220
+      },
+      {
+        "step": 2218,
+        "instruction": "JalR",
+        "total_available": 220
+      },
+      {
+        "step": 3189,
+        "instruction": "JalR",
+        "total_available": 220
+      },
+      {
+        "step": 559,
+        "instruction": "Lui",
+        "total_available": 137
+      },
+      {
+        "step": 1163,
+        "instruction": "Lui",
+        "total_available": 137
+      },
+      {
+        "step": 2527,
+        "instruction": "Lui",
+        "total_available": 137
+      },
+      {
+        "step": 2382,
+        "instruction": "Mul",
+        "total_available": 4
+      },
+      {
+        "step": 3102,
+        "instruction": "Mul",
+        "total_available": 4
+      },
+      {
+        "step": 3756,
+        "instruction": "Mul",
+        "total_available": 4
+      },
+      {
+        "step": 2347,
+        "instruction": "Or",
+        "total_available": 51
+      },
+      {
+        "step": 2595,
+        "instruction": "Or",
+        "total_available": 51
+      },
+      {
+        "step": 2659,
+        "instruction": "Or",
+        "total_available": 51
+      },
+      {
+        "step": 2401,
+        "instruction": "OrI",
+        "total_available": 4
+      },
+      {
+        "step": 3121,
+        "instruction": "OrI",
+        "total_available": 4
+      },
+      {
+        "step": 3775,
+        "instruction": "OrI",
+        "total_available": 4
+      },
+      {
+        "step": 692,
+        "instruction": "SllI",
+        "total_available": 96
+      },
+      {
+        "step": 2337,
+        "instruction": "SllI",
+        "total_available": 96
+      },
+      {
+        "step": 2623,
+        "instruction": "SllI",
+        "total_available": 96
+      },
+      {
+        "step": 2483,
+        "instruction": "SltIU",
+        "total_available": 24
+      },
+      {
+        "step": 3040,
+        "instruction": "SltIU",
+        "total_available": 24
+      },
+      {
+        "step": 3415,
+        "instruction": "SltIU",
+        "total_available": 24
+      },
+      {
+        "step": 2464,
+        "instruction": "SltU",
+        "total_available": 6
+      },
+      {
+        "step": 2916,
+        "instruction": "SltU",
+        "total_available": 6
+      },
+      {
+        "step": 3495,
+        "instruction": "SltU",
+        "total_available": 6
+      },
+      {
+        "step": 702,
+        "instruction": "SrlI",
+        "total_available": 23
+      },
+      {
+        "step": 2989,
+        "instruction": "SrlI",
+        "total_available": 23
+      },
+      {
+        "step": 3543,
+        "instruction": "SrlI",
+        "total_available": 23
+      },
+      {
+        "step": 785,
+        "instruction": "Sub",
+        "total_available": 57
+      },
+      {
+        "step": 2532,
+        "instruction": "Sub",
+        "total_available": 57
+      },
+      {
+        "step": 3405,
+        "instruction": "Sub",
+        "total_available": 57
+      },
+      {
+        "step": 2462,
+        "instruction": "Xor",
+        "total_available": 3
+      },
+      {
+        "step": 2914,
+        "instruction": "Xor",
+        "total_available": 3
+      },
+      {
+        "step": 3494,
+        "instruction": "Xor",
+        "total_available": 3
+      },
+      {
+        "step": 2420,
+        "instruction": "XorI",
+        "total_available": 7
+      },
+      {
+        "step": 2917,
+        "instruction": "XorI",
+        "total_available": 7
+      },
+      {
+        "step": 3497,
+        "instruction": "XorI",
+        "total_available": 7
+      }
+    ],
+    "LOAD_VAL_MOD": [
+      {
+        "step": 3713,
+        "instruction": "Lb",
+        "total_available": 2
+      },
+      {
+        "step": 3714,
+        "instruction": "Lb",
+        "total_available": 2
+      },
+      {
+        "step": 1486,
+        "instruction": "LbU",
+        "total_available": 169
+      },
+      {
+        "step": 1767,
+        "instruction": "LbU",
+        "total_available": 169
+      },
+      {
+        "step": 2018,
+        "instruction": "LbU",
+        "total_available": 169
+      },
+      {
+        "step": 1181,
+        "instruction": "Lw",
+        "total_available": 509
+      },
+      {
+        "step": 2265,
+        "instruction": "Lw",
+        "total_available": 509
+      },
+      {
+        "step": 3198,
+        "instruction": "Lw",
+        "total_available": 509
+      }
+    ],
+    "STORE_OUT_MOD": [
+      {
+        "step": 1224,
+        "instruction": "Sb",
+        "total_available": 55
+      },
+      {
+        "step": 2372,
+        "instruction": "Sb",
+        "total_available": 55
+      },
+      {
+        "step": 3474,
+        "instruction": "Sb",
+        "total_available": 55
+      },
+      {
+        "step": 1275,
+        "instruction": "Sw",
+        "total_available": 541
+      },
+      {
+        "step": 2395,
+        "instruction": "Sw",
+        "total_available": 541
+      },
+      {
+        "step": 2900,
+        "instruction": "Sw",
+        "total_available": 541
+      }
+    ],
+    "PRE_EXEC_REG_MOD": [
+      {
+        "step": 779,
+        "instruction": "Add",
+        "total_available": 89
+      },
+      {
+        "step": 2384,
+        "instruction": "Add",
+        "total_available": 89
+      },
+      {
+        "step": 3280,
+        "instruction": "Add",
+        "total_available": 89
+      },
+      {
+        "step": 927,
+        "instruction": "AddI",
+        "total_available": 1155
+      },
+      {
+        "step": 1750,
+        "instruction": "AddI",
+        "total_available": 1155
+      },
+      {
+        "step": 2890,
+        "instruction": "AddI",
+        "total_available": 1155
+      },
+      {
+        "step": 2466,
+        "instruction": "And",
+        "total_available": 25
+      },
+      {
+        "step": 3013,
+        "instruction": "And",
+        "total_available": 25
+      },
+      {
+        "step": 3498,
+        "instruction": "And",
+        "total_available": 25
+      },
+      {
+        "step": 2327,
+        "instruction": "AndI",
+        "total_available": 88
+      },
+      {
+        "step": 3064,
+        "instruction": "AndI",
+        "total_available": 88
+      },
+      {
+        "step": 3452,
+        "instruction": "AndI",
+        "total_available": 88
+      },
+      {
+        "step": 1079,
+        "instruction": "Auipc",
+        "total_available": 107
+      },
+      {
+        "step": 2356,
+        "instruction": "Auipc",
+        "total_available": 107
+      },
+      {
+        "step": 3205,
+        "instruction": "Auipc",
+        "total_available": 107
+      },
+      {
+        "step": 3713,
+        "instruction": "Lb",
+        "total_available": 2
+      },
+      {
+        "step": 3714,
+        "instruction": "Lb",
+        "total_available": 2
+      },
+      {
+        "step": 1486,
+        "instruction": "LbU",
+        "total_available": 169
+      },
+      {
+        "step": 1767,
+        "instruction": "LbU",
+        "total_available": 169
+      },
+      {
+        "step": 2018,
+        "instruction": "LbU",
+        "total_available": 169
+      },
+      {
+        "step": 559,
+        "instruction": "Lui",
+        "total_available": 137
+      },
+      {
+        "step": 1163,
+        "instruction": "Lui",
+        "total_available": 137
+      },
+      {
+        "step": 2527,
+        "instruction": "Lui",
+        "total_available": 137
+      },
+      {
+        "step": 1181,
+        "instruction": "Lw",
+        "total_available": 509
+      },
+      {
+        "step": 2265,
+        "instruction": "Lw",
+        "total_available": 509
+      },
+      {
+        "step": 3198,
+        "instruction": "Lw",
+        "total_available": 509
+      },
+      {
+        "step": 2382,
+        "instruction": "Mul",
+        "total_available": 4
+      },
+      {
+        "step": 3102,
+        "instruction": "Mul",
+        "total_available": 4
+      },
+      {
+        "step": 3756,
+        "instruction": "Mul",
+        "total_available": 4
+      },
+      {
+        "step": 2347,
+        "instruction": "Or",
+        "total_available": 51
+      },
+      {
+        "step": 2595,
+        "instruction": "Or",
+        "total_available": 51
+      },
+      {
+        "step": 2659,
+        "instruction": "Or",
+        "total_available": 51
+      },
+      {
+        "step": 2401,
+        "instruction": "OrI",
+        "total_available": 4
+      },
+      {
+        "step": 3121,
+        "instruction": "OrI",
+        "total_available": 4
+      },
+      {
+        "step": 3775,
+        "instruction": "OrI",
+        "total_available": 4
+      },
+      {
+        "step": 1224,
+        "instruction": "Sb",
+        "total_available": 55
+      },
+      {
+        "step": 2372,
+        "instruction": "Sb",
+        "total_available": 55
+      },
+      {
+        "step": 3474,
+        "instruction": "Sb",
+        "total_available": 55
+      },
+      {
+        "step": 692,
+        "instruction": "SllI",
+        "total_available": 96
+      },
+      {
+        "step": 2337,
+        "instruction": "SllI",
+        "total_available": 96
+      },
+      {
+        "step": 2623,
+        "instruction": "SllI",
+        "total_available": 96
+      },
+      {
+        "step": 2483,
+        "instruction": "SltIU",
+        "total_available": 24
+      },
+      {
+        "step": 3040,
+        "instruction": "SltIU",
+        "total_available": 24
+      },
+      {
+        "step": 3415,
+        "instruction": "SltIU",
+        "total_available": 24
+      },
+      {
+        "step": 2464,
+        "instruction": "SltU",
+        "total_available": 6
+      },
+      {
+        "step": 2916,
+        "instruction": "SltU",
+        "total_available": 6
+      },
+      {
+        "step": 3495,
+        "instruction": "SltU",
+        "total_available": 6
+      },
+      {
+        "step": 702,
+        "instruction": "SrlI",
+        "total_available": 23
+      },
+      {
+        "step": 2989,
+        "instruction": "SrlI",
+        "total_available": 23
+      },
+      {
+        "step": 3543,
+        "instruction": "SrlI",
+        "total_available": 23
+      },
+      {
+        "step": 785,
+        "instruction": "Sub",
+        "total_available": 57
+      },
+      {
+        "step": 2532,
+        "instruction": "Sub",
+        "total_available": 57
+      },
+      {
+        "step": 3405,
+        "instruction": "Sub",
+        "total_available": 57
+      },
+      {
+        "step": 1275,
+        "instruction": "Sw",
+        "total_available": 541
+      },
+      {
+        "step": 2395,
+        "instruction": "Sw",
+        "total_available": 541
+      },
+      {
+        "step": 2900,
+        "instruction": "Sw",
+        "total_available": 541
+      },
+      {
+        "step": 2462,
+        "instruction": "Xor",
+        "total_available": 3
+      },
+      {
+        "step": 2914,
+        "instruction": "Xor",
+        "total_available": 3
+      },
+      {
+        "step": 3494,
+        "instruction": "Xor",
+        "total_available": 3
+      },
+      {
+        "step": 2420,
+        "instruction": "XorI",
+        "total_available": 7
+      },
+      {
+        "step": 2917,
+        "instruction": "XorI",
+        "total_available": 7
+      },
+      {
+        "step": 3497,
+        "instruction": "XorI",
+        "total_available": 7
+      }
+    ]
+  },
+  "test_commands": {
+    "INSTR_WORD_MOD": [
+      "python3 -m a4.cli compare --step 779 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step779_add.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step779_add.log",
+      "python3 -m a4.cli compare --step 2384 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2384_add.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2384_add.log",
+      "python3 -m a4.cli compare --step 3280 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3280_add.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3280_add.log",
+      "python3 -m a4.cli compare --step 927 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step927_addi.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step927_addi.log",
+      "python3 -m a4.cli compare --step 1750 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step1750_addi.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step1750_addi.log",
+      "python3 -m a4.cli compare --step 2890 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2890_addi.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2890_addi.log",
+      "python3 -m a4.cli compare --step 2466 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2466_and.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2466_and.log",
+      "python3 -m a4.cli compare --step 3013 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3013_and.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3013_and.log",
+      "python3 -m a4.cli compare --step 3498 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3498_and.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3498_and.log",
+      "python3 -m a4.cli compare --step 2327 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2327_andi.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2327_andi.log",
+      "python3 -m a4.cli compare --step 3064 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3064_andi.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3064_andi.log",
+      "python3 -m a4.cli compare --step 3452 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3452_andi.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3452_andi.log",
+      "python3 -m a4.cli compare --step 1079 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step1079_auipc.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step1079_auipc.log",
+      "python3 -m a4.cli compare --step 2356 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2356_auipc.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2356_auipc.log",
+      "python3 -m a4.cli compare --step 3205 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3205_auipc.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3205_auipc.log",
+      "python3 -m a4.cli compare --step 559 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step559_lui.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step559_lui.log",
+      "python3 -m a4.cli compare --step 1163 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step1163_lui.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step1163_lui.log",
+      "python3 -m a4.cli compare --step 2527 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2527_lui.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2527_lui.log",
+      "python3 -m a4.cli compare --step 2382 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2382_mul.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2382_mul.log",
+      "python3 -m a4.cli compare --step 3102 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3102_mul.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3102_mul.log",
+      "python3 -m a4.cli compare --step 3756 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3756_mul.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3756_mul.log",
+      "python3 -m a4.cli compare --step 2347 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2347_or.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2347_or.log",
+      "python3 -m a4.cli compare --step 2595 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2595_or.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2595_or.log",
+      "python3 -m a4.cli compare --step 2659 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2659_or.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2659_or.log",
+      "python3 -m a4.cli compare --step 2401 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2401_ori.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2401_ori.log",
+      "python3 -m a4.cli compare --step 3121 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3121_ori.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3121_ori.log",
+      "python3 -m a4.cli compare --step 3775 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3775_ori.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3775_ori.log",
+      "python3 -m a4.cli compare --step 692 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step692_slli.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step692_slli.log",
+      "python3 -m a4.cli compare --step 2337 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2337_slli.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2337_slli.log",
+      "python3 -m a4.cli compare --step 2623 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2623_slli.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2623_slli.log",
+      "python3 -m a4.cli compare --step 2483 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2483_sltiu.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2483_sltiu.log",
+      "python3 -m a4.cli compare --step 3040 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3040_sltiu.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3040_sltiu.log",
+      "python3 -m a4.cli compare --step 3415 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3415_sltiu.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3415_sltiu.log",
+      "python3 -m a4.cli compare --step 2464 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2464_sltu.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2464_sltu.log",
+      "python3 -m a4.cli compare --step 2916 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2916_sltu.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2916_sltu.log",
+      "python3 -m a4.cli compare --step 3495 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3495_sltu.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3495_sltu.log",
+      "python3 -m a4.cli compare --step 702 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step702_srli.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step702_srli.log",
+      "python3 -m a4.cli compare --step 2989 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2989_srli.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2989_srli.log",
+      "python3 -m a4.cli compare --step 3543 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3543_srli.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3543_srli.log",
+      "python3 -m a4.cli compare --step 785 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step785_sub.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step785_sub.log",
+      "python3 -m a4.cli compare --step 2532 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2532_sub.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2532_sub.log",
+      "python3 -m a4.cli compare --step 3405 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3405_sub.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3405_sub.log",
+      "python3 -m a4.cli compare --step 2462 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2462_xor.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2462_xor.log",
+      "python3 -m a4.cli compare --step 2914 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2914_xor.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2914_xor.log",
+      "python3 -m a4.cli compare --step 3494 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3494_xor.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3494_xor.log",
+      "python3 -m a4.cli compare --step 2420 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2420_xori.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2420_xori.log",
+      "python3 -m a4.cli compare --step 2917 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step2917_xori.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step2917_xori.log",
+      "python3 -m a4.cli compare --step 3497 --kind INSTR_WORD_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/instr_word_mod_step3497_xori.json 2>&1 | tee ./a4/verification/logs/instr_word_mod_step3497_xori.log"
+    ],
+    "COMP_OUT_MOD": [
+      "python3 -m a4.cli compare --step 779 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step779_add.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step779_add.log",
+      "python3 -m a4.cli compare --step 2384 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2384_add.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2384_add.log",
+      "python3 -m a4.cli compare --step 3280 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3280_add.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3280_add.log",
+      "python3 -m a4.cli compare --step 927 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step927_addi.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step927_addi.log",
+      "python3 -m a4.cli compare --step 1750 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step1750_addi.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step1750_addi.log",
+      "python3 -m a4.cli compare --step 2890 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2890_addi.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2890_addi.log",
+      "python3 -m a4.cli compare --step 2466 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2466_and.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2466_and.log",
+      "python3 -m a4.cli compare --step 3013 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3013_and.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3013_and.log",
+      "python3 -m a4.cli compare --step 3498 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3498_and.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3498_and.log",
+      "python3 -m a4.cli compare --step 2327 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2327_andi.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2327_andi.log",
+      "python3 -m a4.cli compare --step 3064 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3064_andi.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3064_andi.log",
+      "python3 -m a4.cli compare --step 3452 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3452_andi.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3452_andi.log",
+      "python3 -m a4.cli compare --step 1079 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step1079_auipc.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step1079_auipc.log",
+      "python3 -m a4.cli compare --step 2356 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2356_auipc.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2356_auipc.log",
+      "python3 -m a4.cli compare --step 3205 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3205_auipc.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3205_auipc.log",
+      "python3 -m a4.cli compare --step 926 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step926_jal.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step926_jal.log",
+      "python3 -m a4.cli compare --step 1950 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step1950_jal.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step1950_jal.log",
+      "python3 -m a4.cli compare --step 2798 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2798_jal.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2798_jal.log",
+      "python3 -m a4.cli compare --step 973 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step973_jalr.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step973_jalr.log",
+      "python3 -m a4.cli compare --step 2218 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2218_jalr.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2218_jalr.log",
+      "python3 -m a4.cli compare --step 3189 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3189_jalr.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3189_jalr.log",
+      "python3 -m a4.cli compare --step 559 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step559_lui.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step559_lui.log",
+      "python3 -m a4.cli compare --step 1163 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step1163_lui.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step1163_lui.log",
+      "python3 -m a4.cli compare --step 2527 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2527_lui.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2527_lui.log",
+      "python3 -m a4.cli compare --step 2382 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2382_mul.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2382_mul.log",
+      "python3 -m a4.cli compare --step 3102 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3102_mul.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3102_mul.log",
+      "python3 -m a4.cli compare --step 3756 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3756_mul.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3756_mul.log",
+      "python3 -m a4.cli compare --step 2347 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2347_or.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2347_or.log",
+      "python3 -m a4.cli compare --step 2595 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2595_or.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2595_or.log",
+      "python3 -m a4.cli compare --step 2659 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2659_or.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2659_or.log",
+      "python3 -m a4.cli compare --step 2401 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2401_ori.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2401_ori.log",
+      "python3 -m a4.cli compare --step 3121 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3121_ori.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3121_ori.log",
+      "python3 -m a4.cli compare --step 3775 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3775_ori.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3775_ori.log",
+      "python3 -m a4.cli compare --step 692 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step692_slli.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step692_slli.log",
+      "python3 -m a4.cli compare --step 2337 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2337_slli.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2337_slli.log",
+      "python3 -m a4.cli compare --step 2623 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2623_slli.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2623_slli.log",
+      "python3 -m a4.cli compare --step 2483 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2483_sltiu.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2483_sltiu.log",
+      "python3 -m a4.cli compare --step 3040 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3040_sltiu.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3040_sltiu.log",
+      "python3 -m a4.cli compare --step 3415 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3415_sltiu.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3415_sltiu.log",
+      "python3 -m a4.cli compare --step 2464 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2464_sltu.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2464_sltu.log",
+      "python3 -m a4.cli compare --step 2916 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2916_sltu.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2916_sltu.log",
+      "python3 -m a4.cli compare --step 3495 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3495_sltu.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3495_sltu.log",
+      "python3 -m a4.cli compare --step 702 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step702_srli.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step702_srli.log",
+      "python3 -m a4.cli compare --step 2989 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2989_srli.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2989_srli.log",
+      "python3 -m a4.cli compare --step 3543 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3543_srli.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3543_srli.log",
+      "python3 -m a4.cli compare --step 785 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step785_sub.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step785_sub.log",
+      "python3 -m a4.cli compare --step 2532 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2532_sub.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2532_sub.log",
+      "python3 -m a4.cli compare --step 3405 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3405_sub.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3405_sub.log",
+      "python3 -m a4.cli compare --step 2462 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2462_xor.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2462_xor.log",
+      "python3 -m a4.cli compare --step 2914 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2914_xor.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2914_xor.log",
+      "python3 -m a4.cli compare --step 3494 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3494_xor.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3494_xor.log",
+      "python3 -m a4.cli compare --step 2420 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2420_xori.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2420_xori.log",
+      "python3 -m a4.cli compare --step 2917 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step2917_xori.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step2917_xori.log",
+      "python3 -m a4.cli compare --step 3497 --kind COMP_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/comp_out_mod_step3497_xori.json 2>&1 | tee ./a4/verification/logs/comp_out_mod_step3497_xori.log"
+    ],
+    "LOAD_VAL_MOD": [
+      "python3 -m a4.cli compare --step 3713 --kind LOAD_VAL_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/load_val_mod_step3713_lb.json 2>&1 | tee ./a4/verification/logs/load_val_mod_step3713_lb.log",
+      "python3 -m a4.cli compare --step 3714 --kind LOAD_VAL_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/load_val_mod_step3714_lb.json 2>&1 | tee ./a4/verification/logs/load_val_mod_step3714_lb.log",
+      "python3 -m a4.cli compare --step 1486 --kind LOAD_VAL_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/load_val_mod_step1486_lbu.json 2>&1 | tee ./a4/verification/logs/load_val_mod_step1486_lbu.log",
+      "python3 -m a4.cli compare --step 1767 --kind LOAD_VAL_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/load_val_mod_step1767_lbu.json 2>&1 | tee ./a4/verification/logs/load_val_mod_step1767_lbu.log",
+      "python3 -m a4.cli compare --step 2018 --kind LOAD_VAL_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/load_val_mod_step2018_lbu.json 2>&1 | tee ./a4/verification/logs/load_val_mod_step2018_lbu.log",
+      "python3 -m a4.cli compare --step 1181 --kind LOAD_VAL_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/load_val_mod_step1181_lw.json 2>&1 | tee ./a4/verification/logs/load_val_mod_step1181_lw.log",
+      "python3 -m a4.cli compare --step 2265 --kind LOAD_VAL_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/load_val_mod_step2265_lw.json 2>&1 | tee ./a4/verification/logs/load_val_mod_step2265_lw.log",
+      "python3 -m a4.cli compare --step 3198 --kind LOAD_VAL_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/load_val_mod_step3198_lw.json 2>&1 | tee ./a4/verification/logs/load_val_mod_step3198_lw.log"
+    ],
+    "STORE_OUT_MOD": [
+      "python3 -m a4.cli compare --step 1224 --kind STORE_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/store_out_mod_step1224_sb.json 2>&1 | tee ./a4/verification/logs/store_out_mod_step1224_sb.log",
+      "python3 -m a4.cli compare --step 2372 --kind STORE_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/store_out_mod_step2372_sb.json 2>&1 | tee ./a4/verification/logs/store_out_mod_step2372_sb.log",
+      "python3 -m a4.cli compare --step 3474 --kind STORE_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/store_out_mod_step3474_sb.json 2>&1 | tee ./a4/verification/logs/store_out_mod_step3474_sb.log",
+      "python3 -m a4.cli compare --step 1275 --kind STORE_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/store_out_mod_step1275_sw.json 2>&1 | tee ./a4/verification/logs/store_out_mod_step1275_sw.log",
+      "python3 -m a4.cli compare --step 2395 --kind STORE_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/store_out_mod_step2395_sw.json 2>&1 | tee ./a4/verification/logs/store_out_mod_step2395_sw.log",
+      "python3 -m a4.cli compare --step 2900 --kind STORE_OUT_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/store_out_mod_step2900_sw.json 2>&1 | tee ./a4/verification/logs/store_out_mod_step2900_sw.log"
+    ],
+    "PRE_EXEC_REG_MOD": [
+      "python3 -m a4.cli compare --step 779 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step779_add.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step779_add.log",
+      "python3 -m a4.cli compare --step 2384 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2384_add.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2384_add.log",
+      "python3 -m a4.cli compare --step 3280 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3280_add.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3280_add.log",
+      "python3 -m a4.cli compare --step 927 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step927_addi.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step927_addi.log",
+      "python3 -m a4.cli compare --step 1750 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step1750_addi.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step1750_addi.log",
+      "python3 -m a4.cli compare --step 2890 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2890_addi.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2890_addi.log",
+      "python3 -m a4.cli compare --step 2466 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2466_and.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2466_and.log",
+      "python3 -m a4.cli compare --step 3013 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3013_and.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3013_and.log",
+      "python3 -m a4.cli compare --step 3498 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3498_and.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3498_and.log",
+      "python3 -m a4.cli compare --step 2327 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2327_andi.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2327_andi.log",
+      "python3 -m a4.cli compare --step 3064 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3064_andi.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3064_andi.log",
+      "python3 -m a4.cli compare --step 3452 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3452_andi.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3452_andi.log",
+      "python3 -m a4.cli compare --step 1079 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step1079_auipc.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step1079_auipc.log",
+      "python3 -m a4.cli compare --step 2356 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2356_auipc.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2356_auipc.log",
+      "python3 -m a4.cli compare --step 3205 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3205_auipc.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3205_auipc.log",
+      "python3 -m a4.cli compare --step 3713 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3713_lb.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3713_lb.log",
+      "python3 -m a4.cli compare --step 3714 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3714_lb.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3714_lb.log",
+      "python3 -m a4.cli compare --step 1486 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step1486_lbu.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step1486_lbu.log",
+      "python3 -m a4.cli compare --step 1767 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step1767_lbu.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step1767_lbu.log",
+      "python3 -m a4.cli compare --step 2018 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2018_lbu.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2018_lbu.log",
+      "python3 -m a4.cli compare --step 559 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step559_lui.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step559_lui.log",
+      "python3 -m a4.cli compare --step 1163 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step1163_lui.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step1163_lui.log",
+      "python3 -m a4.cli compare --step 2527 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2527_lui.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2527_lui.log",
+      "python3 -m a4.cli compare --step 1181 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step1181_lw.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step1181_lw.log",
+      "python3 -m a4.cli compare --step 2265 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2265_lw.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2265_lw.log",
+      "python3 -m a4.cli compare --step 3198 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3198_lw.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3198_lw.log",
+      "python3 -m a4.cli compare --step 2382 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2382_mul.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2382_mul.log",
+      "python3 -m a4.cli compare --step 3102 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3102_mul.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3102_mul.log",
+      "python3 -m a4.cli compare --step 3756 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3756_mul.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3756_mul.log",
+      "python3 -m a4.cli compare --step 2347 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2347_or.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2347_or.log",
+      "python3 -m a4.cli compare --step 2595 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2595_or.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2595_or.log",
+      "python3 -m a4.cli compare --step 2659 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2659_or.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2659_or.log",
+      "python3 -m a4.cli compare --step 2401 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2401_ori.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2401_ori.log",
+      "python3 -m a4.cli compare --step 3121 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3121_ori.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3121_ori.log",
+      "python3 -m a4.cli compare --step 3775 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3775_ori.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3775_ori.log",
+      "python3 -m a4.cli compare --step 1224 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step1224_sb.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step1224_sb.log",
+      "python3 -m a4.cli compare --step 2372 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2372_sb.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2372_sb.log",
+      "python3 -m a4.cli compare --step 3474 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3474_sb.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3474_sb.log",
+      "python3 -m a4.cli compare --step 692 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step692_slli.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step692_slli.log",
+      "python3 -m a4.cli compare --step 2337 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2337_slli.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2337_slli.log",
+      "python3 -m a4.cli compare --step 2623 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2623_slli.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2623_slli.log",
+      "python3 -m a4.cli compare --step 2483 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2483_sltiu.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2483_sltiu.log",
+      "python3 -m a4.cli compare --step 3040 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3040_sltiu.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3040_sltiu.log",
+      "python3 -m a4.cli compare --step 3415 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3415_sltiu.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3415_sltiu.log",
+      "python3 -m a4.cli compare --step 2464 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2464_sltu.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2464_sltu.log",
+      "python3 -m a4.cli compare --step 2916 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2916_sltu.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2916_sltu.log",
+      "python3 -m a4.cli compare --step 3495 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3495_sltu.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3495_sltu.log",
+      "python3 -m a4.cli compare --step 702 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step702_srli.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step702_srli.log",
+      "python3 -m a4.cli compare --step 2989 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2989_srli.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2989_srli.log",
+      "python3 -m a4.cli compare --step 3543 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3543_srli.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3543_srli.log",
+      "python3 -m a4.cli compare --step 785 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step785_sub.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step785_sub.log",
+      "python3 -m a4.cli compare --step 2532 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2532_sub.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2532_sub.log",
+      "python3 -m a4.cli compare --step 3405 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3405_sub.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3405_sub.log",
+      "python3 -m a4.cli compare --step 1275 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step1275_sw.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step1275_sw.log",
+      "python3 -m a4.cli compare --step 2395 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2395_sw.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2395_sw.log",
+      "python3 -m a4.cli compare --step 2900 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2900_sw.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2900_sw.log",
+      "python3 -m a4.cli compare --step 2462 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2462_xor.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2462_xor.log",
+      "python3 -m a4.cli compare --step 2914 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2914_xor.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2914_xor.log",
+      "python3 -m a4.cli compare --step 3494 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3494_xor.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3494_xor.log",
+      "python3 -m a4.cli compare --step 2420 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2420_xori.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2420_xori.log",
+      "python3 -m a4.cli compare --step 2917 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step2917_xori.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step2917_xori.log",
+      "python3 -m a4.cli compare --step 3497 --kind PRE_EXEC_REG_MOD --seed 12345 --host-binary ./workspace/output/target/release/risc0-host --host-args '--in1 5 --in4 10' --output-json ./a4/verification/results/pre_exec_reg_mod_step3497_xori.json 2>&1 | tee ./a4/verification/logs/pre_exec_reg_mod_step3497_xori.log"
+    ]
+  },
+  "stats": {
+    "INSTR_WORD_MOD": {
+      "unique_instructions": 16,
+      "total_valid_steps": 1876,
+      "selected_count": 48
+    },
+    "COMP_OUT_MOD": {
+      "unique_instructions": 18,
+      "total_valid_steps": 2134,
+      "selected_count": 54
+    },
+    "LOAD_VAL_MOD": {
+      "unique_instructions": 3,
+      "total_valid_steps": 680,
+      "selected_count": 8
+    },
+    "STORE_OUT_MOD": {
+      "unique_instructions": 2,
+      "total_valid_steps": 596,
+      "selected_count": 6
+    },
+    "PRE_EXEC_REG_MOD": {
+      "unique_instructions": 21,
+      "total_valid_steps": 3152,
+      "selected_count": 62
+    }
+  }
+}

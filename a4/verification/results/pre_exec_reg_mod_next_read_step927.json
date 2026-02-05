@@ -1,0 +1,25 @@
+{
+  "arguzz": {
+    "step": 927,
+    "kind": "PRE_EXEC_REG_MOD",
+    "seed": 12345,
+    "fault": {
+      "pc": 3221225780,
+      "info_type": "reg_assign",
+      "original_value": 0,
+      "mutated_value": 3792952734
+    },
+    "failures": 0
+  },
+  "a4": {
+    "step": null,
+    "failures": 0
+  },
+  "comparison": {
+    "skipped": true,
+    "skip_reason": "Arguzz guest crashed: thread 'main' panicked at /root/arguzz/workspace/risc0-modified/risc0/circuit/rv32im/src/prove/witgen/preflight.rs:227:34:",
+    "common": [],
+    "arguzz_only": [],
+    "a4_only": []
+  }
+}

@@ -20,9 +20,10 @@ class ArguzzFault:
     step: int
     pc: int
     kind: str
-    info_type: str          # "word" for INSTR_WORD_MOD, "out" for COMP_OUT_MOD
+    info_type: str          # "word" for INSTR_WORD_MOD, "out" for COMP_OUT_MOD, "reg_assign" for PRE_EXEC_REG_MOD
     original_value: int     # Original value (word or output)
     mutated_value: int      # Mutated value
+    target_register: Optional[str] = None  # For PRE_EXEC_REG_MOD: register name (e.g., "s3")
     
     # Backwards compatibility aliases
     @property
@@ -83,6 +84,47 @@ class ArguzzFault:
                     info_type='data',
                     original_value=int(data_match.group(1)),
                     mutated_value=int(data_match.group(2)),
+                )
+            
+            # Try pc:X => pc:Y (PRE_EXEC_PC_MOD)
+            pc_match = re.search(r'pc:(\d+)\s*=>\s*pc:(\d+)', info)
+            if pc_match:
+                return cls(
+                    step=data['step'],
+                    pc=data['pc'],
+                    kind=data['kind'],
+                    info_type='pc',
+                    original_value=int(pc_match.group(1)),
+                    mutated_value=int(pc_match.group(2)),
+                )
+            
+            # Try <reg_name> = <value> (PRE_EXEC_REG_MOD, POST_EXEC_REG_MOD)
+            # Format: "s3 = 1" or "a7 = 3792952734"
+            reg_assign_match = re.search(r'^(\w+)\s*=\s*(\d+)$', info.strip())
+            if reg_assign_match and data['kind'] in ('PRE_EXEC_REG_MOD', 'POST_EXEC_REG_MOD'):
+                return cls(
+                    step=data['step'],
+                    pc=data['pc'],
+                    kind=data['kind'],
+                    info_type='reg_assign',
+                    original_value=0,  # Not available in Arguzz output
+                    mutated_value=int(reg_assign_match.group(2)),
+                    target_register=reg_assign_match.group(1),
+                )
+            
+            # Try MEM[<addr>] = <value> (PRE_EXEC_MEM_MOD, POST_EXEC_MEM_MOD)
+            # Format: "MEM[$0x13946509] = 3792952734"
+            mem_assign_match = re.search(r'MEM\[\$?(0x[0-9a-fA-F]+|\d+)\]\s*=\s*(\d+)', info)
+            if mem_assign_match and data['kind'] in ('PRE_EXEC_MEM_MOD', 'POST_EXEC_MEM_MOD'):
+                addr_str = mem_assign_match.group(1)
+                addr = int(addr_str, 16) if addr_str.startswith('0x') else int(addr_str)
+                return cls(
+                    step=data['step'],
+                    pc=data['pc'],
+                    kind=data['kind'],
+                    info_type='mem_assign',
+                    original_value=addr,  # Store address as original_value
+                    mutated_value=int(mem_assign_match.group(2)),
                 )
             
             # Unknown format - store raw info
@@ -330,6 +372,52 @@ class A4Txn:
         return None
 
 
+@dataclass
+class A4RegTxn:
+    """Parsed A4 <a4_reg_txn> output - register transaction with step info"""
+    txn_idx: int
+    step: int       # user_cycle / A4 step
+    addr: int
+    cycle: int
+    word: int
+    prev_cycle: int
+    prev_word: int
+    
+    @classmethod
+    def parse(cls, line: str) -> Optional['A4RegTxn']:
+        """Parse an <a4_reg_txn> line"""
+        match = re.search(r'<a4_reg_txn>({.*?})</a4_reg_txn>', line)
+        if not match:
+            return None
+        
+        try:
+            data = json.loads(match.group(1))
+            return cls(
+                txn_idx=data['txn_idx'],
+                step=data['step'],
+                addr=data['addr'],
+                cycle=data['cycle'],
+                word=data['word'],
+                prev_cycle=data['prev_cycle'],
+                prev_word=data['prev_word'],
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+    
+    def is_write(self) -> bool:
+        """Check if this is a WRITE transaction (odd cycle)"""
+        return self.cycle % 2 == 1
+    
+    def is_read(self) -> bool:
+        """Check if this is a READ transaction (even cycle)"""
+        return self.cycle % 2 == 0
+    
+    def register_index(self) -> int:
+        """Get the register index (0-31)"""
+        USER_REGS_BASE = 1073725472
+        return self.addr - USER_REGS_BASE
+
+
 def parse_all_faults(output: str) -> List[ArguzzFault]:
     """Parse all <fault> entries from output"""
     return [f for line in output.splitlines() if (f := ArguzzFault.parse(line))]
@@ -358,3 +446,8 @@ def parse_all_step_txns(output: str) -> List[A4StepTxns]:
 def parse_all_txns(output: str) -> List[A4Txn]:
     """Parse all <a4_txn> entries from output"""
     return [t for line in output.splitlines() if (t := A4Txn.parse(line))]
+
+
+def parse_all_reg_txns(output: str) -> List[A4RegTxn]:
+    """Parse all <a4_reg_txn> entries from output"""
+    return [t for line in output.splitlines() if (t := A4RegTxn.parse(line))]

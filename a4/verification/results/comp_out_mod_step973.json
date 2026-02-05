@@ -1,0 +1,25 @@
+{
+  "arguzz": {
+    "step": 973,
+    "kind": "COMP_OUT_MOD",
+    "seed": 12345,
+    "fault": {
+      "pc": 2099812,
+      "info_type": "out",
+      "original_value": 2099816,
+      "mutated_value": 75217640
+    },
+    "failures": 0
+  },
+  "a4": {
+    "step": null,
+    "failures": 0
+  },
+  "comparison": {
+    "skipped": true,
+    "skip_reason": "Arguzz guest crashed: thread 'main' panicked at host/src/main.rs:150:13:",
+    "common": [],
+    "arguzz_only": [],
+    "a4_only": []
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "arguzz": {
+    "step": 3189,
+    "kind": "COMP_OUT_MOD",
+    "seed": 12345,
+    "fault": {
+      "pc": 2122296,
+      "info_type": "out",
+      "original_value": 2122300,
+      "mutated_value": 75223740
+    },
+    "failures": 2
+  },
+  "a4": {
+    "step": 2474,
+    "failures": 2
+  },
+  "comparison": {
+    "skipped": false,
+    "skip_reason": null,
+    "common": [],
+    "arguzz_only": [
+      "3159:2119692:2:4:MemoryWrite@mem.zir:100",
+      "3159:2119692:2:4:MemoryWrite@mem.zir:99"
+    ],
+    "a4_only": [
+      "2474:2122300:2:4:MemoryWrite@mem.zir:100",
+      "2474:2122300:2:4:MemoryWrite@mem.zir:99"
+    ]
+  }
+}
