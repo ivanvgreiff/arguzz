@@ -1,0 +1,33 @@
+{
+  "arguzz": {
+    "step": 2382,
+    "kind": "PRE_EXEC_REG_MOD",
+    "seed": 12345,
+    "fault": {
+      "pc": 2110044,
+      "info_type": "reg_assign",
+      "original_value": 0,
+      "mutated_value": 3792952734
+    },
+    "failures": 6
+  },
+  "a4": {
+    "step": 2645,
+    "failures": 4
+  },
+  "comparison": {
+    "skipped": false,
+    "skip_reason": null,
+    "common": [
+      "MATCH:IsRead@mem.zir:79",
+      "MATCH:IsRead@mem.zir:80",
+      "MATCH:MemoryWrite@mem.zir:100",
+      "MATCH:MemoryWrite@mem.zir:99"
+    ],
+    "arguzz_only": [
+      "2354:2110048:3:2:VerifyOpcodeF3F7@inst.zir:102",
+      "2354:2110048:3:2:VerifyOpcodeF3F7@inst.zir:104"
+    ],
+    "a4_only": []
+  }
+}

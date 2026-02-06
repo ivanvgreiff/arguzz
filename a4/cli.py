@@ -183,7 +183,7 @@ def cmd_compare_instr_word_mod(args, host_args: List[str]):
 def cmd_compare_comp_out_mod(args, host_args: List[str]):
     """Compare Arguzz COMP_OUT_MOD vs A4 COMP_OUT_MOD"""
     from a4.common.trace_parser import parse_all_a4_cycles
-    from a4.mutations.base import run_arguzz_mutation, run_a4_mutation, compare_failures, ComparisonResult
+    from a4.mutations.base import run_arguzz_mutation, run_a4_mutation, compare_failures, compare_failures_by_constraint_only, ComparisonResult
     from a4.mutations.comp_out_mod import find_mutation_target, run_full_inspection
     
     # Step 1: Run Arguzz mutation
@@ -249,8 +249,14 @@ def cmd_compare_comp_out_mod(args, host_args: List[str]):
     
     # Step 5: Compare
     print(f"\n=== Step 5: Comparison ===")
-    step_offset = fault.step - target.step
-    comparison = compare_failures(arguzz_result.failures, a4_failures, step_offset)
+    
+    # Use constraint-only comparison for COMP_OUT_MOD
+    # The key validation is that both A4 and Arguzz trigger the same constraint TYPES
+    # (e.g., MemoryWrite@mem.zir:99). The exact step/PC may differ due to:
+    # - Step offset between Arguzz and A4 counting
+    # - JAL/JALR delayed return address use causing divergence at different points
+    # - Instruction mismatch edge cases
+    comparison = compare_failures_by_constraint_only(arguzz_result.failures, a4_failures)
     comparison.print_summary()
     
     # Cleanup

@@ -390,7 +390,14 @@ def find_a4_step_for_arguzz_step(
     """
     Find the A4 user_cycle (step) that corresponds to an Arguzz step.
     
-    Uses PC-based matching since A4 records next PC = Arguzz PC + 4.
+    For sequential instructions (ADD, LUI, etc.), constraint failures are detected
+    at PC+4 (the next instruction), so we search for PC+4 first.
+    
+    For jump instructions (JAL, JALR), PC+4 doesn't exist in the trace because
+    execution jumps elsewhere. In that case, we fall back to exact PC matching.
+    
+    For instructions in loops, disambiguates by finding the iteration closest to
+    (but not exceeding) the Arguzz step number.
     
     Args:
         arguzz_step: Arguzz injection step
@@ -400,19 +407,39 @@ def find_a4_step_for_arguzz_step(
     Returns:
         The A4 step (user_cycle) that corresponds to this Arguzz step
     """
-    expected_a4_pc = arguzz_pc + 4
+    matches_plus4 = [c for c in a4_cycles if c.pc == arguzz_pc + 4]
+    matches_exact = [c for c in a4_cycles if c.pc == arguzz_pc]
     
-    # Find all cycles with matching PC
-    matches = [c for c in a4_cycles if c.pc == expected_a4_pc]
-    
-    if not matches:
-        raise ValueError(f"No A4 cycle found with PC={expected_a4_pc}")
-    
-    # For loops, pick the latest iteration <= Arguzz step
-    if len(matches) > 1:
+    def disambiguate(matches: list) -> int:
+        """Find best match from a list, preferring step <= arguzz_step"""
+        if len(matches) == 1:
+            return matches[0].step
+        
         valid = [c for c in matches if c.step <= arguzz_step]
-        if not valid:
-            raise ValueError(f"No valid match for loop disambiguation (step <= {arguzz_step})")
-        return max(valid, key=lambda c: c.step).step
+        if valid:
+            return max(valid, key=lambda c: c.step).step
+        
+        # No valid match <= arguzz_step
+        return None
     
-    return matches[0].step
+    # Strategy 1: Try PC+4 first (works for sequential instructions)
+    if matches_plus4:
+        result = disambiguate(matches_plus4)
+        if result is not None:
+            return result
+        # PC+4 disambiguation failed, try exact PC
+    
+    # Strategy 2: Try exact PC (for JAL/JALR or when PC+4 disambiguation fails)
+    if matches_exact:
+        result = disambiguate(matches_exact)
+        if result is not None:
+            return result
+        # Exact PC disambiguation also failed, use closest from either set
+    
+    # Fallback: use closest match from all available
+    all_matches = matches_plus4 + matches_exact
+    if not all_matches:
+        raise ValueError(f"No A4 cycle found with PC={arguzz_pc} (0x{arguzz_pc:X}) or PC+4")
+    
+    closest = min(all_matches, key=lambda c: abs(c.step - arguzz_step))
+    return closest.step

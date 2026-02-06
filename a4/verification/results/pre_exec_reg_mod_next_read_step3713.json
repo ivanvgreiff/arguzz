@@ -1,0 +1,25 @@
+{
+  "arguzz": {
+    "step": 3713,
+    "kind": "PRE_EXEC_REG_MOD",
+    "seed": 12345,
+    "fault": {
+      "pc": 2110948,
+      "info_type": "reg_assign",
+      "original_value": 0,
+      "mutated_value": 3792952734
+    },
+    "failures": 0
+  },
+  "a4": {
+    "step": null,
+    "failures": 0
+  },
+  "comparison": {
+    "skipped": true,
+    "skip_reason": "register READ found at step 3929 but it's during CONTROL0 (non-instruction cycle); IsRead constraints not checked during special operations",
+    "common": [],
+    "arguzz_only": [],
+    "a4_only": []
+  }
+}

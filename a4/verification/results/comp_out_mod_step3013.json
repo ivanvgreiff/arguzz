@@ -1,0 +1,25 @@
+{
+  "arguzz": {
+    "step": 3013,
+    "kind": "COMP_OUT_MOD",
+    "seed": 12345,
+    "fault": {
+      "pc": 2121220,
+      "info_type": "out",
+      "original_value": 0,
+      "mutated_value": 73117824
+    },
+    "failures": 0
+  },
+  "a4": {
+    "step": null,
+    "failures": 0
+  },
+  "comparison": {
+    "skipped": true,
+    "skip_reason": "Arguzz guest crashed: Guest panicked: Out of memory! You have been using the default bump allocator which does not reclaim memory. Enable the `heap-embedded-alloc` feature to reclaim memory. This will result in extra cycle cost.",
+    "common": [],
+    "arguzz_only": [],
+    "a4_only": []
+  }
+}

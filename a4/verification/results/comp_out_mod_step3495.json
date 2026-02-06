@@ -19,8 +19,8 @@
     "skipped": false,
     "skip_reason": null,
     "common": [
-      "3465:2195808:0:6:MemoryWrite@mem.zir:100",
-      "3465:2195808:0:6:MemoryWrite@mem.zir:99"
+      "MATCH:MemoryWrite@mem.zir:100",
+      "MATCH:MemoryWrite@mem.zir:99"
     ],
     "arguzz_only": [],
     "a4_only": []

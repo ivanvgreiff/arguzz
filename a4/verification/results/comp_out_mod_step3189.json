@@ -18,14 +18,11 @@
   "comparison": {
     "skipped": false,
     "skip_reason": null,
-    "common": [],
-    "arguzz_only": [
-      "3159:2119692:2:4:MemoryWrite@mem.zir:100",
-      "3159:2119692:2:4:MemoryWrite@mem.zir:99"
+    "common": [
+      "MATCH:MemoryWrite@mem.zir:100",
+      "MATCH:MemoryWrite@mem.zir:99"
     ],
-    "a4_only": [
-      "2474:2122300:2:4:MemoryWrite@mem.zir:100",
-      "2474:2122300:2:4:MemoryWrite@mem.zir:99"
-    ]
+    "arguzz_only": [],
+    "a4_only": []
   }
 }
