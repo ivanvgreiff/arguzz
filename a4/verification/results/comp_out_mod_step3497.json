@@ -12,15 +12,15 @@
     "failures": 2
   },
   "a4": {
-    "step": 3466,
+    "step": 3467,
     "failures": 2
   },
   "comparison": {
     "skipped": false,
     "skip_reason": null,
     "common": [
-      "MATCH:MemoryWrite@mem.zir:100",
-      "MATCH:MemoryWrite@mem.zir:99"
+      "3467:2195816:1:0:MemoryWrite@mem.zir:100",
+      "3467:2195816:1:0:MemoryWrite@mem.zir:99"
     ],
     "arguzz_only": [],
     "a4_only": []

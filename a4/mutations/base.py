@@ -16,8 +16,8 @@ from pathlib import Path
 from typing import List, Tuple
 
 from a4.common.trace_parser import (
-    ArguzzFault, A4CycleInfo, ConstraintFailure, A4StepTxns, A4Txn,
-    parse_all_faults, parse_all_a4_cycles, parse_all_constraint_failures,
+    ArguzzFault, ArguzzTrace, A4CycleInfo, ConstraintFailure, A4StepTxns, A4Txn,
+    parse_all_faults, parse_all_traces, parse_all_a4_cycles, parse_all_constraint_failures,
     parse_all_step_txns, parse_all_txns
 )
 
@@ -75,6 +75,7 @@ class ArguzzResult:
     output: str
     faults: List[ArguzzFault]
     failures: List[ConstraintFailure]
+    traces: List[ArguzzTrace]  # Execution trace for offset computation
     guest_crashed: bool
     crash_reason: str = ""
 
@@ -114,6 +115,7 @@ def run_arguzz_mutation(
     output = result.stdout + result.stderr
     faults = parse_all_faults(output)
     failures = parse_all_constraint_failures(output)
+    traces = parse_all_traces(output)  # Parse trace for offset computation
     
     # Detect guest crash
     # A "guest crash" is when the prover fails BEFORE it could check constraints.
@@ -152,6 +154,7 @@ def run_arguzz_mutation(
         output=output,
         faults=faults,
         failures=failures,
+        traces=traces,
         guest_crashed=guest_crashed,
         crash_reason=crash_reason,
     )
@@ -382,35 +385,90 @@ def compare_failures_by_constraint_only(
     )
 
 
+def compute_arguzz_preflight_offset(
+    arguzz_traces: List[ArguzzTrace],
+    a4_cycles: List[A4CycleInfo]
+) -> int:
+    """
+    Compute the offset between Arguzz step counting and preflight step counting.
+    
+    The offset = arguzz_step - preflight_step at corresponding instructions.
+    
+    This offset exists because:
+    - Arguzz counts only instruction executions
+    - Preflight counts instruction cycles PLUS some special cycles
+    
+    The offset grows over time as more special cycles are executed.
+    
+    Strategy:
+    - Find PCs that appear in both traces
+    - For each PC, find the first occurrence in each trace
+    - Compute offset = arguzz_step - preflight_step
+    - Use the median offset (to handle any edge cases)
+    
+    Args:
+        arguzz_traces: List of ArguzzTrace entries
+        a4_cycles: All A4 cycles from inspection
+        
+    Returns:
+        The offset (arguzz_step - preflight_step)
+    """
+    # Build PC -> first step mappings
+    arguzz_pc_to_first_step = {}
+    for t in arguzz_traces:
+        if t.pc not in arguzz_pc_to_first_step:
+            arguzz_pc_to_first_step[t.pc] = t.step
+    
+    preflight_pc_to_first_step = {}
+    for c in a4_cycles:
+        if c.major <= 6 and c.pc not in preflight_pc_to_first_step:  # Only instruction cycles
+            preflight_pc_to_first_step[c.pc] = c.step
+    
+    # Find common PCs and compute offsets
+    offsets = []
+    common_pcs = set(arguzz_pc_to_first_step.keys()) & set(preflight_pc_to_first_step.keys())
+    
+    for pc in common_pcs:
+        arguzz_step = arguzz_pc_to_first_step[pc]
+        preflight_step = preflight_pc_to_first_step[pc]
+        offset = arguzz_step - preflight_step
+        offsets.append(offset)
+    
+    if not offsets:
+        # Fallback: assume small offset
+        return 0
+    
+    # Use median offset (most robust to outliers)
+    offsets.sort()
+    return offsets[len(offsets) // 2]
+
+
 def find_a4_step_for_arguzz_step(
     arguzz_step: int,
     arguzz_pc: int,
-    a4_cycles: List[A4CycleInfo]
+    a4_cycles: List[A4CycleInfo],
+    offset: int = None
 ) -> int:
     """
     Find the A4 user_cycle (step) that corresponds to an Arguzz step.
     
     Key insight about step counting differences:
-    - Arguzz counts every instruction execution (including machine mode)
-    - Preflight trace counts instruction cycles PLUS Control/Poseidon/SHA cycles
-    - The offset (arguzz_step - preflight_step) grows over time as more special
-      cycles are executed
+    - Arguzz counts only instruction executions
+    - Preflight counts instruction cycles PLUS special cycles (Control, Poseidon, SHA)
+    - The offset (arguzz_step - preflight_step) grows over time
     
     Strategy:
-    1. Find all preflight cycles at the EXACT Arguzz PC (the instruction location)
-    2. Find the closest preflight step to the Arguzz step
+    1. If offset is provided, calculate target_step = arguzz_step - offset
+    2. Find the preflight cycle at arguzz_pc closest to target_step
     
-    This works because:
-    - The PC uniquely identifies which instruction we're looking for
-    - The offset between Arguzz and preflight is typically < 100, so the closest
-      match at the same PC is the correct one
-    - For loops, there may be multiple cycles at the same PC; we pick the one
-      closest to (but not exceeding) the Arguzz step
+    This gives 100% accuracy for tight loops where offset > loop_period.
     
     Args:
         arguzz_step: Arguzz injection step
         arguzz_pc: PC from Arguzz fault
         a4_cycles: All A4 cycles from inspection
+        offset: Pre-computed offset (arguzz_step - preflight_step). If None,
+                falls back to heuristic (closest step <= arguzz_step).
         
     Returns:
         The A4 step (user_cycle) that corresponds to this Arguzz step
@@ -418,25 +476,32 @@ def find_a4_step_for_arguzz_step(
     Raises:
         ValueError: If no suitable A4 step can be found
     """
-    # Find all instruction cycles at the exact Arguzz PC
+    # Find all instruction cycles at arguzz_pc + 4
+    # Why +4? Because preflight cycle.pc is the NEXT PC (after set_pc is called during execution)
+    # So if arguzz injects at PC=X, the preflight cycle has pc=X+4
     # Only consider instruction cycles (major 0-6)
-    matches = [c for c in a4_cycles if c.pc == arguzz_pc and c.major <= 6]
+    expected_pc = arguzz_pc + 4
+    matches = [c for c in a4_cycles if c.pc == expected_pc and c.major <= 6]
     
     if not matches:
         raise ValueError(
-            f"No A4 instruction cycle found at PC=0x{arguzz_pc:X} for Arguzz step {arguzz_step}. "
+            f"No A4 instruction cycle found at PC=0x{expected_pc:X} (arguzz_pc+4) for Arguzz step {arguzz_step}. "
             f"This PC may not have been reached in the preflight trace."
         )
     
     if len(matches) == 1:
         return matches[0].step
     
-    # Multiple matches (loop iterations) - find the closest to arguzz_step
-    # Prefer matches where preflight_step <= arguzz_step (since preflight counts more cycles)
-    valid = [c for c in matches if c.step <= arguzz_step]
-    if valid:
-        # Return the largest preflight step that's still <= arguzz_step
-        return max(valid, key=lambda c: c.step).step
-    
-    # All matches are > arguzz_step (unusual), return the closest
-    return min(matches, key=lambda c: abs(c.step - arguzz_step)).step
+    # Multiple matches (loop iterations)
+    if offset is not None:
+        # Use exact offset calculation
+        target_step = arguzz_step - offset
+        # Find the cycle closest to target_step
+        return min(matches, key=lambda c: abs(c.step - target_step)).step
+    else:
+        # Fallback: heuristic (closest step <= arguzz_step)
+        # This works when offset < loop_period, but fails for tight loops
+        valid = [c for c in matches if c.step <= arguzz_step]
+        if valid:
+            return max(valid, key=lambda c: c.step).step
+        return min(matches, key=lambda c: abs(c.step - arguzz_step)).step

@@ -1,0 +1,31 @@
+{
+  "arguzz": {
+    "step": 3040,
+    "kind": "INSTR_WORD_MOD",
+    "seed": 12345,
+    "fault": {
+      "pc": 2110204,
+      "info_type": "word",
+      "original_value": 1455891,
+      "mutated_value": 10614035
+    },
+    "failures": 4
+  },
+  "a4": {
+    "step": 3011,
+    "failures": 1
+  },
+  "comparison": {
+    "skipped": false,
+    "skip_reason": null,
+    "common": [
+      "3011:2110208:1:2:VerifyOpcodeF3@inst.zir:97"
+    ],
+    "arguzz_only": [
+      "3024:2110556:6:2:AddrDecomposeBits@u32.zir:87",
+      "3025:2110560:6:2:AddrDecomposeBits@u32.zir:87",
+      "3031:2110584:6:2:AddrDecomposeBits@u32.zir:87"
+    ],
+    "a4_only": []
+  }
+}

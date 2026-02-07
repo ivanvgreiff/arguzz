@@ -9,19 +9,16 @@
       "original_value": 2121640,
       "mutated_value": 75231016
     },
-    "failures": 2
+    "failures": 0
   },
   "a4": {
-    "step": 1923,
-    "failures": 2
+    "step": null,
+    "failures": 0
   },
   "comparison": {
-    "skipped": false,
-    "skip_reason": null,
-    "common": [
-      "MATCH:MemoryWrite@mem.zir:100",
-      "MATCH:MemoryWrite@mem.zir:99"
-    ],
+    "skipped": true,
+    "skip_reason": "Step finding failed: No A4 instruction cycle found at PC=0x205FA8 (arguzz_pc+4) for Arguzz step 1950. This PC may not have been reached in the preflight trace.",
+    "common": [],
     "arguzz_only": [],
     "a4_only": []
   }

@@ -1,0 +1,28 @@
+{
+  "arguzz": {
+    "step": 2395,
+    "kind": "STORE_OUT_MOD",
+    "seed": 12345,
+    "fault": {
+      "pc": 2110096,
+      "info_type": "data",
+      "original_value": 0,
+      "mutated_value": 73117824
+    },
+    "failures": 2
+  },
+  "a4": {
+    "step": 2367,
+    "failures": 2
+  },
+  "comparison": {
+    "skipped": false,
+    "skip_reason": null,
+    "common": [
+      "2367:2110100:6:2:MemoryWrite@mem.zir:100",
+      "2367:2110100:6:2:MemoryWrite@mem.zir:99"
+    ],
+    "arguzz_only": [],
+    "a4_only": []
+  }
+}

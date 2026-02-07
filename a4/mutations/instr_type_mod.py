@@ -47,19 +47,24 @@ class MutationTarget:
     mutated_kind_name: str
 
 
-def find_mutation_target(arguzz_fault: ArguzzFault, a4_cycles: List[A4CycleInfo]) -> Optional[MutationTarget]:
+def find_mutation_target(
+    arguzz_fault: ArguzzFault, 
+    a4_cycles: List[A4CycleInfo],
+    offset: int = None
+) -> Optional[MutationTarget]:
     """
     Find the A4 mutation target that corresponds to an Arguzz INSTR_WORD_MOD fault.
     
     Algorithm:
     1. Decode the original instruction word to get expected major/minor
-    2. Calculate expected A4 PC (Arguzz PC + 4, since A4 records next PC)
-    3. Search for cycles matching PC + major/minor
-    4. For loops, pick the latest iteration <= Arguzz step
+    2. Search for cycles at Arguzz PC matching major/minor
+    3. Use offset (if provided) to find exact loop iteration, otherwise heuristic
     
     Args:
         arguzz_fault: The parsed Arguzz fault information
         a4_cycles: List of A4 cycle info from A4_INSPECT output
+        offset: Pre-computed offset (arguzz_step - preflight_step) for accurate
+                step mapping in tight loops. If None, uses heuristic.
         
     Returns:
         MutationTarget if found, None otherwise
@@ -79,38 +84,41 @@ def find_mutation_target(arguzz_fault: ArguzzFault, a4_cycles: List[A4CycleInfo]
     expected_major = original_decoded.major
     expected_minor = original_decoded.minor
     
-    # Step 2: Calculate expected A4 PC
-    # A4 records the NEXT PC (after instruction), Arguzz records CURRENT PC (before)
-    expected_a4_pc = arguzz_fault.pc + 4
-    
-    # Step 3: Find matching cycles
+    # Step 2: Find matching cycles at arguzz_pc + 4
+    # Why +4? Because preflight cycle.pc is the NEXT PC (after set_pc is called during execution)
+    # So if arguzz injects at PC=X, the preflight cycle has pc=X+4
+    expected_pc = arguzz_fault.pc + 4
     exact_matches = []
     for cycle in a4_cycles:
-        if (cycle.pc == expected_a4_pc and 
+        if (cycle.pc == expected_pc and 
             cycle.major == expected_major and 
             cycle.minor == expected_minor):
             exact_matches.append(cycle)
     
     if not exact_matches:
         # Try to find close matches for debugging
-        pc_matches = [c for c in a4_cycles if c.pc == expected_a4_pc]
-        print(f"No exact match found for PC={expected_a4_pc}, major={expected_major}, minor={expected_minor}")
+        pc_matches = [c for c in a4_cycles if c.pc == expected_pc]
+        print(f"No exact match found for PC={expected_pc} (arguzz_pc+4), major={expected_major}, minor={expected_minor}")
         if pc_matches:
             print(f"  Found {len(pc_matches)} cycles with matching PC but different major/minor:")
             for c in pc_matches[:5]:
                 print(f"    cycle_idx={c.cycle_idx}, step={c.step}, major={c.major}, minor={c.minor}")
         return None
     
-    # Step 4: Handle loops - pick the latest iteration <= Arguzz step
-    if len(exact_matches) > 1:
-        # For loops, pick the highest user_cycle that is still <= Arguzz step
+    # Step 3: Handle loops - use offset if provided, otherwise heuristic
+    if len(exact_matches) == 1:
+        result = exact_matches[0]
+    elif offset is not None:
+        # Use exact offset calculation
+        target_step = arguzz_fault.step - offset
+        result = min(exact_matches, key=lambda c: abs(c.step - target_step))
+    else:
+        # Fallback: pick the highest user_cycle that is still <= Arguzz step
         valid_matches = [c for c in exact_matches if c.step <= arguzz_fault.step]
         if not valid_matches:
             print(f"ERROR: No valid matches found for loop disambiguation (step <= {arguzz_fault.step})")
             return None
         result = max(valid_matches, key=lambda c: c.step)
-    else:
-        result = exact_matches[0]
     
     return MutationTarget(
         cycle_idx=result.cycle_idx,

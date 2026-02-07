@@ -454,6 +454,7 @@ def run_full_inspection(
     host_binary: str,
     host_args: List[str],
     arguzz_fault: ArguzzFault,
+    offset: int = None
 ) -> Tuple[List[A4CycleInfo], List[A4RegTxn], int]:
     """
     Run A4 inspection to get all cycles and register transactions.
@@ -465,6 +466,8 @@ def run_full_inspection(
         host_binary: Path to risc0-host binary
         host_args: Arguments for risc0-host
         arguzz_fault: The Arguzz fault info
+        offset: Pre-computed offset (arguzz_step - preflight_step) for accurate
+                step mapping in tight loops. If None, uses heuristic.
     
     Returns:
         (cycles, reg_txns, injection_a4_step)
@@ -487,6 +490,6 @@ def run_full_inspection(
     print(f"  Parsed {len(cycles)} cycles, {len(reg_txns)} register transactions")
     
     # Find the injection A4 step
-    injection_a4_step = find_a4_step_for_arguzz_step(arguzz_fault.step, arguzz_fault.pc, cycles)
+    injection_a4_step = find_a4_step_for_arguzz_step(arguzz_fault.step, arguzz_fault.pc, cycles, offset)
     
     return cycles, reg_txns, injection_a4_step

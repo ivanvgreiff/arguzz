@@ -118,13 +118,14 @@ def find_mutation_target(
     arguzz_fault: ArguzzFault,
     a4_cycles: List[A4CycleInfo],
     step_txns_list: List[A4StepTxns],
-    txns: List[A4Txn]
+    txns: List[A4Txn],
+    a4_step: int = None
 ) -> Optional[LoadValModTarget]:
     """
     Find the A4 mutation target for a LOAD_VAL_MOD Arguzz fault.
     
     Algorithm:
-    1. Find the A4 step corresponding to the Arguzz step (using PC matching)
+    1. Use provided a4_step or find it using PC matching
     2. Get the transaction range for that step
     3. Find the WRITE transaction within that range
     4. Return the target with all necessary info
@@ -134,18 +135,21 @@ def find_mutation_target(
         a4_cycles: All A4 cycles from inspection
         step_txns_list: Transaction range info (from A4_DUMP_STEP)
         txns: Individual transactions (from A4_DUMP_STEP)
+        a4_step: Pre-computed A4 step (from run_full_inspection with offset).
+                 If None, will be computed using heuristic (may be wrong in tight loops).
         
     Returns:
         LoadValModTarget if found, None otherwise
     """
-    # Step 1: Find A4 step using PC matching
-    try:
-        a4_step = find_a4_step_for_arguzz_step(
-            arguzz_fault.step, arguzz_fault.pc, a4_cycles
-        )
-    except ValueError as e:
-        print(f"ERROR: {e}")
-        return None
+    # Step 1: Use provided a4_step or find it
+    if a4_step is None:
+        try:
+            a4_step = find_a4_step_for_arguzz_step(
+                arguzz_fault.step, arguzz_fault.pc, a4_cycles
+            )
+        except ValueError as e:
+            print(f"ERROR: {e}")
+            return None
     
     # Find the cycle info for this step
     matching_cycle = None
@@ -220,7 +224,8 @@ def create_config(target: LoadValModTarget, output_path: Path) -> Path:
 def run_full_inspection(
     host_binary: str,
     host_args: List[str],
-    arguzz_fault: ArguzzFault
+    arguzz_fault: ArguzzFault,
+    offset: int = None
 ) -> Tuple[List[A4CycleInfo], List[A4StepTxns], List[A4Txn], int]:
     """
     Run A4 inspection to get cycles and step-specific transactions.
@@ -229,6 +234,13 @@ def run_full_inspection(
     1. Full inspection to get all cycles and find the A4 step
     2. Step-specific inspection to get transaction details
     
+    Args:
+        host_binary: Path to risc0-host binary
+        host_args: Arguments for risc0-host
+        arguzz_fault: The Arguzz fault info
+        offset: Pre-computed offset (arguzz_step - preflight_step) for accurate
+                step mapping in tight loops. If None, uses heuristic.
+    
     Returns:
         (cycles, step_txns, txns, a4_step)
     """
@@ -236,7 +248,7 @@ def run_full_inspection(
     output1, cycles, _, _ = run_a4_inspection_with_step(host_binary, host_args, 0)
     
     # Find the A4 step
-    a4_step = find_a4_step_for_arguzz_step(arguzz_fault.step, arguzz_fault.pc, cycles)
+    a4_step = find_a4_step_for_arguzz_step(arguzz_fault.step, arguzz_fault.pc, cycles, offset)
     
     # Now run inspection with the specific step to get transactions
     output2, _, step_txns, txns = run_a4_inspection_with_step(host_binary, host_args, a4_step)

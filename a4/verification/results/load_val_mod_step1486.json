@@ -12,20 +12,17 @@
     "failures": 2
   },
   "a4": {
-    "step": 1483,
+    "step": 1462,
     "failures": 2
   },
   "comparison": {
     "skipped": false,
     "skip_reason": null,
-    "common": [],
-    "arguzz_only": [
+    "common": [
       "1462:2196676:5:3:MemoryWrite@mem.zir:100",
       "1462:2196676:5:3:MemoryWrite@mem.zir:99"
     ],
-    "a4_only": [
-      "1483:2196676:5:3:MemoryWrite@mem.zir:100",
-      "1483:2196676:5:3:MemoryWrite@mem.zir:99"
-    ]
+    "arguzz_only": [],
+    "a4_only": []
   }
 }
