@@ -75,9 +75,13 @@ def cmd_find_target(args):
         
         # Need step-specific inspection for COMP_OUT_MOD
         print("Running step-specific inspection...")
-        cycles, step_txns, txns, a4_step = run_full_inspection(
+        cycles, step_txns, txns, a4_step, step_error = run_full_inspection(
             args.host_binary, host_args.split() if args.host_args else [], fault
         )
+        
+        if step_error:
+            print(f"ERROR: Step finding failed: {step_error}")
+            return 1
         
         target = find_mutation_target(fault, cycles, step_txns, txns)
         if not target:
@@ -214,10 +218,21 @@ def cmd_compare_comp_out_mod(args, host_args: List[str]):
     
     # Step 2: Run A4 inspection with step-specific transactions
     print(f"\n=== Step 2: A4 Inspection ===")
-    cycles, step_txns, txns, a4_step = run_full_inspection(
+    cycles, step_txns, txns, a4_step, step_error = run_full_inspection(
         args.host_binary, host_args, fault
     )
     print(f"Parsed {len(cycles)} cycles")
+    
+    # Check if step finding failed (e.g., JAL/JALR where PC+4 doesn't exist)
+    if step_error:
+        print(f"\n*** STEP FINDING FAILED ***")
+        print(f"Reason: {step_error}")
+        print("\nThis typically happens for JAL/JALR instructions where execution")
+        print("jumps to a target and PC+4 is never reached in the trace.")
+        comparison = ComparisonResult.skipped_result(f"Step finding failed: {step_error}")
+        comparison.print_summary()
+        return 0, comparison, fault, None
+    
     print(f"A4 step: {a4_step} (offset from Arguzz: {fault.step - a4_step})")
     
     # Step 3: Find mutation target

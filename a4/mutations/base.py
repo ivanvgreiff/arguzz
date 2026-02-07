@@ -390,14 +390,22 @@ def find_a4_step_for_arguzz_step(
     """
     Find the A4 user_cycle (step) that corresponds to an Arguzz step.
     
-    For sequential instructions (ADD, LUI, etc.), constraint failures are detected
-    at PC+4 (the next instruction), so we search for PC+4 first.
+    Key insight about step counting differences:
+    - Arguzz counts every instruction execution (including machine mode)
+    - Preflight trace counts instruction cycles PLUS Control/Poseidon/SHA cycles
+    - The offset (arguzz_step - preflight_step) grows over time as more special
+      cycles are executed
     
-    For jump instructions (JAL, JALR), PC+4 doesn't exist in the trace because
-    execution jumps elsewhere. In that case, we fall back to exact PC matching.
+    Strategy:
+    1. Find all preflight cycles at the EXACT Arguzz PC (the instruction location)
+    2. Find the closest preflight step to the Arguzz step
     
-    For instructions in loops, disambiguates by finding the iteration closest to
-    (but not exceeding) the Arguzz step number.
+    This works because:
+    - The PC uniquely identifies which instruction we're looking for
+    - The offset between Arguzz and preflight is typically < 100, so the closest
+      match at the same PC is the correct one
+    - For loops, there may be multiple cycles at the same PC; we pick the one
+      closest to (but not exceeding) the Arguzz step
     
     Args:
         arguzz_step: Arguzz injection step
@@ -406,40 +414,29 @@ def find_a4_step_for_arguzz_step(
         
     Returns:
         The A4 step (user_cycle) that corresponds to this Arguzz step
+        
+    Raises:
+        ValueError: If no suitable A4 step can be found
     """
-    matches_plus4 = [c for c in a4_cycles if c.pc == arguzz_pc + 4]
-    matches_exact = [c for c in a4_cycles if c.pc == arguzz_pc]
+    # Find all instruction cycles at the exact Arguzz PC
+    # Only consider instruction cycles (major 0-6)
+    matches = [c for c in a4_cycles if c.pc == arguzz_pc and c.major <= 6]
     
-    def disambiguate(matches: list) -> int:
-        """Find best match from a list, preferring step <= arguzz_step"""
-        if len(matches) == 1:
-            return matches[0].step
-        
-        valid = [c for c in matches if c.step <= arguzz_step]
-        if valid:
-            return max(valid, key=lambda c: c.step).step
-        
-        # No valid match <= arguzz_step
-        return None
+    if not matches:
+        raise ValueError(
+            f"No A4 instruction cycle found at PC=0x{arguzz_pc:X} for Arguzz step {arguzz_step}. "
+            f"This PC may not have been reached in the preflight trace."
+        )
     
-    # Strategy 1: Try PC+4 first (works for sequential instructions)
-    if matches_plus4:
-        result = disambiguate(matches_plus4)
-        if result is not None:
-            return result
-        # PC+4 disambiguation failed, try exact PC
+    if len(matches) == 1:
+        return matches[0].step
     
-    # Strategy 2: Try exact PC (for JAL/JALR or when PC+4 disambiguation fails)
-    if matches_exact:
-        result = disambiguate(matches_exact)
-        if result is not None:
-            return result
-        # Exact PC disambiguation also failed, use closest from either set
+    # Multiple matches (loop iterations) - find the closest to arguzz_step
+    # Prefer matches where preflight_step <= arguzz_step (since preflight counts more cycles)
+    valid = [c for c in matches if c.step <= arguzz_step]
+    if valid:
+        # Return the largest preflight step that's still <= arguzz_step
+        return max(valid, key=lambda c: c.step).step
     
-    # Fallback: use closest match from all available
-    all_matches = matches_plus4 + matches_exact
-    if not all_matches:
-        raise ValueError(f"No A4 cycle found with PC={arguzz_pc} (0x{arguzz_pc:X}) or PC+4")
-    
-    closest = min(all_matches, key=lambda c: abs(c.step - arguzz_step))
-    return closest.step
+    # All matches are > arguzz_step (unusual), return the closest
+    return min(matches, key=lambda c: abs(c.step - arguzz_step)).step

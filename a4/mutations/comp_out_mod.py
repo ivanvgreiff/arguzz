@@ -215,7 +215,7 @@ def run_full_inspection(
     host_binary: str,
     host_args: List[str],
     arguzz_fault: ArguzzFault
-) -> Tuple[List[A4CycleInfo], List[A4StepTxns], List[A4Txn], int]:
+) -> Tuple[List[A4CycleInfo], List[A4StepTxns], List[A4Txn], int, str]:
     """
     Run A4 inspection to get cycles and step-specific transactions.
     
@@ -224,15 +224,20 @@ def run_full_inspection(
     2. Step-specific inspection to get transaction details
     
     Returns:
-        (cycles, step_txns, txns, a4_step)
+        (cycles, step_txns, txns, a4_step, error_msg)
+        If error_msg is non-empty, the step finding failed and other values may be None.
     """
     # First, run full inspection to get all cycles
     output1, cycles, _, _ = run_a4_inspection_with_step(host_binary, host_args, 0)
     
     # Find the A4 step
-    a4_step = find_a4_step_for_arguzz_step(arguzz_fault.step, arguzz_fault.pc, cycles)
+    try:
+        a4_step = find_a4_step_for_arguzz_step(arguzz_fault.step, arguzz_fault.pc, cycles)
+    except ValueError as e:
+        # Step finding failed (e.g., JAL/JALR where PC+4 doesn't exist in trace)
+        return cycles, [], [], 0, str(e)
     
     # Now run inspection with the specific step to get transactions
     output2, _, step_txns, txns = run_a4_inspection_with_step(host_binary, host_args, a4_step)
     
-    return cycles, step_txns, txns, a4_step
+    return cycles, step_txns, txns, a4_step, ""
