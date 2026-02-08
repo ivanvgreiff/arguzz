@@ -31,7 +31,7 @@ from typing import List, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from a4.core.inspection_data import InspectionData
 
-from a4.core.trace_parser import A4CycleInfo, A4RegTxn
+from a4.core.trace_parser import A4CycleInfo, A4AllTxn
 
 
 # Register name mapping
@@ -139,7 +139,7 @@ def get_all_targets(
     Get all PRE_EXEC_REG_MOD targets across the entire trace.
     
     This is more efficient than calling get_targets_at_step() for every step
-    because it iterates through reg_txns directly.
+    because it iterates through all_txns directly.
     
     Args:
         data: InspectionData containing cycles and register transactions
@@ -152,7 +152,11 @@ def get_all_targets(
     targets = []
     step_to_cycle = {c.step: c for c in data.cycles}
     
-    for txn in data.reg_txns:
+    # Iterate through all transactions, filter for registers
+    for txn in data.all_txns:
+        if not txn.is_register():
+            continue
+            
         # Filter by strategy
         if strategy == "next_read" and not txn.is_read():
             continue

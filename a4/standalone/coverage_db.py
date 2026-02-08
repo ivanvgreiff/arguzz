@@ -112,6 +112,7 @@ class CoverageDB:
             CREATE TABLE IF NOT EXISTS failures (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 mutation_id INTEGER NOT NULL,
+                constraint_type TEXT NOT NULL,
                 constraint_loc TEXT NOT NULL,
                 cycle INTEGER NOT NULL,
                 step INTEGER NOT NULL,
@@ -124,7 +125,11 @@ class CoverageDB:
             )
         """)
         
-        # Coverage table (deduplicated by constraint_loc)
+        # Coverage table (deduplicated by constraint_loc which includes file:line)
+        # The line number IS semantically meaningful:
+        # - IsRead@mem.zir:79 checks data_low (low 16 bits)
+        # - IsRead@mem.zir:80 checks data_high (high 16 bits)
+        # So different line numbers = different constraint checks
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS coverage (
                 constraint_loc TEXT PRIMARY KEY,
@@ -147,6 +152,10 @@ class CoverageDB:
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_failures_constraint 
             ON failures(constraint_loc)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_failures_constraint_type 
+            ON failures(constraint_type)
         """)
         
         self.conn.commit()
@@ -245,18 +254,21 @@ class CoverageDB:
         now = datetime.now().isoformat()
         
         for failure in failures:
-            # Record the failure
+            # Record the failure with both constraint_type and constraint_loc
+            # constraint_loc includes file:line which IS semantically meaningful
+            # (e.g., line 79 checks data_low, line 80 checks data_high)
             cursor.execute("""
                 INSERT INTO failures 
-                (mutation_id, constraint_loc, cycle, step, pc, major, minor, value, full_loc)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (mutation_id, constraint_type, constraint_loc, cycle, step, pc, major, minor, value, full_loc)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                mutation_id, failure.constraint_loc(), failure.cycle,
+                mutation_id, failure.constraint_type(), failure.constraint_loc(), failure.cycle,
                 failure.step, failure.pc, failure.major, failure.minor,
                 failure.value, failure.loc
             ))
             
-            # Update coverage (insert or increment)
+            # Update coverage using constraint_loc (includes file:line)
+            # Different line numbers = different constraint checks
             cursor.execute("""
                 INSERT INTO coverage (constraint_loc, first_hit_mutation_id, first_hit_at, hit_count)
                 VALUES (?, ?, ?, 1)
@@ -302,7 +314,7 @@ class CoverageDB:
         """)
         mutations_by_kind = {row['kind']: row['count'] for row in cursor.fetchall()}
         
-        # Top 10 most-hit constraints
+        # Top 10 most-hit constraints (by location)
         cursor.execute("""
             SELECT constraint_loc, hit_count FROM coverage 
             ORDER BY hit_count DESC LIMIT 10
@@ -330,23 +342,24 @@ class CoverageDB:
     
     def get_uncovered_constraint_patterns(self) -> List[str]:
         """
-        Get patterns of constraints NOT yet covered.
+        Get constraint types NOT yet covered.
         
         This is useful for guiding fuzzing toward unexplored areas.
-        Returns constraint location patterns that could be targeted.
+        Returns constraint types that could be targeted.
         
         Note: This is a heuristic - we don't know all possible constraints,
-        but we can identify patterns we haven't hit yet based on what we have.
+        but we can identify types we haven't hit yet based on what we have.
         """
         cursor = self.conn.cursor()
         
-        # Get all unique constraint prefixes we've seen
+        # Get all unique constraint types we've seen (extract from constraint_loc)
         cursor.execute("""
             SELECT DISTINCT 
                 substr(constraint_loc, 1, instr(constraint_loc, '@') - 1) as constraint_type
             FROM coverage
+            WHERE constraint_loc LIKE '%@%'
         """)
-        seen_types = {row['constraint_type'] for row in cursor.fetchall()}
+        seen_types = {row['constraint_type'] for row in cursor.fetchall() if row['constraint_type']}
         
         # Known constraint types from RISC Zero
         known_types = {
@@ -386,7 +399,7 @@ class CoverageDB:
         )
     
     def get_mutations_hitting_constraint(self, constraint_loc: str) -> List[MutationRecord]:
-        """Get all mutations that hit a specific constraint"""
+        """Get all mutations that hit a specific constraint location"""
         cursor = self.conn.cursor()
         
         cursor.execute("""

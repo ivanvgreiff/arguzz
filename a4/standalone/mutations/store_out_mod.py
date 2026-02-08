@@ -29,7 +29,7 @@ from typing import List, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from a4.core.inspection_data import InspectionData
 
-from a4.core.trace_parser import A4CycleInfo, A4Txn
+from a4.core.trace_parser import A4CycleInfo, A4AllTxn
 
 
 # Valid major category for store instructions
@@ -57,9 +57,7 @@ def get_targets_at_step(step: int, data: 'InspectionData') -> Optional[StoreOutM
     For store instructions, finds the WRITE transaction to memory
     and returns it as a mutation target.
     
-    NOTE: This mutation type requires fetching detailed transactions
-    (memory writes are not in reg_txns), which is slower (~20s per step).
-    For fast fuzzing, prefer other mutation kinds.
+    Uses pre-collected memory transactions for O(1) lookup.
     
     Args:
         step: The step number to find targets for
@@ -77,14 +75,13 @@ def get_targets_at_step(step: int, data: 'InspectionData') -> Optional[StoreOutM
     if cycle.major != VALID_MAJOR:
         return None
     
-    # STORE_OUT_MOD needs detailed transactions (memory writes not in reg_txns)
-    # This is slower but necessary for memory mutation
-    txns = data.get_txns_for_step(step)
-    if not txns:
+    # Get memory transactions at this step (O(1) lookup from pre-indexed data)
+    mem_txns = data.get_mem_txns_at_step(step)
+    if not mem_txns:
         return None
     
-    # Find the WRITE transaction to memory (not register)
-    write_txn = _find_memory_write(txns)
+    # Find the WRITE transaction to memory
+    write_txn = _find_memory_write(mem_txns)
     if not write_txn:
         return None
     
@@ -101,10 +98,10 @@ def get_targets_at_step(step: int, data: 'InspectionData') -> Optional[StoreOutM
     )
 
 
-def _find_memory_write(txns: List[A4Txn]) -> Optional[A4Txn]:
-    """Find the WRITE transaction to memory (not register) within the transactions"""
-    # Memory writes are WRITE transactions NOT to registers
-    write_txns = [t for t in txns if t.is_write() and not t.is_register()]
+def _find_memory_write(txns: List[A4AllTxn]) -> Optional[A4AllTxn]:
+    """Find the WRITE transaction to memory within the transactions"""
+    # Memory writes are WRITE transactions (already filtered to memory only)
+    write_txns = [t for t in txns if t.is_write()]
     if not write_txns:
         return None
     # Return the last memory write

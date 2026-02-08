@@ -6,11 +6,32 @@ Different strategies for generating mutated values:
 - BitFlipValueGenerator: Flip random bits in original value
 - BoundaryValueGenerator: Use boundary values (0, 1, -1, MAX, etc.)
 - SmartValueGenerator: Context-aware mutations based on instruction type
+
+The generate_different() method ensures the mutated value is always
+different from the original, raising ValueGeneratorExhaustedError if
+retries are exhausted (indicates a bug).
 """
 
 import random
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
+
+__all__ = [
+    'ValueGenerator',
+    'ValueGeneratorExhaustedError',
+    'RandomValueGenerator',
+    'BitFlipValueGenerator',
+    'BoundaryValueGenerator',
+    'ArithmeticValueGenerator',
+    'SmartValueGenerator',
+    'CompositeValueGenerator',
+    'create_generator',
+]
+
+
+class ValueGeneratorExhaustedError(Exception):
+    """Raised when generate_different() exhausts retries without finding a different value"""
+    pass
 
 
 class ValueGenerator(ABC):
@@ -29,6 +50,43 @@ class ValueGenerator(ABC):
             Mutated value (32-bit unsigned)
         """
         pass
+    
+    def generate_different(
+        self, 
+        original_value: int, 
+        context: dict = None, 
+        max_retries: int = 10
+    ) -> int:
+        """
+        Generate a value guaranteed to be different from the original.
+        
+        Retries up to max_retries times. If all retries produce the same
+        value as original, raises ValueGeneratorExhaustedError.
+        
+        Args:
+            original_value: The original value being mutated
+            context: Optional context (major, minor, register, etc.)
+            max_retries: Maximum number of generation attempts
+            
+        Returns:
+            Mutated value (32-bit unsigned) that is different from original_value
+            
+        Raises:
+            ValueGeneratorExhaustedError: If max_retries exhausted without
+                finding a different value. This indicates a bug in the
+                generator or seed configuration.
+        """
+        for attempt in range(max_retries):
+            value = self.generate(original_value, context)
+            if value != original_value:
+                return value
+        
+        # This should be extremely rare - indicates a bug
+        raise ValueGeneratorExhaustedError(
+            f"Value generator exhausted {max_retries} retries without producing "
+            f"a value different from {original_value} (0x{original_value:08X}). "
+            f"This indicates a bug in the generator or seed configuration."
+        )
 
 
 class RandomValueGenerator(ValueGenerator):
@@ -50,20 +108,24 @@ class BitFlipValueGenerator(ValueGenerator):
     """
     Bit-flip based mutation.
     
-    Flips 1-8 random bits in the original value. Good for testing
-    single-bit errors and nearby values.
+    Flips 1-31 random bits in the original value (matching Arguzz's selector 4).
+    Good for testing single-bit errors and multi-bit corruption scenarios.
+    
+    Arguzz's random_mod_of_u32() uses: rng.random_range(1..=31) for number of bits.
     """
     
-    def __init__(self, seed: Optional[int] = None, max_flips: int = 8):
+    def __init__(self, seed: Optional[int] = None, max_flips: int = 31):
         self.rng = random.Random(seed)
-        self.max_flips = max_flips
+        self.max_flips = min(max_flips, 31)  # Cap at 31 (all bits except one)
     
     def generate(self, original_value: int, context: dict = None) -> int:
+        # Match Arguzz: flip 1 to max_flips random bits
         num_flips = self.rng.randint(1, self.max_flips)
         result = original_value
         
-        for _ in range(num_flips):
-            bit = self.rng.randint(0, 31)
+        # Select unique bit positions to flip (like Arguzz's index::sample)
+        bits_to_flip = self.rng.sample(range(32), num_flips)
+        for bit in bits_to_flip:
             result ^= (1 << bit)
         
         return result & 0xFFFFFFFF
@@ -81,18 +143,20 @@ class BoundaryValueGenerator(ValueGenerator):
     """
     
     # Standard boundary values
+    # These match Arguzz's random_mod_of_u32() strategies plus additional edge cases
     BOUNDARIES = [
-        0,                  # Zero
-        1,                  # One
-        0xFFFFFFFF,         # -1 (unsigned max)
-        0x7FFFFFFF,         # INT_MAX
-        0x80000000,         # INT_MIN
+        0,                  # Zero (Arguzz selector 0)
+        1,                  # One (Arguzz selector 1)
+        0xFFFFFFFF,         # -1 / unsigned max (Arguzz selector 2)
+        0xFFFFFFFE,         # Max - 1 (Arguzz selector 3)
+        0x7FFFFFFF,         # INT_MAX (signed)
+        0x80000000,         # INT_MIN (signed)
         0xFF,               # Byte max
         0x100,              # Byte overflow
         0xFFFF,             # Halfword max
         0x10000,            # Halfword overflow
-        0x7FFF,             # Short max
-        0x8000,             # Short min
+        0x7FFF,             # Short max (signed)
+        0x8000,             # Short min (signed)
     ]
     
     # Powers of 2

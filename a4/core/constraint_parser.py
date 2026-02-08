@@ -84,12 +84,42 @@ class ConstraintFailure:
         """
         return f"{self.step}:{self.pc}:{self.major}:{self.minor}:{self.short_loc()}"
     
+    def constraint_type(self) -> str:
+        """
+        Get just the constraint TYPE name (without file:line).
+        
+        Used for coverage tracking - two failures at different file lines
+        but same constraint type are considered the "same" for coverage.
+        
+        Examples:
+        - "MemoryWrite" (not "MemoryWrite@mem.zir:99")
+        - "VerifyOpcodeF3F7" (not "VerifyOpcodeF3F7@inst.zir:102")
+        
+        This is the recommended metric for "new" coverage since the same
+        logical constraint may appear at multiple source locations.
+        """
+        # Pattern 1: "loc(callsite( ConstraintName ("
+        match = re.search(r'callsite\(\s*(\w+)\s*\(', self.loc)
+        if match:
+            return match.group(1)
+        
+        # Pattern 2: "ConstraintName(zirgen/..."
+        match = re.search(r'^(\w+)\(', self.loc)
+        if match:
+            return match.group(1)
+        
+        # Fallback: use short_loc if we can't extract just the name
+        return self.short_loc()
+    
     def constraint_loc(self) -> str:
         """
-        Get just the constraint location (without step/pc).
+        Get the constraint location WITH file:line (e.g., "MemoryWrite@mem.zir:99").
         
-        Used for coverage tracking - two failures at different steps
-        but same constraint are considered the "same" for coverage.
+        This provides more granular tracking - same constraint type at different
+        source locations are counted separately. Useful for detailed analysis
+        but inflates "new" coverage counts.
+        
+        For the recommended "new" coverage metric, use constraint_type() instead.
         """
         return self.short_loc()
 

@@ -29,7 +29,7 @@ from typing import List, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from a4.core.inspection_data import InspectionData
 
-from a4.core.trace_parser import A4CycleInfo, A4Txn, A4RegTxn
+from a4.core.trace_parser import A4CycleInfo, A4AllTxn
 
 
 # Register name mapping for pretty printing
@@ -115,7 +115,7 @@ def get_targets_at_step(step: int, data: 'InspectionData') -> Optional[CompOutMo
     )
 
 
-def _find_register_write(txns: List[A4Txn]) -> Optional[A4Txn]:
+def _find_register_write(txns: List[A4AllTxn]) -> Optional[A4AllTxn]:
     """Find the WRITE transaction to a register within the transactions"""
     write_txns = [t for t in txns if t.is_write() and t.is_register()]
     if not write_txns:

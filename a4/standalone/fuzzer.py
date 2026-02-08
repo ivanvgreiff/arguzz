@@ -28,7 +28,11 @@ from a4.core.constraint_parser import ConstraintFailure
 
 from a4.standalone.coverage_db import CoverageDB
 from a4.standalone.step_selector import StepSelector, create_selector
-from a4.standalone.value_generator import ValueGenerator, create_generator
+from a4.standalone.value_generator import (
+    ValueGenerator, 
+    ValueGeneratorExhaustedError,
+    create_generator
+)
 
 # Import mutation modules
 from a4.standalone.mutations import (
@@ -37,6 +41,7 @@ from a4.standalone.mutations import (
     get_store_out_targets, create_store_out_config, StoreOutModTarget,
     get_pre_exec_reg_targets, create_pre_exec_reg_config, PreExecRegModTarget,
     get_instr_type_targets, create_instr_type_config, InstrTypeModTarget,
+    get_mem_val_targets, create_mem_val_config, MemValModTarget,
 )
 from a4.standalone.mutations.instr_type_mod import generate_random_mutation as generate_instr_mutation
 
@@ -46,12 +51,14 @@ class MutationResult:
     """Result of a single mutation attempt"""
     kind: str
     step: int
+    original_value: int
     mutated_value: int
     config: dict
     failures: List[ConstraintFailure]
     verifier_accepted: bool
     execution_time_ms: float
     new_coverage: int = 0
+    witness_gen_failed: bool = False  # True if prover panicked during witness generation
 
 
 @dataclass
@@ -60,6 +67,7 @@ class CampaignStats:
     total_mutations: int = 0
     successful_mutations: int = 0  # Caused failures
     verifier_accepts: int = 0      # BUGS: verifier accepted bad proof
+    witness_gen_failures: int = 0  # Prover panicked during witness generation
     new_coverage_count: int = 0
     total_failures: int = 0
     mutations_by_kind: Dict[str, int] = field(default_factory=dict)
@@ -87,6 +95,7 @@ class A4Fuzzer:
         "STORE_OUT_MOD",
         "PRE_EXEC_REG_MOD",
         "INSTR_TYPE_MOD",
+        "MEM_VAL_MOD",
     ]
     
     def __init__(
@@ -188,7 +197,8 @@ class A4Fuzzer:
             print()
         
         stats = CampaignStats()
-        start_time = time.time()
+        # Use perf_counter for monotonic timing (immune to WSL2 clock sync issues)
+        campaign_start = time.perf_counter()
         
         for i in range(num_mutations):
             result = self._run_single_mutation(i + 1, num_mutations)
@@ -199,7 +209,7 @@ class A4Fuzzer:
                 if self.verbose:
                     self._print_mutation_result(i + 1, result)
         
-        stats.execution_time_ms = (time.time() - start_time) * 1000
+        stats.execution_time_ms = (time.perf_counter() - campaign_start) * 1000
         
         # End campaign
         self.db.end_campaign(self.campaign_id)
@@ -230,7 +240,11 @@ class A4Fuzzer:
         
         # Get target and generate mutation
         try:
-            config, mutated_value = self._create_mutation(kind, step)
+            config, mutated_value, original_value = self._create_mutation(kind, step)
+        except ValueGeneratorExhaustedError as e:
+            # This is a serious error - the generator is broken
+            print(f"  [{mutation_num}/{total}] ERROR: {e}")
+            raise
         except Exception as e:
             if self.verbose:
                 print(f"  [{mutation_num}/{total}] Failed to create mutation: {e}")
@@ -240,7 +254,10 @@ class A4Fuzzer:
             return None
         
         # Execute mutation
-        start_time = time.time()
+        # Use time.perf_counter() instead of time.time() because:
+        # - perf_counter() is monotonic (never goes backward)
+        # - time.time() can jump backward during WSL2 clock sync with Windows host
+        start_time = time.perf_counter()
         config_path = self.temp_dir / f"mutation_{mutation_num}.json"
         config_path.write_text(json.dumps(config, indent=2))
         
@@ -250,7 +267,11 @@ class A4Fuzzer:
             config_path
         )
         
-        execution_time = (time.time() - start_time) * 1000
+        end_time = time.perf_counter()
+        execution_time = (end_time - start_time) * 1000
+        
+        # Check for witness generation failure (prover panic before constraint check)
+        witness_gen_failed = self._check_witness_gen_failure(output)
         
         # Check if verifier accepted (look for specific output)
         verifier_accepted = self._check_verifier_acceptance(output)
@@ -258,11 +279,13 @@ class A4Fuzzer:
         result = MutationResult(
             kind=kind,
             step=step,
+            original_value=original_value,
             mutated_value=mutated_value,
             config=config,
             failures=failures,
             verifier_accepted=verifier_accepted,
             execution_time_ms=execution_time,
+            witness_gen_failed=witness_gen_failed,
         )
         
         # Record in database
@@ -286,13 +309,19 @@ class A4Fuzzer:
         
         return result
     
-    def _create_mutation(self, kind: str, step: int) -> Tuple[Optional[dict], int]:
-        """Create mutation config for a given kind and step"""
+    def _create_mutation(self, kind: str, step: int) -> Tuple[Optional[dict], int, int]:
+        """
+        Create mutation config for a given kind and step.
+        
+        Returns:
+            Tuple of (config, mutated_value, original_value)
+            Returns (None, 0, 0) if no valid target at this step
+        """
         if kind == "COMP_OUT_MOD":
             target = get_comp_out_targets(step, self.data)
             if not target:
-                return None, 0
-            mutated_value = self.value_gen.generate(
+                return None, 0, 0
+            mutated_value = self.value_gen.generate_different(
                 target.original_value,
                 {'major': target.major, 'minor': target.minor}
             )
@@ -302,13 +331,13 @@ class A4Fuzzer:
                 "txn_idx": target.write_txn_idx,
                 "word": mutated_value,
             }
-            return config, mutated_value
+            return config, mutated_value, target.original_value
         
         elif kind == "LOAD_VAL_MOD":
             target = get_load_val_targets(step, self.data)
             if not target:
-                return None, 0
-            mutated_value = self.value_gen.generate(
+                return None, 0, 0
+            mutated_value = self.value_gen.generate_different(
                 target.original_value,
                 {'major': target.major, 'minor': target.minor}
             )
@@ -318,13 +347,13 @@ class A4Fuzzer:
                 "txn_idx": target.write_txn_idx,
                 "word": mutated_value,
             }
-            return config, mutated_value
+            return config, mutated_value, target.original_value
         
         elif kind == "STORE_OUT_MOD":
             target = get_store_out_targets(step, self.data)
             if not target:
-                return None, 0
-            mutated_value = self.value_gen.generate(
+                return None, 0, 0
+            mutated_value = self.value_gen.generate_different(
                 target.original_value,
                 {'major': target.major, 'minor': target.minor}
             )
@@ -334,14 +363,14 @@ class A4Fuzzer:
                 "txn_idx": target.write_txn_idx,
                 "word": mutated_value,
             }
-            return config, mutated_value
+            return config, mutated_value, target.original_value
         
         elif kind == "PRE_EXEC_REG_MOD":
             targets = get_pre_exec_reg_targets(step, self.data, strategy="next_read")
             if not targets:
-                return None, 0
+                return None, 0, 0
             target = self.rng.choice(targets)
-            mutated_value = self.value_gen.generate(
+            mutated_value = self.value_gen.generate_different(
                 target.original_word,
                 {'major': target.major, 'minor': target.minor, 'register': target.register_idx}
             )
@@ -352,23 +381,72 @@ class A4Fuzzer:
                 "word": mutated_value,
                 "strategy": target.strategy,
             }
-            return config, mutated_value
+            return config, mutated_value, target.original_word
         
         elif kind == "INSTR_TYPE_MOD":
             target = get_instr_type_targets(step, self.data)
             if not target:
-                return None, 0
+                return None, 0, 0
             new_major, new_minor = generate_instr_mutation(target, self.rng)
             mutated_value = (new_major << 16) | new_minor  # Encode for tracking
+            original_value = (target.original_major << 16) | target.original_minor
             config = {
                 "mutation_type": "INSTR_TYPE_MOD",
                 "step": target.step,
                 "major": new_major,
                 "minor": new_minor,
             }
-            return config, mutated_value
+            return config, mutated_value, original_value
         
-        return None, 0
+        elif kind == "MEM_VAL_MOD":
+            # MEM_VAL_MOD returns a list of targets (multiple per step possible)
+            targets = get_mem_val_targets(step, self.data)
+            if not targets:
+                return None, 0, 0
+            # Select one target randomly
+            target = self.rng.choice(targets)
+            mutated_value = self.value_gen.generate_different(
+                target.original_value,
+                {
+                    'major': target.major, 
+                    'minor': target.minor,
+                    'txn_type': target.txn_type,  # load_mem_read, store_rmw_read, etc.
+                }
+            )
+            config = {
+                "mutation_type": "MEM_VAL_MOD",
+                "step": target.step,
+                "txn_idx": target.txn_idx,
+                "word": mutated_value,
+            }
+            return config, mutated_value, target.original_value
+        
+        return None, 0, 0
+    
+    def _check_witness_gen_failure(self, output: str) -> bool:
+        """
+        Check if witness generation failed (prover panic).
+        
+        This happens when the mutation creates an inconsistency that the
+        witness generator detects before constraint checking even begins.
+        
+        Symptoms:
+        - "witness generation failure" in output
+        - Prover status: error
+        - Zero constraint failures
+        - Verifier never runs
+        """
+        witness_failure_patterns = [
+            "witness generation failure",
+            "panicked at",
+            "set(row:",  # Witness matrix conflict error
+        ]
+        
+        for pattern in witness_failure_patterns:
+            if pattern in output:
+                return True
+        
+        return False
     
     def _check_verifier_acceptance(self, output: str) -> bool:
         """
@@ -376,8 +454,31 @@ class A4Fuzzer:
         
         Looks for specific patterns in output indicating acceptance.
         A BUG is when verifier accepts a mutated (invalid) proof.
+        
+        The risc0-host outputs verification results as JSON:
+        - <record>{"context":"Verifier", "status":"success"}</record> = accepted
+        - <record>{"context":"Verifier", "status":"error"}</record> = rejected
         """
-        # These patterns indicate verifier accepted the proof
+        import re
+        
+        # Check for JSON-format verifier output (primary check)
+        # Pattern: <record>{"context":"Verifier", "status":"success"}</record>
+        verifier_success = re.search(
+            r'<record>\s*\{[^}]*"context"\s*:\s*"Verifier"[^}]*"status"\s*:\s*"success"[^}]*\}\s*</record>',
+            output
+        )
+        if verifier_success:
+            return True
+        
+        # Also check reverse order: status before context
+        verifier_success_alt = re.search(
+            r'<record>\s*\{[^}]*"status"\s*:\s*"success"[^}]*"context"\s*:\s*"Verifier"[^}]*\}\s*</record>',
+            output
+        )
+        if verifier_success_alt:
+            return True
+        
+        # Legacy patterns (fallback for other output formats)
         acceptance_patterns = [
             "Verification successful",
             "Proof verified",
@@ -390,6 +491,7 @@ class A4Fuzzer:
             "Verification failed",
             "Invalid proof",
             "CONSTRAINT_FAIL",
+            '"status":"error"',  # JSON error format
         ]
         
         output_lower = output.lower()
@@ -412,26 +514,83 @@ class A4Fuzzer:
         stats.total_mutations += 1
         stats.mutations_by_kind[result.kind] = stats.mutations_by_kind.get(result.kind, 0) + 1
         
+        # Track constraint failures (for coverage metrics)
         if result.failures:
-            stats.successful_mutations += 1
             stats.total_failures += len(result.failures)
             for f in result.failures:
                 stats.unique_constraints.add(f.constraint_loc())
         
+        # Classify outcome (mutually exclusive, with priority order):
+        # 1. VERIFIER_ACCEPTED (bug) - highest priority, always track
+        # 2. WITNESS_FAIL - witness matrix conflict (may have constraint failures too)
+        # 3. CONSTRAINT_FAIL - constraint failures without witness matrix conflict
+        # 4. NO_EFFECT - no failures detected
         if result.verifier_accepted:
             stats.verifier_accepts += 1
+        
+        if result.witness_gen_failed:
+            # Witness generation failed (may also have constraint failures, but we classify as WITNESS_FAIL)
+            stats.witness_gen_failures += 1
+        elif result.failures:
+            # Constraint failures without witness matrix conflict
+            stats.successful_mutations += 1
+        # else: no effect (counted implicitly as total - witness - constraint)
         
         stats.new_coverage_count += result.new_coverage
     
     def _print_mutation_result(self, num: int, result: MutationResult):
-        """Print result of a single mutation"""
-        status = "✓" if result.failures else "○"
+        """Print detailed result of a single mutation"""
+        # Status indicator
+        if result.witness_gen_failed:
+            status = "⚡"  # Witness generation failure
+        elif result.failures:
+            status = "✓"  # Constraint failures
+        else:
+            status = "○"  # No effect detected
+        
         bug_marker = " 🐛 BUG!" if result.verifier_accepted else ""
         new_cov = f" [+{result.new_coverage} new]" if result.new_coverage > 0 else ""
         
+        # Outcome classification
+        # Note: witness_gen_failed means the witness matrix had a conflict. This can occur
+        # AFTER constraint failures are detected, since both happen during witness generation.
+        # Constraint failures and witness failures are NOT mutually exclusive.
+        if result.witness_gen_failed:
+            outcome = "WITNESS_FAIL"  # Matrix conflict (may have constraint failures too)
+        elif result.verifier_accepted:
+            outcome = "ACCEPTED"  # BUG: verifier should have rejected
+        else:
+            outcome = "REJECTED"  # Expected behavior
+        
+        # Basic info line
         print(f"  [{num}] {status} {result.kind} @ step {result.step}: "
-              f"{len(result.failures)} failures, {result.execution_time_ms:.0f}ms"
+              f"{len(result.failures)} failures, {result.execution_time_ms:.0f}ms, "
+              f"outcome: {outcome}"
               f"{new_cov}{bug_marker}")
+        
+        # Value change info
+        print(f"       Value: 0x{result.original_value:08X} -> 0x{result.mutated_value:08X}")
+        
+        # Constraint failure details (grouped by constraint location)
+        if result.failures:
+            # Group failures by constraint location
+            failures_by_loc = {}
+            for f in result.failures:
+                loc = f.constraint_loc()
+                if loc not in failures_by_loc:
+                    failures_by_loc[loc] = []
+                failures_by_loc[loc].append(f)
+            
+            print(f"       Constraints hit ({len(failures_by_loc)} unique):")
+            for loc, failures in sorted(failures_by_loc.items()):
+                # Show first failure details for each unique constraint
+                first = failures[0]
+                count_str = f" (x{len(failures)})" if len(failures) > 1 else ""
+                print(f"         - {loc}{count_str}")
+                print(f"           cycle={first.cycle}, step={first.step}, "
+                      f"pc=0x{first.pc:08X}, major={first.major}, minor={first.minor}")
+        else:
+            print(f"       No constraint failures (mutation may have been ineffective)")
     
     def _print_campaign_summary(self, stats: CampaignStats):
         """Print campaign summary"""
@@ -444,6 +603,20 @@ class A4Fuzzer:
         print(f"Unique constraints:  {len(stats.unique_constraints)}")
         print(f"New coverage:        {stats.new_coverage_count}")
         print(f"Execution time:      {stats.execution_time_ms:.0f}ms")
+        
+        # Outcome summary (mutually exclusive categories)
+        # - successful_mutations: constraint failures WITHOUT witness matrix conflict
+        # - witness_gen_failures: witness matrix conflict (may ALSO have constraint failures)
+        # - no_effect: no failures of any kind
+        constraint_only = stats.successful_mutations  # Constraint fail without witness conflict
+        witness_fail = stats.witness_gen_failures     # Witness matrix conflict
+        no_effect = stats.total_mutations - constraint_only - witness_fail
+        
+        print(f"\nOutcome breakdown:")
+        print(f"  Constraint failures:    {constraint_only}")
+        print(f"  Witness gen failures:   {witness_fail} (may include constraint failures)")
+        print(f"  No effect detected:     {no_effect}")
+        print(f"  Verifier accepted:      {stats.verifier_accepts} {'🐛 BUGS!' if stats.verifier_accepts > 0 else ''}")
         
         if stats.verifier_accepts > 0:
             print(f"\n🐛 BUGS FOUND: {stats.verifier_accepts} mutations accepted by verifier!")

@@ -1,23 +1,77 @@
 """
-Step Selection Strategies for Standalone A4 Fuzzing
+Zoned Step Selection for Standalone A4 Fuzzing
 
-Different strategies for selecting which step to mutate:
-- RandomStepSelector: Uniform random selection from valid steps
-- HeuristicStepSelector: Prefer certain instruction types (loads, stores, branches)
-- GuidedStepSelector: Use coverage data to prefer under-tested areas
+This module implements a zoned step selection strategy that ensures a controlled
+distribution of mutations across different phases of program execution:
 
-All selectors work with a specific mutation kind to ensure only valid steps
-are selected.
+- INIT zone (5%): Step 0 only - initialization, ECALL setup, POSEIDON operations
+- CORE zone (90%): Steps 1 to max_step-1 - main program execution
+- FINAL zone (5%): Last step only - cleanup, finalization
+
+This distribution ensures:
+1. Adequate coverage of edge cases at program boundaries (init/final)
+2. Primary focus on the bulk of program execution (core)
+3. Future extensibility for coverage-guided selection
+
+Architecture Notes:
+-------------------
+The previous selectors (RandomStepSelector, SequentialStepSelector, HeuristicStepSelector)
+have been removed because:
+- RandomStepSelector: Suffered from severe bias due to duplicate steps in valid_steps list
+- SequentialStepSelector: Too slow for practical fuzzing; deterministic order not useful
+- HeuristicStepSelector: The heuristic weights were speculative; zoned approach is better
+
+The GuidedStepSelector is kept as a stub for future coverage-guided integration.
 """
 
 import random
 from abc import ABC, abstractmethod
-from typing import List, Optional, TYPE_CHECKING
+from dataclasses import dataclass
+from typing import Dict, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from a4.core.inspection_data import InspectionData
     from a4.standalone.coverage_db import CoverageDB
 
+
+# =============================================================================
+# Zone Configuration
+# =============================================================================
+
+@dataclass
+class ZoneConfig:
+    """
+    Configuration for the zoned step selection strategy.
+    
+    The three zones partition all valid steps:
+    - init: Only step 0 (program initialization)
+    - core: Steps 1 through max_step-1 (main execution)
+    - final: Only the last step (program completion)
+    
+    Weights define the probability of selecting from each zone.
+    These are fixed at 5%/90%/5% and do not need normalization
+    since they sum to 100%.
+    """
+    init_weight: float = 0.05    # 5% chance for step 0
+    core_weight: float = 0.90    # 90% chance for middle steps
+    final_weight: float = 0.05   # 5% chance for last step
+    
+    def get_zone_weights(self) -> Dict[str, float]:
+        """Return zone weights as a dictionary"""
+        return {
+            "init": self.init_weight,
+            "core": self.core_weight,
+            "final": self.final_weight,
+        }
+
+
+# Default zone configuration - used by all zoned selectors
+DEFAULT_ZONE_CONFIG = ZoneConfig()
+
+
+# =============================================================================
+# Base Class
+# =============================================================================
 
 class StepSelector(ABC):
     """Abstract base class for step selection strategies"""
@@ -37,206 +91,359 @@ class StepSelector(ABC):
         pass
     
     def get_valid_steps(self, data: 'InspectionData', kind: str) -> List[int]:
-        """Get list of valid steps for a mutation kind"""
+        """
+        Get list of valid steps for a mutation kind.
+        
+        Note: The underlying data.get_valid_steps_for_kind() returns unique steps
+        (no duplicates), so uniform random selection from this list is unbiased.
+        """
         return data.get_valid_steps_for_kind(kind)
 
 
-class RandomStepSelector(StepSelector):
+# =============================================================================
+# Zoned Step Selector
+# =============================================================================
+
+class ZonedStepSelector(StepSelector):
     """
-    Random step selection with uniform distribution.
+    Zoned step selection with fixed distribution.
     
-    Simple strategy: pick uniformly at random from all valid steps
-    for the given mutation kind.
+    Ensures mutations are distributed across program execution phases:
+    - 5% init (step 0): Catches initialization bugs, ECALL/POSEIDON issues
+    - 90% core (middle steps): Main program execution coverage
+    - 5% final (last step): Catches finalization/cleanup bugs
+    
+    Selection Algorithm:
+    1. Get all valid steps for the mutation kind (already deduplicated)
+    2. Partition valid steps into zones (init, core, final)
+    3. Pick a zone based on configured weights (5%/90%/5%)
+    4. Pick uniformly at random from steps within the chosen zone
+    5. If chosen zone is empty, pick from any valid step (fallback)
+    
+    Why This Works:
+    - The valid_steps list contains unique step numbers (no duplicates)
+    - Zone selection is weighted, ensuring controlled distribution
+    - Within-zone selection is uniform, ensuring fairness within each phase
+    - Fallback handles edge cases (e.g., mutation kind only valid for certain steps)
     """
     
-    def __init__(self, seed: Optional[int] = None):
+    def __init__(self, seed: Optional[int] = None, config: ZoneConfig = None):
         """
-        Initialize with optional random seed.
+        Initialize the zoned selector.
         
         Args:
             seed: Random seed for reproducibility
+            config: Zone configuration (defaults to 5%/90%/5%)
         """
         self.rng = random.Random(seed)
+        self.config = config or DEFAULT_ZONE_CONFIG
     
-    def select_step(self, data: 'InspectionData', kind: str) -> Optional[int]:
-        valid_steps = self.get_valid_steps(data, kind)
-        if not valid_steps:
-            return None
-        return self.rng.choice(valid_steps)
-
-
-class HeuristicStepSelector(StepSelector):
-    """
-    Heuristic-based step selection.
-    
-    Prioritizes certain instruction types that are more likely to
-    expose interesting bugs:
-    - Memory operations (loads/stores) for consistency checks
-    - Branch instructions for control flow checks
-    - Arithmetic with potential overflow
-    
-    Uses weighted random selection based on instruction type.
-    """
-    
-    # Weight multipliers by major category
-    # Higher weight = more likely to be selected
-    MAJOR_WEIGHTS = {
-        0: 1.0,   # MISC0 (compute) - baseline
-        1: 1.5,   # MISC1 (immediate + branches) - branches are interesting
-        2: 2.0,   # MISC2 (jumps) - control flow
-        3: 1.2,   # MUL0 (multiply/shift)
-        4: 1.5,   # DIV0 (divide) - potential edge cases
-        5: 2.5,   # MEM0 (load) - memory consistency
-        6: 2.5,   # MEM1 (store) - memory consistency
-    }
-    
-    def __init__(self, seed: Optional[int] = None):
+    def _partition_into_zones(
+        self, valid_steps: List[int]
+    ) -> Dict[str, List[int]]:
         """
-        Initialize with optional random seed.
+        Partition valid steps into zones based on step number.
         
         Args:
-            seed: Random seed for reproducibility
+            valid_steps: List of unique valid step numbers
+            
+        Returns:
+            Dictionary mapping zone name to list of steps in that zone
+            
+        Zone definitions:
+        - init: step == 0
+        - final: step == max(valid_steps)
+        - core: all other steps
         """
-        self.rng = random.Random(seed)
-    
-    def select_step(self, data: 'InspectionData', kind: str) -> Optional[int]:
-        valid_steps = self.get_valid_steps(data, kind)
         if not valid_steps:
-            return None
+            return {"init": [], "core": [], "final": []}
         
-        # Calculate weights for each step
-        weights = []
+        max_step = max(valid_steps)
+        
+        zones = {"init": [], "core": [], "final": []}
+        
         for step in valid_steps:
-            cycle = data.get_cycle(step)
-            if cycle:
-                weight = self.MAJOR_WEIGHTS.get(cycle.major, 1.0)
+            if step == 0:
+                zones["init"].append(step)
+            elif step == max_step:
+                zones["final"].append(step)
             else:
-                weight = 1.0
-            weights.append(weight)
+                zones["core"].append(step)
         
-        # Weighted random selection
-        return self.rng.choices(valid_steps, weights=weights, k=1)[0]
-
-
-class GuidedStepSelector(StepSelector):
-    """
-    Coverage-guided step selection.
+        return zones
     
-    Uses coverage database to prefer steps that:
-    1. Have not been mutated before
-    2. Are near steps that produced new coverage
-    3. Have instruction types with low coverage
-    
-    Falls back to random selection if no coverage data available.
-    """
-    
-    def __init__(self, db: 'CoverageDB', seed: Optional[int] = None):
+    def select_step(self, data: 'InspectionData', kind: str) -> Optional[int]:
         """
-        Initialize with coverage database.
+        Select a step using zoned distribution.
+        
+        Returns:
+            Selected step, or None if no valid steps exist
+        """
+        valid_steps = self.get_valid_steps(data, kind)
+        if not valid_steps:
+            return None
+        
+        # Partition into zones
+        zones = self._partition_into_zones(valid_steps)
+        
+        # Build weighted selection for non-empty zones
+        available_zones = []
+        zone_weights = []
+        
+        weights = self.config.get_zone_weights()
+        for zone_name in ["init", "core", "final"]:
+            if zones[zone_name]:  # Only include non-empty zones
+                available_zones.append(zone_name)
+                zone_weights.append(weights[zone_name])
+        
+        if not available_zones:
+            # Shouldn't happen if valid_steps is non-empty, but be safe
+            return self.rng.choice(valid_steps)
+        
+        # Select zone (weighted) then step (uniform within zone)
+        chosen_zone = self.rng.choices(available_zones, weights=zone_weights, k=1)[0]
+        return self.rng.choice(zones[chosen_zone])
+    
+    def get_zone_stats(self, data: 'InspectionData', kind: str) -> Dict[str, int]:
+        """
+        Get statistics about zone populations for debugging.
+        
+        Returns:
+            Dictionary with step counts per zone
+        """
+        valid_steps = self.get_valid_steps(data, kind)
+        zones = self._partition_into_zones(valid_steps)
+        return {
+            "init": len(zones["init"]),
+            "core": len(zones["core"]),
+            "final": len(zones["final"]),
+            "total": len(valid_steps),
+        }
+
+
+# =============================================================================
+# Coverage-Guided Selector (Stub for Future Development)
+# =============================================================================
+
+class CoverageGuidedSelector(StepSelector):
+    """
+    Coverage-guided step selection (STUB FOR FUTURE DEVELOPMENT).
+    
+    This selector extends ZonedStepSelector with coverage-based guidance.
+    Currently, it behaves identically to ZonedStepSelector, but provides
+    hooks for future coverage integration.
+    
+    Future Implementation Plan:
+    ---------------------------
+    The record_result() method will be called after each mutation to record:
+    - Which step was mutated
+    - What mutation kind was used
+    - The outcome (constraint failures, witness failures, etc.)
+    - Which constraints were triggered
+    
+    This data will be used to:
+    1. Track which steps have been tested (avoid over-testing same steps)
+    2. Identify "high-value" steps near those that found new coverage
+    3. Adjust zone weights dynamically based on coverage progress
+    4. Prioritize under-tested areas of execution
+    
+    Mutation Result Tracking:
+    -------------------------
+    The `record_result()` method accepts a result dictionary that should contain:
+    - "step": int - The step that was mutated
+    - "kind": str - The mutation kind (e.g., "MEM_VAL_MOD")
+    - "outcome": str - One of "CONSTRAINT_FAIL", "WITNESS_FAIL", "NO_EFFECT", "VERIFIER_ACCEPTED"
+    - "new_coverage": int - Number of new unique constraints triggered
+    - "constraints": List[str] - List of constraint locations triggered
+    
+    This stub stores data but does not yet use it for selection decisions.
+    """
+    
+    def __init__(
+        self, 
+        db: Optional['CoverageDB'] = None,
+        seed: Optional[int] = None, 
+        config: ZoneConfig = None
+    ):
+        """
+        Initialize the coverage-guided selector.
         
         Args:
-            db: CoverageDB instance for coverage queries
+            db: CoverageDB instance for persistent storage (optional for now)
             seed: Random seed for reproducibility
+            config: Zone configuration (defaults to 5%/90%/5%)
         """
-        self.db = db
         self.rng = random.Random(seed)
-        self._mutated_steps: set = set()
-        self._high_value_steps: set = set()
+        self.config = config or DEFAULT_ZONE_CONFIG
+        self.db = db
+        
+        # =====================================================================
+        # STUB DATA STRUCTURES - For future coverage guidance
+        # These track mutation history but are not yet used for selection
+        # =====================================================================
+        
+        # Set of steps that have been mutated at least once
+        # Future use: avoid over-testing same steps
+        self._mutated_steps: Dict[str, set] = {}  # kind -> set of steps
+        
+        # Steps that produced new coverage, mapped to their "value"
+        # Future use: prioritize nearby steps
+        self._high_value_steps: Dict[int, int] = {}  # step -> new_coverage count
+        
+        # Total mutations per zone for adaptive weighting
+        # Future use: balance exploration across zones
+        self._zone_mutation_counts: Dict[str, int] = {
+            "init": 0,
+            "core": 0, 
+            "final": 0,
+        }
     
-    def record_mutation(self, step: int, new_coverage: int):
+    def _partition_into_zones(
+        self, valid_steps: List[int]
+    ) -> Dict[str, List[int]]:
+        """Partition valid steps into zones (same as ZonedStepSelector)"""
+        if not valid_steps:
+            return {"init": [], "core": [], "final": []}
+        
+        max_step = max(valid_steps)
+        zones = {"init": [], "core": [], "final": []}
+        
+        for step in valid_steps:
+            if step == 0:
+                zones["init"].append(step)
+            elif step == max_step:
+                zones["final"].append(step)
+            else:
+                zones["core"].append(step)
+        
+        return zones
+    
+    def select_step(self, data: 'InspectionData', kind: str) -> Optional[int]:
         """
-        Record a mutation result to guide future selection.
+        Select a step using zoned distribution.
+        
+        Currently identical to ZonedStepSelector.
+        Future: Will incorporate coverage data for smarter selection.
+        """
+        valid_steps = self.get_valid_steps(data, kind)
+        if not valid_steps:
+            return None
+        
+        zones = self._partition_into_zones(valid_steps)
+        
+        # Build weighted selection for non-empty zones
+        available_zones = []
+        zone_weights = []
+        
+        weights = self.config.get_zone_weights()
+        for zone_name in ["init", "core", "final"]:
+            if zones[zone_name]:
+                available_zones.append(zone_name)
+                zone_weights.append(weights[zone_name])
+        
+        if not available_zones:
+            return self.rng.choice(valid_steps)
+        
+        # Select zone then step
+        chosen_zone = self.rng.choices(available_zones, weights=zone_weights, k=1)[0]
+        selected_step = self.rng.choice(zones[chosen_zone])
+        
+        # Track which zone we selected from (for future adaptive weighting)
+        self._zone_mutation_counts[chosen_zone] += 1
+        
+        return selected_step
+    
+    def record_result(self, result: Dict) -> None:
+        """
+        Record a mutation result for future coverage guidance.
+        
+        STUB: Currently stores data but does not use it for selection.
         
         Args:
-            step: The step that was mutated
-            new_coverage: Number of new constraints discovered
+            result: Dictionary containing mutation result information:
+                - "step": int - The step that was mutated
+                - "kind": str - The mutation kind
+                - "outcome": str - CONSTRAINT_FAIL, WITNESS_FAIL, NO_EFFECT, VERIFIER_ACCEPTED
+                - "new_coverage": int - Number of new unique constraints
+                - "constraints": List[str] - Constraint locations triggered
+        
+        Future Use:
+        -----------
+        This data will be used to:
+        1. Track coverage progress per step/kind combination
+        2. Identify high-value steps for prioritization
+        3. Detect diminishing returns (repeated mutations with no new coverage)
+        4. Guide exploration toward under-tested execution regions
         """
-        self._mutated_steps.add(step)
+        step = result.get("step")
+        kind = result.get("kind", "unknown")
+        new_coverage = result.get("new_coverage", 0)
+        
+        if step is None:
+            return
+        
+        # Record that this step has been mutated for this kind
+        if kind not in self._mutated_steps:
+            self._mutated_steps[kind] = set()
+        self._mutated_steps[kind].add(step)
+        
+        # Track high-value steps (those that found new coverage)
         if new_coverage > 0:
-            # Mark nearby steps as high-value
-            for s in range(max(0, step - 10), step + 10):
-                self._high_value_steps.add(s)
+            current = self._high_value_steps.get(step, 0)
+            self._high_value_steps[step] = current + new_coverage
     
-    def select_step(self, data: 'InspectionData', kind: str) -> Optional[int]:
-        valid_steps = self.get_valid_steps(data, kind)
-        if not valid_steps:
-            return None
+    def get_coverage_stats(self) -> Dict:
+        """
+        Get coverage statistics for debugging and analysis.
         
-        # Prioritize: unmutated > high-value > random
-        unmutated = [s for s in valid_steps if s not in self._mutated_steps]
-        
-        if unmutated:
-            # Prefer high-value unmutated steps
-            high_value_unmutated = [s for s in unmutated if s in self._high_value_steps]
-            if high_value_unmutated:
-                return self.rng.choice(high_value_unmutated)
-            return self.rng.choice(unmutated)
-        
-        # All steps have been mutated; pick randomly
-        return self.rng.choice(valid_steps)
+        Returns:
+            Dictionary with coverage tracking information
+        """
+        return {
+            "mutated_steps_by_kind": {
+                k: len(v) for k, v in self._mutated_steps.items()
+            },
+            "high_value_steps": len(self._high_value_steps),
+            "zone_mutation_counts": dict(self._zone_mutation_counts),
+        }
 
 
-class SequentialStepSelector(StepSelector):
-    """
-    Sequential step selection for exhaustive testing.
-    
-    Iterates through all valid steps in order. Useful for
-    systematic testing of all possible mutation points.
-    """
-    
-    def __init__(self):
-        self._current_idx = 0
-        self._last_kind: Optional[str] = None
-        self._last_valid_steps: List[int] = []
-    
-    def select_step(self, data: 'InspectionData', kind: str) -> Optional[int]:
-        valid_steps = self.get_valid_steps(data, kind)
-        if not valid_steps:
-            return None
-        
-        # Reset if kind changed
-        if kind != self._last_kind:
-            self._current_idx = 0
-            self._last_kind = kind
-            self._last_valid_steps = valid_steps
-        
-        if self._current_idx >= len(valid_steps):
-            self._current_idx = 0  # Wrap around
-        
-        step = valid_steps[self._current_idx]
-        self._current_idx += 1
-        return step
-    
-    def reset(self):
-        """Reset to start from the beginning"""
-        self._current_idx = 0
-
+# =============================================================================
+# Factory Function
+# =============================================================================
 
 def create_selector(
-    strategy: str, 
+    strategy: str = "zoned",
     seed: Optional[int] = None,
-    db: Optional['CoverageDB'] = None
+    db: Optional['CoverageDB'] = None,
+    config: Optional[ZoneConfig] = None,
 ) -> StepSelector:
     """
     Factory function to create a step selector.
     
     Args:
-        strategy: One of "random", "heuristic", "guided", "sequential"
+        strategy: Selection strategy:
+            - "zoned": Fixed 5%/90%/5% distribution (default, recommended)
+            - "guided": Coverage-guided with zoned base (stub for future)
         seed: Random seed for reproducibility
-        db: CoverageDB instance (required for "guided" strategy)
+        db: CoverageDB instance (for "guided" strategy)
+        config: ZoneConfig for custom zone weights (optional)
         
     Returns:
         Configured StepSelector instance
+        
+    Example:
+        # Default zoned selection (recommended)
+        selector = create_selector("zoned", seed=12345)
+        
+        # Coverage-guided (stub, behaves like zoned for now)
+        selector = create_selector("guided", seed=12345, db=coverage_db)
     """
-    if strategy == "random":
-        return RandomStepSelector(seed)
-    elif strategy == "heuristic":
-        return HeuristicStepSelector(seed)
+    if strategy == "zoned":
+        return ZonedStepSelector(seed=seed, config=config)
     elif strategy == "guided":
-        if db is None:
-            raise ValueError("CoverageDB required for guided strategy")
-        return GuidedStepSelector(db, seed)
-    elif strategy == "sequential":
-        return SequentialStepSelector()
+        return CoverageGuidedSelector(db=db, seed=seed, config=config)
     else:
-        raise ValueError(f"Unknown strategy: {strategy}")
+        raise ValueError(
+            f"Unknown strategy: {strategy}. Valid options: 'zoned', 'guided'"
+        )

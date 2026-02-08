@@ -23,8 +23,8 @@ CLI:
 from a4.standalone.fuzzer import A4Fuzzer, MutationResult, CampaignStats
 from a4.standalone.coverage_db import CoverageDB, CampaignInfo, MutationRecord
 from a4.standalone.step_selector import (
-    StepSelector, RandomStepSelector, HeuristicStepSelector,
-    GuidedStepSelector, SequentialStepSelector, create_selector
+    StepSelector, ZonedStepSelector, CoverageGuidedSelector,
+    ZoneConfig, create_selector
 )
 from a4.standalone.value_generator import (
     ValueGenerator, RandomValueGenerator, BitFlipValueGenerator,
@@ -43,10 +43,9 @@ __all__ = [
     'MutationRecord',
     # Step selectors
     'StepSelector',
-    'RandomStepSelector',
-    'HeuristicStepSelector',
-    'GuidedStepSelector',
-    'SequentialStepSelector',
+    'ZonedStepSelector',
+    'CoverageGuidedSelector',
+    'ZoneConfig',
     'create_selector',
     # Value generators
     'ValueGenerator',

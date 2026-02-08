@@ -91,7 +91,7 @@ def cmd_inspect(args):
     if args.show_steps:
         print("\nValid steps by mutation kind:")
         for kind in ["COMP_OUT_MOD", "LOAD_VAL_MOD", "STORE_OUT_MOD", 
-                     "PRE_EXEC_REG_MOD", "INSTR_TYPE_MOD"]:
+                     "PRE_EXEC_REG_MOD", "INSTR_TYPE_MOD", "MEM_VAL_MOD"]:
             steps = data.get_valid_steps_for_kind(kind)
             print(f"  {kind}: {len(steps)} steps")
             if args.verbose and steps:
@@ -195,11 +195,11 @@ Examples:
     fuzz_parser.add_argument("--num", type=int, default=100, help="Number of mutations (default: 100)")
     fuzz_parser.add_argument("--kind", default="all", 
                             choices=["all", "COMP_OUT_MOD", "LOAD_VAL_MOD", "STORE_OUT_MOD",
-                                    "PRE_EXEC_REG_MOD", "INSTR_TYPE_MOD"],
+                                    "PRE_EXEC_REG_MOD", "INSTR_TYPE_MOD", "MEM_VAL_MOD"],
                             help="Mutation kind (default: all)")
-    fuzz_parser.add_argument("--selector", default="random",
-                            choices=["random", "heuristic", "guided", "sequential"],
-                            help="Step selection strategy (default: random)")
+    fuzz_parser.add_argument("--selector", default="zoned",
+                            choices=["zoned", "guided"],
+                            help="Step selection strategy (default: zoned, 5%%/90%%/5%% distribution)")
     fuzz_parser.add_argument("--values", default="mixed",
                             choices=["random", "bitflip", "boundary", "arithmetic", "smart", "mixed"],
                             help="Value generation strategy (default: mixed)")

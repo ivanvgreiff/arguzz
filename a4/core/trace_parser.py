@@ -177,6 +177,75 @@ class A4RegTxn:
 
 
 @dataclass
+class A4AllTxn:
+    """
+    Parsed A4 <a4_all_txn> output - unified transaction with step info.
+    
+    This is the preferred transaction format as it includes:
+    - Step information (computed at dump time)
+    - Transaction type (reg/mem)
+    - All transaction data
+    
+    Use this instead of A4Txn/A4RegTxn for new code.
+    """
+    txn_idx: int
+    step: int           # user_cycle / A4 step
+    txn_type: str       # "reg" or "mem"
+    addr: int
+    cycle: int
+    word: int
+    prev_cycle: int
+    prev_word: int
+    
+    # Constants for register address detection
+    USER_REGS_BASE: int = 1073725472  # 0xFFFF0080 / 4
+    
+    @classmethod
+    def parse(cls, line: str) -> Optional['A4AllTxn']:
+        """Parse an <a4_all_txn> line"""
+        match = re.search(r'<a4_all_txn>({.*?})</a4_all_txn>', line)
+        if not match:
+            return None
+        
+        try:
+            data = json.loads(match.group(1))
+            return cls(
+                txn_idx=data['txn_idx'],
+                step=data['step'],
+                txn_type=data['txn_type'],
+                addr=data['addr'],
+                cycle=data['cycle'],
+                word=data['word'],
+                prev_cycle=data['prev_cycle'],
+                prev_word=data['prev_word'],
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+    
+    def is_write(self) -> bool:
+        """Check if this is a WRITE transaction (odd cycle)"""
+        return self.cycle % 2 == 1
+    
+    def is_read(self) -> bool:
+        """Check if this is a READ transaction (even cycle)"""
+        return self.cycle % 2 == 0
+    
+    def is_register(self) -> bool:
+        """Check if this is a register transaction"""
+        return self.txn_type == "reg"
+    
+    def is_memory(self) -> bool:
+        """Check if this is a memory transaction"""
+        return self.txn_type == "mem"
+    
+    def register_index(self) -> Optional[int]:
+        """Get the register index if this is a register access"""
+        if self.is_register():
+            return self.addr - self.USER_REGS_BASE
+        return None
+
+
+@dataclass
 class A4InstrTypeMod:
     """Parsed A4 <a4_instr_type_mod> output"""
     step: int
@@ -229,3 +298,8 @@ def parse_all_txns(output: str) -> List[A4Txn]:
 def parse_all_reg_txns(output: str) -> List[A4RegTxn]:
     """Parse all <a4_reg_txn> entries from output"""
     return [t for line in output.splitlines() if (t := A4RegTxn.parse(line))]
+
+
+def parse_all_all_txns(output: str) -> List[A4AllTxn]:
+    """Parse all <a4_all_txn> entries from output"""
+    return [t for line in output.splitlines() if (t := A4AllTxn.parse(line))]

@@ -6,7 +6,7 @@ These are independent of Arguzz and designed for autonomous fuzzing campaigns.
 
 Each module provides:
 - Target dataclass (e.g., CompOutModTarget)
-- get_targets_at_step(step, data) -> Optional[Target]
+- get_targets_at_step(step, data) -> Optional[Target] or List[Target]
 - create_config(target, mutated_value, output_path) -> Path
 
 Supported mutation kinds:
@@ -15,6 +15,7 @@ Supported mutation kinds:
 - STORE_OUT_MOD: Mutate store instruction output (memory write)
 - PRE_EXEC_REG_MOD: Mutate register read/write transactions
 - INSTR_TYPE_MOD: Mutate instruction type (major/minor)
+- MEM_VAL_MOD: Mutate memory transaction values (non-register, non-instruction-fetch)
 """
 
 from a4.standalone.mutations.comp_out_mod import (
@@ -47,6 +48,13 @@ from a4.standalone.mutations.instr_type_mod import (
     create_config as create_instr_type_config,
 )
 
+from a4.standalone.mutations.mem_val_mod import (
+    MemValModTarget,
+    get_targets_at_step as get_mem_val_targets,
+    create_config as create_mem_val_config,
+    get_valid_steps as get_mem_val_valid_steps,
+)
+
 __all__ = [
     # COMP_OUT_MOD
     'CompOutModTarget',
@@ -68,4 +76,9 @@ __all__ = [
     'InstrTypeModTarget',
     'get_instr_type_targets',
     'create_instr_type_config',
+    # MEM_VAL_MOD
+    'MemValModTarget',
+    'get_mem_val_targets',
+    'create_mem_val_config',
+    'get_mem_val_valid_steps',
 ]
