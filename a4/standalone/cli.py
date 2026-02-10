@@ -195,7 +195,8 @@ Examples:
     fuzz_parser.add_argument("--num", type=int, default=100, help="Number of mutations (default: 100)")
     fuzz_parser.add_argument("--kind", default="all", 
                             choices=["all", "COMP_OUT_MOD", "LOAD_VAL_MOD", "STORE_OUT_MOD",
-                                    "PRE_EXEC_REG_MOD", "INSTR_TYPE_MOD", "MEM_VAL_MOD"],
+                                    "PRE_EXEC_REG_MOD", "INSTR_TYPE_MOD", "MEM_VAL_MOD",
+                                    "INSTR_WORD_MOD"],
                             help="Mutation kind (default: all)")
     fuzz_parser.add_argument("--selector", default="zoned",
                             choices=["zoned", "guided"],

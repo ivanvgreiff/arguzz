@@ -16,6 +16,7 @@ Supported mutation kinds:
 - PRE_EXEC_REG_MOD: Mutate register read/write transactions
 - INSTR_TYPE_MOD: Mutate instruction type (major/minor)
 - MEM_VAL_MOD: Mutate memory transaction values (non-register, non-instruction-fetch)
+- INSTR_WORD_MOD: Mutate instruction fetch word (fills gap excluded by MEM_VAL_MOD)
 """
 
 from a4.standalone.mutations.comp_out_mod import (
@@ -55,6 +56,13 @@ from a4.standalone.mutations.mem_val_mod import (
     get_valid_steps as get_mem_val_valid_steps,
 )
 
+from a4.standalone.mutations.instr_word_mod import (
+    InstrWordModTarget,
+    get_targets_at_step as get_instr_word_targets,
+    create_config as create_instr_word_config,
+    get_valid_steps as get_instr_word_valid_steps,
+)
+
 __all__ = [
     # COMP_OUT_MOD
     'CompOutModTarget',
@@ -81,4 +89,9 @@ __all__ = [
     'get_mem_val_targets',
     'create_mem_val_config',
     'get_mem_val_valid_steps',
+    # INSTR_WORD_MOD
+    'InstrWordModTarget',
+    'get_instr_word_targets',
+    'create_instr_word_config',
+    'get_instr_word_valid_steps',
 ]

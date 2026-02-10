@@ -61,18 +61,26 @@ def inject_a4(risc0_path: Path) -> bool:
     
     success = True
     
-    # Patch 1: mod.rs - A4 inspection and mutation hooks
-    from a4.injection.patches.mod_rs_patch import get_patch
+    # Patch 1: witgen/mod.rs - A4 inspection and mutation hooks
+    from a4.injection.patches.mod_rs_patch import get_patch as get_mod_rs_patch
     mod_rs_path = risc0_path / "risc0" / "circuit" / "rv32im" / "src" / "prove" / "witgen" / "mod.rs"
     
-    patch = get_patch()
-    if not apply_patch(mod_rs_path, patch['search'], patch['replace'], "mod.rs: A4 hooks"):
+    patch = get_mod_rs_patch()
+    if not apply_patch(mod_rs_path, patch['search'], patch['replace'], "witgen/mod.rs: A4 hooks"):
+        success = False
+    
+    # Patch 2: hal/mod.rs - Force sequential mode for A4 mutations
+    from a4.injection.patches.hal_mod_rs_patch import get_patch as get_hal_patch
+    hal_mod_rs_path = risc0_path / "risc0" / "circuit" / "rv32im" / "src" / "prove" / "hal" / "mod.rs"
+    
+    hal_patch = get_hal_patch()
+    if not apply_patch(hal_mod_rs_path, hal_patch['search'], hal_patch['replace'], "hal/mod.rs: Sequential mode"):
         success = False
     
     print("=" * 60)
     if success:
         print("A4 injection complete. Rebuild risc0 to apply changes:")
-        print(f"  cd {risc0_path} && cargo build --release")
+        print(f"  cd {risc0_path} && cargo build --release -p risc0-host")
     else:
         print("A4 injection failed. Check errors above.")
     
@@ -87,21 +95,40 @@ def check_a4(risc0_path: Path) -> bool:
     print(f"A4 Check: {risc0_path}")
     print("=" * 60)
     
+    all_ok = True
+    
+    # Check 1: witgen/mod.rs
     mod_rs_path = risc0_path / "risc0" / "circuit" / "rv32im" / "src" / "prove" / "witgen" / "mod.rs"
     
     if not mod_rs_path.exists():
         print(f"  ERROR: mod.rs not found at {mod_rs_path}")
-        return False
-    
-    content = mod_rs_path.read_text()
-    
-    if ">>> A4:" in content or "A4 PREFLIGHT INSPECTION" in content:
-        print("  OK: mod.rs has A4 hooks")
-        return True
+        all_ok = False
     else:
-        print("  MISSING: mod.rs does not have A4 hooks")
+        content = mod_rs_path.read_text()
+        if ">>> A4:" in content or "A4 PREFLIGHT INSPECTION" in content:
+            print("  OK: witgen/mod.rs has A4 hooks")
+        else:
+            print("  MISSING: witgen/mod.rs does not have A4 hooks")
+            all_ok = False
+    
+    # Check 2: hal/mod.rs
+    hal_mod_rs_path = risc0_path / "risc0" / "circuit" / "rv32im" / "src" / "prove" / "hal" / "mod.rs"
+    
+    if not hal_mod_rs_path.exists():
+        print(f"  ERROR: hal/mod.rs not found at {hal_mod_rs_path}")
+        all_ok = False
+    else:
+        content = hal_mod_rs_path.read_text()
+        if "A4: Force sequential mode" in content or 'std::env::var_os("A4_MUTATION_CONFIG")' in content:
+            print("  OK: hal/mod.rs has A4 sequential mode")
+        else:
+            print("  MISSING: hal/mod.rs does not have A4 sequential mode")
+            all_ok = False
+    
+    if not all_ok:
         print("  Run: python3 -m a4.injection.inject --risc0-path " + str(risc0_path))
-        return False
+    
+    return all_ok
 
 
 def revert_a4(risc0_path: Path) -> bool:
@@ -114,24 +141,30 @@ def revert_a4(risc0_path: Path) -> bool:
     print(f"A4 Revert: {risc0_path}")
     print("=" * 60)
     
-    mod_rs_path = risc0_path / "risc0" / "circuit" / "rv32im" / "src" / "prove" / "witgen" / "mod.rs"
+    files_to_revert = [
+        risc0_path / "risc0" / "circuit" / "rv32im" / "src" / "prove" / "witgen" / "mod.rs",
+        risc0_path / "risc0" / "circuit" / "rv32im" / "src" / "prove" / "hal" / "mod.rs",
+    ]
     
-    try:
-        result = subprocess.run(
-            ["git", "checkout", "HEAD", "--", str(mod_rs_path)],
-            cwd=risc0_path,
-            capture_output=True,
-            text=True
-        )
-        if result.returncode == 0:
-            print(f"  OK: Reverted mod.rs")
-            return True
-        else:
-            print(f"  ERROR: git checkout failed: {result.stderr}")
-            return False
-    except Exception as e:
-        print(f"  ERROR: {e}")
-        return False
+    all_ok = True
+    for file_path in files_to_revert:
+        try:
+            result = subprocess.run(
+                ["git", "checkout", "HEAD", "--", str(file_path)],
+                cwd=risc0_path,
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                print(f"  OK: Reverted {file_path.name}")
+            else:
+                print(f"  ERROR: git checkout failed for {file_path.name}: {result.stderr}")
+                all_ok = False
+        except Exception as e:
+            print(f"  ERROR: {e}")
+            all_ok = False
+    
+    return all_ok
 
 
 def main():

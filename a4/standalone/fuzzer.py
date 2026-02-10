@@ -42,6 +42,7 @@ from a4.standalone.mutations import (
     get_pre_exec_reg_targets, create_pre_exec_reg_config, PreExecRegModTarget,
     get_instr_type_targets, create_instr_type_config, InstrTypeModTarget,
     get_mem_val_targets, create_mem_val_config, MemValModTarget,
+    get_instr_word_targets, create_instr_word_config, InstrWordModTarget,
 )
 from a4.standalone.mutations.instr_type_mod import generate_random_mutation as generate_instr_mutation
 
@@ -65,9 +66,10 @@ class MutationResult:
 class CampaignStats:
     """Statistics for a fuzzing campaign"""
     total_mutations: int = 0
-    successful_mutations: int = 0  # Caused failures
+    successful_mutations: int = 0  # Caused failures (REJECTED)
     verifier_accepts: int = 0      # BUGS: verifier accepted bad proof
-    witness_gen_failures: int = 0  # Prover panicked during witness generation
+    witness_gen_failures: int = 0  # WITNESS_ERROR: prover failed during witness gen
+    skipped_mutations: int = 0     # Mutations skipped (no valid target after retries)
     new_coverage_count: int = 0
     total_failures: int = 0
     mutations_by_kind: Dict[str, int] = field(default_factory=dict)
@@ -96,6 +98,7 @@ class A4Fuzzer:
         "PRE_EXEC_REG_MOD",
         "INSTR_TYPE_MOD",
         "MEM_VAL_MOD",
+        "INSTR_WORD_MOD",
     ]
     
     def __init__(
@@ -201,7 +204,7 @@ class A4Fuzzer:
         campaign_start = time.perf_counter()
         
         for i in range(num_mutations):
-            result = self._run_single_mutation(i + 1, num_mutations)
+            result = self._run_single_mutation(i + 1, num_mutations, stats)
             
             if result:
                 self._update_stats(stats, result)
@@ -222,36 +225,51 @@ class A4Fuzzer:
     def _run_single_mutation(
         self, 
         mutation_num: int, 
-        total: int
+        total: int,
+        stats: CampaignStats
     ) -> Optional[MutationResult]:
-        """Run a single mutation attempt"""
+        """Run a single mutation attempt with retry logic"""
         # Select mutation kind
         if self.kind == "all":
             kind = self.rng.choice(self.MUTATION_KINDS)
         else:
             kind = self.kind
         
-        # Select step
-        step = self.selector.select_step(self.data, kind)
-        if step is None:
-            if self.verbose:
-                print(f"  [{mutation_num}/{total}] No valid steps for {kind}")
-            return None
-        
-        # Get target and generate mutation
-        try:
-            config, mutated_value, original_value = self._create_mutation(kind, step)
-        except ValueGeneratorExhaustedError as e:
-            # This is a serious error - the generator is broken
-            print(f"  [{mutation_num}/{total}] ERROR: {e}")
-            raise
-        except Exception as e:
-            if self.verbose:
-                print(f"  [{mutation_num}/{total}] Failed to create mutation: {e}")
-            return None
-        
-        if config is None:
-            return None
+        # Retry loop: step selection is coarse-grained (by major), but
+        # mutation creation does finer validation. Retry up to 10 times
+        # to find a valid target.
+        MAX_RETRIES = 10
+        for attempt in range(MAX_RETRIES):
+            # Select step
+            step = self.selector.select_step(self.data, kind)
+            if step is None:
+                if self.verbose:
+                    print(f"  [{mutation_num}/{total}] ⊘ SKIP: No valid steps for {kind}")
+                stats.skipped_mutations += 1
+                return None
+            
+            # Get target and generate mutation
+            try:
+                config, mutated_value, original_value = self._create_mutation(kind, step)
+            except ValueGeneratorExhaustedError as e:
+                # This is a serious error - the generator is broken
+                print(f"  [{mutation_num}/{total}] ERROR: {e}")
+                raise
+            except Exception as e:
+                if self.verbose:
+                    print(f"  [{mutation_num}/{total}] ⊘ SKIP: Failed to create mutation: {e}")
+                stats.skipped_mutations += 1
+                return None
+            
+            if config is not None:
+                break  # Success - found valid target
+            
+            # Step was valid by major but had no mutation target, retry
+            if attempt == MAX_RETRIES - 1:
+                if self.verbose:
+                    print(f"  [{mutation_num}/{total}] ⊘ SKIP: No valid target after {MAX_RETRIES} retries for {kind}")
+                stats.skipped_mutations += 1
+                return None
         
         # Execute mutation
         # Use time.perf_counter() instead of time.time() because:
@@ -421,25 +439,49 @@ class A4Fuzzer:
             }
             return config, mutated_value, target.original_value
         
+        elif kind == "INSTR_WORD_MOD":
+            # INSTR_WORD_MOD: Mutate instruction fetch word
+            target = get_instr_word_targets(step, self.data)
+            if not target:
+                return None, 0, 0
+            mutated_value = self.value_gen.generate_different(
+                target.original_word,
+                {
+                    'major': target.major,
+                    'minor': target.minor,
+                    'txn_type': 'instr_fetch',
+                }
+            )
+            # Note: Rust handler sets both word AND prev_word to preserve IsRead
+            config = {
+                "mutation_type": "INSTR_WORD_MOD",
+                "step": target.step,
+                "word": mutated_value,
+            }
+            return config, mutated_value, target.original_word
+        
         return None, 0, 0
     
     def _check_witness_gen_failure(self, output: str) -> bool:
         """
-        Check if witness generation failed (prover panic).
+        Check if witness generation ACTUALLY failed (not just proof invalid).
         
         This happens when the mutation creates an inconsistency that the
-        witness generator detects before constraint checking even begins.
+        witness generator detects before proof generation completes.
         
-        Symptoms:
-        - "witness generation failure" in output
-        - Prover status: error
-        - Zero constraint failures
-        - Verifier never runs
+        We must NOT match "panicked at" generically because:
+        - "witness generation failure" = actual witness fail (prover internal error)
+        - "verify segment" = proof generated but internally invalid (constraint failures)
+        
+        Both panics originate from host/src/main.rs:150 but have different meanings.
         """
+        # Specific patterns that indicate actual witness failures
         witness_failure_patterns = [
-            "witness generation failure",
-            "panicked at",
-            "set(row:",  # Witness matrix conflict error
+            "witness generation failure",  # Actual witness gen error from prover
+            "set(row:",   # Witness matrix conflict (inconsistent set)
+            "get(row:",   # Witness matrix read of unset value
+            "Inconsistent set",  # Explicit buffer error message
+            "Read of unset value",  # Explicit buffer error message
         ]
         
         for pattern in witness_failure_patterns:
@@ -520,47 +562,66 @@ class A4Fuzzer:
             for f in result.failures:
                 stats.unique_constraints.add(f.constraint_loc())
         
-        # Classify outcome (mutually exclusive, with priority order):
-        # 1. VERIFIER_ACCEPTED (bug) - highest priority, always track
-        # 2. WITNESS_FAIL - witness matrix conflict (may have constraint failures too)
-        # 3. CONSTRAINT_FAIL - constraint failures without witness matrix conflict
+        # Classify outcome (mutually exclusive, priority order must match display):
+        # 1. ACCEPTED (bug) - verifier accepted invalid proof
+        # 2. REJECTED - constraint failures detected, proof invalid (SUCCESS!)
+        # 3. WITNESS_ERROR - witness gen failed without constraint detection
         # 4. NO_EFFECT - no failures detected
         if result.verifier_accepted:
             stats.verifier_accepts += 1
         
-        if result.witness_gen_failed:
-            # Witness generation failed (may also have constraint failures, but we classify as WITNESS_FAIL)
-            stats.witness_gen_failures += 1
-        elif result.failures:
-            # Constraint failures without witness matrix conflict
+        if result.failures:
+            # Constraint failures detected - this is the success case!
             stats.successful_mutations += 1
-        # else: no effect (counted implicitly as total - witness - constraint)
+        elif result.witness_gen_failed:
+            # Witness generation failed without constraint failures
+            stats.witness_gen_failures += 1
+        # else: no effect (counted implicitly as total - rejected - witness_error)
         
         stats.new_coverage_count += result.new_coverage
     
     def _print_mutation_result(self, num: int, result: MutationResult):
         """Print detailed result of a single mutation"""
         # Status indicator
-        if result.witness_gen_failed:
-            status = "⚡"  # Witness generation failure
+        if result.verifier_accepted:
+            status = "🐛"  # BUG - verifier accepted invalid proof
         elif result.failures:
-            status = "✓"  # Constraint failures
+            status = "✓"  # Mutation detected - proof rejected
+        elif result.witness_gen_failed:
+            status = "⚠"  # Witness error (rare)
         else:
             status = "○"  # No effect detected
         
-        bug_marker = " 🐛 BUG!" if result.verifier_accepted else ""
+        bug_marker = " BUG!" if result.verifier_accepted else ""
         new_cov = f" [+{result.new_coverage} new]" if result.new_coverage > 0 else ""
         
-        # Outcome classification
-        # Note: witness_gen_failed means the witness matrix had a conflict. This can occur
-        # AFTER constraint failures are detected, since both happen during witness generation.
-        # Constraint failures and witness failures are NOT mutually exclusive.
-        if result.witness_gen_failed:
-            outcome = "WITNESS_FAIL"  # Matrix conflict (may have constraint failures too)
-        elif result.verifier_accepted:
-            outcome = "ACCEPTED"  # BUG: verifier should have rejected
+        # Outcome classification:
+        # 
+        # REJECTED = Mutation detected, proof invalid (expected success!)
+        #   - Constraint failures detected (via <constraint_fail> tags)
+        #   - Prover's internal verification fails ("verify segment")
+        #   - This is the GOAL of fuzzing - we found constraint failures
+        #
+        # WITNESS_ERROR = Witness generation itself failed (rare with FAULT_INJECTION)
+        #   - "witness generation failure" message
+        #   - Matrix conflicts (set(row:) with different values)
+        #   - This means something went wrong in witness gen, not constraint check
+        #
+        # ACCEPTED = Verifier accepted (BUG!)
+        #   - Prover succeeded, verifier succeeded
+        #   - This should NEVER happen with proper mutations
+        #
+        # NO_EFFECT = No failures detected
+        #   - Mutation may not have affected checked constraints
+        #
+        if result.verifier_accepted:
+            outcome = "ACCEPTED"  # BUG: soundness violation!
+        elif result.failures:
+            outcome = "REJECTED"  # Success! Mutation detected, proof invalid
+        elif result.witness_gen_failed:
+            outcome = "WITNESS_ERROR"  # Witness gen problem (not constraint fail)
         else:
-            outcome = "REJECTED"  # Expected behavior
+            outcome = "NO_EFFECT"  # No failures detected
         
         # Basic info line
         print(f"  [{num}] {status} {result.kind} @ step {result.step}: "
@@ -589,6 +650,9 @@ class A4Fuzzer:
                 print(f"         - {loc}{count_str}")
                 print(f"           cycle={first.cycle}, step={first.step}, "
                       f"pc=0x{first.pc:08X}, major={first.major}, minor={first.minor}")
+        elif outcome == "NO_EFFECT":
+            # No constraint failures detected - this is unusual and worth investigating
+            print(f"       ⚠ No constraint failures detected - possible edge case or parsing issue")
         else:
             print(f"       No constraint failures (mutation may have been ineffective)")
     
@@ -599,24 +663,28 @@ class A4Fuzzer:
         print("="*60)
         print(f"Total mutations:     {stats.total_mutations}")
         print(f"Successful (caused failures): {stats.successful_mutations}")
+        print(f"Skipped (no valid target):    {stats.skipped_mutations}")
         print(f"Total failures:      {stats.total_failures}")
         print(f"Unique constraints:  {len(stats.unique_constraints)}")
         print(f"New coverage:        {stats.new_coverage_count}")
         print(f"Execution time:      {stats.execution_time_ms:.0f}ms")
         
         # Outcome summary (mutually exclusive categories)
-        # - successful_mutations: constraint failures WITHOUT witness matrix conflict
-        # - witness_gen_failures: witness matrix conflict (may ALSO have constraint failures)
-        # - no_effect: no failures of any kind
-        constraint_only = stats.successful_mutations  # Constraint fail without witness conflict
-        witness_fail = stats.witness_gen_failures     # Witness matrix conflict
-        no_effect = stats.total_mutations - constraint_only - witness_fail
+        # - successful_mutations: REJECTED (constraint failures detected, proof invalid)
+        # - witness_gen_failures: WITNESS_ERROR (witness gen itself failed)
+        # - verifier_accepts: ACCEPTED (BUG!)
+        # - no_effect: NO_EFFECT (no failures)
+        # - skipped: No valid target found after retries
+        rejected = stats.successful_mutations  # Mutation detected, proof rejected
+        witness_error = stats.witness_gen_failures  # Witness gen problem
+        no_effect = stats.total_mutations - rejected - witness_error
         
         print(f"\nOutcome breakdown:")
-        print(f"  Constraint failures:    {constraint_only}")
-        print(f"  Witness gen failures:   {witness_fail} (may include constraint failures)")
-        print(f"  No effect detected:     {no_effect}")
-        print(f"  Verifier accepted:      {stats.verifier_accepts} {'🐛 BUGS!' if stats.verifier_accepts > 0 else ''}")
+        print(f"  REJECTED (mutation detected): {rejected}")
+        print(f"  WITNESS_ERROR:                {witness_error}")
+        print(f"  NO_EFFECT:                    {no_effect}")
+        print(f"  ACCEPTED (BUG!):              {stats.verifier_accepts} {'🐛' if stats.verifier_accepts > 0 else ''}")
+        print(f"  SKIPPED:                      {stats.skipped_mutations}")
         
         if stats.verifier_accepts > 0:
             print(f"\n🐛 BUGS FOUND: {stats.verifier_accepts} mutations accepted by verifier!")

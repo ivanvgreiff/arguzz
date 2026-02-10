@@ -150,7 +150,7 @@ class InspectionData:
         
         Args:
             kind: Mutation kind (COMP_OUT_MOD, LOAD_VAL_MOD, STORE_OUT_MOD, 
-                  PRE_EXEC_REG_MOD, INSTR_TYPE_MOD, MEM_VAL_MOD)
+                  PRE_EXEC_REG_MOD, INSTR_TYPE_MOD, MEM_VAL_MOD, INSTR_WORD_MOD)
         
         Returns:
             Sorted list of unique valid step numbers
@@ -202,6 +202,12 @@ class InspectionData:
                 # Most common: load (major 5) and store (major 6), but also
                 # ECALLs (major 7+) can have memory transactions
                 if cycle.step in self._step_to_mem_txns:
+                    valid_steps.add(cycle.step)
+            
+            elif kind == "INSTR_WORD_MOD":
+                # Instruction word mutation: any instruction cycle (major 0-6)
+                # Targets the instruction fetch transaction
+                if cycle.major <= 6:
                     valid_steps.add(cycle.step)
         
         # Return sorted list for deterministic ordering
