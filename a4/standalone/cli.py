@@ -196,7 +196,7 @@ Examples:
     fuzz_parser.add_argument("--kind", default="all", 
                             choices=["all", "COMP_OUT_MOD", "LOAD_VAL_MOD", "STORE_OUT_MOD",
                                     "PRE_EXEC_REG_MOD", "INSTR_TYPE_MOD", "MEM_VAL_MOD",
-                                    "INSTR_WORD_MOD"],
+                                    "INSTR_WORD_MOD_FULL", "INSTR_WORD_MOD_SUR"],
                             help="Mutation kind (default: all)")
     fuzz_parser.add_argument("--selector", default="zoned",
                             choices=["zoned", "guided"],

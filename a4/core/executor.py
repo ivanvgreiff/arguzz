@@ -7,6 +7,7 @@ These are the core execution primitives shared by all A4 strategies.
 
 import os
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Tuple
 
@@ -123,11 +124,21 @@ def run_a4_inspection_with_reg_txns(
     return output, cycles
 
 
+@dataclass
+class MutationExecutionResult:
+    """Result of executing a mutation against the risc0 prover."""
+    stdout: str
+    stderr: str
+    combined_output: str
+    exit_code: int
+    failures: List[ConstraintFailure]
+
+
 def run_a4_mutation(
     host_binary: str,
     host_args: List[str],
     config_path: Path,
-) -> Tuple[str, List[ConstraintFailure]]:
+) -> MutationExecutionResult:
     """
     Run A4 mutation and capture constraint failures.
     
@@ -140,7 +151,7 @@ def run_a4_mutation(
         config_path: Path to JSON mutation config file
         
     Returns:
-        Tuple of (raw_output, constraint_failures)
+        MutationExecutionResult with stdout, stderr, exit_code, and parsed failures
     """
     cmd = [host_binary] + host_args
     
@@ -156,7 +167,13 @@ def run_a4_mutation(
         env={**dict(os.environ), **env}
     )
     
-    output = result.stdout + result.stderr
-    failures = parse_all_constraint_failures(output)
+    combined = result.stdout + result.stderr
+    failures = parse_all_constraint_failures(combined)
     
-    return output, failures
+    return MutationExecutionResult(
+        stdout=result.stdout,
+        stderr=result.stderr,
+        combined_output=combined,
+        exit_code=result.returncode,
+        failures=failures,
+    )

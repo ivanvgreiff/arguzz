@@ -204,10 +204,11 @@ class InspectionData:
                 if cycle.step in self._step_to_mem_txns:
                     valid_steps.add(cycle.step)
             
-            elif kind == "INSTR_WORD_MOD":
-                # Instruction word mutation: any instruction cycle (major 0-6)
+            elif kind in ("INSTR_WORD_MOD", "INSTR_WORD_MOD_FULL", "INSTR_WORD_MOD_SUR"):
+                # Instruction word mutation: any instruction or ECALL cycle
                 # Targets the instruction fetch transaction
-                if cycle.major <= 6:
+                # Both FULL (entire word) and SUR (surgical field) use same targets
+                if cycle.major <= 6 or cycle.major == 8:
                     valid_steps.add(cycle.step)
         
         # Return sorted list for deterministic ordering

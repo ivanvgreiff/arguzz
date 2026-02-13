@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from a4.core.inspection_data import InspectionData
-from a4.core.executor import run_a4_mutation
+from a4.core.executor import run_a4_mutation, MutationExecutionResult
 from a4.core.constraint_parser import ConstraintFailure
 
 from a4.standalone.coverage_db import CoverageDB
@@ -46,6 +46,18 @@ from a4.standalone.mutations import (
 )
 from a4.standalone.mutations.instr_type_mod import generate_random_mutation as generate_instr_mutation
 
+# Surgical instruction mutations
+from a4.standalone.mutations.instr_word_mod_sur import (
+    RiscVInstruction,
+    InstrFormat,
+    SurgicalField,
+    get_targets_at_step as get_instr_word_sur_targets,
+    select_surgical_field,
+    generate_field_value,
+    create_config as create_instr_word_sur_config,
+    InstrWordModSurTarget,
+)
+
 
 @dataclass
 class MutationResult:
@@ -59,7 +71,12 @@ class MutationResult:
     verifier_accepted: bool
     execution_time_ms: float
     new_coverage: int = 0
-    witness_gen_failed: bool = False  # True if prover panicked during witness generation
+    exit_code: int = 0  # Process exit code (139=SIGSEGV, 101=panic, 0=success)
+    crashed: bool = False  # True if process crashed (segfault, etc.)
+    proof_generated: bool = False  # True if proof was generated (may still be invalid)
+    proof_verify_failed: bool = False  # True if proof verification failed (verify segment)
+    raw_errors: List[str] = field(default_factory=list)  # Exact error lines from risc0 prover (unmodified)
+    raw_output: Optional[str] = None  # Raw stdout for debugging (truncated)
 
 
 @dataclass
@@ -68,7 +85,7 @@ class CampaignStats:
     total_mutations: int = 0
     successful_mutations: int = 0  # Caused failures (REJECTED)
     verifier_accepts: int = 0      # BUGS: verifier accepted bad proof
-    witness_gen_failures: int = 0  # WITNESS_ERROR: prover failed during witness gen
+    crashes: int = 0               # CRASH: process crashed (segfault, etc.)
     skipped_mutations: int = 0     # Mutations skipped (no valid target after retries)
     new_coverage_count: int = 0
     total_failures: int = 0
@@ -98,7 +115,8 @@ class A4Fuzzer:
         "PRE_EXEC_REG_MOD",
         "INSTR_TYPE_MOD",
         "MEM_VAL_MOD",
-        "INSTR_WORD_MOD",
+        "INSTR_WORD_MOD_FULL",  # Full 32-bit instruction word mutation
+        "INSTR_WORD_MOD_SUR",   # Surgical field-level mutation
     ]
     
     def __init__(
@@ -279,7 +297,7 @@ class A4Fuzzer:
         config_path = self.temp_dir / f"mutation_{mutation_num}.json"
         config_path.write_text(json.dumps(config, indent=2))
         
-        output, failures = run_a4_mutation(
+        exec_result = run_a4_mutation(
             self.host_binary,
             self.host_args,
             config_path
@@ -288,11 +306,34 @@ class A4Fuzzer:
         end_time = time.perf_counter()
         execution_time = (end_time - start_time) * 1000
         
-        # Check for witness generation failure (prover panic before constraint check)
-        witness_gen_failed = self._check_witness_gen_failure(output)
+        output = exec_result.combined_output
+        failures = exec_result.failures
+        exit_code = exec_result.exit_code
+        
+        # Check for process crash (segfault, etc.)
+        # Python subprocess returns negative signal number: -11 for SIGSEGV, -6 for SIGABRT
+        # Shell returns 128+signal: 139 for SIGSEGV, 134 for SIGABRT
+        # We check both conventions to be safe
+        crash_signals_negative = (-11, -6, -8, -9, -10)  # SIGSEGV, SIGABRT, SIGFPE, SIGKILL, SIGBUS
+        crash_signals_shell = (139, 134, 136, 137, 138)  # 128 + signal
+        crashed = exit_code in crash_signals_negative or exit_code in crash_signals_shell
+        
+        # Check if proof was generated
+        # "verify segment" error means proof WAS created but failed self-verification
+        # Prover status "success" = proof generated
+        proof_generated = self._check_proof_generated(output, exit_code)
+        
+        # Check for proof verification failure (verify segment panic)
+        proof_verify_failed = self._check_proof_verification_failure(output)
         
         # Check if verifier accepted (look for specific output)
         verifier_accepted = self._check_verifier_acceptance(output)
+        
+        # Extract exact error lines from risc0 for accurate tracing (unmodified)
+        raw_errors = self._extract_raw_error(exec_result.stdout, exec_result.stderr)
+        
+        # Truncate raw output to last 2000 chars for debugging
+        raw_output_truncated = output[-2000:] if len(output) > 2000 else output
         
         result = MutationResult(
             kind=kind,
@@ -303,7 +344,12 @@ class A4Fuzzer:
             failures=failures,
             verifier_accepted=verifier_accepted,
             execution_time_ms=execution_time,
-            witness_gen_failed=witness_gen_failed,
+            exit_code=exit_code,
+            crashed=crashed,
+            proof_generated=proof_generated,
+            proof_verify_failed=proof_verify_failed,
+            raw_errors=raw_errors,
+            raw_output=raw_output_truncated,
         )
         
         # Record in database
@@ -348,6 +394,11 @@ class A4Fuzzer:
                 "step": target.step,
                 "txn_idx": target.write_txn_idx,
                 "word": mutated_value,
+                "_info": {
+                    "register_idx": target.register_idx,
+                    "register_name": target.register_name,
+                    "pc": f"0x{target.pc:08x}",
+                },
             }
             return config, mutated_value, target.original_value
         
@@ -364,6 +415,11 @@ class A4Fuzzer:
                 "step": target.step,
                 "txn_idx": target.write_txn_idx,
                 "word": mutated_value,
+                "_info": {
+                    "register_idx": target.register_idx,
+                    "register_name": target.register_name,
+                    "pc": f"0x{target.pc:08x}",
+                },
             }
             return config, mutated_value, target.original_value
         
@@ -380,6 +436,10 @@ class A4Fuzzer:
                 "step": target.step,
                 "txn_idx": target.write_txn_idx,
                 "word": mutated_value,
+                "_info": {
+                    "memory_byte_addr": f"0x{target.memory_byte_addr:08x}",
+                    "pc": f"0x{target.pc:08x}",
+                },
             }
             return config, mutated_value, target.original_value
         
@@ -398,6 +458,12 @@ class A4Fuzzer:
                 "txn_idx": target.txn_idx,
                 "word": mutated_value,
                 "strategy": target.strategy,
+                "_info": {
+                    "register_idx": target.register_idx,
+                    "register_name": target.register_name,
+                    "is_write": target.is_write,
+                    "pc": f"0x{target.pc:08x}",
+                },
             }
             return config, mutated_value, target.original_word
         
@@ -405,14 +471,27 @@ class A4Fuzzer:
             target = get_instr_type_targets(step, self.data)
             if not target:
                 return None, 0, 0
-            new_major, new_minor = generate_instr_mutation(target, self.rng)
+            new_major, new_minor, is_valid = generate_instr_mutation(target, self.rng)
             mutated_value = (new_major << 16) | new_minor  # Encode for tracking
             original_value = (target.original_major << 16) | target.original_minor
+            # Get instruction name for mutated combination (kind = major*8 + minor)
+            from a4.core.insn_decode import INSN_KIND_NAMES
+            mutated_kind_num = new_major * 8 + new_minor
+            mutated_kind = INSN_KIND_NAMES.get(mutated_kind_num, 
+                                                f"Unknown({new_major},{new_minor})")
             config = {
                 "mutation_type": "INSTR_TYPE_MOD",
                 "step": target.step,
                 "major": new_major,
                 "minor": new_minor,
+                "_info": {
+                    "original_major": target.original_major,
+                    "original_minor": target.original_minor,
+                    "original_kind": target.kind_name,
+                    "mutated_kind": mutated_kind,
+                    "pc": f"0x{target.pc:08x}",
+                    "is_valid_combination": is_valid,
+                },
             }
             return config, mutated_value, original_value
         
@@ -436,59 +515,320 @@ class A4Fuzzer:
                 "step": target.step,
                 "txn_idx": target.txn_idx,
                 "word": mutated_value,
+                "_info": {
+                    "txn_type": target.txn_type,
+                    "byte_addr": f"0x{target.byte_addr:08x}",
+                    "is_write": target.is_write,
+                },
             }
             return config, mutated_value, target.original_value
         
-        elif kind == "INSTR_WORD_MOD":
-            # INSTR_WORD_MOD: Mutate instruction fetch word
+        elif kind == "INSTR_WORD_MOD_FULL":
+            # INSTR_WORD_MOD_FULL: Mutate entire instruction word (32 bits)
+            # Uses arguzz's mutation strategy: validated random mutations
             target = get_instr_word_targets(step, self.data)
             if not target:
                 return None, 0, 0
-            mutated_value = self.value_gen.generate_different(
-                target.original_word,
-                {
-                    'major': target.major,
-                    'minor': target.minor,
-                    'txn_type': 'instr_fetch',
-                }
-            )
+            
+            # Generate mutation using arguzz's strategy (validated loop)
+            mutated_value = self._generate_valid_instr_word_mutation(target.original_word)
+            if mutated_value is None:
+                return None, 0, 0
+            
+            # Decode both instructions for detailed output
+            orig_instr = RiscVInstruction.from_word(target.original_word)
+            mut_instr = RiscVInstruction.from_word(mutated_value)
+            
             # Note: Rust handler sets both word AND prev_word to preserve IsRead
             config = {
-                "mutation_type": "INSTR_WORD_MOD",
+                "mutation_type": "INSTR_WORD_MOD",  # Rust handler name unchanged
                 "step": target.step,
                 "word": mutated_value,
+                "original_disassembly": orig_instr.disassemble(),
+                "mutated_disassembly": mut_instr.disassemble(),
+                "original_format": orig_instr.format.value,
+                "mutated_format": mut_instr.format.value,
+            }
+            return config, mutated_value, target.original_word
+        
+        elif kind == "INSTR_WORD_MOD_SUR":
+            # INSTR_WORD_MOD_SUR: Surgical field-level mutation
+            target = get_instr_word_sur_targets(step, self.data)
+            if not target:
+                return None, 0, 0
+            
+            # Decode instruction to understand format
+            instr = target.instruction
+            
+            # Select which field to mutate
+            surgical_field = select_surgical_field(instr, self.rng)
+            if surgical_field is None:
+                return None, 0, 0
+            
+            # Get original field value
+            original_field_value = instr.get_field_value(surgical_field)
+            
+            # Generate a new value for that field
+            new_field_value = generate_field_value(
+                surgical_field, original_field_value, instr, self.rng
+            )
+            
+            # Apply the surgical mutation
+            mutated_value = instr.encode_with_mutation(surgical_field, new_field_value)
+            
+            # Ensure the mutation actually changed something
+            if mutated_value == target.original_word:
+                return None, 0, 0
+            
+            # Decode mutated instruction for disassembly
+            mutated_instr = RiscVInstruction.from_word(mutated_value)
+            
+            # Note: Rust handler is the same as INSTR_WORD_MOD
+            config = {
+                "mutation_type": "INSTR_WORD_MOD",  # Rust handler name unchanged
+                "step": target.step,
+                "word": mutated_value,
+                # Surgical mutation details (top-level for easy access in output)
+                "surgical_field": surgical_field.value,
+                "original_field_value": original_field_value,
+                "mutated_field_value": new_field_value,
+                "original_disassembly": instr.disassemble(),
+                "mutated_disassembly": mutated_instr.disassemble(),
+                "instruction_format": instr.format.value,
+                "format_name": instr.format_name,
             }
             return config, mutated_value, target.original_word
         
         return None, 0, 0
     
-    def _check_witness_gen_failure(self, output: str) -> bool:
+    def _is_valid_rv32im_instruction(self, word: int) -> bool:
         """
-        Check if witness generation ACTUALLY failed (not just proof invalid).
+        Check if a 32-bit word is a valid RV32IM instruction.
         
-        This happens when the mutation creates an inconsistency that the
-        witness generator detects before proof generation completes.
-        
-        We must NOT match "panicked at" generically because:
-        - "witness generation failure" = actual witness fail (prover internal error)
-        - "verify segment" = proof generated but internally invalid (constraint failures)
-        
-        Both panics originate from host/src/main.rs:150 but have different meanings.
+        Ported from arguzz's insn_kind_from_decoded (rv32im.rs:55-116).
+        Checks the full (opcode, funct3, funct7) combination, not just opcode.
         """
-        # Specific patterns that indicate actual witness failures
-        witness_failure_patterns = [
-            "witness generation failure",  # Actual witness gen error from prover
-            "set(row:",   # Witness matrix conflict (inconsistent set)
-            "get(row:",   # Witness matrix read of unset value
-            "Inconsistent set",  # Explicit buffer error message
-            "Read of unset value",  # Explicit buffer error message
-        ]
+        # Bits 0-1 must be 0b11 for a 32-bit instruction
+        if (word & 0x03) != 0x03:
+            return False
         
-        for pattern in witness_failure_patterns:
-            if pattern in output:
-                return True
+        opcode = word & 0x7F
+        funct3 = (word >> 12) & 0x7
+        funct7 = (word >> 25) & 0x7F
+        
+        # R-type (opcode=0b0110011) - need specific funct3/funct7 combinations
+        if opcode == 0b0110011:
+            valid_r_type = {
+                # Base RV32I
+                (0b000, 0b0000000),  # ADD
+                (0b000, 0b0100000),  # SUB
+                (0b001, 0b0000000),  # SLL
+                (0b010, 0b0000000),  # SLT
+                (0b011, 0b0000000),  # SLTU
+                (0b100, 0b0000000),  # XOR
+                (0b101, 0b0000000),  # SRL
+                (0b101, 0b0100000),  # SRA
+                (0b110, 0b0000000),  # OR
+                (0b111, 0b0000000),  # AND
+                # RV32M extension
+                (0b000, 0b0000001),  # MUL
+                (0b001, 0b0000001),  # MULH
+                (0b010, 0b0000001),  # MULHSU
+                (0b011, 0b0000001),  # MULHU
+                (0b100, 0b0000001),  # DIV
+                (0b101, 0b0000001),  # DIVU
+                (0b110, 0b0000001),  # REM
+                (0b111, 0b0000001),  # REMU
+            }
+            return (funct3, funct7) in valid_r_type
+        
+        # I-type ALU (opcode=0b0010011) - some need specific funct7
+        if opcode == 0b0010011:
+            if funct3 == 0b001:  # SLLI
+                return funct7 == 0b0000000
+            if funct3 == 0b101:  # SRLI/SRAI
+                return funct7 in (0b0000000, 0b0100000)
+            # ADDI, SLTI, SLTIU, XORI, ORI, ANDI - funct7 is part of immediate
+            return funct3 in (0b000, 0b010, 0b011, 0b100, 0b110, 0b111)
+        
+        # I-type LOAD (opcode=0b0000011) - valid funct3 values
+        if opcode == 0b0000011:
+            return funct3 in (0b000, 0b001, 0b010, 0b100, 0b101)  # LB, LH, LW, LBU, LHU
+        
+        # S-type STORE (opcode=0b0100011) - valid funct3 values
+        if opcode == 0b0100011:
+            return funct3 in (0b000, 0b001, 0b010)  # SB, SH, SW
+        
+        # B-type BRANCH (opcode=0b1100011) - valid funct3 values
+        if opcode == 0b1100011:
+            return funct3 in (0b000, 0b001, 0b100, 0b101, 0b110, 0b111)  # BEQ, BNE, BLT, BGE, BLTU, BGEU
+        
+        # U-type: LUI (0b0110111), AUIPC (0b0010111) - any funct3 valid
+        if opcode in (0b0110111, 0b0010111):
+            return True
+        
+        # J-type: JAL (0b1101111) - any funct3 valid
+        if opcode == 0b1101111:
+            return True
+        
+        # I-type: JALR (0b1100111) - any funct3 valid (though typically 0)
+        if opcode == 0b1100111:
+            return True
+        
+        # SYSTEM (opcode=0b1110011) - specific funct3/funct7 for ECALL, EBREAK, MRET
+        if opcode == 0b1110011:
+            if funct3 == 0b000:
+                # ECALL: funct7=0, rs2=0; EBREAK: funct7=0, rs2=1; MRET: funct7=0b0011000
+                rs2 = (word >> 20) & 0x1F
+                imm_11_0 = (word >> 20) & 0xFFF
+                return imm_11_0 in (0b000000000000, 0b000000000001, 0b001100000010)
+            return False
+        
+        # MISC-MEM: FENCE (opcode=0b0001111)
+        if opcode == 0b0001111:
+            return funct3 == 0b000
         
         return False
+    
+    def _generate_valid_instr_word_mutation(self, original_word: int, max_attempts: int = 100) -> Optional[int]:
+        """
+        Generate a mutated instruction word that is valid RV32IM.
+        
+        Uses arguzz's mutation strategy (rv32im.rs:190-222):
+        - Strategy 0: Flip exactly 1 bit (bits 2-31)
+        - Strategy 1: Flip N random bits (bits 2-31)
+        - Strategy 2: Random word with bits 0-1 = 0b11
+        
+        Loops until we get a word that is:
+        1. Different from original
+        2. Valid RV32IM instruction
+        """
+        for _ in range(max_attempts):
+            strategy = self.rng.randint(0, 2)
+            
+            if strategy == 0:
+                # Strategy 0: Flip exactly 1 bit (bits 2-31)
+                bit_to_flip = self.rng.randint(2, 31)
+                new_word = original_word ^ (1 << bit_to_flip)
+            
+            elif strategy == 1:
+                # Strategy 1: Flip N random bits (bits 2-31)
+                n = self.rng.randint(1, 29)
+                bits_to_flip = self.rng.sample(range(2, 32), min(n, 30))
+                new_word = original_word
+                for bit in bits_to_flip:
+                    new_word ^= (1 << bit)
+            
+            else:
+                # Strategy 2: Random word with bits 0-1 = 0b11
+                new_word = self.rng.randint(0, 0xFFFFFFFF) | 0x03
+            
+            # Check if valid and different
+            if new_word != original_word and self._is_valid_rv32im_instruction(new_word):
+                return new_word
+        
+        # Fallback: couldn't find valid mutation in max_attempts
+        return None
+    
+    def _check_proof_generated(self, output: str, exit_code: int) -> bool:
+        """
+        Check if a proof was actually generated (even if invalid).
+        
+        From risc0 source (prover_impl.rs:271-280):
+        1. SegmentReceipt is created in memory (proof generated)
+        2. Then verify_integrity_with_context is called
+        3. If verification fails, "verify segment" error occurs
+        
+        So "verify segment" error = proof WAS generated but failed self-verification
+        Prover "status":"success" also means proof was generated (from main.rs:131-138)
+        """
+        # If process crashed (segfault), no proof was generated
+        # Python subprocess: negative signal, Shell: 128+signal
+        crash_signals_negative = (-11, -6, -8, -9, -10)
+        crash_signals_shell = (139, 134, 136, 137, 138)
+        if exit_code in crash_signals_negative or exit_code in crash_signals_shell:
+            return False
+        
+        # "verify segment" means proof WAS created but failed verification
+        if "verify segment" in output:
+            return True
+        
+        # Prover success means proof was generated
+        # NOTE: The actual JSON uses "status":"success", not "status":"ok"
+        if '"context":"Prover"' in output and '"status":"success"' in output:
+            return True
+        
+        # If we see verifier output, proof must have been generated
+        if '"context":"Verifier"' in output:
+            return True
+        
+        return False
+    
+    def _check_proof_verification_failure(self, output: str) -> bool:
+        """
+        Check if proof self-verification failed ("verify segment" panic).
+        
+        This is DIFFERENT from verifier rejection:
+        - "verify segment" = prover's internal self-check failed (proof generated but invalid)
+        - This always indicates the mutation was effective (constraints broken)
+        """
+        return "verify segment" in output
+    
+    def _extract_raw_error(self, stdout: str, stderr: str) -> List[str]:
+        """
+        Extract error messages from risc0 prover output with verified source locations.
+        
+        Each error is annotated with its exact source file and line number.
+        Only includes annotations we can verify from source code.
+        """
+        import re
+        
+        errors = []
+        
+        # Extract panic info from stderr
+        # Format: "thread 'main' panicked at host/src/main.rs:150:13:\nverify segment"
+        # - The panic location (host/src/main.rs:150) is where panic!() is called
+        # - The message "verify segment" is added at prover_impl.rs:280 via .context()
+        panic_loc_match = re.search(r"panicked at ([^:]+:\d+:\d+):", stderr)
+        panic_msg_lines = []
+        in_panic = False
+        for line in stderr.split('\n'):
+            line = line.strip()
+            if 'panicked at' in line:
+                in_panic = True
+                continue
+            if in_panic and line and not line.startswith('note:'):
+                panic_msg_lines.append(line)
+            elif line.startswith('note:'):
+                in_panic = False
+        
+        if panic_loc_match and panic_msg_lines:
+            panic_loc = panic_loc_match.group(1)
+            panic_msg = ' '.join(panic_msg_lines)
+            # "verify segment" is added at prover_impl.rs:280
+            if 'verify segment' in panic_msg:
+                errors.append(f"[prover_impl.rs:280] verify segment (internal proof verification failed)")
+            else:
+                errors.append(f"[{panic_loc}] {panic_msg}")
+        
+        # Extract address mismatch from stdout
+        # Source: ffi.cpp:113 - printf("[%lu]: txn.addr: 0x%08x, addr: 0x%08x\n", ...)
+        addr_match = re.search(r"\[(\d+)\]: txn\.addr: (0x[0-9a-fA-F]+), addr: (0x[0-9a-fA-F]+)", stdout)
+        if addr_match:
+            cycle = addr_match.group(1)
+            expected = addr_match.group(2)
+            actual = addr_match.group(3)
+            errors.append(f"[ffi.cpp:113] address mismatch at cycle {cycle}: preflight={expected}, actual={actual}")
+        
+        # Extract SKIP THROW from stdout
+        # Source: ffi.cpp:121 - printf("SKIP THROW: %s @ %s:%d\n", ...)
+        skip_match = re.search(r"SKIP THROW: ([^@]+)@ ([^\n]+)", stdout)
+        if skip_match:
+            reason = skip_match.group(1).strip()
+            location = skip_match.group(2).strip()
+            errors.append(f"[{location}] SKIP THROW: {reason}")
+        
+        return errors
     
     def _check_verifier_acceptance(self, output: str) -> bool:
         """
@@ -562,21 +902,21 @@ class A4Fuzzer:
             for f in result.failures:
                 stats.unique_constraints.add(f.constraint_loc())
         
-        # Classify outcome (mutually exclusive, priority order must match display):
+        # Classify outcome (mutually exclusive, priority order):
         # 1. ACCEPTED (bug) - verifier accepted invalid proof
-        # 2. REJECTED - constraint failures detected, proof invalid (SUCCESS!)
-        # 3. WITNESS_ERROR - witness gen failed without constraint detection
+        # 2. CRASH - process crashed (segfault, etc.)
+        # 3. REJECTED - constraint failures OR proof verification failed
         # 4. NO_EFFECT - no failures detected
         if result.verifier_accepted:
             stats.verifier_accepts += 1
         
-        if result.failures:
-            # Constraint failures detected - this is the success case!
+        if result.crashed:
+            # Process crashed - something severe happened
+            stats.crashes += 1
+        elif result.failures or result.proof_verify_failed:
+            # Constraint failures detected OR proof verification failed - mutation was effective!
             stats.successful_mutations += 1
-        elif result.witness_gen_failed:
-            # Witness generation failed without constraint failures
-            stats.witness_gen_failures += 1
-        # else: no effect (counted implicitly as total - rejected - witness_error)
+        # else: no effect (counted implicitly)
         
         stats.new_coverage_count += result.new_coverage
     
@@ -585,52 +925,127 @@ class A4Fuzzer:
         # Status indicator
         if result.verifier_accepted:
             status = "🐛"  # BUG - verifier accepted invalid proof
-        elif result.failures:
+        elif result.crashed:
+            status = "💥"  # Process crashed
+        elif result.failures or result.proof_verify_failed:
             status = "✓"  # Mutation detected - proof rejected
-        elif result.witness_gen_failed:
-            status = "⚠"  # Witness error (rare)
         else:
             status = "○"  # No effect detected
         
         bug_marker = " BUG!" if result.verifier_accepted else ""
         new_cov = f" [+{result.new_coverage} new]" if result.new_coverage > 0 else ""
         
-        # Outcome classification:
+        # Outcome classification (priority order):
         # 
-        # REJECTED = Mutation detected, proof invalid (expected success!)
-        #   - Constraint failures detected (via <constraint_fail> tags)
-        #   - Prover's internal verification fails ("verify segment")
-        #   - This is the GOAL of fuzzing - we found constraint failures
-        #
-        # WITNESS_ERROR = Witness generation itself failed (rare with FAULT_INJECTION)
-        #   - "witness generation failure" message
-        #   - Matrix conflicts (set(row:) with different values)
-        #   - This means something went wrong in witness gen, not constraint check
-        #
-        # ACCEPTED = Verifier accepted (BUG!)
-        #   - Prover succeeded, verifier succeeded
-        #   - This should NEVER happen with proper mutations
-        #
+        # ACCEPTED = Verifier accepted (BUG!) - soundness violation
+        # CRASH = Process crashed (segfault, etc.) - severe mutation effect
+        # REJECTED = Proof invalid - constraint failures OR verify segment failed
         # NO_EFFECT = No failures detected
-        #   - Mutation may not have affected checked constraints
         #
         if result.verifier_accepted:
             outcome = "ACCEPTED"  # BUG: soundness violation!
-        elif result.failures:
-            outcome = "REJECTED"  # Success! Mutation detected, proof invalid
-        elif result.witness_gen_failed:
-            outcome = "WITNESS_ERROR"  # Witness gen problem (not constraint fail)
+        elif result.crashed:
+            outcome = "CRASH"  # Process crashed (segfault, etc.)
+        elif result.failures or result.proof_verify_failed:
+            outcome = "REJECTED"  # Mutation detected, proof invalid
         else:
             outcome = "NO_EFFECT"  # No failures detected
+        
+        # Proof status for clarity
+        proof_status = ""
+        if result.proof_generated:
+            proof_status = " [proof:GENERATED]"
+        elif result.crashed:
+            proof_status = " [proof:NOT_GENERATED]"
         
         # Basic info line
         print(f"  [{num}] {status} {result.kind} @ step {result.step}: "
               f"{len(result.failures)} failures, {result.execution_time_ms:.0f}ms, "
-              f"outcome: {outcome}"
-              f"{new_cov}{bug_marker}")
+              f"outcome: {outcome}, exit: {result.exit_code}"
+              f"{proof_status}{new_cov}{bug_marker}")
         
         # Value change info
         print(f"       Value: 0x{result.original_value:08X} -> 0x{result.mutated_value:08X}")
+        
+        # Show instruction details for INSTR_WORD_MOD mutations
+        if result.kind == "INSTR_WORD_MOD_SUR" and result.config:
+            surgical_field = result.config.get("surgical_field", "unknown")
+            orig_field_val = result.config.get("original_field_value", "?")
+            mut_field_val = result.config.get("mutated_field_value", "?")
+            orig_disasm = result.config.get("original_disassembly", "")
+            mut_disasm = result.config.get("mutated_disassembly", "")
+            print(f"       Surgical: {surgical_field} = {orig_field_val} -> {mut_field_val}")
+            if orig_disasm:
+                print(f"       Original: {orig_disasm}")
+            if mut_disasm:
+                print(f"       Mutated:  {mut_disasm}")
+        elif result.kind == "INSTR_WORD_MOD_FULL" and result.config:
+            orig_disasm = result.config.get("original_disassembly", "")
+            mut_disasm = result.config.get("mutated_disassembly", "")
+            orig_fmt = result.config.get("original_format", "")
+            mut_fmt = result.config.get("mutated_format", "")
+            if orig_disasm:
+                print(f"       Original: {orig_disasm}")
+            if mut_disasm:
+                print(f"       Mutated:  {mut_disasm}")
+            if orig_fmt != mut_fmt:
+                print(f"       Format changed: {orig_fmt} -> {mut_fmt}")
+        elif result.kind == "INSTR_TYPE_MOD" and result.config:
+            # Show decoded major/minor values with instruction names
+            info = result.config.get("_info", {})
+            orig_major = info.get("original_major", "?")
+            orig_minor = info.get("original_minor", "?")
+            orig_kind = info.get("original_kind", "?")
+            mut_kind = info.get("mutated_kind", "?")
+            mut_major = result.config.get("major", "?")
+            mut_minor = result.config.get("minor", "?")
+            is_valid = info.get("is_valid_combination", True)
+            valid_marker = "" if is_valid else " ⚠INVALID"
+            # Format: "InstructionName [major=X, minor=Y]"
+            print(f"       Original: {orig_kind} [major={orig_major}, minor={orig_minor}]")
+            print(f"       Mutated:  {mut_kind} [major={mut_major}, minor={mut_minor}]{valid_marker}")
+        elif result.kind == "COMP_OUT_MOD" and result.config:
+            # Show destination register (rd) being mutated
+            info = result.config.get("_info", {})
+            reg_name = info.get("register_name", "?")
+            reg_idx = info.get("register_idx", "?")
+            print(f"       Destination: rd = x{reg_idx} ({reg_name})")
+        elif result.kind == "LOAD_VAL_MOD" and result.config:
+            # Show destination register being mutated (load result)
+            info = result.config.get("_info", {})
+            reg_name = info.get("register_name", "?")
+            reg_idx = info.get("register_idx", "?")
+            print(f"       Load destination: rd = x{reg_idx} ({reg_name})")
+        elif result.kind == "STORE_OUT_MOD" and result.config:
+            # Show memory address being written to
+            info = result.config.get("_info", {})
+            mem_addr = info.get("memory_byte_addr", "?")
+            print(f"       Store address: {mem_addr}")
+        elif result.kind == "PRE_EXEC_REG_MOD" and result.config:
+            # Show register being mutated
+            info = result.config.get("_info", {})
+            reg_name = info.get("register_name", "?")
+            reg_idx = info.get("register_idx", "?")
+            is_write = info.get("is_write", False)
+            strategy = result.config.get("strategy", "?")
+            op = "WRITE" if is_write else "READ"
+            print(f"       Register: x{reg_idx} ({reg_name}), {op}, strategy={strategy}")
+        elif result.kind == "MEM_VAL_MOD" and result.config:
+            # Show memory transaction type and address
+            # Note: "Value" line above shows original -> mutated value
+            # This line shows WHERE in memory and WHAT TYPE of transaction
+            info = result.config.get("_info", {})
+            txn_type = info.get("txn_type", "?")
+            byte_addr = info.get("byte_addr", "?")
+            is_write = info.get("is_write", False)
+            op = "WRITE" if is_write else "READ"
+            print(f"       Transaction: {txn_type} ({op}) at address {byte_addr}")
+        
+        # Show raw errors from risc0 for accurate outcome tracing (exact text, no reformatting)
+        if result.raw_errors:
+            print(f"       zkVM errors ({len(result.raw_errors)} lines):")
+            for err in result.raw_errors:
+                print(f"         • {err}")
         
         # Constraint failure details (grouped by constraint location)
         if result.failures:
@@ -650,6 +1065,9 @@ class A4Fuzzer:
                 print(f"         - {loc}{count_str}")
                 print(f"           cycle={first.cycle}, step={first.step}, "
                       f"pc=0x{first.pc:08X}, major={first.major}, minor={first.minor}")
+        elif result.proof_verify_failed:
+            # Proof verification failed but no constraint tags emitted
+            print(f"       Proof verification failed (no local constraint failures)")
         elif outcome == "NO_EFFECT":
             # No constraint failures detected - this is unusual and worth investigating
             print(f"       ⚠ No constraint failures detected - possible edge case or parsing issue")
@@ -671,17 +1089,17 @@ class A4Fuzzer:
         
         # Outcome summary (mutually exclusive categories)
         # - successful_mutations: REJECTED (constraint failures detected, proof invalid)
-        # - witness_gen_failures: WITNESS_ERROR (witness gen itself failed)
+        # - crashes: CRASH (process crashed, segfault, etc.)
         # - verifier_accepts: ACCEPTED (BUG!)
         # - no_effect: NO_EFFECT (no failures)
         # - skipped: No valid target found after retries
         rejected = stats.successful_mutations  # Mutation detected, proof rejected
-        witness_error = stats.witness_gen_failures  # Witness gen problem
-        no_effect = stats.total_mutations - rejected - witness_error
+        crashes = stats.crashes  # Process crashed
+        no_effect = stats.total_mutations - rejected - crashes
         
         print(f"\nOutcome breakdown:")
         print(f"  REJECTED (mutation detected): {rejected}")
-        print(f"  WITNESS_ERROR:                {witness_error}")
+        print(f"  CRASH (segfault, etc.):       {crashes}")
         print(f"  NO_EFFECT:                    {no_effect}")
         print(f"  ACCEPTED (BUG!):              {stats.verifier_accepts} {'🐛' if stats.verifier_accepts > 0 else ''}")
         print(f"  SKIPPED:                      {stats.skipped_mutations}")

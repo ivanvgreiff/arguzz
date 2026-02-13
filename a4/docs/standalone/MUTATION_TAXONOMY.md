@@ -313,54 +313,121 @@ This section documents EVERY mutation function (existing, partial, and planned) 
 
 ---
 
-### 3.7 INSTR_WORD_MOD
+### 3.7 INSTR_WORD_MOD (Overview)
+
+There are **two variants** of instruction word mutation, each with distinct strategies and purposes:
+
+| Variant | File | Strategy | Produces Invalid Instructions? |
+|---------|------|----------|-------------------------------|
+| **INSTR_WORD_MOD_FULL** | `instr_word_mod.py` | Full 32-bit word mutation | ❌ No (Arguzz-aligned validation) |
+| **INSTR_WORD_MOD_SUR** | `instr_word_mod_sur.py` | Surgical field-level mutation | ✅ Yes (intentional for constraint coverage) |
+
+---
+
+### 3.7.1 INSTR_WORD_MOD_FULL
 
 | Property | Value |
 |----------|-------|
 | **Status** | ✅ Implemented |
 | **File** | `instr_word_mod.py` |
 | **Target Field(s)** | `txns[].word` AND `txns[].prev_word` (both set to same mutated value) |
-| **Scope** | Instruction fetch transactions at instruction and ECALL cycles |
-| **Expected Constraint Failures** | Instruction decoding constraints (VerifyOpcodeF3F7) |
+| **Scope** | Instruction fetch transactions at instruction cycles (major 0-6) |
+| **Mutation Strategy** | Arguzz-aligned: bit flips + random words with validation loop |
+| **Produces Invalid Instructions** | ❌ No - always generates valid RV32IM |
+| **Expected Constraint Failures** | VerifyOpcodeF3, VerifyOpcodeF3F7, instruction execution constraints |
 | **Rust Support** | ✅ Yes (in mod.rs) |
-| **Can Be Verified Against Arguzz** | ✅ Yes (Arguzz has INSTR_WORD_MOD) |
+| **Verified Against Arguzz** | ✅ Yes |
 
-**What It Covers:**
+#### Purpose & Philosophy
 
-1. **Instruction cycles (major 0-6):**
-   - MISC0 (major=0): ALU operations (ADD, SUB, XOR, OR, AND, etc.)
-   - MISC1 (major=1): Compare and branch (SLT, BEQ, BNE, BLT, etc.)
-   - MISC2 (major=2): LUI, AUIPC, JAL, JALR
-   - MUL0 (major=3): Multiplication
-   - DIV0 (major=4): Division
-   - MEM0 (major=5): Load instructions
-   - MEM1 (major=6): Store instructions
+INSTR_WORD_MOD_FULL tests what happens when the **entire instruction word** is changed to a **different but valid** RV32IM instruction. This simulates scenarios where:
+- Memory corruption changes an instruction
+- An attacker replaces one valid instruction with another
+- The wrong instruction is fetched
 
-2. **ECALL cycles (major=8):**
-   - System calls fetch the ECALL instruction (0x00000073)
-   - Included to test ECALL handling when instruction word is mutated
+By ensuring the mutated instruction is always valid, this mutation focuses on testing **instruction execution constraints** and **opcode/funct mismatch detection** rather than invalid instruction handling.
 
-**What It EXCLUDES:**
+#### Mutation Strategy (Arguzz-Aligned)
+
+The mutation strategy is directly ported from Arguzz's `rv32im.rs`:
+
+```python
+def _generate_valid_full_word_mutation(original_word, max_attempts=100):
+    for _ in range(max_attempts):
+        selector = random(0, 2)
+        if selector == 0:
+            new_word = single_bit_flip(original_word)      # Flip 1 bit (not bits 0-1)
+        elif selector == 1:
+            new_word = multi_bit_flip(original_word)       # Flip 1-29 random bits
+        else:
+            new_word = random_word_with_bits_0_1_set()     # Random word with bits[1:0]=0b11
+        
+        if new_word != original_word and is_valid_rv32im(new_word):
+            return new_word
+    return None  # Failed after max_attempts
+```
+
+**Key Properties:**
+1. **Bits 0-1 are protected**: Always `0b11` (required for 32-bit RISC-V instructions)
+2. **Validation loop**: Ensures output is always a valid RV32IM instruction
+3. **Three strategies** with equal probability:
+   - Single bit flip (1 bit in positions 2-31)
+   - Multi bit flip (1-29 bits in positions 2-31)
+   - Completely random valid word
+
+#### Validation Function
+
+```python
+def _is_valid_rv32im_instruction(word):
+    if (word & 0x03) != 0x03:  # Must be 32-bit instruction
+        return False
+    
+    instr = RiscVInstruction.from_word(word)
+    return instr.format != InstrFormat.UNKNOWN
+```
+
+This validates:
+- Correct opcode (bits 0-6 form a recognized RV32IM opcode)
+- Valid funct3 for the opcode (where applicable)
+- Valid funct7 for R-type instructions
+
+#### What It Covers
+
+| Cycle Type | Major | Included | Reason |
+|------------|-------|----------|--------|
+| MISC0 | 0 | ✅ | ALU ops (ADD, SUB, XOR, etc.) |
+| MISC1 | 1 | ✅ | Compare/branch (SLT, BEQ, etc.) |
+| MISC2 | 2 | ✅ | LUI, AUIPC, JAL, JALR |
+| MUL0 | 3 | ✅ | Multiplication |
+| DIV0 | 4 | ✅ | Division |
+| MEM0 | 5 | ✅ | Load instructions |
+| MEM1 | 6 | ✅ | Store instructions |
+| CONTROL0 | 7 | ❌ | No instruction fetch |
+| ECALL0 | 8 | ❌ | System calls (different handling) |
+| POSEIDON | 9-10 | ❌ | No transactions |
+| SHA | 11 | ❌ | No transactions |
+
+#### What It EXCLUDES
 
 | Exclusion | Reason |
 |-----------|--------|
-| **Step 0** | Bootloader initialization (AUIPC at 0xC0000000); same instruction every run; 16,574 cycles overhead |
-| **CONTROL cycles (major=7)** | No instruction fetch - system state management |
-| **POSEIDON cycles (major=9-10)** | No transactions - cryptographic operations |
-| **SHA cycles (major=11)** | No transactions - hashing operations |
-| **Other memory transactions** | Covered by MEM_VAL_MOD |
-| **Register transactions** | Covered by PRE_EXEC_REG_MOD |
+| **Step 0** | Bootloader init (AUIPC at 0xC0000000); 16,574 cycles; not user code |
+| **Invalid instructions** | Validation loop ensures only valid RV32IM |
+| **Field-specific mutations** | Covered by INSTR_WORD_MOD_SUR |
 
-**Step 0 Details:**
+#### Terminal Output Format
 
-Step 0 is excluded because:
-- **Instruction**: `AUIPC x3, 0x40011000` at kernel address `0xC0000000`
-- **Purpose**: Sets up global pointer (gp) for RISC Zero bootloader
-- **Cycles**: 16,574 cycles (massive overhead to iterate through)
-- **Value**: Same instruction every execution (not input-dependent)
-- **Verdict**: Low fuzzing value, not user program code
+```
+INSTR_WORD_MOD_FULL @ step 1234: 3 failures, 5432ms, outcome: REJECTED [+2 new]
+  Original: ADD x10, x11, x12 (R-type)
+  Mutated:  SUB x10, x11, x12 (R-type)
+  Format change: R-type -> R-type
+  Constraints hit (3 unique):
+    - VerifyOpcodeF3F7@inst.zir:97
+    - ...
+```
 
-**Why Both `word` AND `prev_word` Are Set:**
+#### Why Both `word` AND `prev_word` Are Set
 
 The Rust handler sets both fields to the same mutated value:
 ```rust
@@ -373,7 +440,163 @@ This is intentional because instruction fetch is a READ transaction, and for REA
 2. But the circuit now "sees" a different instruction word
 3. This causes **instruction decoding constraints** to fail
 
-If we only changed `word` but not `prev_word`, the IsRead constraint would fail instead of instruction decoding. This mutation is specifically designed to test instruction decoding logic, not memory consistency. Memory consistency (IsRead) is already tested by MEM_VAL_MOD on other memory transactions.
+---
+
+### 3.7.2 INSTR_WORD_MOD_SUR (Surgical)
+
+| Property | Value |
+|----------|-------|
+| **Status** | ✅ Implemented |
+| **File** | `instr_word_mod_sur.py` |
+| **Target Field(s)** | Individual fields within `txns[].word` |
+| **Scope** | Instruction fetch transactions at instruction cycles (major 0-6) |
+| **Mutation Strategy** | Surgical: mutate ONE specific field per mutation |
+| **Produces Invalid Instructions** | ✅ Yes (intentional - tests more constraints) |
+| **Expected Constraint Failures** | Field-specific (see table below) |
+| **Rust Support** | ✅ Yes (reuses INSTR_WORD_MOD handler in mod.rs) |
+
+#### Purpose & Philosophy
+
+INSTR_WORD_MOD_SUR tests what happens when **specific fields** within an instruction are corrupted while others remain intact. This provides:
+1. **Fine-grained constraint coverage**: Know exactly which field triggered which constraint
+2. **Field-constraint correlation**: Build a map of which fields affect which constraints
+3. **Invalid instruction testing**: Intentionally create invalid opcode/funct combinations to test constraint completeness
+
+**Key difference from FULL**: SUR does NOT validate instruction validity because invalid combinations (e.g., LOAD with invalid funct3) can reveal constraint gaps that valid-only mutations would miss.
+
+#### Mutable Fields
+
+| Field | Bits | Applies To | Description |
+|-------|------|------------|-------------|
+| `opcode` | [6:0] | All formats | Instruction type identifier |
+| `rd` | [11:7] | R, I, U, J | Destination register |
+| `rs1` | [19:15] | R, I, S, B | Source register 1 |
+| `rs2` | [24:20] | R, S, B | Source register 2 |
+| `funct3` | [14:12] | R, I, S, B | Operation variant |
+| `funct7` | [31:25] | R only | Extended operation |
+| `imm` | Various | I, S, B, U, J | Immediate value |
+
+#### Value Generation Strategies Per Field
+
+| Field | Strategy | Can Produce Invalid? |
+|-------|----------|---------------------|
+| `opcode` | 70% valid opcodes, 30% random [0,127] | ✅ Yes (30% chance) |
+| `rd` | Random [0,31] | ❌ No (all registers valid) |
+| `rs1` | Random [0,31] | ❌ No (all registers valid) |
+| `rs2` | Random [0,31] | ❌ No (all registers valid) |
+| `funct3` | Random [0,7] | ✅ Yes (invalid combos) |
+| `funct7` | 60% common (0x00,0x20,0x01), 40% random | ✅ Yes (invalid combos) |
+| `imm` | Random within format-specific range | ❌ No (any value valid) |
+
+#### Why Invalid Instructions Are Allowed
+
+From actual test results:
+```
+Surgical: funct3 = 0 -> 3
+Original: ADDI x23, x10, 0
+Mutated:  SLTIU x23, x10, 0
+Constraints hit: VerifyOpcodeF3@inst.zir:97
+```
+
+The constraint `VerifyOpcodeF3` verifies that the instruction's funct3 **matches what was recorded in the preflight trace**, not that the instruction is valid. This distinction is crucial:
+
+- **FULL** tests: "What if a different valid instruction is executed?"
+- **SUR** tests: "What if a specific field doesn't match the recorded trace?"
+
+Invalid instruction combinations can hit **different constraints** than valid ones, providing better coverage of the constraint system.
+
+#### Expected Constraints Per Field
+
+| Field Mutated | Primary Constraints Triggered |
+|---------------|------------------------------|
+| `opcode` | VerifyOpcodeF3, VerifyOpcodeF3F7, format detection |
+| `rd` | Register addressing, result storage |
+| `rs1` | Register read, operand fetch |
+| `rs2` | Register read, operand fetch |
+| `funct3` | VerifyOpcodeF3, operation selection |
+| `funct7` | VerifyOpcodeF3F7, operation selection (R-type) |
+| `imm` | Immediate decode, address calculation, branch targets |
+
+#### RISC-V Instruction Format Reference
+
+```
+R-type: [funct7:7][rs2:5][rs1:5][funct3:3][rd:5][opcode:7]
+I-type: [imm[11:0]:12][rs1:5][funct3:3][rd:5][opcode:7]
+S-type: [imm[11:5]:7][rs2:5][rs1:5][funct3:3][imm[4:0]:5][opcode:7]
+B-type: [imm[12|10:5]:7][rs2:5][rs1:5][funct3:3][imm[4:1|11]:5][opcode:7]
+U-type: [imm[31:12]:20][rd:5][opcode:7]
+J-type: [imm[20|10:1|11|19:12]:20][rd:5][opcode:7]
+```
+
+#### Terminal Output Format
+
+```
+INSTR_WORD_MOD_SUR @ step 3308: 1 failures, 18194ms, outcome: REJECTED [+1 new]
+  Surgical: funct3 = 0 -> 3
+  Original: ADDI x23, x10, 0
+  Mutated:  SLTIU x23, x10, 0
+  Constraints hit (1 unique):
+    - VerifyOpcodeF3@inst.zir:97
+```
+
+#### Disassembly Support
+
+The `RiscVInstruction` class provides full disassembly with proper mnemonics:
+
+| Format | Mnemonic Resolution |
+|--------|---------------------|
+| R-type | funct7 + funct3 → ADD/SUB/SLL/SLT/SLTU/XOR/SRL/SRA/OR/AND/MUL/etc. |
+| I-type ALU | funct3 → ADDI/SLTI/SLTIU/XORI/ORI/ANDI/SLLI/SRLI/SRAI |
+| I-type LOAD | funct3 → LB/LH/LW/LBU/LHU |
+| I-type JALR | JALR |
+| S-type | funct3 → SB/SH/SW |
+| B-type | funct3 → BEQ/BNE/BLT/BGE/BLTU/BGEU |
+| U-type | opcode → LUI/AUIPC |
+| J-type | JAL |
+
+---
+
+### 3.7.3 Comparison: FULL vs SUR
+
+| Aspect | INSTR_WORD_MOD_FULL | INSTR_WORD_MOD_SUR |
+|--------|--------------------|--------------------|
+| **Granularity** | Whole 32-bit word | Individual field |
+| **Validation** | ✅ Always valid RV32IM | ❌ May be invalid |
+| **Strategy** | Arguzz-aligned (bit flips + random) | Field-specific value gen |
+| **Constraint Focus** | Execution constraints | Field-specific constraints |
+| **Trackability** | Original/mutated word | Which field, old/new value |
+| **Use Case** | "Wrong instruction executed" | "Field mismatch detection" |
+| **Coverage Style** | Broad (any valid instruction) | Deep (specific field combos) |
+
+#### When to Use Each
+
+| Scenario | Use |
+|----------|-----|
+| Testing overall instruction validation | FULL |
+| Building field-constraint correlation map | SUR |
+| Fuzzing with valid-only mutations | FULL |
+| Testing constraint completeness | SUR |
+| Replicating Arguzz behavior | FULL |
+| Fine-grained coverage analysis | SUR |
+
+---
+
+### 3.7.4 Common Properties (Both Variants)
+
+**What Both Cover:**
+- Instruction cycles (major 0-6): MISC0, MISC1, MISC2, MUL0, DIV0, MEM0, MEM1
+- Instruction fetch transaction (first memory READ of cycle)
+
+**What Both EXCLUDE:**
+
+| Exclusion | Reason |
+|-----------|--------|
+| **Step 0** | Bootloader init; not user code |
+| **CONTROL cycles (major=7)** | No instruction fetch |
+| **ECALL cycles (major=8)** | Different handling (fixed ECALL opcode) |
+| **POSEIDON/SHA cycles** | No transactions |
+| **Other memory transactions** | Covered by MEM_VAL_MOD |
+| **Register transactions** | Covered by PRE_EXEC_REG_MOD |
 
 **Branch/Jump Handling:**
 
@@ -381,11 +604,10 @@ For branches (BEQ, BNE, BLT, BGE, etc.) and jumps (JAL, JALR):
 - `cycle.pc` stores the NEXT PC (branch target or sequential)
 - We use `cycle.txn_idx` directly to find the instruction fetch
 - This correctly handles all instruction types regardless of control flow
-- The old approach `(cycle.pc - 4) / 4` was buggy for taken branches and jumps
 
 **Relationship to Other Mutations:**
-- **Fills the gap left by MEM_VAL_MOD**: MEM_VAL_MOD explicitly excludes instruction fetch with comment "Covered by INSTR_WORD_MOD"
-- **Complementary to INSTR_TYPE_MOD**: INSTR_TYPE_MOD changes `cycles[].major/minor`; INSTR_WORD_MOD changes the actual instruction bits in `txns[].word`
+- **Fills gap left by MEM_VAL_MOD**: MEM_VAL_MOD explicitly excludes instruction fetch
+- **Complementary to INSTR_TYPE_MOD**: INSTR_TYPE_MOD changes `cycles[].major/minor`; these change `txns[].word`
 
 ---
 
@@ -682,7 +904,7 @@ For branches (BEQ, BNE, BLT, BGE, etc.) and jumps (JAL, JALR):
 |-------|------|------------|------|
 | `addr` | u32 | ❌ NONE | TXN_ADDR_MOD |
 | `cycle` | u32 | ❌ NONE | TXN_CYCLE_PHASE_MOD |
-| `word` | u32 | ✅ Multiple (see §5) | INSTR_WORD_MOD, REG_TXN_NON_INSN_MOD |
+| `word` | u32 | ✅ Multiple (see §5) | INSTR_WORD_MOD_FULL, INSTR_WORD_MOD_SUR, REG_TXN_NON_INSN_MOD |
 | `prev_cycle` | u32 | ❌ NONE | TXN_PREV_CYCLE_MOD |
 | `prev_word` | u32 | ❌ NONE | TXN_PREV_WORD_MOD |
 
@@ -735,7 +957,7 @@ This section provides complete coverage analysis of the `txns[].word` field acro
 
 | Context | Covered By | Status |
 |---------|------------|--------|
-| **Instruction Fetch** (first READ at instruction/ECALL cycle) | INSTR_WORD_MOD | ✅ Implemented |
+| **Instruction Fetch** (first READ at instruction cycle) | INSTR_WORD_MOD_FULL, INSTR_WORD_MOD_SUR | ✅ Implemented |
 | Memory READ at load (major 5) | MEM_VAL_MOD (load_mem_read) | ✅ Implemented |
 | Memory READ at store (major 6) - RMW read | MEM_VAL_MOD (store_rmw_read) | ✅ Implemented |
 | Memory WRITE at store (major 6) - RMW write | STORE_OUT_MOD | ✅ Implemented |
@@ -746,7 +968,7 @@ This section provides complete coverage analysis of the `txns[].word` field acro
 
 | Mutation | What It Explicitly Excludes | Why |
 |----------|----------------------------|-----|
-| MEM_VAL_MOD | Instruction fetch (`_is_instruction_fetch()`) | Covered by INSTR_WORD_MOD |
+| MEM_VAL_MOD | Instruction fetch (`_is_instruction_fetch()`) | Covered by INSTR_WORD_MOD_FULL/SUR |
 | MEM_VAL_MOD | Store memory writes (`major == 6 && is_write`) | Covered by STORE_OUT_MOD |
 | MEM_VAL_MOD | Register transactions (address check) | Covered by PRE_EXEC_REG_MOD |
 | PRE_EXEC_REG_MOD | Non-instruction cycles (major 7+) | Different execution context |
@@ -762,7 +984,7 @@ This section provides complete coverage analysis of the `txns[].word` field acro
 
 | Gap ID | Description | Mutation to Implement | Notes |
 |--------|-------------|----------------------|-------|
-| GAP-TW-1 | ~~Instruction fetch READ~~ | ~~INSTR_WORD_MOD~~ | ✅ **Implemented** |
+| GAP-TW-1 | ~~Instruction fetch READ~~ | ~~INSTR_WORD_MOD~~ | ✅ **Implemented as INSTR_WORD_MOD_FULL and INSTR_WORD_MOD_SUR** |
 | GAP-TW-2 | Register txns at non-instruction cycles | REG_TXN_NON_INSN_MOD | Verify if any exist first |
 
 ### 6.2 Full Field Gaps
@@ -794,20 +1016,21 @@ This section provides complete coverage analysis of the `txns[].word` field acro
 
 ### 7.1 Implemented (Ready to Use)
 
-| Mutation | File | Verified |
-|----------|------|----------|
-| INSTR_TYPE_MOD | `instr_type_mod.py` | ✅ Yes |
-| COMP_OUT_MOD | `comp_out_mod.py` | ✅ Yes |
-| LOAD_VAL_MOD | `load_val_mod.py` | ✅ Yes |
-| STORE_OUT_MOD | `store_out_mod.py` | ✅ Yes |
-| PRE_EXEC_REG_MOD | `pre_exec_reg_mod.py` | ✅ Yes |
-| MEM_VAL_MOD | `mem_val_mod.py` | ❌ Standalone-only |
+| Mutation | File | Verified | Notes |
+|----------|------|----------|-------|
+| INSTR_TYPE_MOD | `instr_type_mod.py` | ✅ Yes | |
+| COMP_OUT_MOD | `comp_out_mod.py` | ✅ Yes | |
+| LOAD_VAL_MOD | `load_val_mod.py` | ✅ Yes | |
+| STORE_OUT_MOD | `store_out_mod.py` | ✅ Yes | |
+| PRE_EXEC_REG_MOD | `pre_exec_reg_mod.py` | ✅ Yes | |
+| MEM_VAL_MOD | `mem_val_mod.py` | ❌ Standalone-only | |
+| **INSTR_WORD_MOD_FULL** | `instr_word_mod.py` | ✅ Yes | Full 32-bit word, Arguzz-aligned, valid instructions only |
+| **INSTR_WORD_MOD_SUR** | `instr_word_mod_sur.py` | ✅ Yes | Surgical field-level, may produce invalid instructions |
 
 ### 7.2 To Implement
 
 | Priority | Mutation | File | Risk | Notes |
 |----------|----------|------|------|-------|
-| ~~🔴 **Highest**~~ | ~~INSTR_WORD_MOD~~ | ~~`instr_word_mod.py`~~ | ~~Low~~ | ✅ **Implemented** |
 | 🔴 High | TXN_PREV_WORD_MOD | `txn_prev_word_mod.py` | Low | Tests IsRead constraint |
 | 🔴 High | TXN_PREV_CYCLE_MOD | `txn_prev_cycle_mod.py` | Low | Tests memory ordering |
 | 🟡 Medium | TXN_ADDR_MOD | `txn_addr_mod.py` | High | May crash witgen |
