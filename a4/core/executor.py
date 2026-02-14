@@ -134,6 +134,23 @@ class MutationExecutionResult:
     failures: List[ConstraintFailure]
 
 
+def run_baseline(host_binary: str, host_args: List[str]) -> str:
+    """
+    Run the host without any mutation (no A4_MUTATION_CONFIG, no CONSTRAINT_CONTINUE).
+
+    Used for Phase 0.2 baseline: valid witness should produce no <constraint_fail> lines.
+    Returns combined stdout+stderr. Call parse_all_constraint_failures(output) to verify zero.
+    """
+    cmd = [host_binary] + host_args
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        env=dict(os.environ),  # Do not add A4_MUTATION_CONFIG or CONSTRAINT_CONTINUE
+    )
+    return result.stdout + result.stderr
+
+
 def run_a4_mutation(
     host_binary: str,
     host_args: List[str],

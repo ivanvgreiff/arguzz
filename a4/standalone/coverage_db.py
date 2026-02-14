@@ -16,7 +16,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from a4.core.constraint_parser import ConstraintFailure
 
@@ -397,7 +397,52 @@ class CoverageDB:
             total_mutations=row['total_mutations'],
             unique_constraints=row['unique_constraints'],
         )
-    
+
+    def get_last_campaign_id(self) -> Optional[int]:
+        """Return the most recent campaign id, or None if no campaigns exist."""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT id FROM campaigns ORDER BY id DESC LIMIT 1")
+        row = cursor.fetchone()
+        return int(row["id"]) if row else None
+
+    def get_distinct_context_ids_for_campaign(self, campaign_id: int) -> Set[Tuple[str, int, int]]:
+        """
+        Return the set of distinct (constraint_loc, major, minor) for all failures in a campaign.
+
+        Used for Phase 0.2: K_total = len(get_distinct_context_ids_for_campaign(cid)).
+        """
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT DISTINCT f.constraint_loc, f.major, f.minor
+            FROM failures f
+            JOIN mutations m ON f.mutation_id = m.id
+            WHERE m.campaign_id = ?
+        """, (campaign_id,))
+        return {(row["constraint_loc"], row["major"], row["minor"]) for row in cursor.fetchall()}
+
+    def get_distinct_context_id_counts_per_mutation(self, campaign_id: int) -> List[Tuple[int, int]]:
+        """
+        Return [(mutation_id, distinct_context_id_count)] for each mutation in the campaign.
+
+        Used for Phase 0.2 per-run stats (min/max/mean distinct context_id per run).
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT id FROM mutations WHERE campaign_id = ? ORDER BY id",
+            (campaign_id,),
+        )
+        mutation_ids = [row["id"] for row in cursor.fetchall()]
+        result = []
+        for mid in mutation_ids:
+            cursor.execute(
+                "SELECT constraint_loc, major, minor FROM failures WHERE mutation_id = ?",
+                (mid,),
+            )
+            rows = cursor.fetchall()
+            distinct = len({(r["constraint_loc"], r["major"], r["minor"]) for r in rows})
+            result.append((mid, distinct))
+        return result
+
     def get_mutations_hitting_constraint(self, constraint_loc: str) -> List[MutationRecord]:
         """Get all mutations that hit a specific constraint location"""
         cursor = self.conn.cursor()

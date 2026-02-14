@@ -8,6 +8,55 @@ This document is a **fact-based, source-code-grounded** implementation plan for 
 
 ---
 
+## 0. Decisions: Bucket Necessity and Touch Accuracy
+
+### 0.1 Do we need step buckets?
+
+**What we need to size**
+
+- **Per run**: Number of *distinct* coverage keys produced in a single witness-generation pass. Keys are either `(constraint_loc, major, minor)` or `(constraint_loc, major, minor, step_bucket)` with `step_bucket = step // B`.
+- **Per campaign**: Cumulative distinct keys over all runs (global bitmap union).
+- **Bitmap**: If we use a fixed `MAP_SIZE` (e.g. 65536), then with `K` distinct keys we get approximate collision count ~ `K² / (2 * MAP_SIZE)` when hashing into the bitmap. Too many collisions merge different contexts into the same bucket (loss of guidance); too few keys and we don’t need step at all.
+
+**Source-code bounds**
+
+- **EQZ sites**: `steps.cpp` has **1912** EQZ call sites (grep count). Each has a unique `loc` string.
+- **Major/minor**: `exec_Top` (steps.cpp lines 14596–14749) dispatches on `OneHot_13` for major: `if (x19._super[0]) exec_Misc0(...); else if (x19._super[1]) exec_Misc1(...); ...` So **only one** major branch runs per cycle. Within each component (e.g. `exec_Div0` at 1628), dispatch is on `minorOnehot` (eight arms). So per cycle we execute one major and a subset of minors; each EQZ is only reached when its branch is taken.
+- **Without step**: Distinct keys per run are at most the set of `(loc, major, minor)` that ever appear. Each `loc` is tied to one or a few components, so each loc is paired with a limited set of (major, minor). Upper bound is on the order of 1912 × (max (major,minor) pairs per loc), which in practice is much smaller (many locs share the same major, e.g. all Div0 EQZs share major=4). A plausible upper bound for distinct `(loc, major, minor)` in one run is **low thousands to low tens of thousands** (e.g. 2k–15k).
+- **With step_bucket**: If we add `step_bucket = step // B` with B=64 and ~20k steps, we have ~313 buckets. Then distinct keys could be up to (distinct (loc, major, minor)) × 313 in the worst case (every constraint in every bucket). That could reach **hundreds of thousands** of keys; with MAP_SIZE=65536 we’d have heavy collisions.
+
+**Conclusion and placement**
+
+- **Phase I (and Phase 0)**: Implement coverage **without** step_bucket: key = `(constraint_loc, major, minor)` only. That keeps the key space small and avoids collisions for a 64k bitmap.
+- **When to decide on buckets**: In **Phase 0.2** we can **measure** from existing failure data (and later from touch data): for a few runs and for a short campaign, compute the number of distinct `(constraint_loc(), major, minor)` per run and total. Use that to:
+  1. Confirm that without step_bucket the distinct key count stays below a threshold (e.g. &lt; 20k) so that a 64k bitmap has acceptable collision rate.
+  2. If we later want location-aware coverage (step region), add step_bucket in a follow-up and either increase MAP_SIZE or accept more collisions; the same measurement (with step_bucket) gives the formula: expected collisions ≈ `K² / (2 * MAP_SIZE)`.
+- **Phase 0.1**: Do **not** implement step_bucket. Add `context_id()` as `(constraint_loc(), major, minor)` only; add optional `context_id_with_step_bucket(B)` in the same helper for future use. Phase 0.2 includes the sizing measurement and a short note on “bucket necessity” so we have data before Phase 3.
+
+### 0.2 Is “EQZ called” equivalent to “constraint active”?
+
+**Risk**: In some AIR designs, constraints are enforced as `selector * expr = 0`. If the generated code always evaluates `selector * expr` and then calls EQZ on that product, then EQZ would be invoked even when selector=0 (the value would be 0). We would then mark “touched” for inactive constraints (overcount).
+
+**What the generated code actually does (steps.cpp)**
+
+- **Top-level dispatch**: `exec_Top` (lines 14596–14749) gets major/minor from `INVOKE_EXTERN(ctx,getMajorMinor)`, builds `OneHot_13` for major, then runs **exactly one** of: `exec_Misc0`, `exec_Misc1`, `exec_Misc2`, `exec_Mul0`, `exec_Div0`, … So EQZ calls inside `exec_Div0` are **only reached when major is the Div component** (control-flow gated).
+- **Within a component**: e.g. `exec_Div0` (lines 1628–1714) has `if (to_size_t(x4._super.minorOnehot._super[0]._super)) { ... EQZ(...); } else if (minorOnehot[1]) { ... } ...`. So each EQZ is inside a branch that runs **only when that minor op is active**. No “always-called EQZ(selector*expr)”; the codegen uses **branching on onehot selectors**.
+- **ReadSourceRegs** (lines 994–1023): One EQZ is unconditional in the function, `EQZ((x5._super * x6), ...)` — but it enforces “exactly one of (same reg / different reg)”; the function is only called when we’re in an instruction path that reads source regs, so the constraint is still “active” whenever the call is made.
+
+**Conclusion**
+
+- **Fact**: In this codebase, EQZ is only invoked when the corresponding component/minor branch is taken. So “touched” = “EQZ was called” = “this constraint was active for this cycle.” We do **not** overcount inactive constraints.
+- **Verification (optional)**  
+  - **Static (Phase 0.1)**: Document the above finding (top-level major dispatch + per-component minor dispatch) in the plan or a short doc; cite `exec_Top` and one component (e.g. `exec_Div0`) as evidence. No code change.  
+  - **Dynamic (Phase 0.2)**: Run a **minimal guest** that only uses one instruction type (e.g. a single ADD). After we have touch instrumentation, the touch set should be a subset of decode + that component; no DIV/ECALL-only constraints. Without touch yet, we can still run the same minimal guest with a mutation and check that **failure** set only contains constraints plausible for that path. This is a sanity check, not strictly required for Phase I.
+
+**Phase placement**
+
+- **Phase 0.1**: Add a short “Touch accuracy” note to the plan (or coverage_utils doc) stating that EQZ is control-flow gated (reference steps.cpp `exec_Top` and `exec_Div0`). No DATA matrix or selector comparison needed.
+- **Phase 0.2**: Optionally run a minimal-program sanity check (failure set or touch set) to confirm we don’t see impossible constraints.
+
+---
+
 ## 1. Source-of-Truth Summary (Facts Only)
 
 ### 1.1 Where Constraint Checking Happens
@@ -65,10 +114,10 @@ This document is a **fact-based, source-code-grounded** implementation plan for 
 
 ### 2.2 Stable ConstraintContext ID
 
-- **Definition**: `ConstraintContext := (ConstraintFamily, major, minor)` with optional `step_bucket = step // B` (e.g. B=64).
+- **Definition**: `ConstraintContext := (ConstraintFamily, major, minor)`. Optional for future use: `(ConstraintFamily, major, minor, step_bucket)` with `step_bucket = step // B` (see section 0.1: Phase I uses no step_bucket).
 - **Facts**: `ConstraintFailure` already has major, minor, step (`constraint_parser.py`). No step_bucket in current schema.
 - **Actions**:
-  1. Add a small helper (e.g. in `constraint_parser.py` or a new `coverage_utils.py`): given a `ConstraintFailure`, compute `context_id = (constraint_loc(), major, minor)` and optionally `(constraint_loc(), major, minor, step // B)`.
+  1. Add a small helper (e.g. in `constraint_parser.py` or a new `coverage_utils.py`): given a `ConstraintFailure`, compute `context_id = (constraint_loc(), major, minor)` and optionally `context_id_with_step_bucket(B)` for future use.
   2. Use this same tuple for (a) Python-side failure coverage keying and (b) the C++ touch bitmap key (after normalizing loc to the same string form; see 3.2). No schema change required for Phase 0 if we only add the helper; DB can stay keyed by constraint_loc for “violated” coverage.
 
 ### 2.3 Determinism Check
@@ -79,12 +128,14 @@ This document is a **fact-based, source-code-grounded** implementation plan for 
   1. Add a small test or script: run the same mutation config twice, parse both outputs, compare sets of `(constraint_loc(), major, minor, step)` (and optionally cycle). Fail if they differ.
   2. Document that RISC Zero host must be built in release mode and that no ASLR or thread-scheduling-dependent behavior should affect witness order; A4 already forces SeqForward.
 
+**Touch accuracy (EQZ only when active):** see §0.2; evidence in steps.cpp `exec_Top` and `exec_Div0`.
+
 ### 2.4 Deliverables (Phase 0)
 
 - [ ] Document canonical ConstraintFamily = `constraint_loc()` and ConstraintContext = `(constraint_loc(), major, minor)` (+ optional step_bucket) in code comments or a4/docs.
 - [ ] Add `context_id()` (and optionally `context_id_with_step_bucket(B)`) on `ConstraintFailure` or in a shared util used by coverage_db and future touch logic.
 - [ ] Add determinism test: two runs, same config → same failure set.
-- [ ] (Optional) Run baseline (unmutated) guest once with failure parsing; confirm zero failures and record which constraints would be “touched” for that run once Phase 3 is in place (baseline touch set).
+- [ ] (Optional) Run baseline (unmutated) guest once with failure parsing; confirm zero failures and record which constraints would be “touched” for that run once Phase 3 is in place (baseline touch set). Phase 0.1 vs 0.2: 0.1 = Python-only (IDs, context_id, determinism test, touch-accuracy note); 0.2 = baseline runs + measure distinct (constraint_loc, major, minor) + bucket doc. **Detailed Phase 0.1 plan**: See [PHASE_0_1_IMPLEMENTATION_PLAN.md](./PHASE_0_1_IMPLEMENTATION_PLAN.md) for step-by-step implementation (Steps 0.1.1–0.1.5 and completion checklist). Phase 0.2 checklist is there for reference.
 
 ---
 

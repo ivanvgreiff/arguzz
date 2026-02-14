@@ -1,6 +1,6 @@
 # Modifications to RISC Zero Source Code
 
-This document tracks all modifications made to the RISC Zero zkVM source code for A4 fuzzing support.
+This document tracks all modifications made to the RISC Zero zkVM source code for A4 fuzzing support. Environment variables that are read **only by Python tests** (e.g. Phase 0.1 determinism test: `A4_TEST_HOST`, `A4_TEST_HOST_ARGS`, `A4_TEST_CONFIG`) are **not** listed here; see [README.md](./README.md) section "Test / development environment variables".
 
 ## 1. ffi.cpp - Transaction Tracing and Fault Injection
 

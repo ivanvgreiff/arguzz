@@ -4,12 +4,18 @@ Constraint Failure Parsing
 Parses <constraint_fail> output from A4 mutation runs.
 This is used by both standalone and arguzz-dependent strategies
 to analyze which constraints were violated.
+
+Canonical coverage IDs (see a4/docs/touch/PHASE_I_IMPLEMENTATION_PLAN.md §2.1, §0.1):
+- ConstraintFamily = constraint_loc() (name@file:line).
+- ConstraintContext = (constraint_loc(), major, minor). No step_bucket in Phase I.
+Constraint 'touched' = EQZ was invoked for that (cycle, loc); in RV32IM codegen this
+implies the constraint was active (control-flow gated). See PHASE_I_IMPLEMENTATION_PLAN.md §0.2.
 """
 
 import json
 import re
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 
 @dataclass
@@ -114,14 +120,31 @@ class ConstraintFailure:
     def constraint_loc(self) -> str:
         """
         Get the constraint location WITH file:line (e.g., "MemoryWrite@mem.zir:99").
-        
+
         This provides more granular tracking - same constraint type at different
         source locations are counted separately. Useful for detailed analysis
         but inflates "new" coverage counts.
-        
+
         For the recommended "new" coverage metric, use constraint_type() instead.
         """
         return self.short_loc()
+
+    def context_id(self) -> Tuple[str, int, int]:
+        """
+        Stable coverage key: (constraint_loc, major, minor).
+
+        Used for determinism tests and Phase 0.2 measurement (distinct contexts).
+        Hashable for use in sets/dicts. See PHASE_I_IMPLEMENTATION_PLAN.md §2.2, §0.1.
+        """
+        return (self.constraint_loc(), self.major, self.minor)
+
+    def context_id_with_step_bucket(self, B: int) -> Tuple[str, int, int, int]:
+        """
+        Coverage key with step bucketing: (constraint_loc, major, minor, step // B).
+
+        For future location-aware coverage; Phase I uses context_id() only.
+        """
+        return (self.constraint_loc(), self.major, self.minor, self.step // B)
 
 
 def parse_all_constraint_failures(output: str) -> List[ConstraintFailure]:

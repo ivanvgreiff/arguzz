@@ -200,6 +200,20 @@ python -m a4.standalone.cli inspect \
 | `CONSTRAINT_CONTINUE=1` | Continue after constraint failures | Python executor |
 | `A4_TRACE_TXN=1` | Trace transaction access (debug) | Shell |
 
+### Test / development environment variables (Phase 0.1 determinism test)
+
+These are **not** used by the fuzzing pipeline or by RISC Zero. They are read only by the Phase 0.1 determinism test (`a4/standalone/tests/test_determinism.py`).
+
+| Variable | Purpose | Set By |
+|----------|---------|--------|
+| `A4_TEST_HOST` | Path to risc0-host binary; **required** to run the determinism test | Manual / CI |
+| `A4_TEST_HOST_ARGS` | Host arguments (e.g. `--in1 5 --in4 10`), space-separated; default `--in1 5 --in4 10` | Manual / CI |
+| `A4_TEST_CONFIG` | Optional path to a pre-made mutation config JSON; if unset, the test generates one from inspection | Manual |
+
+**Usage**: `A4_TEST_HOST=./workspace/output/target/release/risc0-host A4_TEST_HOST_ARGS="--in1 5 --in4 10" python -m pytest a4/standalone/tests/test_determinism.py -v`
+
+See `a4/docs/touch/PHASE_0_1_IMPLEMENTATION_PLAN.md` and `PHASE_0_1_IMPLEMENTATION_REPORT.md` for details.
+
 ### ⚠️ CRITICAL: Sequential Execution Mode
 
 **A4 automatically forces sequential witness generation when `A4_MUTATION_CONFIG` is set.**
