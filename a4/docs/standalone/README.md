@@ -198,6 +198,7 @@ python -m a4.standalone.cli inspect \
 |----------|---------|--------|
 | `FAULT_INJECTION_ENABLED=1` | **Skip throws on address mismatches** | **Auto (Rust)** |
 | `CONSTRAINT_CONTINUE=1` | Continue after constraint failures | Python executor |
+| `A4_COVERAGE_TOUCH=1` | Emit touch coverage bitmap after witness generation (Phase 3.2) | Python executor |
 | `A4_TRACE_TXN=1` | Trace transaction access (debug) | Shell |
 
 ### Test / development environment variables (Phase 0.1 determinism test)

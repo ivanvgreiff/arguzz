@@ -36,6 +36,17 @@ from a4.core.constraint_parser import (
     parse_all_constraint_failures,
 )
 
+from a4.core.touch_coverage import (
+    A4_TOUCH_MAP_SIZE,
+    parse_touch_bitmap,
+    make_global_bitmap,
+    count_new_bits,
+    merge_into_global,
+    fnv1a_touch_hash,
+    distinct_touched,
+    total_touches,
+)
+
 from a4.core.inspection_data import InspectionData
 
 __all__ = [
@@ -56,6 +67,15 @@ __all__ = [
     # Constraint parsing
     'ConstraintFailure',
     'parse_all_constraint_failures',
+    # Touch coverage (Phase 3.2)
+    'A4_TOUCH_MAP_SIZE',
+    'parse_touch_bitmap',
+    'make_global_bitmap',
+    'count_new_bits',
+    'merge_into_global',
+    'fnv1a_touch_hash',
+    'distinct_touched',
+    'total_touches',
     # Inspection data container
     'InspectionData',
 ]

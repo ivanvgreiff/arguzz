@@ -126,5 +126,41 @@ def test_same_config_same_failure_set_by_signature():
             temp_config.unlink(missing_ok=True)
 
 
+@pytest.mark.skipif(
+    not os.environ.get("A4_TEST_HOST"),
+    reason="Set A4_TEST_HOST (path to risc0-host) and A4_TEST_HOST_ARGS to run",
+)
+def test_same_config_same_touch_bitmap():
+    """Two runs with same config must yield byte-identical touch bitmaps (Phase 3.4)."""
+    host_binary = os.environ["A4_TEST_HOST"].strip()
+    host_args_str = os.environ.get("A4_TEST_HOST_ARGS", "--in1 5 --in4 10").strip()
+    host_args = host_args_str.split() if host_args_str else []
+
+    config_path = _get_test_config_path()
+    temp_config = None
+    if config_path is None or not config_path.is_file():
+        config_path = _build_config_from_inspection(host_binary, host_args)
+        temp_config = config_path
+
+    try:
+        r1 = run_a4_mutation(host_binary, host_args, config_path)
+        r2 = run_a4_mutation(host_binary, host_args, config_path)
+
+        assert r1.touch_bitmap is not None, "Run 1 did not produce a touch bitmap"
+        assert r2.touch_bitmap is not None, "Run 2 did not produce a touch bitmap"
+        assert len(r1.touch_bitmap) == len(r2.touch_bitmap), (
+            f"Bitmap lengths differ: {len(r1.touch_bitmap)} vs {len(r2.touch_bitmap)}"
+        )
+
+        if r1.touch_bitmap != r2.touch_bitmap:
+            differing = sum(1 for a, b in zip(r1.touch_bitmap, r2.touch_bitmap) if a != b)
+            assert False, (
+                f"Touch bitmaps differ at {differing} of {len(r1.touch_bitmap)} bytes"
+            )
+    finally:
+        if temp_config and temp_config.exists():
+            temp_config.unlink(missing_ok=True)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

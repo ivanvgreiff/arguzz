@@ -25,6 +25,9 @@ from typing import Dict, List, Optional, Tuple
 from a4.core.inspection_data import InspectionData
 from a4.core.executor import run_a4_mutation, MutationExecutionResult
 from a4.core.constraint_parser import ConstraintFailure
+from a4.core.touch_coverage import (
+    make_global_bitmap, count_new_bits, merge_into_global, distinct_touched,
+)
 
 from a4.standalone.coverage_db import CoverageDB
 from a4.standalone.step_selector import StepSelector, create_selector
@@ -71,6 +74,7 @@ class MutationResult:
     verifier_accepted: bool
     execution_time_ms: float
     new_coverage: int = 0
+    new_touch: int = 0
     exit_code: int = 0  # Process exit code (139=SIGSEGV, 101=panic, 0=success)
     crashed: bool = False  # True if process crashed (segfault, etc.)
     proof_generated: bool = False  # True if proof was generated (may still be invalid)
@@ -88,6 +92,8 @@ class CampaignStats:
     crashes: int = 0               # CRASH: process crashed (segfault, etc.)
     skipped_mutations: int = 0     # Mutations skipped (no valid target after retries)
     new_coverage_count: int = 0
+    new_touch_count: int = 0
+    total_distinct_touched: int = 0
     total_failures: int = 0
     mutations_by_kind: Dict[str, int] = field(default_factory=dict)
     unique_constraints: set = field(default_factory=set)
@@ -160,6 +166,9 @@ class A4Fuzzer:
         self.data: Optional[InspectionData] = None
         self.campaign_id: Optional[int] = None
         
+        # Phase 3.3: Global touch bitmap (campaign-level accumulator)
+        self.global_touch_bitmap: bytearray = make_global_bitmap()
+        
         # Temp directory for config files
         self.temp_dir = Path(tempfile.mkdtemp(prefix="a4_fuzz_"))
     
@@ -231,6 +240,9 @@ class A4Fuzzer:
                     self._print_mutation_result(i + 1, result)
         
         stats.execution_time_ms = (time.perf_counter() - campaign_start) * 1000
+        
+        # Phase 3.3: Record final bitmap occupancy
+        stats.total_distinct_touched = distinct_touched(bytes(self.global_touch_bitmap))
         
         # End campaign
         self.db.end_campaign(self.campaign_id)
@@ -367,9 +379,15 @@ class A4Fuzzer:
         total_recorded, new_coverage = self.db.record_failures(mutation_id, failures)
         result.new_coverage = new_coverage
         
+        # Phase 3.3: Touch coverage — count new bits and merge into global bitmap
+        if exec_result.touch_bitmap is not None:
+            new_touch = count_new_bits(exec_result.touch_bitmap, self.global_touch_bitmap)
+            merge_into_global(exec_result.touch_bitmap, self.global_touch_bitmap)
+            result.new_touch = new_touch
+        
         # Update guided selector if applicable
         if hasattr(self.selector, 'record_mutation'):
-            self.selector.record_mutation(step, new_coverage)
+            self.selector.record_mutation(step, new_coverage + result.new_touch)
         
         return result
     
@@ -919,6 +937,7 @@ class A4Fuzzer:
         # else: no effect (counted implicitly)
         
         stats.new_coverage_count += result.new_coverage
+        stats.new_touch_count += result.new_touch
     
     def _print_mutation_result(self, num: int, result: MutationResult):
         """Print detailed result of a single mutation"""
@@ -934,6 +953,7 @@ class A4Fuzzer:
         
         bug_marker = " BUG!" if result.verifier_accepted else ""
         new_cov = f" [+{result.new_coverage} new]" if result.new_coverage > 0 else ""
+        new_touch_str = f" [+{result.new_touch} touch]" if result.new_touch > 0 else ""
         
         # Outcome classification (priority order):
         # 
@@ -962,7 +982,7 @@ class A4Fuzzer:
         print(f"  [{num}] {status} {result.kind} @ step {result.step}: "
               f"{len(result.failures)} failures, {result.execution_time_ms:.0f}ms, "
               f"outcome: {outcome}, exit: {result.exit_code}"
-              f"{proof_status}{new_cov}{bug_marker}")
+              f"{proof_status}{new_cov}{new_touch_str}{bug_marker}")
         
         # Value change info
         print(f"       Value: 0x{result.original_value:08X} -> 0x{result.mutated_value:08X}")
@@ -1085,6 +1105,8 @@ class A4Fuzzer:
         print(f"Total failures:      {stats.total_failures}")
         print(f"Unique constraints:  {len(stats.unique_constraints)}")
         print(f"New coverage:        {stats.new_coverage_count}")
+        print(f"New touch:           {stats.new_touch_count}")
+        print(f"Distinct touched:    {stats.total_distinct_touched}")
         print(f"Execution time:      {stats.execution_time_ms:.0f}ms")
         
         # Outcome summary (mutually exclusive categories)

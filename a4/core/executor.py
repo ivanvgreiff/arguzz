@@ -9,7 +9,7 @@ import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from a4.core.trace_parser import (
     A4CycleInfo, A4StepTxns, A4Txn,
@@ -19,6 +19,7 @@ from a4.core.constraint_parser import (
     ConstraintFailure,
     parse_all_constraint_failures
 )
+from a4.core.touch_coverage import parse_touch_bitmap
 
 
 def run_a4_inspection(host_binary: str, host_args: List[str]) -> str:
@@ -132,6 +133,7 @@ class MutationExecutionResult:
     combined_output: str
     exit_code: int
     failures: List[ConstraintFailure]
+    touch_bitmap: Optional[bytes] = None
 
 
 def run_baseline(host_binary: str, host_args: List[str]) -> str:
@@ -175,6 +177,7 @@ def run_a4_mutation(
     env = {
         "A4_MUTATION_CONFIG": str(config_path),
         "CONSTRAINT_CONTINUE": "1",
+        "A4_COVERAGE_TOUCH": "1",
     }
     
     result = subprocess.run(
@@ -186,6 +189,7 @@ def run_a4_mutation(
     
     combined = result.stdout + result.stderr
     failures = parse_all_constraint_failures(combined)
+    touch_bitmap = parse_touch_bitmap(combined)
     
     return MutationExecutionResult(
         stdout=result.stdout,
@@ -193,4 +197,5 @@ def run_a4_mutation(
         combined_output=combined,
         exit_code=result.returncode,
         failures=failures,
+        touch_bitmap=touch_bitmap,
     )
