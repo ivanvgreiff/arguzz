@@ -9,7 +9,7 @@ import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from a4.core.trace_parser import (
     A4CycleInfo, A4StepTxns, A4Txn,
@@ -136,19 +136,32 @@ class MutationExecutionResult:
     touch_bitmap: Optional[bytes] = None
 
 
-def run_baseline(host_binary: str, host_args: List[str]) -> str:
+def run_baseline(
+    host_binary: str,
+    host_args: List[str],
+    extra_env: Optional[Dict[str, str]] = None,
+) -> str:
     """
     Run the host without any mutation (no A4_MUTATION_CONFIG, no CONSTRAINT_CONTINUE).
 
     Used for Phase 0.2 baseline: valid witness should produce no <constraint_fail> lines.
     Returns combined stdout+stderr. Call parse_all_constraint_failures(output) to verify zero.
+
+    Args:
+        host_binary: Path to risc0-host binary
+        host_args: Arguments for risc0-host
+        extra_env: Optional extra environment variables to set (e.g. {"A4_COVERAGE_TOUCH": "1"}).
+                   Does not add A4_MUTATION_CONFIG or CONSTRAINT_CONTINUE.
     """
     cmd = [host_binary] + host_args
+    env = dict(os.environ)
+    if extra_env:
+        env.update(extra_env)
     result = subprocess.run(
         cmd,
         capture_output=True,
         text=True,
-        env=dict(os.environ),  # Do not add A4_MUTATION_CONFIG or CONSTRAINT_CONTINUE
+        env=env,
     )
     return result.stdout + result.stderr
 

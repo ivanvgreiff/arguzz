@@ -199,8 +199,8 @@ Examples:
                                     "INSTR_WORD_MOD_FULL", "INSTR_WORD_MOD_SUR"],
                             help="Mutation kind (default: all)")
     fuzz_parser.add_argument("--selector", default="zoned",
-                            choices=["zoned", "guided"],
-                            help="Step selection strategy (default: zoned, 5%%/90%%/5%% distribution)")
+                            choices=["zoned", "guided", "bandit"],
+                            help="Step selection strategy (default: zoned; bandit: coverage-guided UCB)")
     fuzz_parser.add_argument("--values", default="mixed",
                             choices=["random", "bitflip", "boundary", "arithmetic", "smart", "mixed"],
                             help="Value generation strategy (default: mixed)")

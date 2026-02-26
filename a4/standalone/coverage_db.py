@@ -269,15 +269,19 @@ class CoverageDB:
             
             # Update coverage using constraint_loc (includes file:line)
             # Different line numbers = different constraint checks
+            # Two-step approach: INSERT OR IGNORE to detect new, then UPDATE for existing.
+            # SQLite's ON CONFLICT DO UPDATE returns rowcount=1 for both insert and update,
+            # so we cannot use it to distinguish new vs existing (Phase II bug fix).
             cursor.execute("""
-                INSERT INTO coverage (constraint_loc, first_hit_mutation_id, first_hit_at, hit_count)
+                INSERT OR IGNORE INTO coverage (constraint_loc, first_hit_mutation_id, first_hit_at, hit_count)
                 VALUES (?, ?, ?, 1)
-                ON CONFLICT(constraint_loc) DO UPDATE SET hit_count = hit_count + 1
             """, (failure.constraint_loc(), mutation_id, now))
-            
-            # Check if this was a new coverage entry
-            if cursor.rowcount == 1:  # INSERT happened, not UPDATE
+            if cursor.rowcount == 1:
                 new_coverage += 1
+            else:
+                cursor.execute("""
+                    UPDATE coverage SET hit_count = hit_count + 1 WHERE constraint_loc = ?
+                """, (failure.constraint_loc(),))
         
         # Update mutation's num_failures
         cursor.execute("""

@@ -30,12 +30,20 @@ from a4.core.touch_coverage import (
 )
 
 from a4.standalone.coverage_db import CoverageDB
-from a4.standalone.step_selector import StepSelector, create_selector
+from a4.standalone.step_selector import StepSelector, ZonedStepSelector, create_selector
 from a4.standalone.value_generator import (
     ValueGenerator, 
     ValueGeneratorExhaustedError,
     create_generator
 )
+
+from a4.standalone.bandit import DiscountedUCBScheduler
+from a4.standalone.arm_universe import ArmUniverse
+from a4.standalone.pilot_calibration import (
+    CalibratedParams, calibrate_from_pilot, collect_pilot_stat, compute_N_pilot,
+)
+from a4.standalone.coverage_state import CoverageState, compute_reward, update_state
+from a4.standalone.baseline_touch import capture_baseline_touch
 
 # Import mutation modules
 from a4.standalone.mutations import (
@@ -81,6 +89,8 @@ class MutationResult:
     proof_verify_failed: bool = False  # True if proof verification failed (verify segment)
     raw_errors: List[str] = field(default_factory=list)  # Exact error lines from risc0 prover (unmodified)
     raw_output: Optional[str] = None  # Raw stdout for debugging (truncated)
+    reward: float = 0.0  # Bandit reward (Phase II.4; 0 for non-bandit mode)
+    reward_diag: Optional[dict] = None  # Reward diagnostic breakdown (Phase II.4)
 
 
 @dataclass
@@ -156,9 +166,14 @@ class A4Fuzzer:
         self.verbose = verbose
         self.seed = seed if seed is not None else random.randint(0, 2**32)
         
+        self.selector_strategy = selector_strategy
+        
         # Initialize components
         self.db = CoverageDB(db_path)
-        self.selector = create_selector(selector_strategy, self.seed, self.db)
+        if selector_strategy == "bandit":
+            self.selector: Optional[StepSelector] = None
+        else:
+            self.selector = create_selector(selector_strategy, self.seed, self.db)
         self.value_gen = create_generator(value_strategy, self.seed)
         self.rng = random.Random(self.seed)
         
@@ -168,6 +183,12 @@ class A4Fuzzer:
         
         # Phase 3.3: Global touch bitmap (campaign-level accumulator)
         self.global_touch_bitmap: bytearray = make_global_bitmap()
+        
+        # Phase II.4: Bandit-mode state (populated by _setup_bandit)
+        self.scheduler: Optional[DiscountedUCBScheduler] = None
+        self.coverage_state: Optional[CoverageState] = None
+        self.arm_universe: Optional[ArmUniverse] = None
+        self._pilot_count: int = 0
         
         # Temp directory for config files
         self.temp_dir = Path(tempfile.mkdtemp(prefix="a4_fuzz_"))
@@ -190,6 +211,234 @@ class A4Fuzzer:
         
         return self.data
     
+    def _classify_outcome(self, result: 'MutationResult') -> str:
+        """Derive outcome string from MutationResult fields."""
+        if result.verifier_accepted:
+            return "ACCEPTED"
+        elif result.crashed:
+            return "CRASH"
+        elif result.failures or result.proof_verify_failed:
+            return "REJECTED"
+        return "NO_EFFECT"
+    
+    def _setup_bandit(self, num_mutations: int, stats: 'CampaignStats') -> None:
+        """
+        Full bandit initialization: baseline → arms → pilot → calibration → bandit.
+
+        Pilot mutations are executed here and count toward the campaign budget.
+        After this method returns, self.scheduler is ready for select()/update().
+        """
+        if self.verbose:
+            print("\n--- BANDIT SETUP ---")
+
+        # 1. Baseline capture
+        if self.verbose:
+            print("Capturing baseline touch...")
+        baseline = capture_baseline_touch(self.host_binary, self.host_args)
+        if self.verbose:
+            print(f"  Baseline: {baseline.distinct_buckets} bitmap buckets")
+
+        # 2. Arm universe
+        self.arm_universe = ArmUniverse(self.data, num_mutations, self.MUTATION_KINDS)
+        if self.verbose:
+            print(self.arm_universe.summary())
+
+        # 3. Pilot calibration
+        N_pilot = compute_N_pilot(num_mutations)
+        if self.verbose:
+            print(f"\nRunning {N_pilot} pilot mutations (uniform random)...")
+
+        pilot_selector = ZonedStepSelector(seed=self.seed + 1000)
+        pilot_bitmap = make_global_bitmap()
+        merge_into_global(baseline.bitmap, pilot_bitmap)
+        pilot_stats_list = []
+
+        for p in range(N_pilot):
+            kind = self.rng.choice(self.MUTATION_KINDS)
+            config_path = None
+            step = None
+
+            for attempt in range(10):
+                step = pilot_selector.select_step(self.data, kind)
+                if step is None:
+                    break
+                config, mv, ov = self._create_mutation(kind, step)
+                if config is not None:
+                    config_path = self.temp_dir / f"pilot_{p}.json"
+                    config_path.write_text(json.dumps(config, indent=2))
+                    break
+
+            if config_path is None:
+                continue
+
+            exec_result = run_a4_mutation(self.host_binary, self.host_args, config_path)
+
+            pstat = collect_pilot_stat(exec_result, pilot_bitmap)
+            if exec_result.touch_bitmap is not None:
+                merge_into_global(exec_result.touch_bitmap, pilot_bitmap)
+            pilot_stats_list.append(pstat)
+
+            # Record pilot mutation in DB + stats (it counts toward the campaign)
+            output = exec_result.combined_output
+            failures = exec_result.failures
+            exit_code = exec_result.exit_code
+
+            crash_signals_negative = (-11, -6, -8, -9, -10)
+            crash_signals_shell = (139, 134, 136, 137, 138)
+            crashed = exit_code in crash_signals_negative or exit_code in crash_signals_shell
+            proof_generated = self._check_proof_generated(output, exit_code)
+            proof_verify_failed = self._check_proof_verification_failure(output)
+            verifier_accepted = self._check_verifier_acceptance(output)
+
+            pilot_result = MutationResult(
+                kind=kind, step=step or 0,
+                original_value=ov, mutated_value=mv, config=config,
+                failures=failures, verifier_accepted=verifier_accepted,
+                execution_time_ms=0, exit_code=exit_code, crashed=crashed,
+                proof_generated=proof_generated, proof_verify_failed=proof_verify_failed,
+            )
+            self._update_stats(stats, pilot_result)
+
+            txn_idx = config.get("txn_idx") if config else None
+            mutation_id = self.db.record_mutation(
+                self.campaign_id, kind, step or 0, mv, config, txn_idx, verifier_accepted
+            )
+            self.db.record_failures(mutation_id, failures)
+
+            if exec_result.touch_bitmap is not None:
+                new_touch = count_new_bits(exec_result.touch_bitmap, self.global_touch_bitmap)
+                merge_into_global(exec_result.touch_bitmap, self.global_touch_bitmap)
+                pilot_result.new_touch = new_touch
+
+            if self.verbose:
+                n_fail = len(failures)
+                print(f"  [pilot {p+1}/{N_pilot}] {kind} @ step {step}: {n_fail}f")
+
+        self._pilot_count = len(pilot_stats_list)
+
+        if self.verbose:
+            print(f"  Pilot: {self._pilot_count} runs completed")
+
+        # 4. Calibrate
+        params = calibrate_from_pilot(pilot_stats_list, num_mutations)
+        if self.verbose:
+            print(f"  Calibrated: τ_T={params.tau_new:.1f}, τ_d={params.tau_d:.1f}, "
+                  f"K_T_rare={params.K_T_rare}, γ={params.gamma:.4f}")
+
+        # 5. Coverage state (seeded from baseline + pilot coverage)
+        self.coverage_state = CoverageState(params)
+        self.coverage_state.seed_from_baseline(baseline.bitmap)
+        # Merge pilot's incremental touch into coverage state
+        for i in range(len(pilot_bitmap)):
+            if pilot_bitmap[i] > 0 and self.coverage_state.global_bitmap[i] == 0:
+                self.coverage_state.global_bitmap[i] = pilot_bitmap[i]
+                self.coverage_state.freq[i] = 1
+            elif pilot_bitmap[i] > self.coverage_state.global_bitmap[i]:
+                self.coverage_state.global_bitmap[i] = pilot_bitmap[i]
+
+        # 6. Construct bandit
+        self.scheduler = DiscountedUCBScheduler(self.arm_universe, params, seed=self.seed)
+
+        if self.verbose:
+            print(f"\n--- BANDIT READY ({self.arm_universe.num_arms} arms, "
+                  f"budget remaining: {num_mutations - self._pilot_count}) ---\n")
+    
+    def _run_bandit_mutation(
+        self,
+        mutation_num: int,
+        total: int,
+        stats: 'CampaignStats',
+    ) -> Optional['MutationResult']:
+        """Run a single mutation using the bandit scheduler."""
+        kind, step = self.scheduler.select()
+
+        # Retry within same arm's bucket if _create_mutation fails
+        bucket = self.arm_universe.bucket_for_step(step)
+        bucket_steps = self.arm_universe.steps_in_arm(kind, bucket)
+        config = None
+        mutated_value = 0
+        original_value = 0
+
+        for attempt in range(min(10, len(bucket_steps))):
+            try:
+                config, mutated_value, original_value = self._create_mutation(kind, step)
+            except ValueGeneratorExhaustedError:
+                raise
+            except Exception:
+                config = None
+
+            if config is not None:
+                break
+            # Pick a different step from the same bucket
+            step = self.rng.choice(bucket_steps)
+
+        if config is None:
+            if self.verbose:
+                print(f"  [{mutation_num}/{total}] SKIP {kind} bucket {bucket}")
+            stats.skipped_mutations += 1
+            return None
+
+        # Execute
+        start_time = time.perf_counter()
+        config_path = self.temp_dir / f"mutation_{mutation_num}.json"
+        config_path.write_text(json.dumps(config, indent=2))
+        exec_result = run_a4_mutation(self.host_binary, self.host_args, config_path)
+        execution_time = (time.perf_counter() - start_time) * 1000
+
+        output = exec_result.combined_output
+        failures = exec_result.failures
+        exit_code = exec_result.exit_code
+
+        crash_signals_negative = (-11, -6, -8, -9, -10)
+        crash_signals_shell = (139, 134, 136, 137, 138)
+        crashed = exit_code in crash_signals_negative or exit_code in crash_signals_shell
+        proof_generated = self._check_proof_generated(output, exit_code)
+        proof_verify_failed = self._check_proof_verification_failure(output)
+        verifier_accepted = self._check_verifier_acceptance(output)
+        raw_errors = self._extract_raw_error(exec_result.stdout, exec_result.stderr)
+        raw_output_truncated = output[-2000:] if len(output) > 2000 else output
+
+        result = MutationResult(
+            kind=kind, step=step,
+            original_value=original_value, mutated_value=mutated_value,
+            config=config, failures=failures, verifier_accepted=verifier_accepted,
+            execution_time_ms=execution_time, exit_code=exit_code, crashed=crashed,
+            proof_generated=proof_generated, proof_verify_failed=proof_verify_failed,
+            raw_errors=raw_errors, raw_output=raw_output_truncated,
+        )
+
+        # Outcome classification for reward
+        outcome = self._classify_outcome(result)
+
+        # Reward computation (reads state BEFORE this run)
+        reward, diag = compute_reward(
+            exec_result.touch_bitmap, failures, exit_code,
+            outcome, proof_generated, self.coverage_state,
+        )
+        result.reward = reward
+        result.reward_diag = diag
+
+        # Bandit update
+        self.scheduler.update(kind, step, reward)
+
+        # Coverage state update (writes this run's data)
+        update_state(exec_result.touch_bitmap, failures, exit_code, self.coverage_state)
+
+        # DB recording
+        txn_idx = config.get("txn_idx")
+        mutation_id = self.db.record_mutation(
+            self.campaign_id, kind, step, mutated_value, config, txn_idx, verifier_accepted
+        )
+        self.db.record_failures(mutation_id, failures)
+
+        # Touch tracking (separate from CoverageState, for campaign stats)
+        if exec_result.touch_bitmap is not None:
+            new_touch = count_new_bits(exec_result.touch_bitmap, self.global_touch_bitmap)
+            merge_into_global(exec_result.touch_bitmap, self.global_touch_bitmap)
+            result.new_touch = new_touch
+
+        return result
+
     def run_campaign(self, num_mutations: int) -> CampaignStats:
         """
         Run a fuzzing campaign with the specified number of mutations.
@@ -227,24 +476,34 @@ class A4Fuzzer:
             print()
         
         stats = CampaignStats()
-        # Use perf_counter for monotonic timing (immune to WSL2 clock sync issues)
         campaign_start = time.perf_counter()
         
-        for i in range(num_mutations):
-            result = self._run_single_mutation(i + 1, num_mutations, stats)
+        # Bandit mode: run setup (baseline + pilot + calibration)
+        if self.selector_strategy == "bandit":
+            self._setup_bandit(num_mutations, stats)
+            main_budget = num_mutations - self._pilot_count
+            start_idx = self._pilot_count
+        else:
+            main_budget = num_mutations
+            start_idx = 0
+        
+        for i in range(main_budget):
+            mutation_num = start_idx + i + 1
+            
+            if self.scheduler is not None:
+                result = self._run_bandit_mutation(mutation_num, num_mutations, stats)
+            else:
+                result = self._run_single_mutation(mutation_num, num_mutations, stats)
             
             if result:
                 self._update_stats(stats, result)
                 
                 if self.verbose:
-                    self._print_mutation_result(i + 1, result)
+                    self._print_mutation_result(mutation_num, result)
         
         stats.execution_time_ms = (time.perf_counter() - campaign_start) * 1000
-        
-        # Phase 3.3: Record final bitmap occupancy
         stats.total_distinct_touched = distinct_touched(bytes(self.global_touch_bitmap))
         
-        # End campaign
         self.db.end_campaign(self.campaign_id)
         
         if self.verbose:
@@ -984,6 +1243,12 @@ class A4Fuzzer:
               f"outcome: {outcome}, exit: {result.exit_code}"
               f"{proof_status}{new_cov}{new_touch_str}{bug_marker}")
         
+        if result.reward_diag is not None:
+            d = result.reward_diag
+            print(f"       r={result.reward:.3f}  T_new={d.get('T_new',0):.2f} "
+                  f"F_new={d.get('F_new',0):.2f} F_rare={d.get('F_rare',0):.2f} "
+                  f"Z={d.get('Z',0)} Q={d.get('Q',0):.2f}")
+        
         # Value change info
         print(f"       Value: 0x{result.original_value:08X} -> 0x{result.mutated_value:08X}")
         
@@ -1132,6 +1397,9 @@ class A4Fuzzer:
         print(f"\nMutations by kind:")
         for kind, count in sorted(stats.mutations_by_kind.items()):
             print(f"  {kind}: {count}")
+        
+        if self.scheduler is not None:
+            print(f"\n{self.scheduler.summary()}")
     
     def cleanup(self):
         """Clean up temporary files and close database"""
