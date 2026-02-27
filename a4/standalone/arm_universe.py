@@ -20,7 +20,7 @@ and a4/docs/touch/Phase II/PHASE_II_MASTER_IMPLEMENTATION_PLAN.md section 2.2.
 
 import math
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, TYPE_CHECKING
+from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from a4.core.inspection_data import InspectionData
@@ -74,6 +74,7 @@ class ArmUniverse:
         data: 'InspectionData',
         budget: int,
         mutation_kinds: List[str],
+        b_count_override: Optional[int] = None,
     ):
         """
         Construct the arm universe.
@@ -82,6 +83,7 @@ class ArmUniverse:
             data: InspectionData from a guest program inspection run.
             budget: Campaign budget N (total number of mutations planned).
             mutation_kinds: List of mutation kind names (e.g. A4Fuzzer.MUTATION_KINDS).
+            b_count_override: If set, use this bucket count instead of deriving from budget.
         """
         self.budget = budget
         self.mutation_kinds = list(mutation_kinds)
@@ -101,8 +103,10 @@ class ArmUniverse:
         else:
             self.T = 0
 
-        # Step 3: Compute B_count (number of step buckets) from budget
-        if self.K > 0 and budget > 0:
+        # Step 3: Compute B_count (number of step buckets)
+        if b_count_override is not None:
+            self.B_count = b_count_override
+        elif self.K > 0 and budget > 0:
             raw = budget // (self.K * _N_TARGET)
             self.B_count = pow2_clamp(raw, _B_MIN, _B_MAX)
         else:

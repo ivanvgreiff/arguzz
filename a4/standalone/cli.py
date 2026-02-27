@@ -54,6 +54,7 @@ def cmd_fuzz(args):
         value_strategy=args.values,
         seed=args.seed,
         verbose=True,
+        b_count_override=args.b_count,
     ) as fuzzer:
         # Run campaign
         stats = fuzzer.run_campaign(args.num)
@@ -201,6 +202,8 @@ Examples:
     fuzz_parser.add_argument("--selector", default="zoned",
                             choices=["zoned", "guided", "bandit"],
                             help="Step selection strategy (default: zoned; bandit: coverage-guided UCB)")
+    fuzz_parser.add_argument("--b-count", type=int, default=None,
+                            help="Override bucket count for bandit arm universe (default: auto)")
     fuzz_parser.add_argument("--values", default="mixed",
                             choices=["random", "bitflip", "boundary", "arithmetic", "smart", "mixed"],
                             help="Value generation strategy (default: mixed)")

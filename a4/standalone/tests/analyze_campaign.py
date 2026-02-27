@@ -34,6 +34,8 @@ class RunRecord:
     Q: float = 0.0
     is_pilot: bool = False
     new_touch: int = 0
+    new_coverage: int = 0
+    d_fail: int = -1
 
 
 PILOT_RE = re.compile(r'\[pilot (\d+)/(\d+)\] (\w+) @ step (\d+): (\d+)f')
@@ -41,9 +43,10 @@ BANDIT_RE = re.compile(
     r'\[(\d+)\] [^\s]+ (\w+) @ step (\d+): (\d+) failures?, (\d+)ms, outcome: (\w+)'
 )
 REWARD_RE = re.compile(
-    r'r=([\d.]+)\s+T_new=([\d.]+)\s+F_new=([\d.]+)\s+F_rare=([\d.]+)\s+Z=(\d+)\s+Q=([\d.]+)'
+    r'r=([\d.]+)\s+T_new=([\d.]+)\s+F_new=([\d.]+)\s+F_rare=([\d.]+)\s+Z=(\d+)\s+Q=([\d.]+)(?:\s+df=(\d+))?'
 )
 TOUCH_RE = re.compile(r'\[([+-]\d+) touch\]')
+NEWCOV_RE = re.compile(r'\[\+(\d+) new\]')
 CALIB_RE = re.compile(r'Calibrated: .+=(.+), .+=(.+), .+=(\d+), .+=(.+)')
 
 
@@ -87,6 +90,9 @@ def parse_terminal(path: str) -> Tuple[List[RunRecord], dict]:
                 tm = TOUCH_RE.search(line)
                 if tm:
                     rec.new_touch = int(tm.group(1))
+                nm = NEWCOV_RE.search(line)
+                if nm:
+                    rec.new_coverage = int(nm.group(1))
                 runs.append(rec)
                 pending_reward = rec
                 continue
@@ -100,6 +106,8 @@ def parse_terminal(path: str) -> Tuple[List[RunRecord], dict]:
                     pending_reward.F_rare = float(rm.group(4))
                     pending_reward.Z = int(rm.group(5))
                     pending_reward.Q = float(rm.group(6))
+                    if rm.group(7) is not None:
+                        pending_reward.d_fail = int(rm.group(7))
                     pending_reward = None
 
     return runs, meta
@@ -274,6 +282,90 @@ def analyze(runs: List[RunRecord], meta: dict):
     print(f"  Z events: {len(z_runs)} ({len(z_runs)/len(bandit)*100:.1f}%)")
     print(f"  Crashes: {outcomes.get('CRASH', 0)}")
     print(f"  Accepted (BUGS): {outcomes.get('ACCEPTED', 0)}")
+
+
+def compute_cumulative_metrics(runs: List[RunRecord]) -> dict:
+    """Compute per-run cumulative coverage metrics for A/B comparison plots."""
+    cum_touch, cum_cov, cum_z, cum_crash = [], [], [], []
+    t, c, z, cr = 0, 0, 0, 0
+    for r in runs:
+        t += r.new_touch
+        c += r.new_coverage
+        z += r.Z
+        cr += 1 if r.outcome == "CRASH" else 0
+        cum_touch.append(t)
+        cum_cov.append(c)
+        cum_z.append(z)
+        cum_crash.append(cr)
+    return {
+        'cum_touch': cum_touch,
+        'cum_coverage': cum_cov,
+        'cum_Z': cum_z,
+        'cum_crash': cum_crash,
+    }
+
+
+def compute_cumulative_from_db(db_path: str, campaign_id: int = None) -> dict:
+    """Compute cumulative failure context and family curves from the SQLite DB.
+
+    This is the authoritative source for C_fail(t) and C_family(t) because
+    the terminal output may not have new_coverage for older bandit campaigns
+    (the field was only wired into _run_bandit_mutation after Phase II.5a).
+
+    Returns dict with lists:
+      'cum_fail_contexts': cumulative distinct (constraint_loc, major, minor) tuples
+      'cum_families': cumulative distinct constraint_loc families
+    """
+    import sqlite3
+    db = sqlite3.connect(db_path)
+    cur = db.cursor()
+
+    if campaign_id is None:
+        cur.execute('SELECT MAX(id) FROM campaigns')
+        campaign_id = cur.fetchone()[0]
+
+    cur.execute('SELECT id FROM mutations WHERE campaign_id = ? ORDER BY id', (campaign_id,))
+    mutation_ids = [r[0] for r in cur.fetchall()]
+
+    seen_contexts: set = set()
+    seen_families: set = set()
+    cum_contexts: list = []
+    cum_families: list = []
+
+    for mid in mutation_ids:
+        cur.execute(
+            'SELECT DISTINCT constraint_loc, major, minor FROM failures WHERE mutation_id = ?',
+            (mid,),
+        )
+        for loc, major, minor in cur.fetchall():
+            seen_contexts.add((loc, major, minor))
+            seen_families.add(loc)
+        cum_contexts.append(len(seen_contexts))
+        cum_families.append(len(seen_families))
+
+    db.close()
+    return {
+        'cum_fail_contexts': cum_contexts,
+        'cum_families': cum_families,
+    }
+
+
+def compute_auc_normalized(curve: list) -> float:
+    """Normalized AUC: sum(curve) / (n * final_value). Higher = faster discovery."""
+    if not curve or curve[-1] == 0:
+        return 0.0
+    return sum(curve) / (len(curve) * curve[-1])
+
+
+def compute_t80(curve: list) -> int:
+    """Iterations to reach 80% of final value. Returns len(curve) if never reached."""
+    if not curve or curve[-1] == 0:
+        return len(curve)
+    target = 0.8 * curve[-1]
+    for i, v in enumerate(curve):
+        if v >= target:
+            return i + 1
+    return len(curve)
 
 
 if __name__ == "__main__":

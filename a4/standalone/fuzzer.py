@@ -145,6 +145,7 @@ class A4Fuzzer:
         value_strategy: str = "mixed",
         seed: Optional[int] = None,
         verbose: bool = False,
+        b_count_override: Optional[int] = None,
     ):
         """
         Initialize the fuzzer.
@@ -158,6 +159,7 @@ class A4Fuzzer:
             value_strategy: Value generation strategy
             seed: Random seed for reproducibility
             verbose: Print detailed output
+            b_count_override: Override bucket count for bandit arm universe
         """
         self.host_binary = host_binary
         self.host_args = host_args
@@ -189,6 +191,7 @@ class A4Fuzzer:
         self.coverage_state: Optional[CoverageState] = None
         self.arm_universe: Optional[ArmUniverse] = None
         self._pilot_count: int = 0
+        self.b_count_override: Optional[int] = b_count_override
         
         # Temp directory for config files
         self.temp_dir = Path(tempfile.mkdtemp(prefix="a4_fuzz_"))
@@ -239,7 +242,10 @@ class A4Fuzzer:
             print(f"  Baseline: {baseline.distinct_buckets} bitmap buckets")
 
         # 2. Arm universe
-        self.arm_universe = ArmUniverse(self.data, num_mutations, self.MUTATION_KINDS)
+        self.arm_universe = ArmUniverse(
+            self.data, num_mutations, self.MUTATION_KINDS,
+            b_count_override=self.b_count_override,
+        )
         if self.verbose:
             print(self.arm_universe.summary())
 
@@ -342,7 +348,33 @@ class A4Fuzzer:
         if self.verbose:
             print(f"\n--- BANDIT READY ({self.arm_universe.num_arms} arms, "
                   f"budget remaining: {num_mutations - self._pilot_count}) ---\n")
-    
+
+    def _setup_coverage_tracking(self) -> None:
+        """Initialize CoverageState for non-bandit mode (reward diagnostics only)."""
+        if self.verbose:
+            print("\n--- COVERAGE TRACKING SETUP ---")
+            print("Capturing baseline touch...")
+
+        baseline = capture_baseline_touch(self.host_binary, self.host_args)
+
+        if self.verbose:
+            print(f"  Baseline: {baseline.distinct_buckets} bitmap buckets")
+
+        params = CalibratedParams(
+            tau_new=35.0,
+            tau_d=3.0,
+            K_T_rare=31,
+            gamma=0.9965,
+        )
+
+        self.coverage_state = CoverageState(params)
+        self.coverage_state.seed_from_baseline(baseline.bitmap)
+
+        if self.verbose:
+            print(f"  Calibrated: \u03c4_T={params.tau_new:.1f}, \u03c4_d={params.tau_d:.1f}, "
+                  f"K_T_rare={params.K_T_rare}, \u03b3={params.gamma:.4f}")
+            print("--- COVERAGE TRACKING READY ---\n")
+
     def _run_bandit_mutation(
         self,
         mutation_num: int,
@@ -429,7 +461,8 @@ class A4Fuzzer:
         mutation_id = self.db.record_mutation(
             self.campaign_id, kind, step, mutated_value, config, txn_idx, verifier_accepted
         )
-        self.db.record_failures(mutation_id, failures)
+        total_recorded, new_coverage = self.db.record_failures(mutation_id, failures)
+        result.new_coverage = new_coverage
 
         # Touch tracking (separate from CoverageState, for campaign stats)
         if exec_result.touch_bitmap is not None:
@@ -486,6 +519,7 @@ class A4Fuzzer:
         else:
             main_budget = num_mutations
             start_idx = 0
+            self._setup_coverage_tracking()
         
         for i in range(main_budget):
             mutation_num = start_idx + i + 1
@@ -644,6 +678,17 @@ class A4Fuzzer:
             merge_into_global(exec_result.touch_bitmap, self.global_touch_bitmap)
             result.new_touch = new_touch
         
+        # Phase II.5a: Reward computation for coverage tracking (non-bandit mode)
+        if self.coverage_state is not None:
+            outcome = self._classify_outcome(result)
+            reward, diag = compute_reward(
+                exec_result.touch_bitmap, failures, exit_code,
+                outcome, proof_generated, self.coverage_state,
+            )
+            result.reward = reward
+            result.reward_diag = diag
+            update_state(exec_result.touch_bitmap, failures, exit_code, self.coverage_state)
+
         # Update guided selector if applicable
         if hasattr(self.selector, 'record_mutation'):
             self.selector.record_mutation(step, new_coverage + result.new_touch)
@@ -1247,7 +1292,8 @@ class A4Fuzzer:
             d = result.reward_diag
             print(f"       r={result.reward:.3f}  T_new={d.get('T_new',0):.2f} "
                   f"F_new={d.get('F_new',0):.2f} F_rare={d.get('F_rare',0):.2f} "
-                  f"Z={d.get('Z',0)} Q={d.get('Q',0):.2f}")
+                  f"Z={d.get('Z',0)} Q={d.get('Q',0):.2f} "
+                  f"df={d.get('d_fail',0)}")
         
         # Value change info
         print(f"       Value: 0x{result.original_value:08X} -> 0x{result.mutated_value:08X}")
