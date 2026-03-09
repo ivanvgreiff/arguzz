@@ -201,28 +201,30 @@ class TestUCBExploitation:
 
 class TestUCBExploration:
     def test_unseen_arm_explored(self):
-        """An arm with N=0 should be selected due to forced exploration."""
+        """An arm with m=0 (never pulled) should be selected via cold-start."""
         universe = _small_universe(n_steps=10, budget=1000)
         params = _default_params(gamma=0.999)
         scheduler = DiscountedUCBScheduler(universe, params, seed=42)
         arms = universe.available_arms
 
-        # Set time to just before the select call
         scheduler.t = len(arms)
 
-        # Mark all arms EXCEPT the last one as explored at current time
+        # Mark all arms EXCEPT the last one as pulled (m > 0)
         for arm in arms[:-1]:
             kind, bucket = arm
             steps = universe.steps_in_arm(kind, bucket)
             scheduler.arm_N[arm] = 2.0
             scheduler.arm_S[arm] = 1.0
             scheduler.arm_t[arm] = scheduler.t
+            scheduler.arm_m[arm] = 1
             step = steps[0]
             scheduler.step_N[(kind, step)] = 2.0
             scheduler.step_S[(kind, step)] = 1.0
             scheduler.step_t[(kind, step)] = scheduler.t
+            scheduler.step_m[(kind, step)] = 1
 
         unseen_arm = arms[-1]
+        assert scheduler.arm_m[unseen_arm] == 0, "Last arm should have m=0"
         kind, step = scheduler.select()
         bucket = universe.bucket_for_step(step)
         selected_arm = (kind, bucket)
@@ -236,8 +238,8 @@ class TestUCBExploration:
 # =========================================================================
 
 class TestStepSelection:
-    def test_step_forced_exploration(self):
-        """Steps within a bucket should be force-explored."""
+    def test_step_cold_start(self):
+        """Steps within a bucket should be cold-start explored (m=0 first)."""
         universe = _small_universe(n_steps=300, budget=200)
         params = _default_params(gamma=0.99)
         scheduler = DiscountedUCBScheduler(universe, params, seed=42)
@@ -259,20 +261,22 @@ class TestStepSelection:
                 scheduler._decay_arm(a)
             scheduler.arm_N[arm] = 10.0
             scheduler.arm_t[arm] = scheduler.t
+            scheduler.arm_m[arm] = 10
 
             for s in steps:
                 scheduler._decay_step((kind, s))
 
-            under_explored = [s for s in steps if scheduler.step_N[(kind, s)] < scheduler.n_min]
-            if under_explored:
-                chosen = scheduler.rng.choice(under_explored)
+            cold_start = [s for s in steps if scheduler.step_m[(kind, s)] == 0]
+            if cold_start:
+                chosen = scheduler.rng.choice(cold_start)
                 scheduler.step_N[(kind, chosen)] += 1.0
                 scheduler.step_S[(kind, chosen)] += 0.5
                 scheduler.step_t[(kind, chosen)] = scheduler.t
+                scheduler.step_m[(kind, chosen)] += 1
                 steps_seen.add(chosen)
 
         assert steps_seen == set(steps), (
-            f"All steps should be explored: expected {set(steps)}, got {steps_seen}"
+            f"All steps should be cold-started: expected {set(steps)}, got {steps_seen}"
         )
 
 

@@ -37,12 +37,17 @@ class DiscountedUCBScheduler:
 
     Level 1 (arm selection):
       Arms are (mutation_kind, step_bucket) pairs from ArmUniverse.
-      Each arm tracks discounted count N, reward sum S, and last-update time t.
-      Selection: forced exploration (n_min) then UCB index maximization.
+      Each arm tracks discounted count N, reward sum S, last-update time t,
+      and raw pull count m (for cold-start, never decayed).
+      Selection: cold-start (m==0) then UCB index maximization.
 
     Level 2 (step selection within chosen arm):
       Same Discounted-UCB structure over individual steps in the bucket.
       N_tot for the exploration bonus is scoped to the bucket, not global.
+
+    Fixed per Pro_Report_9: forced exploration now uses raw pull counts (m)
+    instead of decayed N, preventing the perpetual-exploration trap where
+    UCB was dead code.
     """
 
     def __init__(
@@ -54,7 +59,6 @@ class DiscountedUCBScheduler:
         self.universe = universe
         self.gamma = params.gamma
         self.c = params.c_explore
-        self.n_min = universe.n_min
         self.rng = random.Random(seed)
 
         self.t: int = 0
@@ -62,14 +66,17 @@ class DiscountedUCBScheduler:
         self.arm_N: Dict[Tuple[str, int], float] = {}
         self.arm_S: Dict[Tuple[str, int], float] = {}
         self.arm_t: Dict[Tuple[str, int], int] = {}
+        self.arm_m: Dict[Tuple[str, int], int] = {}
         for arm in universe.available_arms:
             self.arm_N[arm] = 0.0
             self.arm_S[arm] = 0.0
             self.arm_t[arm] = 0
+            self.arm_m[arm] = 0
 
         self.step_N: Dict[Tuple[str, int], float] = {}
         self.step_S: Dict[Tuple[str, int], float] = {}
         self.step_t: Dict[Tuple[str, int], int] = {}
+        self.step_m: Dict[Tuple[str, int], int] = {}
         for arm in universe.available_arms:
             kind, bucket = arm
             for s in universe.steps_in_arm(kind, bucket):
@@ -77,6 +84,12 @@ class DiscountedUCBScheduler:
                 self.step_N[key] = 0.0
                 self.step_S[key] = 0.0
                 self.step_t[key] = 0
+                self.step_m[key] = 0
+
+        self.stats_coldstart_arm: int = 0
+        self.stats_ucb_arm: int = 0
+        self.stats_coldstart_step: int = 0
+        self.stats_ucb_step: int = 0
 
     # ------------------------------------------------------------------
     # Lazy decay helpers
@@ -132,10 +145,11 @@ class DiscountedUCBScheduler:
         for arm in arms:
             self._decay_arm(arm)
 
-        # --- Arm-level forced exploration ---
-        under_explored = [a for a in arms if self.arm_N[a] < self.n_min]
-        if under_explored:
-            chosen_arm = self.rng.choice(under_explored)
+        # --- Arm-level cold-start (raw pull count, never decayed) ---
+        cold_start = [a for a in arms if self.arm_m[a] == 0]
+        if cold_start:
+            chosen_arm = self.rng.choice(cold_start)
+            self.stats_coldstart_arm += 1
         else:
             # --- Arm-level UCB selection ---
             n_tot = sum(self.arm_N[a] for a in arms)
@@ -145,6 +159,7 @@ class DiscountedUCBScheduler:
                 return self._ucb_index(mu, self.c, n_tot, self.arm_N[a])
 
             chosen_arm = self._pick_max_random_tie(arms, arm_ucb)
+            self.stats_ucb_arm += 1
 
         kind, bucket = chosen_arm
 
@@ -154,9 +169,10 @@ class DiscountedUCBScheduler:
         for s in steps:
             self._decay_step((kind, s))
 
-        under_explored_steps = [s for s in steps if self.step_N[(kind, s)] < self.n_min]
-        if under_explored_steps:
-            chosen_step = self.rng.choice(under_explored_steps)
+        cold_start_steps = [s for s in steps if self.step_m[(kind, s)] == 0]
+        if cold_start_steps:
+            chosen_step = self.rng.choice(cold_start_steps)
+            self.stats_coldstart_step += 1
         else:
             n_tot_step = sum(self.step_N[(kind, s)] for s in steps)
 
@@ -166,6 +182,7 @@ class DiscountedUCBScheduler:
                 return self._ucb_index(mu, self.c, n_tot_step, self.step_N[key])
 
             chosen_step = self._pick_max_random_tie(steps, step_ucb)
+            self.stats_ucb_step += 1
 
         return kind, chosen_step
 
@@ -188,12 +205,14 @@ class DiscountedUCBScheduler:
             self.arm_N[arm] += 1.0
             self.arm_S[arm] += reward
             self.arm_t[arm] = self.t
+            self.arm_m[arm] += 1
 
         step_key = (kind, step)
         if step_key in self.step_N:
             self.step_N[step_key] += 1.0
             self.step_S[step_key] += reward
             self.step_t[step_key] = self.t
+            self.step_m[step_key] += 1
 
     def get_arm_stats(self, arm: Tuple[str, int]) -> Tuple[float, float, float]:
         """Return (N, mean_reward, ucb_index) for an arm at current t."""
@@ -207,9 +226,19 @@ class DiscountedUCBScheduler:
     def summary(self) -> str:
         """Human-readable summary of bandit state."""
         lines = [
-            f"DiscountedUCBScheduler (t={self.t}, γ={self.gamma:.4f}, c={self.c})",
+            f"DiscountedUCBScheduler (t={self.t}, \u03b3={self.gamma:.4f}, c={self.c})",
             f"  Arms: {self.universe.num_arms}",
         ]
+
+        total_arm_sel = self.stats_coldstart_arm + self.stats_ucb_arm
+        if total_arm_sel > 0:
+            lines.append(f"  Arm selections: {self.stats_coldstart_arm} coldstart "
+                         f"({self.stats_coldstart_arm/total_arm_sel*100:.0f}%) + "
+                         f"{self.stats_ucb_arm} UCB ({self.stats_ucb_arm/total_arm_sel*100:.0f}%)")
+        total_step_sel = self.stats_coldstart_step + self.stats_ucb_step
+        if total_step_sel > 0:
+            lines.append(f"  Step selections: {self.stats_coldstart_step} coldstart + "
+                         f"{self.stats_ucb_step} UCB")
 
         for arm in self.universe.available_arms:
             self._decay_arm(arm)
