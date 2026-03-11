@@ -17,8 +17,9 @@ See a4/docs/touch/PHASE_I_IMPLEMENTATION_PLAN.md §3 and
 """
 
 import base64
+import json
 import re
-from typing import Optional
+from typing import List, Optional, Set
 
 
 A4_TOUCH_MAP_SIZE = 65536
@@ -26,6 +27,23 @@ A4_TOUCH_MAP_SIZE = 65536
 
 _TOUCH_COVERAGE_RE = re.compile(
     r'<a4_touch_coverage>([\w+/=]+)</a4_touch_coverage>'
+)
+
+_ACCUM_TOUCH_COVERAGE_RE = re.compile(
+    r'<a4_accum_touch_coverage>([\w+/=]+)</a4_accum_touch_coverage>'
+)
+
+_ACCUM_VERBOSE_RE = re.compile(
+    r'<a4_accum_touch_verbose>\[(.*?)\]</a4_accum_touch_verbose>', re.DOTALL
+)
+
+_GLOBAL_RESIDUE_NONZERO_RE = re.compile(
+    r'<a4_global_residue_nonzero>({.*?})</a4_global_residue_nonzero>'
+)
+_GLOBAL_RESIDUE_ZERO_RE = re.compile(r'<a4_global_residue_zero/>')
+
+_FAMILY_RESIDUE_RE = re.compile(
+    r'<a4_family_residue>({.*?})</a4_family_residue>'
 )
 
 
@@ -111,3 +129,84 @@ def distinct_touched(bitmap: bytes) -> int:
 def total_touches(bitmap: bytes) -> int:
     """Sum of all entries in a bitmap (total touch count, may saturate per bucket)."""
     return sum(bitmap)
+
+
+def parse_accum_touch_bitmap(output: str) -> Optional[bytes]:
+    """
+    Extract and decode the accum touch bitmap from combined host output.
+
+    Searches for <a4_accum_touch_coverage>BASE64</a4_accum_touch_coverage>,
+    base64-decodes, and returns the raw bytes (length A4_TOUCH_MAP_SIZE).
+    Returns None if the tag is not found, decoding fails, or length mismatches.
+    """
+    match = _ACCUM_TOUCH_COVERAGE_RE.search(output)
+    if not match:
+        return None
+    try:
+        raw = base64.b64decode(match.group(1))
+    except Exception:
+        return None
+    if len(raw) != A4_TOUCH_MAP_SIZE:
+        return None
+    return bytes(raw)
+
+
+def parse_accum_verbose_set(output: str) -> Optional[Set[str]]:
+    """
+    Extract the accum verbose touch set from combined host output.
+
+    Searches for <a4_accum_touch_verbose>[...]</a4_accum_touch_verbose>,
+    parses the JSON array of "loc|major|minor" strings, and returns a set.
+    Returns None if the tag is not found or parsing fails.
+    """
+    match = _ACCUM_VERBOSE_RE.search(output)
+    if not match:
+        return None
+    try:
+        return set(json.loads('[' + match.group(1) + ']'))
+    except (json.JSONDecodeError, ValueError):
+        return None
+
+
+def parse_family_residues(output: str) -> Optional[List[dict]]:
+    """
+    Parse all <a4_family_residue> tags from output.
+
+    Requires A4_FAMILY_RESIDUE=1 (and A4_MUTATION_CONFIG or A4_COVERAGE_TOUCH)
+    to be set during the run.
+
+    Returns a list of dicts, one per family:
+      [{"family": "memory", "nonzero": true, "e0": ..., ...},
+       {"family": "u16", "nonzero": false}, ...]
+    Returns None if no tags found.
+    """
+    matches = _FAMILY_RESIDUE_RE.findall(output)
+    if not matches:
+        return None
+    results = []
+    for m in matches:
+        try:
+            results.append(json.loads(m))
+        except json.JSONDecodeError:
+            continue
+    return results if results else None
+
+
+def parse_global_residue(output: str) -> Optional[dict]:
+    """
+    Parse global residue tag from output.
+
+    Requires A4_GLOBAL_RESIDUE=1 to be set during the run.
+
+    Returns:
+      {"nonzero": True, "e0": ..., "e1": ..., "e2": ..., "e3": ...} if nonzero
+      {"nonzero": False} if zero
+      None if tag not found (env var not set or accum phase didn't run)
+    """
+    m = _GLOBAL_RESIDUE_NONZERO_RE.search(output)
+    if m:
+        data = json.loads(m.group(1))
+        return {"nonzero": True, **data}
+    if _GLOBAL_RESIDUE_ZERO_RE.search(output):
+        return {"nonzero": False}
+    return None

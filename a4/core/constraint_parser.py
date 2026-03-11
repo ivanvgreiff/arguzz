@@ -28,6 +28,7 @@ class ConstraintFailure:
     minor: int
     loc: str
     value: int
+    phase: str = "local"
     
     @classmethod
     def parse(cls, line: str) -> Optional['ConstraintFailure']:
@@ -46,6 +47,7 @@ class ConstraintFailure:
                 minor=data['minor'],
                 loc=data['loc'],
                 value=data['value'],
+                phase=data.get('phase', 'local'),
             )
         except (json.JSONDecodeError, KeyError):
             return None

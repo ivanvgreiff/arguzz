@@ -3,6 +3,12 @@
 
 # zkSecurity
 a4/output/*
+a4/docs/*
+a4/notebooks/*
+a4/docs
+a4/notebooks
+*.db
+.cursor
 
 ### C++ ###
 # Prerequisites

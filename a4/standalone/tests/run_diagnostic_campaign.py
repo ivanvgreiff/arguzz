@@ -36,6 +36,7 @@ from a4.core.constraint_parser import ConstraintFailure, parse_all_constraint_fa
 from a4.core.touch_coverage import (
     parse_touch_bitmap, count_new_bits, merge_into_global,
     make_global_bitmap, distinct_touched, A4_TOUCH_MAP_SIZE,
+    parse_accum_touch_bitmap, parse_accum_verbose_set,
 )
 from a4.standalone.step_selector import ZonedStepSelector
 from a4.standalone.value_generator import create_generator
@@ -62,10 +63,18 @@ MUTATION_KINDS = [
 CRASH_SIGNALS = {-11, -6, -8, -9, -10, 139, 134, 136, 137, 138}
 
 VERBOSE_RE = re.compile(r'<a4_touch_verbose>\[(.*?)\]</a4_touch_verbose>', re.DOTALL)
+ACCUM_VERBOSE_RE = re.compile(r'<a4_accum_touch_verbose>\[(.*?)\]</a4_accum_touch_verbose>', re.DOTALL)
 
 
 def parse_verbose_set(output: str) -> Optional[Set[str]]:
     match = VERBOSE_RE.search(output)
+    if not match:
+        return None
+    return set(json.loads('[' + match.group(1) + ']'))
+
+
+def parse_accum_verbose(output: str) -> Optional[Set[str]]:
+    match = ACCUM_VERBOSE_RE.search(output)
     if not match:
         return None
     return set(json.loads('[' + match.group(1) + ']'))
@@ -121,6 +130,16 @@ class RunResult:
     reward: float
     diag: dict
     execution_time_ms: float
+    n_fail_local: int = 0
+    n_fail_accum: int = 0
+    d_fail_local: int = 0
+    d_fail_accum: int = 0
+    fail_context_ids_local: Set[Tuple[str, int, int]] = None
+    fail_context_ids_accum: Set[Tuple[str, int, int]] = None
+    accum_bitmap_delta_new: int = 0
+    accum_exact_delta_new: int = 0
+    accum_exact_touched_count: int = 0
+    accum_bitmap_touched_count: int = 0
 
 
 def create_mutation(kind, step, data, rng, value_gen):
@@ -247,6 +266,10 @@ def main():
     merge_into_global(baseline.bitmap, global_bitmap)
     global_exact_set: Set[str] = set()
 
+    # Accum (global constraint) tracking
+    global_accum_bitmap = make_global_bitmap()
+    global_accum_exact_set: Set[str] = set()
+
     results: List[RunResult] = []
     kind_counter: Counter = Counter()
     campaign_start = time.perf_counter()
@@ -278,15 +301,25 @@ def main():
         bitmap = parse_touch_bitmap(output)
         verbose = parse_verbose_set(output)
 
+        local_failures = [f for f in failures if f.phase == "local"]
+        accum_failures = [f for f in failures if f.phase == "accum"]
+
         n_fail = len(failures)
-        fail_ctx = set((f.constraint_loc(), f.major, f.minor) for f in failures)
+        n_fail_local = len(local_failures)
+        n_fail_accum = len(accum_failures)
+
+        fail_ctx_local = set((f.constraint_loc(), f.major, f.minor) for f in local_failures)
+        fail_ctx_accum = set((f.constraint_loc(), f.major, f.minor) for f in accum_failures)
+        fail_ctx = fail_ctx_local | fail_ctx_accum
         d_fail = len(fail_ctx)
+        d_fail_local = len(fail_ctx_local)
+        d_fail_accum = len(fail_ctx_accum)
         r_rep = max(0, n_fail - d_fail)
 
         outcome, proof_generated = classify_outcome(output, exit_code, n_fail)
         crashed = exit_code in CRASH_SIGNALS
 
-        # Bitmap tracking (separate from CoverageState for comparison)
+        # Local bitmap tracking
         if bitmap is not None:
             bitmap_delta = count_new_bits(bitmap, global_bitmap)
             bitmap_count = distinct_touched(bitmap)
@@ -295,7 +328,7 @@ def main():
             bitmap_delta = 0
             bitmap_count = 0
 
-        # Exact set tracking
+        # Local exact set tracking
         if verbose is not None:
             exact_delta = len(verbose - global_exact_set)
             exact_count = len(verbose)
@@ -303,6 +336,26 @@ def main():
         else:
             exact_delta = 0
             exact_count = 0
+
+        # Accum bitmap tracking
+        accum_bitmap = parse_accum_touch_bitmap(output)
+        if accum_bitmap is not None:
+            accum_bitmap_delta = count_new_bits(accum_bitmap, global_accum_bitmap)
+            accum_bitmap_count = distinct_touched(accum_bitmap)
+            merge_into_global(accum_bitmap, global_accum_bitmap)
+        else:
+            accum_bitmap_delta = 0
+            accum_bitmap_count = 0
+
+        # Accum exact set tracking
+        accum_verbose = parse_accum_verbose(output)
+        if accum_verbose is not None:
+            accum_exact_delta = len(accum_verbose - global_accum_exact_set)
+            accum_exact_count = len(accum_verbose)
+            global_accum_exact_set.update(accum_verbose)
+        else:
+            accum_exact_delta = 0
+            accum_exact_count = 0
 
         # REWARD COMPUTATION (revised formula)
         reward, diag = compute_reward(bitmap, failures, exit_code, outcome, proof_generated, state)
@@ -316,12 +369,18 @@ def main():
             bitmap_delta_new=bitmap_delta, exact_delta_new=exact_delta,
             exact_touched_count=exact_count, bitmap_touched_count=bitmap_count,
             reward=reward, diag=diag, execution_time_ms=exec_ms,
+            n_fail_local=n_fail_local, n_fail_accum=n_fail_accum,
+            d_fail_local=d_fail_local, d_fail_accum=d_fail_accum,
+            fail_context_ids_local=fail_ctx_local, fail_context_ids_accum=fail_ctx_accum,
+            accum_bitmap_delta_new=accum_bitmap_delta, accum_exact_delta_new=accum_exact_delta,
+            accum_exact_touched_count=accum_exact_count, accum_bitmap_touched_count=accum_bitmap_count,
         )
         results.append(rr)
 
         touch_str = f" [bm:+{bitmap_delta} ex:+{exact_delta}]" if bitmap_delta > 0 or exact_delta > 0 else ""
+        accum_touch_str = f" [abm:+{accum_bitmap_delta} aex:+{accum_exact_delta}]" if accum_bitmap_delta > 0 or accum_exact_delta > 0 else ""
         z_str = " [Z]" if diag.get("Z", 0) == 1 else ""
-        print(f"  [{i+1}/{num}] {kind} @ step {step}: {n_fail}f {d_fail}d r={reward:.3f}{touch_str}{z_str} [{outcome}]")
+        print(f"  [{i+1}/{num}] {kind} @ step {step}: {n_fail_local}Lf {n_fail_accum}Af {d_fail}d r={reward:.3f}{touch_str}{accum_touch_str}{z_str} [{outcome}]")
 
     total_time = (time.perf_counter() - campaign_start) * 1000
 
@@ -341,15 +400,55 @@ def main():
     print(f"Final exact triples: {len(global_exact_set)}")
     print(f"Hash collisions: {len(global_exact_set) - distinct_touched(bytes(global_bitmap))}")
 
-    # Failure coverage
+    # Failure coverage (combined)
     all_fail_ctx = set()
     all_fail_locs = set()
     for r in results:
         all_fail_ctx.update(r.fail_context_ids)
         all_fail_locs.update(loc for loc, _, _ in r.fail_context_ids)
-    print(f"\n--- FAILURE COVERAGE ---")
+    print(f"\n--- FAILURE COVERAGE (combined) ---")
     print(f"Distinct constraint_loc families: {len(all_fail_locs)}")
     print(f"Distinct (loc,major,minor) context_ids: {len(all_fail_ctx)}")
+
+    # Local failure coverage
+    all_local_ctx = set()
+    all_local_locs = set()
+    for r in results:
+        if r.fail_context_ids_local:
+            all_local_ctx.update(r.fail_context_ids_local)
+            all_local_locs.update(loc for loc, _, _ in r.fail_context_ids_local)
+    print(f"\n--- LOCAL FAILURE COVERAGE ---")
+    print(f"Distinct local constraint_loc families: {len(all_local_locs)}")
+    print(f"Distinct local (loc,major,minor) context_ids: {len(all_local_ctx)}")
+
+    # Accum failure coverage
+    all_accum_ctx = set()
+    all_accum_locs = set()
+    for r in results:
+        if r.fail_context_ids_accum:
+            all_accum_ctx.update(r.fail_context_ids_accum)
+            all_accum_locs.update(loc for loc, _, _ in r.fail_context_ids_accum)
+    runs_with_accum = sum(1 for r in results if r.n_fail_accum > 0)
+    print(f"\n--- ACCUM FAILURE COVERAGE ---")
+    print(f"Distinct accum constraint_loc families: {len(all_accum_locs)}")
+    print(f"Distinct accum (loc,major,minor) context_ids: {len(all_accum_ctx)}")
+    print(f"Runs with accum failures: {runs_with_accum}/{len(results)}")
+
+    # Accum touch coverage
+    print(f"\n--- ACCUM TOUCH COVERAGE ---")
+    print(f"Final accum bitmap buckets: {distinct_touched(bytes(global_accum_bitmap))}")
+    print(f"Final accum exact triples: {len(global_accum_exact_set)}")
+
+    # Phase breakdown
+    local_only = sum(1 for r in results if r.n_fail_local > 0 and r.n_fail_accum == 0)
+    accum_only = sum(1 for r in results if r.n_fail_local == 0 and r.n_fail_accum > 0)
+    both_phases = sum(1 for r in results if r.n_fail_local > 0 and r.n_fail_accum > 0)
+    no_failures = sum(1 for r in results if r.n_fail == 0)
+    print(f"\n--- PHASE BREAKDOWN ---")
+    print(f"Runs with local-only failures: {local_only}")
+    print(f"Runs with accum-only failures: {accum_only}")
+    print(f"Runs with both local + accum failures: {both_phases}")
+    print(f"Runs with no failures: {no_failures}")
 
     # Reward distributions
     print(f"\n--- REWARD BY KIND ---")
