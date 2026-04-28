@@ -46,6 +46,14 @@ _FAMILY_RESIDUE_RE = re.compile(
     r'<a4_family_residue>({.*?})</a4_family_residue>'
 )
 
+_FAMILY_STATS_RE = re.compile(
+    r'<a4_family_stats>({.*?})</a4_family_stats>'
+)
+
+_FAMILY_DETAIL_RE = re.compile(
+    r'<a4_family_detail>({.*?})</a4_family_detail>'
+)
+
 
 def parse_touch_bitmap(output: str) -> Optional[bytes]:
     """
@@ -181,6 +189,34 @@ def parse_family_residues(output: str) -> Optional[List[dict]]:
     Returns None if no tags found.
     """
     matches = _FAMILY_RESIDUE_RE.findall(output)
+    if not matches:
+        return None
+    results = []
+    for m in matches:
+        try:
+            results.append(json.loads(m))
+        except json.JSONDecodeError:
+            continue
+    return results if results else None
+
+
+def parse_family_stats(output: str) -> Optional[List[dict]]:
+    """Parse all <a4_family_stats> tags from output."""
+    matches = _FAMILY_STATS_RE.findall(output)
+    if not matches:
+        return None
+    results = []
+    for m in matches:
+        try:
+            results.append(json.loads(m))
+        except json.JSONDecodeError:
+            continue
+    return results if results else None
+
+
+def parse_family_detail(output: str) -> Optional[List[dict]]:
+    """Parse all <a4_family_detail> tags (only present when a family residue is nonzero)."""
+    matches = _FAMILY_DETAIL_RE.findall(output)
     if not matches:
         return None
     results = []

@@ -83,24 +83,29 @@ class MutationResult:
     execution_time_ms: float
     new_coverage: int = 0
     new_touch: int = 0
-    exit_code: int = 0  # Process exit code (139=SIGSEGV, 101=panic, 0=success)
-    crashed: bool = False  # True if process crashed (segfault, etc.)
-    proof_generated: bool = False  # True if proof was generated (may still be invalid)
-    proof_verify_failed: bool = False  # True if proof verification failed (verify segment)
-    raw_errors: List[str] = field(default_factory=list)  # Exact error lines from risc0 prover (unmodified)
-    raw_output: Optional[str] = None  # Raw stdout for debugging (truncated)
-    reward: float = 0.0  # Bandit reward (Phase II.4; 0 for non-bandit mode)
-    reward_diag: Optional[dict] = None  # Reward diagnostic breakdown (Phase II.4)
+    exit_code: int = 0
+    crashed: bool = False
+    proof_generated: bool = False
+    proof_verify_failed: bool = False
+    raw_errors: List[str] = field(default_factory=list)
+    raw_output: Optional[str] = None
+    reward: float = 0.0
+    reward_diag: Optional[dict] = None
+    broken_families: List[str] = field(default_factory=list)
+    broken_addresses: List[dict] = field(default_factory=list)
+    is_global_only: bool = False
+    family_stats: Optional[List[dict]] = None
+    family_details: Optional[List[dict]] = None
 
 
 @dataclass
 class CampaignStats:
     """Statistics for a fuzzing campaign"""
     total_mutations: int = 0
-    successful_mutations: int = 0  # Caused failures (REJECTED)
-    verifier_accepts: int = 0      # BUGS: verifier accepted bad proof
-    crashes: int = 0               # CRASH: process crashed (segfault, etc.)
-    skipped_mutations: int = 0     # Mutations skipped (no valid target after retries)
+    successful_mutations: int = 0
+    verifier_accepts: int = 0
+    crashes: int = 0
+    skipped_mutations: int = 0
     new_coverage_count: int = 0
     new_touch_count: int = 0
     total_distinct_touched: int = 0
@@ -108,6 +113,9 @@ class CampaignStats:
     mutations_by_kind: Dict[str, int] = field(default_factory=dict)
     unique_constraints: set = field(default_factory=set)
     execution_time_ms: float = 0
+    global_violations: int = 0
+    global_only: int = 0
+    local_only: int = 0
 
 
 class A4Fuzzer:
@@ -220,7 +228,7 @@ class A4Fuzzer:
             return "ACCEPTED"
         elif result.crashed:
             return "CRASH"
-        elif result.failures or result.proof_verify_failed:
+        elif result.failures or result.proof_verify_failed or result.broken_families:
             return "REJECTED"
         return "NO_EFFECT"
     
@@ -430,6 +438,22 @@ class A4Fuzzer:
         raw_errors = self._extract_raw_error(exec_result.stdout, exec_result.stderr)
         raw_output_truncated = output[-2000:] if len(output) > 2000 else output
 
+        # Global constraint info from Hook 3
+        broken_families = []
+        broken_addresses = []
+        if exec_result.family_residues:
+            for fr in exec_result.family_residues:
+                if fr.get("nonzero"):
+                    broken_families.append(fr["family"])
+        if exec_result.family_details:
+            for fd in exec_result.family_details:
+                if fd.get("broken_addrs"):
+                    broken_addresses.extend(fd["broken_addrs"])
+                if fd.get("broken_indices"):
+                    broken_addresses.extend(fd["broken_indices"])
+        local_failures = [f for f in failures if f.phase == "local"]
+        is_global_only = len(broken_families) > 0 and len(local_failures) == 0
+
         result = MutationResult(
             kind=kind, step=step,
             original_value=original_value, mutated_value=mutated_value,
@@ -437,6 +461,9 @@ class A4Fuzzer:
             execution_time_ms=execution_time, exit_code=exit_code, crashed=crashed,
             proof_generated=proof_generated, proof_verify_failed=proof_verify_failed,
             raw_errors=raw_errors, raw_output=raw_output_truncated,
+            broken_families=broken_families, broken_addresses=broken_addresses,
+            is_global_only=is_global_only,
+            family_details=exec_result.family_details,
         )
 
         # Outcome classification for reward
@@ -640,6 +667,22 @@ class A4Fuzzer:
         # Truncate raw output to last 2000 chars for debugging
         raw_output_truncated = output[-2000:] if len(output) > 2000 else output
         
+        # Global constraint info from Hook 3
+        broken_families = []
+        broken_addresses = []
+        if exec_result.family_residues:
+            for fr in exec_result.family_residues:
+                if fr.get("nonzero"):
+                    broken_families.append(fr["family"])
+        if exec_result.family_details:
+            for fd in exec_result.family_details:
+                if fd.get("broken_addrs"):
+                    broken_addresses.extend(fd["broken_addrs"])
+                if fd.get("broken_indices"):
+                    broken_addresses.extend(fd["broken_indices"])
+        local_failures = [f for f in failures if f.phase == "local"]
+        is_global_only = len(broken_families) > 0 and len(local_failures) == 0
+
         result = MutationResult(
             kind=kind,
             step=step,
@@ -655,6 +698,10 @@ class A4Fuzzer:
             proof_verify_failed=proof_verify_failed,
             raw_errors=raw_errors,
             raw_output=raw_output_truncated,
+            broken_families=broken_families,
+            broken_addresses=broken_addresses,
+            is_global_only=is_global_only,
+            family_details=exec_result.family_details,
         )
         
         # Record in database
@@ -1242,7 +1289,54 @@ class A4Fuzzer:
         
         stats.new_coverage_count += result.new_coverage
         stats.new_touch_count += result.new_touch
+        
+        if result.broken_families:
+            stats.global_violations += 1
+            if result.is_global_only:
+                stats.global_only += 1
+        local_fails = [f for f in result.failures if f.phase == "local"]
+        if local_fails and not result.broken_families:
+            stats.local_only += 1
     
+    _REG_ABI = [
+        "zero","ra","sp","gp","tp","t0","t1","t2",
+        "s0","s1","a0","a1","a2","a3","a4","a5",
+        "a6","a7","s2","s3","s4","s5","s6","s7",
+        "s8","s9","s10","s11","t3","t4","t5","t6",
+    ]
+
+    @staticmethod
+    def _format_mem_mismatch(info: dict) -> str:
+        """Format a single broken memory address for display."""
+        reg = info.get("reg")
+        if reg:
+            idx = int(reg[1:]) if reg.startswith("x") and reg[1:].isdigit() else -1
+            abi = A4Fuzzer._REG_ABI
+            name = f"{reg}/{abi[idx]}" if 0 <= idx < 32 else reg
+        else:
+            byte_addr = info.get("byte_addr")
+            if byte_addr is not None:
+                addr_type = info.get("type", "data")
+                name = f"0x{int(byte_addr):08X} ({addr_type})"
+            else:
+                name = info.get("hex", f"0x{info.get('addr', 0):08x}")
+
+        wrote = info.get("wrote")
+        expected = info.get("expected")
+        cycle = info.get("mismatch_cycle")
+        cycle_str = f" (cycle {cycle})" if cycle is not None else ""
+
+        if wrote is not None and expected is not None:
+            return f"{name}: wrote {wrote}, expected {expected}{cycle_str}"
+        elif wrote is not None and expected is None:
+            return f"{name}: unexpected write {wrote}{cycle_str}"
+        elif wrote is None and expected is not None:
+            return f"{name}: expected write missing, needed {expected}{cycle_str}"
+        else:
+            plus = info.get("plus", 0)
+            minus = info.get("minus", 0)
+            return f"{name}: {plus} +entries, {minus} -entries"
+
     def _print_mutation_result(self, num: int, result: MutationResult):
         """Print detailed result of a single mutation"""
         # Status indicator
@@ -1250,30 +1344,15 @@ class A4Fuzzer:
             status = "🐛"  # BUG - verifier accepted invalid proof
         elif result.crashed:
             status = "💥"  # Process crashed
-        elif result.failures or result.proof_verify_failed:
+        elif result.failures or result.proof_verify_failed or result.broken_families:
             status = "✓"  # Mutation detected - proof rejected
         else:
             status = "○"  # No effect detected
         
+        outcome = self._classify_outcome(result)
         bug_marker = " BUG!" if result.verifier_accepted else ""
         new_cov = f" [+{result.new_coverage} new]" if result.new_coverage > 0 else ""
         new_touch_str = f" [+{result.new_touch} touch]" if result.new_touch > 0 else ""
-        
-        # Outcome classification (priority order):
-        # 
-        # ACCEPTED = Verifier accepted (BUG!) - soundness violation
-        # CRASH = Process crashed (segfault, etc.) - severe mutation effect
-        # REJECTED = Proof invalid - constraint failures OR verify segment failed
-        # NO_EFFECT = No failures detected
-        #
-        if result.verifier_accepted:
-            outcome = "ACCEPTED"  # BUG: soundness violation!
-        elif result.crashed:
-            outcome = "CRASH"  # Process crashed (segfault, etc.)
-        elif result.failures or result.proof_verify_failed:
-            outcome = "REJECTED"  # Mutation detected, proof invalid
-        else:
-            outcome = "NO_EFFECT"  # No failures detected
         
         # Proof status for clarity
         proof_status = ""
@@ -1282,11 +1361,24 @@ class A4Fuzzer:
         elif result.crashed:
             proof_status = " [proof:NOT_GENERATED]"
         
+        # Global marker
+        global_marker = ""
+        if result.broken_families:
+            fams = "|".join(result.broken_families)
+            if result.is_global_only:
+                global_marker = f" G={fams}[GO]"
+            else:
+                global_marker = f" G={fams}"
+        
+        local_count = len([f for f in result.failures if f.phase == "local"])
+        accum_count = len([f for f in result.failures if f.phase == "accum"])
+        fail_str = f"{local_count}L {accum_count}A" if accum_count > 0 else f"{local_count} failures"
+        
         # Basic info line
         print(f"  [{num}] {status} {result.kind} @ step {result.step}: "
-              f"{len(result.failures)} failures, {result.execution_time_ms:.0f}ms, "
+              f"{fail_str}, {result.execution_time_ms:.0f}ms, "
               f"outcome: {outcome}, exit: {result.exit_code}"
-              f"{proof_status}{new_cov}{new_touch_str}{bug_marker}")
+              f"{proof_status}{new_cov}{new_touch_str}{global_marker}{bug_marker}")
         
         if result.reward_diag is not None:
             d = result.reward_diag
@@ -1378,32 +1470,114 @@ class A4Fuzzer:
             for err in result.raw_errors:
                 print(f"         • {err}")
         
-        # Constraint failure details (grouped by constraint location)
+        # Constraint failure details (separated by phase)
         if result.failures:
-            # Group failures by constraint location
-            failures_by_loc = {}
-            for f in result.failures:
-                loc = f.constraint_loc()
-                if loc not in failures_by_loc:
-                    failures_by_loc[loc] = []
-                failures_by_loc[loc].append(f)
+            local_failures = [f for f in result.failures if f.phase == "local"]
+            accum_failures = [f for f in result.failures if f.phase == "accum"]
             
-            print(f"       Constraints hit ({len(failures_by_loc)} unique):")
-            for loc, failures in sorted(failures_by_loc.items()):
-                # Show first failure details for each unique constraint
-                first = failures[0]
-                count_str = f" (x{len(failures)})" if len(failures) > 1 else ""
-                print(f"         - {loc}{count_str}")
-                print(f"           cycle={first.cycle}, step={first.step}, "
-                      f"pc=0x{first.pc:08X}, major={first.major}, minor={first.minor}")
-        elif result.proof_verify_failed:
-            # Proof verification failed but no constraint tags emitted
-            print(f"       Proof verification failed (no local constraint failures)")
-        elif outcome == "NO_EFFECT":
-            # No constraint failures detected - this is unusual and worth investigating
-            print(f"       ⚠ No constraint failures detected - possible edge case or parsing issue")
-        else:
-            print(f"       No constraint failures (mutation may have been ineffective)")
+            if local_failures:
+                local_by_loc = {}
+                for f in local_failures:
+                    loc = f.constraint_loc()
+                    if loc not in local_by_loc:
+                        local_by_loc[loc] = []
+                    local_by_loc[loc].append(f)
+                print(f"       Local constraints hit ({len(local_by_loc)} unique):")
+                for loc, fails in sorted(local_by_loc.items()):
+                    first = fails[0]
+                    count_str = f" (x{len(fails)})" if len(fails) > 1 else ""
+                    print(f"         - {loc}{count_str}")
+                    print(f"           cycle={first.cycle}, step={first.step}, "
+                          f"pc=0x{first.pc:08X}, major={first.major}, minor={first.minor}")
+            
+            if accum_failures:
+                accum_by_loc = {}
+                for f in accum_failures:
+                    loc = f.constraint_loc()
+                    if loc not in accum_by_loc:
+                        accum_by_loc[loc] = []
+                    accum_by_loc[loc].append(f)
+                print(f"       Accum constraints hit ({len(accum_by_loc)} unique):")
+                for loc, fails in sorted(accum_by_loc.items()):
+                    first = fails[0]
+                    count_str = f" (x{len(fails)})" if len(fails) > 1 else ""
+                    label = "BigInt" if "BigInt" in loc or "inst_bigint" in loc else "AccumDelta"
+                    print(f"         - [{label}] {loc}{count_str}")
+                    print(f"           cycle={first.cycle}, step={first.step}, "
+                          f"pc=0x{first.pc:08X}, major={first.major}, minor={first.minor}")
+        elif not result.broken_families:
+            if result.proof_verify_failed:
+                print(f"       Proof verification failed (no constraint failures detected)")
+            elif outcome == "NO_EFFECT":
+                print(f"       No constraint failures detected")
+            else:
+                print(f"       No constraint failures (mutation may have been ineffective)")
+        
+        # Global constraint info from Hook 3
+        if result.broken_families:
+            go_str = " [GLOBAL-ONLY]" if result.is_global_only else ""
+
+            # Memory permutation violations
+            if "memory" in result.broken_families:
+                mem_detail = None
+                if result.family_details:
+                    for fd in result.family_details:
+                        if fd.get("family") == "memory":
+                            mem_detail = fd
+                            break
+                broken_count = mem_detail.get("broken_count", 0) if mem_detail else 0
+                n_reg = mem_detail.get("n_reg", 0) if mem_detail else 0
+                n_code = mem_detail.get("n_code", 0) if mem_detail else 0
+                n_data = mem_detail.get("n_data", 0) if mem_detail else 0
+                mem_addrs = mem_detail.get("broken_addrs", []) if mem_detail else []
+
+                if broken_count >= 10:
+                    parts = []
+                    if n_reg: parts.append(f"{n_reg} register")
+                    if n_code: parts.append(f"{n_code} code")
+                    if n_data: parts.append(f"{n_data} data")
+                    type_str = ", ".join(parts)
+                    print(f"       Global: memory permutation violated ({broken_count} addrs: {type_str}){go_str}")
+                    interesting = [a for a in mem_addrs if a.get("type") != "code"]
+                    for a in interesting[:3]:
+                        print(f"         {self._format_mem_mismatch(a)}")
+                    code_shown = sum(1 for a in mem_addrs if a.get("type") == "code")
+                    remaining = broken_count - len(interesting[:3])
+                    if n_code:
+                        print(f"         + {n_code} code addresses diverged (instruction fetch cascade)")
+                        remaining -= n_code
+                    if remaining > 0:
+                        print(f"         + {remaining} more addresses")
+                else:
+                    print(f"       Global: memory permutation violated{go_str}")
+                    for a in mem_addrs:
+                        print(f"         {self._format_mem_mismatch(a)}")
+
+            # Lookup violations
+            if result.family_details:
+                for fd in result.family_details:
+                    fam = fd.get("family", "")
+                    if fam == "memory":
+                        continue
+                    broken_indices = fd.get("broken_indices", [])
+                    if not broken_indices:
+                        continue
+                    broken_count = fd.get("broken_count", len(broken_indices))
+                    print(f"       Global: {fam} lookup violated ({broken_count} indices broken)")
+                    for idx_info in broken_indices[:5]:
+                        idx = idx_info.get("index", "?")
+                        plus = idx_info.get("plus", 0)
+                        minus = idx_info.get("minus", 0)
+                        if plus > 0 and minus == 0:
+                            print(f"         index {idx}: orphan provide ({plus} entries, no matching use)")
+                        elif minus > 0 and plus == 0:
+                            print(f"         index {idx}: orphan use ({minus} entries, no matching provide)")
+                        else:
+                            print(f"         index {idx}: {plus} provides, {minus} uses (imbalanced)")
+                    if broken_count > 5:
+                        print(f"         + {broken_count - 5} more indices")
+        elif result.failures and not result.broken_families:
+            print(f"       Global: no permutation/lookup violations (local-only)")
     
     def _print_campaign_summary(self, stats: CampaignStats):
         """Print campaign summary"""
@@ -1418,6 +1592,10 @@ class A4Fuzzer:
         print(f"New coverage:        {stats.new_coverage_count}")
         print(f"New touch:           {stats.new_touch_count}")
         print(f"Distinct touched:    {stats.total_distinct_touched}")
+        print(f"\nGlobal Constraint Summary:")
+        print(f"  Mutations with global violations: {stats.global_violations}")
+        print(f"  Global-only (no local failures):  {stats.global_only}")
+        print(f"  Local-only (no global violations):{stats.local_only}")
         print(f"Execution time:      {stats.execution_time_ms:.0f}ms")
         
         # Outcome summary (mutually exclusive categories)

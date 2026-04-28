@@ -19,7 +19,7 @@ from a4.core.constraint_parser import (
     ConstraintFailure,
     parse_all_constraint_failures
 )
-from a4.core.touch_coverage import parse_touch_bitmap
+from a4.core.touch_coverage import parse_touch_bitmap, parse_family_residues, parse_family_detail
 
 
 def run_a4_inspection(host_binary: str, host_args: List[str]) -> str:
@@ -134,6 +134,8 @@ class MutationExecutionResult:
     exit_code: int
     failures: List[ConstraintFailure]
     touch_bitmap: Optional[bytes] = None
+    family_residues: Optional[List[dict]] = None
+    family_details: Optional[List[dict]] = None
 
 
 def run_baseline(
@@ -191,6 +193,7 @@ def run_a4_mutation(
         "A4_MUTATION_CONFIG": str(config_path),
         "CONSTRAINT_CONTINUE": "1",
         "A4_COVERAGE_TOUCH": "1",
+        "A4_FAMILY_RESIDUE": "1",
     }
     
     result = subprocess.run(
@@ -203,6 +206,8 @@ def run_a4_mutation(
     combined = result.stdout + result.stderr
     failures = parse_all_constraint_failures(combined)
     touch_bitmap = parse_touch_bitmap(combined)
+    family_residues = parse_family_residues(combined)
+    family_details = parse_family_detail(combined)
     
     return MutationExecutionResult(
         stdout=result.stdout,
@@ -211,4 +216,6 @@ def run_a4_mutation(
         exit_code=result.returncode,
         failures=failures,
         touch_bitmap=touch_bitmap,
+        family_residues=family_residues,
+        family_details=family_details,
     )

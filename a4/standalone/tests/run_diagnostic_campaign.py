@@ -37,6 +37,7 @@ from a4.core.touch_coverage import (
     parse_touch_bitmap, count_new_bits, merge_into_global,
     make_global_bitmap, distinct_touched, A4_TOUCH_MAP_SIZE,
     parse_accum_touch_bitmap, parse_accum_verbose_set,
+    parse_global_residue, parse_family_residues, parse_family_detail,
 )
 from a4.standalone.step_selector import ZonedStepSelector
 from a4.standalone.value_generator import create_generator
@@ -226,6 +227,8 @@ def run_mutation(host, host_args, config_path):
         "CONSTRAINT_CONTINUE": "1",
         "A4_COVERAGE_TOUCH": "1",
         "A4_COVERAGE_TOUCH_VERBOSE": "1",
+        "A4_GLOBAL_RESIDUE": "1",
+        "A4_FAMILY_RESIDUE": "1",
     }
     result = subprocess.run([host] + host_args, capture_output=True, text=True, env=env)
     return result.stdout + result.stderr, result.returncode
@@ -357,6 +360,28 @@ def main():
             accum_exact_delta = 0
             accum_exact_count = 0
 
+        # Global hooks parsing
+        global_residue = parse_global_residue(output)
+        family_residues = parse_family_residues(output)
+        family_details = parse_family_detail(output)
+
+        # Build global summary string
+        broken_families = []
+        broken_addrs_str = ""
+        if family_residues:
+            for fr in family_residues:
+                if fr.get("nonzero"):
+                    broken_families.append(fr["family"])
+        if family_details:
+            for fd in family_details:
+                if fd.get("broken_addrs"):
+                    addrs = []
+                    for a in fd["broken_addrs"][:3]:
+                        addrs.append(a.get("reg", a.get("hex", str(a["addr"]))))
+                    if fd.get("broken_count", 0) > 3:
+                        addrs.append(f"+{fd['broken_count']-3}")
+                    broken_addrs_str = "(" + ",".join(addrs) + ")"
+
         # REWARD COMPUTATION (revised formula)
         reward, diag = compute_reward(bitmap, failures, exit_code, outcome, proof_generated, state)
         update_state(bitmap, failures, exit_code, state)
@@ -380,7 +405,12 @@ def main():
         touch_str = f" [bm:+{bitmap_delta} ex:+{exact_delta}]" if bitmap_delta > 0 or exact_delta > 0 else ""
         accum_touch_str = f" [abm:+{accum_bitmap_delta} aex:+{accum_exact_delta}]" if accum_bitmap_delta > 0 or accum_exact_delta > 0 else ""
         z_str = " [Z]" if diag.get("Z", 0) == 1 else ""
-        print(f"  [{i+1}/{num}] {kind} @ step {step}: {n_fail_local}Lf {n_fail_accum}Af {d_fail}d r={reward:.3f}{touch_str}{accum_touch_str}{z_str} [{outcome}]")
+        g_str = ""
+        if broken_families:
+            g_str = f" G={','.join(broken_families)}{broken_addrs_str}"
+        elif global_residue and not global_residue.get("nonzero"):
+            g_str = " G=--"
+        print(f"  [{i+1}/{num}] {kind} @ step {step}: {n_fail_local}Lf {n_fail_accum}Af {d_fail}d r={reward:.3f}{touch_str}{accum_touch_str}{g_str}{z_str} [{outcome}]")
 
     total_time = (time.perf_counter() - campaign_start) * 1000
 
@@ -449,6 +479,16 @@ def main():
     print(f"Runs with accum-only failures: {accum_only}")
     print(f"Runs with both local + accum failures: {both_phases}")
     print(f"Runs with no failures: {no_failures}")
+
+    # Global constraint summary
+    print(f"\n--- GLOBAL CONSTRAINT SUMMARY ---")
+    # Note: global_residue and family data are not stored in RunResult yet,
+    # so we re-scan from the run output. For now, use the per-run parsed data.
+    # We stored broken_families in the display string; let's count from residues.
+    # Since we don't persist family_residues in RunResult, just report what we showed per-run.
+    global_nz_count = sum(1 for r in results if r.n_fail_local == 0 and r.n_fail_accum == 0
+                          and r.outcome == "REJECTED")
+    print(f"Global-only runs (0 local, 0 accum, REJECTED): {global_nz_count}")
 
     # Reward distributions
     print(f"\n--- REWARD BY KIND ---")

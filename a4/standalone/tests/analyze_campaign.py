@@ -49,6 +49,16 @@ TOUCH_RE = re.compile(r'\[([+-]\d+) touch\]')
 NEWCOV_RE = re.compile(r'\[\+(\d+) new\]')
 CALIB_RE = re.compile(r'Calibrated: .+=(.+), .+=(.+), .+=(\d+), .+=(.+)')
 
+# Arm universe summary (printed once per campaign, in BANDIT SETUP block)
+ARM_UNIV_T_RE      = re.compile(r'Step horizon \(T\):\s+(\d+)')
+ARM_UNIV_BCOUNT_RE = re.compile(r'Bucket count:\s+(\d+)')
+ARM_UNIV_B_RE      = re.compile(r'Steps per bucket:\s+(\d+)')
+ARM_UNIV_NARMS_RE  = re.compile(r'Total arms:\s+(\d+)')
+
+# Selection-mode summary (printed at campaign end, in DiscountedUCBScheduler summary)
+ARM_SEL_RE  = re.compile(r'Arm selections:\s+(\d+) coldstart \((\d+)%\) \+ (\d+) UCB \((\d+)%\)')
+STEP_SEL_RE = re.compile(r'Step selections:\s+(\d+) coldstart \+ (\d+) UCB')
+
 
 def parse_terminal(path: str) -> Tuple[List[RunRecord], dict]:
     meta = {}
@@ -70,6 +80,32 @@ def parse_terminal(path: str) -> Tuple[List[RunRecord], dict]:
                 m = re.search(r'budget remaining: (-?\d+)', line)
                 if m:
                     meta['main_budget'] = int(m.group(1))
+
+            # Arm universe summary
+            m = ARM_UNIV_T_RE.search(line)
+            if m:
+                meta['T'] = int(m.group(1))
+            m = ARM_UNIV_BCOUNT_RE.search(line)
+            if m:
+                meta['B_count'] = int(m.group(1))
+            m = ARM_UNIV_B_RE.search(line)
+            if m:
+                meta['B'] = int(m.group(1))
+            m = ARM_UNIV_NARMS_RE.search(line)
+            if m:
+                meta['num_arms'] = int(m.group(1))
+
+            # Selection-mode counts
+            m = ARM_SEL_RE.search(line)
+            if m:
+                meta['arm_coldstart'] = int(m.group(1))
+                meta['arm_coldstart_pct'] = int(m.group(2))
+                meta['arm_ucb'] = int(m.group(3))
+                meta['arm_ucb_pct'] = int(m.group(4))
+            m = STEP_SEL_RE.search(line)
+            if m:
+                meta['step_coldstart'] = int(m.group(1))
+                meta['step_ucb'] = int(m.group(2))
 
             pm = PILOT_RE.search(line)
             if pm:
