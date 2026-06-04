@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 """
-Phase II.2R unit tests for revised CoverageState, compute_reward, and update_state.
+Phase II.2R / Phase III.0 unit tests for CoverageState, compute_reward, update_state,
+and derive_global_contexts.
 
-Tests the 5-component reward (T_new, T_rare, F_new, F_rare, Z),
-revised Q (Q_dist * Q_rep), weighted average, baseline seeding,
-valid-run gating, and update order.
+Tests the 5-component reward (T_new, T_rare, F_new, F_rare, U),
+three-factor Q (Q_loc * Q_rep * Q_glob), weighted average, baseline seeding,
+valid-run gating, update order, and global-context unification.
+
+Phase III.0 deltas:
+  - U replaces Z (stricter: also requires d_glob == 0)
+  - d_loc/d_glob/d_ext replace d_fail
+  - Q_loc/Q_glob replace/extend Q_dist
+  - F_new and F_rare run over the extended context set
 
 Run: python -m pytest a4/standalone/tests/test_coverage_state.py -v
 """
@@ -19,6 +26,7 @@ from a4.standalone.coverage_state import (
     CoverageState,
     compute_reward,
     update_state,
+    derive_global_contexts,
 )
 
 
@@ -26,7 +34,8 @@ def _params(**overrides) -> CalibratedParams:
     defaults = dict(
         tau_new=64.0, tau_d=3.0, K_T_rare=32, gamma=0.9965,
         tau_F_new=2.0, K_F_rare=2, r_0=10, tau_r=25.0, c_explore=0.25,
-        a_Tn=1.0, a_Tr=0.25, a_Fn=1.0, a_Fr=1.0, a_Z=1.0,
+        a_Tn=1.0, a_Tr=0.25, a_Fn=1.0, a_Fr=1.0, a_U=1.0,
+        # tau_g defaults to 2*tau_d via __post_init__
     )
     defaults.update(overrides)
     return CalibratedParams(**defaults)
@@ -138,37 +147,37 @@ class TestComputeReward:
         r, d = compute_reward(bm, [], 101, "REJECTED", True, state)
         assert d["F_rare"] == 0.0
 
-    def test_Z_fires_correctly(self):
+    def test_U_fires_correctly(self):
         state = CoverageState(_params())
         bm = _bm({0: 1})
         r, d = compute_reward(bm, [], 101, "REJECTED", True, state)
-        assert d["Z"] == 1  # REJECTED + proof_generated + d_fail==0
+        assert d["U"] == 1  # REJECTED + proof + d_loc==0 + d_glob==0
 
-    def test_Z_not_on_crash(self):
+    def test_U_not_on_crash(self):
         state = CoverageState(_params())
         r, d = compute_reward(_bm({0: 1}), [], -11, "CRASH", False, state)
-        assert d["Z"] == 0
+        assert d["U"] == 0
 
-    def test_Z_not_without_proof(self):
+    def test_U_not_without_proof(self):
         state = CoverageState(_params())
         bm = _bm({0: 1})
         r, d = compute_reward(bm, [], 101, "REJECTED", False, state)
-        assert d["Z"] == 0  # proof_generated is False
+        assert d["U"] == 0  # proof_generated is False
 
-    def test_Z_not_with_failures(self):
+    def test_U_not_with_failures(self):
         state = CoverageState(_params())
         bm = _bm({0: 1})
         fails = [_fail("A", 0, 0)]
         r, d = compute_reward(bm, fails, 101, "REJECTED", True, state)
-        assert d["Z"] == 0  # d_fail > 0
+        assert d["U"] == 0  # d_loc > 0
 
-    def test_Q_dist_penalty(self):
+    def test_Q_loc_penalty(self):
         state = CoverageState(_params(tau_d=3.0))
         bm = _bm({0: 1})
         fails = [_fail(f"F{i}", i, 0) for i in range(6)]
         r, d = compute_reward(bm, fails, 101, "REJECTED", True, state)
-        expected_Q_dist = math.exp(-6.0 / 3.0)
-        assert abs(d["Q_dist"] - expected_Q_dist) < 0.001
+        expected_Q_loc = math.exp(-6.0 / 3.0)
+        assert abs(d["Q_loc"] - expected_Q_loc) < 0.001
 
     def test_Q_rep_no_cascade(self):
         state = CoverageState(_params(r_0=10))
@@ -188,10 +197,10 @@ class TestComputeReward:
         assert abs(d["Q_rep"] - expected) < 0.001
 
     def test_weighted_average(self):
-        state = CoverageState(_params(a_Tn=1.0, a_Tr=0.0, a_Fn=0.0, a_Fr=0.0, a_Z=0.0))
+        state = CoverageState(_params(a_Tn=1.0, a_Tr=0.0, a_Fn=0.0, a_Fr=0.0, a_U=0.0))
         bm = _bm({i: 1 for i in range(50)})
         r, d = compute_reward(bm, [], 101, "REJECTED", True, state)
-        # Only T_new has weight, and Z fires but a_Z=0
+        # Only T_new has weight, and U fires but a_U=0
         # S should equal T_new (since only a_Tn has weight)
         assert abs(d["S"] - d["T_new"]) < 0.001
 
@@ -264,6 +273,230 @@ class TestUpdateState:
         r2, d2 = compute_reward(bm, [], 101, "REJECTED", True, state)
         assert d2["delta_T"] == 0
         assert r2 < r1
+
+
+# =============================================================================
+# Phase III.0 — Global-Aware Reward
+# =============================================================================
+
+def _residues(*nonzero_families) -> list:
+    """Build family_residues fixture. Pass family names that are nonzero.
+    Adds exactly one nonzero=False entry per missing family for realism."""
+    return [
+        {"family": fam, "nonzero": True, "e0": 1, "e1": 0, "e2": 0, "e3": 0}
+        for fam in nonzero_families
+    ]
+
+
+def _details_memory(*addrs) -> dict:
+    return {
+        "family": "memory", "broken_addrs": list(addrs),
+        "broken_count": len(addrs), "total_addrs": len(addrs),
+        "n_reg": 0, "n_code": 0, "n_data": len(addrs),
+    }
+
+
+def _details_lookup(family: str, *idxs) -> dict:
+    return {
+        "family": family, "broken_indices": list(idxs),
+        "broken_count": len(idxs), "total_indices": len(idxs),
+    }
+
+
+class TestDeriveGlobalContexts:
+    def test_empty_input(self):
+        assert derive_global_contexts(None, None) == set()
+        assert derive_global_contexts([], []) == set()
+        assert derive_global_contexts(_residues(), [_details_memory(1, 2)]) == set()
+
+    def test_only_memory(self):
+        ctx = derive_global_contexts(
+            _residues("memory"), [_details_memory(10, 20, 30)]
+        )
+        assert ctx == {
+            ("GLOBAL", "memory", "10"),
+            ("GLOBAL", "memory", "20"),
+            ("GLOBAL", "memory", "30"),
+        }
+
+    def test_only_lookup(self):
+        ctx = derive_global_contexts(
+            _residues("u8"), [_details_lookup("u8", 5, 7)]
+        )
+        assert ctx == {("GLOBAL", "u8", "5"), ("GLOBAL", "u8", "7")}
+
+    def test_mixed_memory_and_lookup(self):
+        ctx = derive_global_contexts(
+            _residues("memory", "u8", "u16"),
+            [
+                _details_memory(100),
+                _details_lookup("u8", 5),
+                _details_lookup("u16", 9, 12),
+            ],
+        )
+        assert ctx == {
+            ("GLOBAL", "memory", "100"),
+            ("GLOBAL", "u8", "5"),
+            ("GLOBAL", "u16", "9"),
+            ("GLOBAL", "u16", "12"),
+        }
+
+    def test_residue_without_detail(self):
+        # Residue says nonzero but no detail dict provided -> empty result
+        # (defensive: don't fabricate keys when we lack address info)
+        assert derive_global_contexts(_residues("memory"), None) == set()
+        assert derive_global_contexts(_residues("memory"), []) == set()
+
+    def test_detail_for_zero_residue_family_skipped(self):
+        # Family detail present but residue says nonzero=False -> family ignored
+        residues = [
+            {"family": "memory", "nonzero": False},
+            {"family": "u8", "nonzero": True, "e0": 1, "e1": 0, "e2": 0, "e3": 0},
+        ]
+        details = [_details_memory(99), _details_lookup("u8", 7)]
+        ctx = derive_global_contexts(residues, details)
+        assert ctx == {("GLOBAL", "u8", "7")}
+
+
+class TestGlobalAwareReward:
+    """Phase III.0: F_new and F_rare run over F_ext = F_loc U F_glob;
+    Q gains Q_glob; U replaces Z with stricter semantics."""
+
+    def test_no_global_contexts_matches_local_only_baseline(self):
+        """With global_contexts=set(), reward equals the pre-III.0 reward
+        on a non-trivial fixture."""
+        state = CoverageState(_params(tau_new=64.0, tau_d=3.0))
+        bm = _bm({i: 1 for i in range(50)})
+        fails = [_fail("A", 0, 0), _fail("A", 0, 0), _fail("B", 1, 0)]  # n=3, d_loc=2, r_rep=1
+
+        r, d = compute_reward(bm, fails, 101, "REJECTED", True, state, global_contexts=set())
+
+        # Verify baseline shape
+        assert d["d_loc"] == 2
+        assert d["d_glob"] == 0
+        assert d["d_ext"] == 2
+        assert d["U"] == 0
+        assert d["Q_glob"] == 1.0  # exp(-0/tau_g) = 1
+        assert d["Q_loc"] == pytest.approx(math.exp(-2.0 / 3.0), abs=1e-9)
+        # Reward equals what the legacy formula would have produced
+        assert 0.0 < r < 1.0
+
+    def test_global_only_increases_F_new_and_lowers_Q_glob(self):
+        state = CoverageState(_params(tau_F_new=2.0, tau_d=3.0))
+        # Baseline-seed touch so delta_T = 0 (we want to isolate F_* contribution)
+        state.seed_from_baseline(_bm({0: 1, 1: 1, 2: 1}))
+        bm = _bm({0: 1, 1: 1, 2: 1})
+        g_ctx = {
+            ("GLOBAL", "memory", "10"),
+            ("GLOBAL", "u8", "5"),
+            ("GLOBAL", "u16", "7"),
+        }
+
+        r, d = compute_reward(bm, [], 0, "REJECTED", True, state, global_contexts=g_ctx)
+
+        assert d["d_loc"] == 0
+        assert d["d_glob"] == 3
+        assert d["d_ext"] == 3
+        assert d["F_new"] > 0  # all three globals novel
+        assert d["U"] == 0  # because d_glob > 0
+        assert d["Q_glob"] < 1.0  # mild penalty bites
+        assert d["Q_loc"] == 1.0  # exp(0) = 1, no local failures
+
+    def test_U_indicator_distinguishes_global_from_unknown(self):
+        """U=1 requires d_loc=0 AND d_glob=0 (and proof + REJECTED)."""
+        state = CoverageState(_params())
+        bm = _bm({0: 1})
+
+        # Case (a): clean rejection with no failures of any kind -> U=1
+        _, d = compute_reward(bm, [], 0, "REJECTED", True, state, global_contexts=set())
+        assert d["U"] == 1
+
+        # Case (b): rejected with global-only failures -> U=0
+        g = {("GLOBAL", "memory", "1")}
+        _, d = compute_reward(bm, [], 0, "REJECTED", True, state, global_contexts=g)
+        assert d["U"] == 0
+
+        # Case (c): rejected with local failures only -> U=0
+        _, d = compute_reward(bm, [_fail()], 101, "REJECTED", True, state, global_contexts=set())
+        assert d["U"] == 0
+
+        # Case (d): rejected with both -> U=0
+        _, d = compute_reward(bm, [_fail()], 101, "REJECTED", True, state, global_contexts=g)
+        assert d["U"] == 0
+
+    def test_Q_glob_mild_relative_to_Q_loc(self):
+        """With tau_g = 2*tau_d (default), Q_glob(d_glob=2k) == Q_loc(d_loc=k)."""
+        p = _params(tau_d=3.0)
+        assert p.tau_g == pytest.approx(6.0)  # __post_init__ default
+
+        # Local case: 3 distinct local failures, tau_d=3 -> Q_loc = exp(-1)
+        state_a = CoverageState(p)
+        bm = _bm({0: 1})
+        fails = [_fail("A", 1, 1), _fail("B", 2, 2), _fail("C", 3, 3)]
+        _, d_loc = compute_reward(bm, fails, 101, "REJECTED", True, state_a)
+
+        # Global case: 6 distinct global contexts, tau_g=6 -> Q_glob = exp(-1)
+        state_b = CoverageState(p)
+        g = {("GLOBAL", "memory", str(i)) for i in range(6)}
+        _, d_glob = compute_reward(bm, [], 0, "REJECTED", True, state_b, global_contexts=g)
+
+        assert d_loc["Q_loc"] == pytest.approx(d_glob["Q_glob"], abs=1e-9)
+        assert d_loc["Q_loc"] == pytest.approx(math.exp(-1.0), abs=1e-6)
+
+    def test_update_state_increments_once_per_ext_ctx(self):
+        """Local repeats are deduped (existing semantics); globals are already a set.
+        Two consecutive runs with the same ext_contexts each bump every key by 1."""
+        state = CoverageState(_params())
+        bm = _bm({0: 1})
+        # Three local instances of the SAME context plus two global contexts.
+        f = [_fail("A", 1, 1)] * 3
+        g = {("GLOBAL", "memory", "10"), ("GLOBAL", "u8", "5")}
+
+        update_state(bm, f, 101, state, global_contexts=g)
+        update_state(bm, f, 101, state, global_contexts=g)
+
+        # constraint_loc() shortens the fixture path to "A@test.zir:1"
+        loc_key = ("A@test.zir:1", 1, 1)
+        assert state.fail_freq[loc_key] == 2  # once per run, regardless of repeats
+        assert state.fail_freq[("GLOBAL", "memory", "10")] == 2
+        assert state.fail_freq[("GLOBAL", "u8", "5")] == 2
+
+    def test_compute_reward_reads_extended_freq_for_F_rare(self):
+        """F_rare must consider state.fail_freq entries for global keys too."""
+        p = _params(K_F_rare=1)
+        state = CoverageState(p)
+        # Pre-seed: a global context already seen 99 times (very common).
+        common_g = ("GLOBAL", "memory", "100")
+        state.fail_freq[common_g] = 99
+        bm = _bm({0: 1})
+
+        # Run breaks two globals: the common one and a fresh one.
+        g = {common_g, ("GLOBAL", "memory", "200")}
+        _, d = compute_reward(bm, [], 0, "REJECTED", True, state, global_contexts=g)
+
+        # K_F_rare=1: top-1 should be the rare one with weight 1/sqrt(1+0)=1.0
+        assert d["F_rare"] == pytest.approx(1.0, abs=1e-9)
+
+
+class TestCalibratedParamsAlias:
+    """Phase III.0 rename: a_Z is preserved as a property alias for a_U."""
+
+    def test_a_Z_reads_a_U(self):
+        p = _params(a_U=0.7)
+        assert p.a_Z == 0.7
+
+    def test_a_Z_setter_writes_a_U(self):
+        p = _params()
+        p.a_Z = 2.5
+        assert p.a_U == 2.5
+
+    def test_tau_g_default_is_2x_tau_d(self):
+        p = _params(tau_d=3.0)
+        assert p.tau_g == pytest.approx(6.0)
+
+    def test_tau_g_explicit_override(self):
+        p = _params(tau_d=3.0, tau_g=12.0)
+        assert p.tau_g == 12.0
 
 
 if __name__ == "__main__":

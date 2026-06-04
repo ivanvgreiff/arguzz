@@ -30,20 +30,52 @@ class RunRecord:
     T_new: float = 0.0
     F_new: float = 0.0
     F_rare: float = 0.0
-    Z: int = 0
+    # Phase III.0: U replaces Z; d_loc/d_glob replace d_fail; Q_loc/Q_glob added.
+    U: int = 0
     Q: float = 0.0
+    Q_loc: float = 1.0
+    Q_glob: float = 1.0
+    d_loc: int = -1
+    d_glob: int = 0
     is_pilot: bool = False
     new_touch: int = 0
     new_coverage: int = 0
-    d_fail: int = -1
+
+    # Back-compat aliases for old notebook cells / scripts
+    @property
+    def Z(self) -> int:
+        return self.U
+
+    @Z.setter
+    def Z(self, value: int) -> None:
+        self.U = value
+
+    @property
+    def d_fail(self) -> int:
+        return self.d_loc
+
+    @d_fail.setter
+    def d_fail(self, value: int) -> None:
+        self.d_loc = value
 
 
 PILOT_RE = re.compile(r'\[pilot (\d+)/(\d+)\] (\w+) @ step (\d+): (\d+)f')
 BANDIT_RE = re.compile(
     r'\[(\d+)\] [^\s]+ (\w+) @ step (\d+): (\d+) failures?, (\d+)ms, outcome: (\w+)'
 )
+
+# Phase III.0 reward-diag format: U=, Q_l=, Q_g=, dl=, dg= (df=/Z= absent).
 REWARD_RE = re.compile(
-    r'r=([\d.]+)\s+T_new=([\d.]+)\s+F_new=([\d.]+)\s+F_rare=([\d.]+)\s+Z=(\d+)\s+Q=([\d.]+)(?:\s+df=(\d+))?'
+    r'r=([\d.]+)\s+T_new=([\d.]+)\s+F_new=([\d.]+)\s+F_rare=([\d.]+)'
+    r'\s+U=(\d+)\s+Q=([\d.]+)'
+    r'(?:\s+Q_l=([\d.]+)\s+Q_g=([\d.]+))?'
+    r'(?:\s+dl=(\d+)\s+dg=(\d+))?'
+)
+# Legacy (pre-III.0) format: Z=, df=, no Q_l/Q_g, no dg. Used as fallback so the
+# boss notebook can re-load older campaigns (e.g. uniform_baseline_1000.txt).
+REWARD_RE_LEGACY = re.compile(
+    r'r=([\d.]+)\s+T_new=([\d.]+)\s+F_new=([\d.]+)\s+F_rare=([\d.]+)'
+    r'\s+Z=(\d+)\s+Q=([\d.]+)(?:\s+df=(\d+))?'
 )
 TOUCH_RE = re.compile(r'\[([+-]\d+) touch\]')
 NEWCOV_RE = re.compile(r'\[\+(\d+) new\]')
@@ -140,11 +172,31 @@ def parse_terminal(path: str) -> Tuple[List[RunRecord], dict]:
                     pending_reward.T_new = float(rm.group(2))
                     pending_reward.F_new = float(rm.group(3))
                     pending_reward.F_rare = float(rm.group(4))
-                    pending_reward.Z = int(rm.group(5))
+                    pending_reward.U = int(rm.group(5))
                     pending_reward.Q = float(rm.group(6))
-                    if rm.group(7) is not None:
-                        pending_reward.d_fail = int(rm.group(7))
+                    if rm.group(7) is not None and rm.group(8) is not None:
+                        pending_reward.Q_loc = float(rm.group(7))
+                        pending_reward.Q_glob = float(rm.group(8))
+                    if rm.group(9) is not None and rm.group(10) is not None:
+                        pending_reward.d_loc = int(rm.group(9))
+                        pending_reward.d_glob = int(rm.group(10))
                     pending_reward = None
+                else:
+                    # Legacy fallback (pre-III.0 campaigns)
+                    rm = REWARD_RE_LEGACY.search(line)
+                    if rm:
+                        pending_reward.reward = float(rm.group(1))
+                        pending_reward.T_new = float(rm.group(2))
+                        pending_reward.F_new = float(rm.group(3))
+                        pending_reward.F_rare = float(rm.group(4))
+                        pending_reward.U = int(rm.group(5))     # legacy Z -> U alias
+                        pending_reward.Q = float(rm.group(6))
+                        pending_reward.Q_loc = pending_reward.Q  # no separation in legacy
+                        pending_reward.Q_glob = 1.0
+                        if rm.group(7) is not None:
+                            pending_reward.d_loc = int(rm.group(7))
+                        pending_reward.d_glob = 0
+                        pending_reward = None
 
     return runs, meta
 

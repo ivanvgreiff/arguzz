@@ -200,8 +200,11 @@ Examples:
                                     "INSTR_WORD_MOD_FULL", "INSTR_WORD_MOD_SUR"],
                             help="Mutation kind (default: all)")
     fuzz_parser.add_argument("--selector", default="zoned",
-                            choices=["zoned", "guided", "bandit"],
-                            help="Step selection strategy (default: zoned; bandit: coverage-guided UCB)")
+                            choices=["zoned", "guided", "bandit", "uniform"],
+                            help="Step selection strategy (default: zoned; "
+                                 "bandit: coverage-guided UCB; "
+                                 "uniform: Phase III.2 fair baseline that draws "
+                                 "(kind, bucket) uniformly over the bandit's arm universe)")
     fuzz_parser.add_argument("--b-count", type=int, default=None,
                             help="Override bucket count for bandit arm universe (default: auto)")
     fuzz_parser.add_argument("--values", default="mixed",

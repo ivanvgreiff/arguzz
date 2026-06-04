@@ -20,7 +20,7 @@ import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from a4.core.inspection_data import InspectionData
 from a4.core.executor import run_a4_mutation, MutationExecutionResult
@@ -42,7 +42,10 @@ from a4.standalone.arm_universe import ArmUniverse
 from a4.standalone.pilot_calibration import (
     CalibratedParams, calibrate_from_pilot, collect_pilot_stat, compute_N_pilot,
 )
-from a4.standalone.coverage_state import CoverageState, compute_reward, update_state
+from a4.standalone.coverage_state import (
+    CoverageState, compute_reward, update_state,
+    derive_global_contexts, GlobalContext,
+)
 from a4.standalone.baseline_touch import capture_baseline_touch
 
 # Import mutation modules
@@ -96,6 +99,8 @@ class MutationResult:
     is_global_only: bool = False
     family_stats: Optional[List[dict]] = None
     family_details: Optional[List[dict]] = None
+    # Phase III.0: canonical F_glob set passed to compute_reward / update_state.
+    global_contexts: Set[GlobalContext] = field(default_factory=set)
 
 
 @dataclass
@@ -180,7 +185,8 @@ class A4Fuzzer:
         
         # Initialize components
         self.db = CoverageDB(db_path)
-        if selector_strategy == "bandit":
+        if selector_strategy in ("bandit", "uniform"):
+            # Both need an ArmUniverse, which needs InspectionData; defer construction.
             self.selector: Optional[StepSelector] = None
         else:
             self.selector = create_selector(selector_strategy, self.seed, self.db)
@@ -231,6 +237,40 @@ class A4Fuzzer:
         elif result.failures or result.proof_verify_failed or result.broken_families:
             return "REJECTED"
         return "NO_EFFECT"
+
+    def _derive_global_info(
+        self,
+        exec_result: MutationExecutionResult,
+        failures: List[ConstraintFailure],
+    ) -> Tuple[List[str], List, bool, Set[GlobalContext]]:
+        """
+        Phase III.0: extract global Hook 3 info into the four pieces every
+        mutation path needs.
+
+        Returns (broken_families, broken_addresses, is_global_only, global_contexts):
+          - broken_families: list of family names with nonzero residue
+          - broken_addresses: flat list of broken_addrs / broken_indices
+          - is_global_only: True iff at least one global broke and zero local failures
+          - global_contexts: canonical F_glob set keyed off (GLOBAL, family, addr_str)
+        """
+        broken_families: List[str] = []
+        broken_addresses: List = []
+        if exec_result.family_residues:
+            for fr in exec_result.family_residues:
+                if fr.get("nonzero"):
+                    broken_families.append(fr["family"])
+        if exec_result.family_details:
+            for fd in exec_result.family_details:
+                if fd.get("broken_addrs"):
+                    broken_addresses.extend(fd["broken_addrs"])
+                if fd.get("broken_indices"):
+                    broken_addresses.extend(fd["broken_indices"])
+        local_failures = [f for f in failures if f.phase == "local"]
+        is_global_only = len(broken_families) > 0 and len(local_failures) == 0
+        global_contexts = derive_global_contexts(
+            exec_result.family_residues, exec_result.family_details
+        )
+        return broken_families, broken_addresses, is_global_only, global_contexts
     
     def _setup_bandit(self, num_mutations: int, stats: 'CampaignStats') -> None:
         """
@@ -318,6 +358,11 @@ class A4Fuzzer:
                 self.campaign_id, kind, step or 0, mv, config, txn_idx, verifier_accepted
             )
             self.db.record_failures(mutation_id, failures)
+            # Phase III.1: pilot-phase mutations also produce Hook 3 globals; persist them
+            # so analyze_campaign can include the pilot rows in cumulative-coverage curves.
+            _, _, _, pilot_global_ctx = self._derive_global_info(exec_result, failures)
+            if pilot_global_ctx:
+                self.db.record_global_failures(mutation_id, pilot_global_ctx)
 
             if exec_result.touch_bitmap is not None:
                 new_touch = count_new_bits(exec_result.touch_bitmap, self.global_touch_bitmap)
@@ -383,6 +428,38 @@ class A4Fuzzer:
                   f"K_T_rare={params.K_T_rare}, \u03b3={params.gamma:.4f}")
             print("--- COVERAGE TRACKING READY ---\n")
 
+    def _setup_uniform(self, num_mutations: int, stats: 'CampaignStats') -> None:
+        """
+        Phase III.2: setup for the 'uniform' selector — fair learning-free
+        baseline that draws (kind, bucket) uniformly over the same arm
+        universe the bandit uses.
+
+        Steps:
+          1. Build ArmUniverse from inspection data + budget (mirroring _setup_bandit).
+             Print summary so analyze_campaign.py picks up T / B_count / B / num_arms.
+          2. Construct UniformArmSelector(arm_universe, seed).
+          3. Enable coverage tracking (default CalibratedParams) so reward
+             diagnostics still print and persist alongside each mutation.
+        """
+        if self.verbose:
+            print("\n--- UNIFORM-ARM SETUP ---")
+
+        self.arm_universe = ArmUniverse(
+            self.data, num_mutations, self.MUTATION_KINDS,
+            b_count_override=self.b_count_override,
+        )
+        if self.verbose:
+            print(self.arm_universe.summary())
+
+        self.selector = create_selector(
+            "uniform", seed=self.seed, arm_universe=self.arm_universe,
+        )
+
+        self._setup_coverage_tracking()
+
+        if self.verbose:
+            print(f"--- UNIFORM-ARM READY ({self.arm_universe.num_arms} arms) ---\n")
+
     def _run_bandit_mutation(
         self,
         mutation_num: int,
@@ -438,21 +515,10 @@ class A4Fuzzer:
         raw_errors = self._extract_raw_error(exec_result.stdout, exec_result.stderr)
         raw_output_truncated = output[-2000:] if len(output) > 2000 else output
 
-        # Global constraint info from Hook 3
-        broken_families = []
-        broken_addresses = []
-        if exec_result.family_residues:
-            for fr in exec_result.family_residues:
-                if fr.get("nonzero"):
-                    broken_families.append(fr["family"])
-        if exec_result.family_details:
-            for fd in exec_result.family_details:
-                if fd.get("broken_addrs"):
-                    broken_addresses.extend(fd["broken_addrs"])
-                if fd.get("broken_indices"):
-                    broken_addresses.extend(fd["broken_indices"])
-        local_failures = [f for f in failures if f.phase == "local"]
-        is_global_only = len(broken_families) > 0 and len(local_failures) == 0
+        # Global constraint info from Hook 3 (Phase III.0: also derives F_glob set)
+        broken_families, broken_addresses, is_global_only, global_contexts = (
+            self._derive_global_info(exec_result, failures)
+        )
 
         result = MutationResult(
             kind=kind, step=step,
@@ -464,6 +530,7 @@ class A4Fuzzer:
             broken_families=broken_families, broken_addresses=broken_addresses,
             is_global_only=is_global_only,
             family_details=exec_result.family_details,
+            global_contexts=global_contexts,
         )
 
         # Outcome classification for reward
@@ -473,6 +540,7 @@ class A4Fuzzer:
         reward, diag = compute_reward(
             exec_result.touch_bitmap, failures, exit_code,
             outcome, proof_generated, self.coverage_state,
+            global_contexts=global_contexts,
         )
         result.reward = reward
         result.reward_diag = diag
@@ -481,7 +549,10 @@ class A4Fuzzer:
         self.scheduler.update(kind, step, reward)
 
         # Coverage state update (writes this run's data)
-        update_state(exec_result.touch_bitmap, failures, exit_code, self.coverage_state)
+        update_state(
+            exec_result.touch_bitmap, failures, exit_code, self.coverage_state,
+            global_contexts=global_contexts,
+        )
 
         # DB recording
         txn_idx = config.get("txn_idx")
@@ -489,6 +560,9 @@ class A4Fuzzer:
             self.campaign_id, kind, step, mutated_value, config, txn_idx, verifier_accepted
         )
         total_recorded, new_coverage = self.db.record_failures(mutation_id, failures)
+        # Phase III.1: persist global Hook 3 contexts for offline analysis.
+        if global_contexts:
+            self.db.record_global_failures(mutation_id, global_contexts)
         result.new_coverage = new_coverage
 
         # Touch tracking (separate from CoverageState, for campaign stats)
@@ -543,6 +617,12 @@ class A4Fuzzer:
             self._setup_bandit(num_mutations, stats)
             main_budget = num_mutations - self._pilot_count
             start_idx = self._pilot_count
+        elif self.selector_strategy == "uniform":
+            # Phase III.2: arm-universe + uniform sampler + coverage tracking.
+            # No pilot phase (uniform doesn't need calibrated params for sampling).
+            self._setup_uniform(num_mutations, stats)
+            main_budget = num_mutations
+            start_idx = 0
         else:
             main_budget = num_mutations
             start_idx = 0
@@ -579,19 +659,27 @@ class A4Fuzzer:
         stats: CampaignStats
     ) -> Optional[MutationResult]:
         """Run a single mutation attempt with retry logic"""
-        # Select mutation kind
-        if self.kind == "all":
-            kind = self.rng.choice(self.MUTATION_KINDS)
-        else:
-            kind = self.kind
-        
+        # Phase III.2: 'uniform' couples kind and step (uniform draw over
+        # the bandit's arm universe) and must re-draw both on retry.
+        is_uniform = self.selector_strategy == "uniform"
+
+        # For non-uniform strategies, pick kind once outside the retry loop.
+        if not is_uniform:
+            if self.kind == "all":
+                kind = self.rng.choice(self.MUTATION_KINDS)
+            else:
+                kind = self.kind
+
         # Retry loop: step selection is coarse-grained (by major), but
         # mutation creation does finer validation. Retry up to 10 times
         # to find a valid target.
         MAX_RETRIES = 10
         for attempt in range(MAX_RETRIES):
-            # Select step
-            step = self.selector.select_step(self.data, kind)
+            # Select step (and kind, for uniform)
+            if is_uniform:
+                kind, step = self.selector.select_arm_then_step()
+            else:
+                step = self.selector.select_step(self.data, kind)
             if step is None:
                 if self.verbose:
                     print(f"  [{mutation_num}/{total}] ⊘ SKIP: No valid steps for {kind}")
@@ -667,21 +755,10 @@ class A4Fuzzer:
         # Truncate raw output to last 2000 chars for debugging
         raw_output_truncated = output[-2000:] if len(output) > 2000 else output
         
-        # Global constraint info from Hook 3
-        broken_families = []
-        broken_addresses = []
-        if exec_result.family_residues:
-            for fr in exec_result.family_residues:
-                if fr.get("nonzero"):
-                    broken_families.append(fr["family"])
-        if exec_result.family_details:
-            for fd in exec_result.family_details:
-                if fd.get("broken_addrs"):
-                    broken_addresses.extend(fd["broken_addrs"])
-                if fd.get("broken_indices"):
-                    broken_addresses.extend(fd["broken_indices"])
-        local_failures = [f for f in failures if f.phase == "local"]
-        is_global_only = len(broken_families) > 0 and len(local_failures) == 0
+        # Global constraint info from Hook 3 (Phase III.0: also derives F_glob set)
+        broken_families, broken_addresses, is_global_only, global_contexts = (
+            self._derive_global_info(exec_result, failures)
+        )
 
         result = MutationResult(
             kind=kind,
@@ -702,6 +779,7 @@ class A4Fuzzer:
             broken_addresses=broken_addresses,
             is_global_only=is_global_only,
             family_details=exec_result.family_details,
+            global_contexts=global_contexts,
         )
         
         # Record in database
@@ -717,6 +795,9 @@ class A4Fuzzer:
         )
         
         total_recorded, new_coverage = self.db.record_failures(mutation_id, failures)
+        # Phase III.1: persist global Hook 3 contexts for offline analysis.
+        if global_contexts:
+            self.db.record_global_failures(mutation_id, global_contexts)
         result.new_coverage = new_coverage
         
         # Phase 3.3: Touch coverage — count new bits and merge into global bitmap
@@ -726,15 +807,20 @@ class A4Fuzzer:
             result.new_touch = new_touch
         
         # Phase II.5a: Reward computation for coverage tracking (non-bandit mode)
+        # Phase III.0: now passes global_contexts to both compute_reward and update_state.
         if self.coverage_state is not None:
             outcome = self._classify_outcome(result)
             reward, diag = compute_reward(
                 exec_result.touch_bitmap, failures, exit_code,
                 outcome, proof_generated, self.coverage_state,
+                global_contexts=global_contexts,
             )
             result.reward = reward
             result.reward_diag = diag
-            update_state(exec_result.touch_bitmap, failures, exit_code, self.coverage_state)
+            update_state(
+                exec_result.touch_bitmap, failures, exit_code, self.coverage_state,
+                global_contexts=global_contexts,
+            )
 
         # Update guided selector if applicable
         if hasattr(self.selector, 'record_mutation'):
@@ -1382,10 +1468,13 @@ class A4Fuzzer:
         
         if result.reward_diag is not None:
             d = result.reward_diag
+            # Phase III.0: U replaces Z; Q_l/Q_g surface the loc/glob factors;
+            # dl/dg replace df with both halves of d_ext.
             print(f"       r={result.reward:.3f}  T_new={d.get('T_new',0):.2f} "
                   f"F_new={d.get('F_new',0):.2f} F_rare={d.get('F_rare',0):.2f} "
-                  f"Z={d.get('Z',0)} Q={d.get('Q',0):.2f} "
-                  f"df={d.get('d_fail',0)}")
+                  f"U={d.get('U',0)} Q={d.get('Q',0):.2f} "
+                  f"Q_l={d.get('Q_loc',0):.2f} Q_g={d.get('Q_glob',1):.2f} "
+                  f"dl={d.get('d_loc',0)} dg={d.get('d_glob',0)}")
         
         # Value change info
         print(f"       Value: 0x{result.original_value:08X} -> 0x{result.mutated_value:08X}")

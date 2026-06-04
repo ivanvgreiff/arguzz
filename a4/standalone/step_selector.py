@@ -27,11 +27,12 @@ The GuidedStepSelector is kept as a stub for future coverage-guided integration.
 import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, List, Optional, TYPE_CHECKING
+from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from a4.core.inspection_data import InspectionData
     from a4.standalone.coverage_db import CoverageDB
+    from a4.standalone.arm_universe import ArmUniverse
 
 
 # =============================================================================
@@ -409,6 +410,51 @@ class CoverageGuidedSelector(StepSelector):
 
 
 # =============================================================================
+# Uniform-Arm Selector (Phase III.2)
+# =============================================================================
+
+class UniformArmSelector(StepSelector):
+    """
+    Pick (kind, bucket) uniformly at random over the bandit's arm universe,
+    then pick a step uniformly at random inside that bucket. Independent of
+    any reward signal — used as the fair learning-free baseline against the
+    bandit (same arm universe and bucket discretisation, no UCB).
+
+    Interface note:
+      The legacy StepSelector contract is `select_step(data, kind)`, which
+      assumes the caller has already chosen `kind`. UniformArmSelector
+      cannot satisfy that contract while remaining truly uniform across the
+      arm universe (it must couple kind+bucket draws). It exposes a new
+      `select_arm_then_step()` method that returns (kind, step). The
+      legacy `select_step` raises NotImplementedError so the fuzzer's
+      dispatch branch is forced to use the new API.
+
+    Determinism: a single Random instance seeds both draws, so passing
+    the same `seed` reproduces an identical sequence of (kind, step) pairs.
+    """
+
+    def __init__(self, arm_universe: 'ArmUniverse', seed: Optional[int] = None):
+        if arm_universe is None:
+            raise ValueError("UniformArmSelector requires a non-None arm_universe")
+        self.au = arm_universe
+        self.rng = random.Random(seed)
+
+    def select_arm_then_step(self) -> Tuple[str, int]:
+        """Return (kind, step) drawn uniformly at random from the arm universe."""
+        if not self.au.available_arms:
+            raise RuntimeError("UniformArmSelector: arm universe has zero arms")
+        kind, bucket = self.rng.choice(self.au.available_arms)
+        steps = self.au.arms[(kind, bucket)]
+        return kind, self.rng.choice(steps)
+
+    def select_step(self, data: 'InspectionData', kind: str) -> Optional[int]:
+        raise NotImplementedError(
+            "UniformArmSelector uses select_arm_then_step(); "
+            "the (data, kind) contract does not match its arm-coupled sampling."
+        )
+
+
+# =============================================================================
 # Factory Function
 # =============================================================================
 
@@ -417,33 +463,46 @@ def create_selector(
     seed: Optional[int] = None,
     db: Optional['CoverageDB'] = None,
     config: Optional[ZoneConfig] = None,
+    *,
+    arm_universe: Optional['ArmUniverse'] = None,
 ) -> StepSelector:
     """
     Factory function to create a step selector.
-    
+
     Args:
         strategy: Selection strategy:
-            - "zoned": Fixed 5%/90%/5% distribution (default, recommended)
-            - "guided": Coverage-guided with zoned base (stub for future)
-        seed: Random seed for reproducibility
-        db: CoverageDB instance (for "guided" strategy)
-        config: ZoneConfig for custom zone weights (optional)
-        
+            - "zoned":   Fixed 5%/90%/5% distribution (default, recommended).
+            - "guided":  Coverage-guided with zoned base (stub for future).
+            - "uniform": Phase III.2; uniform draw over (kind, bucket) arms,
+                         requires `arm_universe`.
+        seed: Random seed for reproducibility.
+        db: CoverageDB instance (for "guided" strategy).
+        config: ZoneConfig for custom zone weights (optional).
+        arm_universe: ArmUniverse instance (required for "uniform"). Must be
+                      passed by keyword to avoid breaking legacy 3-arg callers.
+
     Returns:
-        Configured StepSelector instance
-        
-    Example:
-        # Default zoned selection (recommended)
+        Configured StepSelector instance.
+
+    Examples:
         selector = create_selector("zoned", seed=12345)
-        
-        # Coverage-guided (stub, behaves like zoned for now)
         selector = create_selector("guided", seed=12345, db=coverage_db)
+        selector = create_selector("uniform", seed=12345, arm_universe=au)
     """
     if strategy == "zoned":
         return ZonedStepSelector(seed=seed, config=config)
     elif strategy == "guided":
         return CoverageGuidedSelector(db=db, seed=seed, config=config)
+    elif strategy == "uniform":
+        if arm_universe is None:
+            raise ValueError(
+                "strategy='uniform' requires arm_universe to be passed "
+                "(keyword-only). Build one from ArmUniverse(...)."
+            )
+        return UniformArmSelector(arm_universe=arm_universe, seed=seed)
     else:
         raise ValueError(
-            f"Unknown strategy: {strategy}. Valid options: 'zoned', 'guided'"
+            f"Unknown strategy: {strategy}. "
+            f"Valid options: 'zoned', 'guided', 'uniform' (and 'bandit' is "
+            f"handled separately in fuzzer.py)."
         )

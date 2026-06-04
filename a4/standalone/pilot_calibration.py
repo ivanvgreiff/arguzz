@@ -18,6 +18,7 @@ and a4/docs/touch/Phase II/PHASE_II_MASTER_IMPLEMENTATION_PLAN.md.
 """
 
 import math
+import os
 import statistics
 from dataclasses import dataclass
 from typing import List, Optional
@@ -56,19 +57,25 @@ class CalibratedParams:
 
     CALIBRATE ONCE (from pilot):
       tau_new       - touch novelty scaling
-      tau_d         - distinct-failure penalty scaling
+      tau_d         - local distinct-failure penalty scaling
       K_T_rare      - touch rarity top-K
 
     DERIVED (from budget):
       gamma         - discount factor for bandit
 
     HARD (not calibrated):
-      tau_F_new     - failure novelty scaling
-      K_F_rare      - failure rarity top-K
+      tau_F_new     - failure novelty scaling (over extended contexts post-III.0)
+      K_F_rare      - failure rarity top-K (over extended contexts post-III.0)
       r_0           - cascade repeat threshold
       tau_r         - cascade penalty slope
       c_explore     - UCB exploration coefficient
-      a_Tn..a_Z     - reward component weights
+      a_Tn..a_U     - reward component weights
+      tau_g         - global distinct-failure penalty scaling (default 2*tau_d,
+                      env override A4_TAU_G); added in Phase III.0.
+
+    Phase III.0 rename: a_Z -> a_U (semantic shift; old `Z` indicator now ill-defined
+    after Hook 3 enabled global instrumentation). The legacy name `a_Z` is preserved
+    as a property alias for back-compat with external scripts.
     """
     # Calibrated
     tau_new: float
@@ -87,7 +94,23 @@ class CalibratedParams:
     a_Tr: float = 0.25
     a_Fn: float = 1.0
     a_Fr: float = 1.0
-    a_Z: float = 1.0
+    a_U: float = 1.0      # Phase III.0: renamed from a_Z (alias kept below)
+    # Global distinct-failure scale (Phase III.0). Defaults to 2*tau_d via __post_init__.
+    tau_g: float = 0.0
+
+    def __post_init__(self):
+        if self.tau_g <= 0:
+            override = os.environ.get("A4_TAU_G")
+            self.tau_g = float(override) if override else 2.0 * self.tau_d
+
+    @property
+    def a_Z(self) -> float:
+        """Back-compat alias for a_U (Phase III.0 rename)."""
+        return self.a_U
+
+    @a_Z.setter
+    def a_Z(self, value: float) -> None:
+        self.a_U = value
 
 
 def compute_N_pilot(budget: int) -> int:

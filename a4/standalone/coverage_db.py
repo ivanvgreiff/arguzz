@@ -6,6 +6,8 @@ SQLite-based tracking of:
 - Individual mutations (step, kind, value, config)
 - Constraint failures (location, context)
 - Coverage statistics (deduplicated by constraint location)
+- Phase III.1: Global failures from Hook 3 (memory/u8/u16/cycle residues
+  with per-address detail), keyed (mutation_id, family, address).
 
 This enables coverage-guided fuzzing by tracking which constraints
 have been hit and prioritizing mutations that explore new areas.
@@ -140,6 +142,22 @@ class CoverageDB:
             )
         """)
         
+        # Phase III.1: Global failures table (Hook 3 family-level residues).
+        # The (family, address) pair canonicalises a global failure key the
+        # same way coverage_state.GlobalContext does: ("GLOBAL", family, addr).
+        # `address` is TEXT to uniformly hold memory addresses (decimal,
+        # matching the C++ "%u" printf in ffi.cpp) and lookup indices.
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS global_failures (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                mutation_id INTEGER NOT NULL,
+                family TEXT NOT NULL,
+                address TEXT NOT NULL,
+                UNIQUE(mutation_id, family, address),
+                FOREIGN KEY (mutation_id) REFERENCES mutations(id) ON DELETE CASCADE
+            )
+        """)
+
         # Indices for common queries
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_mutations_campaign 
@@ -157,7 +175,15 @@ class CoverageDB:
             CREATE INDEX IF NOT EXISTS idx_failures_constraint_type 
             ON failures(constraint_type)
         """)
-        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_gf_mut
+            ON global_failures(mutation_id)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_gf_ctx
+            ON global_failures(family, address)
+        """)
+
         self.conn.commit()
     
     def start_campaign(
@@ -471,6 +497,127 @@ class CoverageDB:
             verifier_accepted=bool(row['verifier_accepted']),
         ) for row in cursor.fetchall()]
     
+    # =========================================================================
+    # Phase III.1: Global failures (Hook 3 family residues + per-address detail)
+    # =========================================================================
+
+    def record_global_failures(
+        self,
+        mutation_id: int,
+        global_contexts,
+    ) -> int:
+        """
+        Bulk-insert global-failure rows for a single mutation.
+
+        Args:
+            mutation_id: parent mutation id (foreign key)
+            global_contexts: iterable of canonical 3-tuples
+                ("GLOBAL", family: str, address: str), as produced by
+                a4.standalone.coverage_state.derive_global_contexts().
+                Empty / None is a valid no-op.
+
+        The UNIQUE(mutation_id, family, address) constraint plus
+        INSERT OR IGNORE makes this idempotent: re-inserting the same
+        key for the same mutation is a silent no-op.
+
+        Returns:
+            Number of rows actually inserted (excludes IGNOREd duplicates).
+        """
+        if not global_contexts:
+            return 0
+
+        rows = []
+        for ctx in global_contexts:
+            # Defensive: tolerate either ("GLOBAL", family, addr) or (family, addr).
+            if len(ctx) == 3 and ctx[0] == "GLOBAL":
+                _, family, addr = ctx
+            elif len(ctx) == 2:
+                family, addr = ctx
+            else:
+                continue
+            rows.append((mutation_id, family, str(addr)))
+
+        if not rows:
+            return 0
+
+        cursor = self.conn.cursor()
+        cursor.executemany(
+            """
+            INSERT OR IGNORE INTO global_failures (mutation_id, family, address)
+            VALUES (?, ?, ?)
+            """,
+            rows,
+        )
+        inserted = cursor.rowcount
+        self.conn.commit()
+        return inserted
+
+    def get_global_contexts_for_campaign(
+        self, campaign_id: int
+    ) -> Set[Tuple[str, str]]:
+        """
+        Return the set of distinct (family, address) pairs over all global
+        failures recorded against any mutation in this campaign.
+
+        Note: returns 2-tuples, not the canonical 3-tuple. To rebuild the
+        canonical key, prepend "GLOBAL" or use get_extended_contexts_for_campaign.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT DISTINCT g.family, g.address
+            FROM global_failures g
+            JOIN mutations m ON g.mutation_id = m.id
+            WHERE m.campaign_id = ?
+            """,
+            (campaign_id,),
+        )
+        return {(row["family"], row["address"]) for row in cursor.fetchall()}
+
+    def get_extended_contexts_for_campaign(
+        self, campaign_id: int
+    ) -> Set[Tuple]:
+        """
+        Return the EXTENDED context set for a campaign:
+            { (constraint_loc, major: int, minor: int)            for each local }
+          ∪ { ("GLOBAL", family: str, address: str)               for each global }
+
+        This matches the F_ext set semantics used by Phase III.0
+        (coverage_state.compute_reward / update_state).
+        """
+        local = self.get_distinct_context_ids_for_campaign(campaign_id)
+        global_pairs = self.get_global_contexts_for_campaign(campaign_id)
+        ext: Set[Tuple] = set(local)
+        for family, addr in global_pairs:
+            ext.add(("GLOBAL", family, addr))
+        return ext
+
+    def get_global_failure_counts_per_mutation(
+        self, campaign_id: int
+    ) -> List[Tuple[int, int]]:
+        """
+        Return [(mutation_id, distinct_global_contexts_count), ...] for every
+        mutation in the campaign, in mutation_id order. Mutations with zero
+        global failures still appear with count 0 (LEFT JOIN).
+
+        Used by the boss notebook for per-run plots and the precloud
+        validation campaign.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT m.id AS mid,
+                   COUNT(DISTINCT g.family || ':' || g.address) AS n
+            FROM mutations m
+            LEFT JOIN global_failures g ON g.mutation_id = m.id
+            WHERE m.campaign_id = ?
+            GROUP BY m.id
+            ORDER BY m.id
+            """,
+            (campaign_id,),
+        )
+        return [(int(row["mid"]), int(row["n"])) for row in cursor.fetchall()]
+
     def close(self):
         """Close the database connection"""
         self.conn.close()
