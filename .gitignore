@@ -281,3 +281,30 @@ output/
 dump/
 obj/
 objs/
+
+# ---------------------------------------------------------------------------
+# A4 overrides: track the workspace/output/host and workspace/output/methods
+# *source* (Cargo.toml, src/, etc.) so feature flags such as `circuit_debug`
+# can never silently regress without showing up in `git diff`. We still ignore
+# the build artifacts (target/) and per-feature Cargo.lock files.
+# These rules come AFTER all earlier `output/` ignores so they take effect
+# (gitignore applies later rules over earlier rules).
+# ---------------------------------------------------------------------------
+!workspace/
+!workspace/output/
+!workspace/output/host/
+!workspace/output/host/**
+!workspace/output/methods/
+!workspace/output/methods/**
+!workspace/output/Cargo.toml
+!workspace/output/rust-toolchain.toml
+# Re-ignore the build artifacts under workspace/output:
+workspace/output/target/
+workspace/output/host/target/
+workspace/output/methods/target/
+workspace/output/methods/guest/target/
+# Re-ignore Cargo.lock under workspace/output (these are reproducible from Cargo.toml):
+workspace/output/Cargo.lock
+workspace/output/host/Cargo.lock
+workspace/output/methods/Cargo.lock
+workspace/output/methods/guest/Cargo.lock

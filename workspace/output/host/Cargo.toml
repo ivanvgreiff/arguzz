@@ -1,0 +1,21 @@
+[package]
+name = "risc0-host"
+version = "0.1.0"
+edition = "2021"
+default-run = "risc0-host"
+
+[dependencies]
+risc0-methods = { path = "../methods" }
+risc0-zkvm = { path = "/root/arguzz/workspace/risc0-modified/risc0/zkvm" }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4.0", features = ["derive", "env"] }
+fuzzer_utils = { path = "/root/arguzz/workspace/risc0-modified/fuzzer_utils" }
+
+
+[features]
+default = ["prove"] # ["prove", "heap-embedded-alloc"]
+# With check polynomial scan (disables ZK shift, proof always invalid):
+# ACTIVE: prove = ["risc0-zkvm/prove", "risc0-zkvm/witgen_debug", "risc0-zkvm/circuit_debug"]
+# STEP 6 EXPERIMENT (Jun 3 2026): temporarily disable circuit_debug to test hypothesis
+prove = ["risc0-zkvm/prove", "risc0-zkvm/witgen_debug"]
+# heap-embedded-alloc = ["risc0-zkvm-platform/heap-embedded-alloc"]
