@@ -428,6 +428,32 @@ class A4Fuzzer:
                   f"K_T_rare={params.K_T_rare}, \u03b3={params.gamma:.4f}")
             print("--- COVERAGE TRACKING READY ---\n")
 
+    def _persist_campaign_params(self) -> None:
+        """
+        Phase IV.0-prep: write the calibrated reward params + bandit knobs
+        to `campaign_params` so downstream (cloud aggregator, boss notebook,
+        analyze_campaign.py) can read them by SQL rather than parsing the
+        verbose terminal log. Silently no-ops if coverage_state was never
+        initialised (which today means: nothing — all selectors enable it
+        as of III.2). Idempotent on (campaign_id).
+        """
+        if self.campaign_id is None or self.coverage_state is None:
+            return
+        params = self.coverage_state.params
+        self.db.record_campaign_params(
+            self.campaign_id,
+            tau_new=float(params.tau_new),
+            tau_d=float(params.tau_d),
+            tau_g=float(params.tau_g),
+            gamma=float(params.gamma),
+            K_T_rare=int(params.K_T_rare),
+            b_count=(
+                int(self.arm_universe.B_count) if self.arm_universe is not None else None
+            ),
+            selector=self.selector_strategy,
+            extra={"num_arms": int(self.arm_universe.num_arms)} if self.arm_universe is not None else None,
+        )
+
     def _setup_uniform(self, num_mutations: int, stats: 'CampaignStats') -> None:
         """
         Phase III.2: setup for the 'uniform' selector — fair learning-free
@@ -563,6 +589,8 @@ class A4Fuzzer:
         # Phase III.1: persist global Hook 3 contexts for offline analysis.
         if global_contexts:
             self.db.record_global_failures(mutation_id, global_contexts)
+        # Phase III.3: persist reward components to SQLite for cloud aggregation.
+        self.db.record_reward_diag(mutation_id, diag)
         result.new_coverage = new_coverage
 
         # Touch tracking (separate from CoverageState, for campaign stats)
@@ -627,6 +655,8 @@ class A4Fuzzer:
             main_budget = num_mutations
             start_idx = 0
             self._setup_coverage_tracking()
+
+        self._persist_campaign_params()
         
         for i in range(main_budget):
             mutation_num = start_idx + i + 1
@@ -821,6 +851,8 @@ class A4Fuzzer:
                 exec_result.touch_bitmap, failures, exit_code, self.coverage_state,
                 global_contexts=global_contexts,
             )
+            # Phase III.3: persist reward components to SQLite for cloud aggregation.
+            self.db.record_reward_diag(mutation_id, diag)
 
         # Update guided selector if applicable
         if hasattr(self.selector, 'record_mutation'):

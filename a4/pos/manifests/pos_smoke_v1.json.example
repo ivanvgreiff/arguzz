@@ -1,0 +1,12 @@
+{
+  "_doc": "Example manifest format for dispatch_pos.py. Rename to .json before use.",
+  "name": "pos_smoke_v1",
+  "bundle": "<your-subdir>/a4_campaign_<git-short>.tar.gz",
+  "b_count": 16,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "uniform", "seed": 42, "n": 50},
+    {"strategy": "zoned",   "seed": 42, "n": 50},
+    {"strategy": "bandit",  "seed": 42, "n": 50}
+  ]
+}

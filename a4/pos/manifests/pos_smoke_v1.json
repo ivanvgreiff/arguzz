@@ -1,0 +1,9 @@
+{
+  "name": "pos_smoke_v1",
+  "image": "debian-bookworm",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "uniform", "seed": 42, "n": 20, "b_count": 16}
+  ]
+}

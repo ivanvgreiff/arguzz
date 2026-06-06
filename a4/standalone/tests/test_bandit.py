@@ -279,6 +279,78 @@ class TestStepSelection:
             f"All steps should be cold-started: expected {set(steps)}, got {steps_seen}"
         )
 
+    def test_step_ucb_prefers_high_reward_after_coldstart(self):
+        """
+        Phase III.5 acceptance: once all (kind, step) pairs in the
+        chosen arm are out of cold-start (step_m > 0 for every step),
+        the next selection within that arm is UCB-driven and favours
+        the step that has the higher mean reward.
+
+        Pro_Report_9 motivation: prior to this fix the step-level
+        cold-start condition used a decayed counter that never reached
+        zero, so the UCB branch was dead code (effectively random
+        sampling). This test fails loudly if anyone ever reverts to
+        that behaviour.
+        """
+        # Need enough steps so that at least one (kind, bucket) arm
+        # contains 2+ distinct step ids. The existing test_step_cold_start
+        # uses n_steps=300 budget=200 for the same reason.
+        universe = _small_universe(n_steps=300, budget=200)
+        params = _default_params(gamma=0.99)
+        params.c_explore = 0.01  # tiny so reward gap dominates
+        scheduler = DiscountedUCBScheduler(universe, params, seed=42)
+
+        # Find an arm with at least 2 steps.
+        multi = [a for a in universe.available_arms
+                 if len(universe.steps_in_arm(*a)) >= 2]
+        if not multi:
+            pytest.skip("Need an arm with >= 2 steps")
+        arm = multi[0]
+        kind, bucket = arm
+        steps = universe.steps_in_arm(kind, bucket)
+        s_lo, s_hi = steps[0], steps[1]
+
+        # Warm-start every arm so the arm-level cold-start branch is
+        # exhausted. For arms other than `arm`, one step is enough.
+        for warm_arm in universe.available_arms:
+            wk, wb = warm_arm
+            if warm_arm == arm:
+                continue
+            wsteps = universe.steps_in_arm(wk, wb)
+            scheduler.update(wk, wsteps[0], 0.5)
+        # The test arm: warm-start EVERY step in this arm so no step
+        # is in cold-start. Give s_hi reward=1.0 and every other step
+        # reward=0.0. Note: we use a neutral 0.0 reward for the steps
+        # we don't care about to keep them clearly below s_hi.
+        for s in steps:
+            scheduler.update(kind, s, 1.0 if s == s_hi else 0.0)
+
+        # Now neither s_lo nor s_hi is in cold-start. Inflate test arm's
+        # decayed reward to ensure it wins arm-level UCB too.
+        scheduler.arm_N[arm] = 5.0
+        scheduler.arm_S[arm] = 5.0  # mean reward 1.0
+        scheduler.arm_t[arm] = scheduler.t
+
+        # Drive a real select() and verify the step picked inside `arm`
+        # is s_hi. If select() lands on a different arm, retry (other
+        # arms have mean 0.5 vs our 1.0, so UCB should pick us quickly).
+        for _ in range(20):
+            k_chosen, s_chosen = scheduler.select()
+            picked_arm = (k_chosen, universe.bucket_for_step(s_chosen))
+            if picked_arm == arm:
+                assert s_chosen == s_hi, (
+                    f"Expected UCB to prefer step {s_hi} (reward=1.0) "
+                    f"over {s_lo} (reward=0.0), got step {s_chosen}"
+                )
+                # Verify we actually came in via UCB, not coldstart.
+                assert scheduler.stats_ucb_step >= 1, (
+                    "Step-level UCB branch never fired — the cold-start "
+                    "fix may be regressed"
+                )
+                return
+            scheduler.update(k_chosen, s_chosen, 0.0)  # discourage other arms
+        pytest.fail("Bandit never selected the test arm in 20 rounds")
+
 
 # =========================================================================
 # Test 6: Discount forgets old rewards

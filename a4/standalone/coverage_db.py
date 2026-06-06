@@ -184,6 +184,64 @@ class CoverageDB:
             ON global_failures(family, address)
         """)
 
+        # Phase III.3: Per-run reward-component persistence.
+        # One row per mutation that had compute_reward called for it
+        # (i.e. coverage_state is not None). Mutations from campaigns
+        # without coverage tracking simply have zero rows here, which
+        # callers must handle via LEFT JOIN. ON DELETE CASCADE keeps
+        # this in lockstep with the parent mutations row.
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS mutation_rewards (
+                mutation_id INTEGER PRIMARY KEY,
+                reward     REAL NOT NULL,
+                T_new      REAL NOT NULL,
+                T_rare     REAL NOT NULL,
+                F_new      REAL NOT NULL,
+                F_rare     REAL NOT NULL,
+                U          INTEGER NOT NULL,
+                Q_loc      REAL NOT NULL,
+                Q_rep      REAL NOT NULL,
+                Q_glob     REAL NOT NULL,
+                Q          REAL NOT NULL,
+                S          REAL NOT NULL,
+                delta_T    INTEGER NOT NULL,
+                delta_F    INTEGER NOT NULL,
+                n_fail     INTEGER NOT NULL,
+                r_rep      INTEGER NOT NULL,
+                d_loc      INTEGER NOT NULL,
+                d_glob     INTEGER NOT NULL,
+                d_ext      INTEGER NOT NULL,
+                mode       TEXT NOT NULL,
+                FOREIGN KEY (mutation_id) REFERENCES mutations(id) ON DELETE CASCADE
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_mr_mut
+            ON mutation_rewards(mutation_id)
+        """)
+
+        # Phase IV.0-prep: Per-campaign calibrated reward parameters.
+        # tau_g and gamma in particular are needed by aggregation/notebooks
+        # so they don't have to be reconstructed from terminal-log parsing.
+        # One row per campaign (PRIMARY KEY enforces). All numeric fields
+        # nullable because some selectors (uniform) don't run the bandit
+        # pilot but still call coverage_state init with the same defaults.
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS campaign_params (
+                campaign_id INTEGER PRIMARY KEY,
+                tau_new     REAL,
+                tau_d       REAL,
+                tau_g       REAL,
+                gamma       REAL,
+                K_T_rare    INTEGER,
+                b_count     INTEGER,
+                selector    TEXT,
+                extra_json  TEXT,
+                recorded_at TEXT NOT NULL,
+                FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+            )
+        """)
+
         self.conn.commit()
     
     def start_campaign(
@@ -617,6 +675,160 @@ class CoverageDB:
             (campaign_id,),
         )
         return [(int(row["mid"]), int(row["n"])) for row in cursor.fetchall()]
+
+    # =========================================================================
+    # Phase III.3: Per-run reward-component persistence
+    # =========================================================================
+
+    def record_reward_diag(
+        self,
+        mutation_id: int,
+        diag: dict,
+    ) -> None:
+        """
+        Persist the reward-diagnostic dict produced by compute_reward.
+
+        Phase III.3: SQLite-authoritative store for per-run reward
+        components. Called from fuzzer._run_bandit_mutation and
+        fuzzer._run_single_mutation IFF coverage tracking is enabled
+        (i.e. self.coverage_state is not None) and compute_reward was
+        invoked.
+
+        Args:
+            mutation_id: parent mutation id (foreign key into `mutations`)
+            diag: the diag dict returned by compute_reward. Must contain
+                  all 19 fields listed in the Phase III.3 schema; missing
+                  fields raise KeyError to fail loudly rather than silently
+                  insert defaults.
+
+        Uses INSERT OR REPLACE so a defensive re-call with the same
+        mutation_id (e.g. from a retry) overwrites instead of erroring.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO mutation_rewards
+            (mutation_id, reward, T_new, T_rare, F_new, F_rare, U,
+             Q_loc, Q_rep, Q_glob, Q, S,
+             delta_T, delta_F, n_fail, r_rep,
+             d_loc, d_glob, d_ext, mode)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                mutation_id,
+                float(diag["r"]),
+                float(diag["T_new"]),
+                float(diag["T_rare"]),
+                float(diag["F_new"]),
+                float(diag["F_rare"]),
+                int(diag["U"]),
+                float(diag["Q_loc"]),
+                float(diag["Q_rep"]),
+                float(diag["Q_glob"]),
+                float(diag["Q"]),
+                float(diag["S"]),
+                int(diag["delta_T"]),
+                int(diag["delta_F"]),
+                int(diag["n_fail"]),
+                int(diag["r_rep"]),
+                int(diag["d_loc"]),
+                int(diag["d_glob"]),
+                int(diag["d_ext"]),
+                str(diag["mode"]),
+            ),
+        )
+        self.conn.commit()
+
+    def get_reward_diag_for_campaign(
+        self,
+        campaign_id: int,
+    ) -> List[dict]:
+        """
+        Return all reward-diagnostic rows for a campaign, in mutation_id
+        order (= insertion order = chronological order).
+
+        Each entry is a dict containing every column of the
+        `mutation_rewards` row. Mutations without a reward row (e.g.
+        crash-only campaigns, pre-III.3 DBs being re-read, or a
+        --selector run without coverage tracking) are absent from the
+        result rather than appearing as nulls.
+
+        Used by Phase IV.2 cloud aggregation as the SQL-authoritative
+        replacement for parsing terminal log files.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT mr.*
+            FROM mutation_rewards mr
+            JOIN mutations m ON mr.mutation_id = m.id
+            WHERE m.campaign_id = ?
+            ORDER BY mr.mutation_id
+            """,
+            (campaign_id,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    def record_campaign_params(
+        self,
+        campaign_id: int,
+        *,
+        tau_new: Optional[float] = None,
+        tau_d: Optional[float] = None,
+        tau_g: Optional[float] = None,
+        gamma: Optional[float] = None,
+        K_T_rare: Optional[int] = None,
+        b_count: Optional[int] = None,
+        selector: Optional[str] = None,
+        extra: Optional[dict] = None,
+    ) -> None:
+        """
+        Persist the calibrated CalibratedParams + bandit knobs used for one
+        campaign. Idempotent on (campaign_id): re-calling overwrites.
+
+        Why: tau_g and gamma are needed by Phase IV.2 aggregation and the
+        Phase IV.2.5 boss notebook so they don't have to be reconstructed
+        from terminal-log parsing (which is fragile across config changes).
+
+        Pre-IV.0 campaigns (where this method was never called) simply
+        have no row, and callers should fall back to defaults or the
+        terminal-log parser as needed.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO campaign_params (
+                campaign_id, tau_new, tau_d, tau_g, gamma,
+                K_T_rare, b_count, selector, extra_json, recorded_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                campaign_id,
+                tau_new, tau_d, tau_g, gamma,
+                K_T_rare, b_count, selector,
+                json.dumps(extra) if extra else None,
+                datetime.now().isoformat(),
+            ),
+        )
+        self.conn.commit()
+
+    def get_campaign_params(self, campaign_id: int) -> Optional[dict]:
+        """Return the campaign_params row, or None if not persisted."""
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT * FROM campaign_params WHERE campaign_id = ?",
+            (campaign_id,),
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        d = dict(row)
+        if d.get("extra_json"):
+            try:
+                d["extra"] = json.loads(d["extra_json"])
+            except (json.JSONDecodeError, TypeError):
+                d["extra"] = None
+        return d
 
     def close(self):
         """Close the database connection"""

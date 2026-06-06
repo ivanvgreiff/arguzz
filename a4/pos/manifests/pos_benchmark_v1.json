@@ -1,0 +1,12 @@
+{
+  "_doc": "IV.POS.2 benchmark manifest: 3 strategies x N=50 on a SINGLE node. Output drives N choice for IV.POS.5 via a4/pos/benchmark_pos.sh.",
+  "name": "pos_benchmark_v1",
+  "image": "debian-bookworm",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "uniform",   "seed": 1234, "n": 50, "b_count": 16},
+    {"strategy": "zoned",     "seed": 1234, "n": 50, "b_count": 16},
+    {"strategy": "bandit-16", "seed": 1234, "n": 50, "b_count": 16}
+  ]
+}
