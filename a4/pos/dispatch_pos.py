@@ -494,16 +494,38 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
             msg = str(e)
             # Decode poslib's misleading messages into actionable hints
             # (anti-pattern §12.28: pos allocate failure modes).
-            if "no calendar event" in msg.lower() or "Maximum number of future entries" in msg:
+            if "Maximum number of future entries" in msg:
                 print(
                     f"\n[dispatch] !!! ALLOCATE FAILED: {e}\n"
-                    f"[dispatch] !!! Most likely cause: stale calendar entries for these\n"
-                    f"[dispatch] !!! nodes are filling your per-user quota (max 2 future\n"
-                    f"[dispatch] !!! entries). Run:\n"
-                    f"[dispatch] !!!   pos calendar list\n"
-                    f"[dispatch] !!!   pos calendar delete <node>            # or --id <id>\n"
-                    f"[dispatch] !!! Or pick a different free node:\n"
-                    f"[dispatch] !!!   pos nodes list | awk '$2==\"host\" && $3==\"booted\" && $4==\"None\"'\n",
+                    f"[dispatch] !!! POS per-user quota is 2 concurrent calendar events.\n"
+                    f"[dispatch] !!! See your active allocations:\n"
+                    f"[dispatch] !!!   pos allocations list | grep $(whoami)\n"
+                    f"[dispatch] !!! Either free one of them:\n"
+                    f"[dispatch] !!!   pos allocations free <alloc-id>\n"
+                    f"[dispatch] !!! Or wait for one to finish (this dispatcher\n"
+                    f"[dispatch] !!! will auto-clean its calendar entry on free).\n"
+                    f"[dispatch] !!! See anti-pattern §12.28.\n",
+                    file=sys.stderr,
+                )
+            elif "no calendar event" in msg.lower():
+                print(
+                    f"\n[dispatch] !!! ALLOCATE FAILED: {e}\n"
+                    f"[dispatch] !!! Likely cause: --allocation-duration set to 0\n"
+                    f"[dispatch] !!! (uses pre-existing event) but no event exists\n"
+                    f"[dispatch] !!! for this node. Try omitting --allocation-duration\n"
+                    f"[dispatch] !!! (defaults to 120 min) or pass a positive value.\n"
+                    f"[dispatch] !!! See anti-pattern §12.29.\n",
+                    file=sys.stderr,
+                )
+            elif "Cannot update event in the past" in msg:
+                print(
+                    f"\n[dispatch] !!! ALLOCATE FAILED: {e}\n"
+                    f"[dispatch] !!! Stale calendar entry with past start_date is blocking\n"
+                    f"[dispatch] !!! the new allocate. The dispatcher should have cleaned\n"
+                    f"[dispatch] !!! this up via _delete_stale_calendar_entries() but didn't.\n"
+                    f"[dispatch] !!! Inspect: pos calendar list -j | python -m json.tool\n"
+                    f"[dispatch] !!! Manually delete: pos calendar delete --id <id> <node>\n"
+                    f"[dispatch] !!! See anti-patterns §12.31 and §12.32.\n",
                     file=sys.stderr,
                 )
             raise

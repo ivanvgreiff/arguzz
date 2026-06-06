@@ -1,0 +1,11 @@
+{
+  "_doc": "IV.POS.3 multi-node dispatch smoke. Two jobs on two nodes simultaneously, ONE dispatcher invocation. Validates: (1) dispatcher handles --nodes a b c correctly across allocate, set_variables, image, reset, copy, launch, await loops; (2) per-node attribution via i % len(nodes); (3) parallel completion + per-node DB attribution. Picks 2 free EPYC nodes (flare = Tier S EPYC 9354, algofi = Tier A EPYC 7543) for a fast smoke (~5min wall) AND to bonus-benchmark the EPYC 9354 tier. Job-to-node mapping: jobs[0] -> nodes[0], jobs[1] -> nodes[1]. So with `--nodes flare algofi`, uniform runs on flare and bandit-16 on algofi.",
+  "name": "pos_smoke_v3_multinode",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "uniform",   "seed": 1234, "n": 20, "b_count": 16},
+    {"strategy": "bandit-16", "seed": 1234, "n": 20, "b_count": 16}
+  ]
+}
