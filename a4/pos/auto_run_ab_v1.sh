@@ -196,10 +196,15 @@ run_one_dispatch() {
 
     status "dispatch=$d_id status=running started_at=$(ts) nodes=\"$NODES\""
     log "  launching at $(ts)"
+    log "  tail -F $log_file in another session to see live progress"
     local start_epoch
     start_epoch=$(date +%s)
 
-    python -m a4.pos.dispatch_pos \
+    # PYTHONUNBUFFERED=1 + python -u so stdout/stderr flush per-line.
+    # Without these, Python block-buffers ~4KB of output when redirected to a
+    # file, which makes the dispatcher appear hung for 10+ min during 3-node
+    # boot/setup (every print just sits in the buffer). Verified Jun 6 21:00.
+    PYTHONUNBUFFERED=1 python -u -m a4.pos.dispatch_pos \
         --manifest "$manifest" \
         --bundle "$BUNDLE" \
         --nodes $NODES \
