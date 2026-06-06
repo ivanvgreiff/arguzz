@@ -293,11 +293,17 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
     result.allocation = alloc
 
     # ----- 2. image + reset ------------------------------------------------
+    # NOTE per official poslib docs (verified Jun 6) `pos.nodes.image` and
+    # `pos.nodes.reset` take a SINGLE NODE STRING (or a role), NOT a list.
+    # Passing a list trips poslib's URL builder ('/'.join with a list inside).
+    # For multi-node dispatch (IV.POS.3+) we should switch to non-blocking
+    # reset + await for parallelism; sequential is fine for 1-node smoke.
     print(f"[dispatch] setting image {image} on each node")
     for n in nodes:
         pos.nodes.image(n, image)
-    print(f"[dispatch] resetting nodes (blocking — wait for boot)")
-    pos.nodes.reset(nodes, blocking=True)
+    print(f"[dispatch] resetting nodes (blocking — wait for boot, sequential)")
+    for n in nodes:
+        pos.nodes.reset(n, blocking=True)
 
     # ----- 3. ship bundle to each node -------------------------------------
     bundle_basename = bundle_path.name
