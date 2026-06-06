@@ -210,27 +210,33 @@ def _make_extract_bundle_script(bundle_basename: str) -> str:
 def _extract_cmd_id(resp: Any, node: str) -> str:
     """Normalise the return of `pos.commands.launch(...)` into a single cmd id string.
 
-    poslib's return type varies by call shape (per inspection of `pos-examples/`):
-      - single node, queued, no role:  returns a STRING (the cmd id)
-      - role, queued:                  returns a TUPLE `(_, {'nodes': {<n>: <id>, ...}})`
-      - sometimes:                     returns a DICT `{'nodes': {<n>: <id>}}`
-    We tolerate all three.
+    poslib's `commands.launch` returns a TUPLE `(is_role, data)` (verified Jun 6
+    by inspecting pos-examples `synthesize_programs:207`: `_, ids = pos.commands.launch(...)`).
+    `data` is typically `{'nodes': {<n>: <cmd_id>, ...}}`. We also tolerate the
+    dict form (legacy/other variants) and a bare string (unlikely but cheap).
+
+    IMPORTANT: skip booleans — `is_role` is `True/False` and would otherwise be
+    stringified as `"True"` / `"False"` and treated as a cmd id, leading to the
+    failure mode `await "False"` -> `Resource False not found` (Jun 6 07:02).
     """
+    if isinstance(resp, bool) or resp is None:
+        return ""
     if isinstance(resp, tuple):
-        # most commonly (cmd_id_or_alias, ids_dict)
+        # Prefer the element that actually carries the id info (dict / nested tuple).
         for part in resp:
+            if isinstance(part, bool) or part is None:
+                continue
             try:
                 cid = _extract_cmd_id(part, node)
                 if cid:
                     return cid
             except Exception:
                 continue
-        return str(resp)
+        return ""  # nothing usable; caller will log a warning
     if isinstance(resp, dict):
         if "nodes" in resp and isinstance(resp["nodes"], dict):
             if node in resp["nodes"]:
                 return str(resp["nodes"][node])
-            # single-entry fallback
             vals = list(resp["nodes"].values())
             if len(vals) == 1:
                 return str(vals[0])
@@ -238,7 +244,7 @@ def _extract_cmd_id(resp: Any, node: str) -> str:
         for k in ("id", "cmd_id", "command_id"):
             if k in resp:
                 return str(resp[k])
-        return str(resp)
+        return ""
     return str(resp)
 
 
@@ -417,7 +423,13 @@ def _dispatch_after_alloc(args, result, nodes, image, bundle_path,
                     queued=True,
                     name="extract_bundle",
                 )
-            extract_ids.append((n, _extract_cmd_id(cid_resp, n)))
+            cid = _extract_cmd_id(cid_resp, n)
+            if not cid:
+                print(f"[dispatch] WARN: extract launch on {n} returned no cmd id "
+                      f"(resp={cid_resp!r}); proceeding without await",
+                      file=sys.stderr)
+                continue
+            extract_ids.append((n, cid))
         for n, cid in extract_ids:
             rc, err = _await_id_silently(cid, timeout_s=300)
             if rc != 0:
@@ -439,22 +451,21 @@ def _dispatch_after_alloc(args, result, nodes, image, bundle_path,
             yaml.safe_dump(vars_dict, f)
             yml_path = f.name
         try:
-            # Per official docs: set_variables(allocation, datafile, extension,
-            # as_global, as_loop, print_variables). pos-examples CLI form is
-            # `pos allocations set_variables <node> <file.yml>` with NO extension
-            # arg — poslib auto-detects from filename. Our temp file ends in .yml
-            # so auto-detect works; we still pass the other kwargs explicitly
-            # so the call is unambiguous.
-            pos.allocations.set_variables(
-                a.node,
-                yml_path,
-                extension=None,
-                as_global=False,
-                as_loop=False,
-                print_variables=False,
-            )
-            # NOTE: `infile=` must be a FILE OBJECT, not a path. See extract
-            # block above + anti-pattern §12.23.
+            # NOTE per anti-pattern §12.24 (verified Jun 6 07:02):
+            # `set_variables(allocation, datafile, ...)` takes a FILE OBJECT
+            # for datafile, NOT a path. The CLI accepts a path; the Python API
+            # does `datafile.name` internally (for extension auto-detection),
+            # so a string raises `'str' object has no attribute 'name'`.
+            with open(yml_path, "r") as datafile:
+                pos.allocations.set_variables(
+                    a.node,
+                    datafile,
+                    extension=None,
+                    as_global=False,
+                    as_loop=False,
+                    print_variables=False,
+                )
+            # `infile=` must also be a FILE OBJECT (anti-pattern §12.23).
             with open(str(runner_local), "r") as fh:
                 cmd_resp = pos.commands.launch(
                     a.node,
