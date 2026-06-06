@@ -2,7 +2,7 @@
   "_doc": "IV.POS.5 main A/B manifest: 3 strategies x 5 seeds x N (TBD-from-IV.POS.2 benchmark) = 15 jobs. ProG_Report_1.md §6.3 prefers N=20000 (~156 pulls/arm at 128 arms); the actual N is calibrated from a4/pos/benchmark_pos.sh output to fit within the planned ~3-day node reservation with 30% slack per pivot §9.2. Once benchmark gives s/mut, compute N_max = floor(reservation_secs * 0.7 / s_per_mut). Seeds 1234..1238 are locked per A7 (ProG §6.4 R=5 replicates).",
   "_TBD": "Replace n=10000 below with the IV.POS.2-derived value before launching IV.POS.5.",
   "name": "pos_ab_v1",
-  "image": "debian-bookworm",
+  "image": "debian-trixie",
   "no_internet": false,
   "guest_args": ["--in1", "5", "--in4", "10"],
   "jobs": [

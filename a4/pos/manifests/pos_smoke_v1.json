@@ -1,6 +1,6 @@
 {
   "name": "pos_smoke_v1",
-  "image": "debian-bookworm",
+  "image": "debian-trixie",
   "no_internet": false,
   "guest_args": ["--in1", "5", "--in4", "10"],
   "jobs": [

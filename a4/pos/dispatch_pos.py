@@ -359,7 +359,9 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
 
     spec = json.loads(manifest_path.read_text())
     name = spec["name"]
-    image = args.image or spec.get("image", "debian-bullseye")
+    # NB: debian-trixie has GLIBC 2.39+; bookworm has 2.36 which is TOO OLD for
+    # risc0-host built against Ubuntu 24.04's GLIBC 2.39. Anti-pattern §12.30.
+    image = args.image or spec.get("image", "debian-trixie")
     guest_args = spec.get("guest_args", ["--in1", "5", "--in4", "10"])
     no_internet = bool(spec.get("no_internet", False))
     jobs = [JobSpec.from_dict(j) for j in spec["jobs"]]
@@ -599,7 +601,9 @@ def _main():
     p.add_argument("--manifest", required=True, help="path to campaign manifest JSON")
     p.add_argument("--bundle", required=True, help="path to bundle tarball (local on mgmt node)")
     p.add_argument("--nodes", nargs="+", required=True, help="POS nodes to dispatch onto")
-    p.add_argument("--image", default=None, help="image (overrides manifest; default debian-bullseye)")
+    p.add_argument("--image", default=None,
+                   help="image (overrides manifest; default debian-trixie because "
+                        "risc0-host needs GLIBC 2.39+; see anti-pattern §12.30)")
     p.add_argument("--out", default="dispatch_manifest.json", help="output JSON path")
     p.add_argument("--allocation-id", default=None,
                    help="reuse this allocation id (skip allocate/free)")

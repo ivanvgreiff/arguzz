@@ -1,7 +1,7 @@
 {
   "_doc": "IV.POS.2 benchmark manifest: 3 strategies x N=50 on a SINGLE node. Output drives N choice for IV.POS.5 via a4/pos/benchmark_pos.sh.",
   "name": "pos_benchmark_v1",
-  "image": "debian-bookworm",
+  "image": "debian-trixie",
   "no_internet": false,
   "guest_args": ["--in1", "5", "--in4", "10"],
   "jobs": [

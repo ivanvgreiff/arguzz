@@ -1,7 +1,7 @@
 {
   "_doc": "IV.POS.4 POS validation campaign: 3 strategies x 3 seeds x N=250 = 9 jobs. Validates dispatch end-to-end on multiple nodes and serves as a small-scale sanity check before the full IV.POS.5 A/B. Cross-validates a4/notebooks/precloud_validation.ipynb on POS-produced DBs (which DO include mutation_rewards, unlike the III.6 piggyback bandit DB).",
   "name": "pos_validation_v1",
-  "image": "debian-bookworm",
+  "image": "debian-trixie",
   "no_internet": false,
   "guest_args": ["--in1", "5", "--in4", "10"],
   "jobs": [
