@@ -403,10 +403,18 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
         alloc = args.allocation_id
         print(f"[dispatch] reusing existing allocation: {alloc}")
     else:
-        print(f"[dispatch] freeing nodes (idempotent): {' '.join(nodes)}")
+        # NOTE per pos-examples synthesize_programs:47-49 + anti-pattern §12.31:
+        # When we're about to CREATE a new calendar event below (duration > 0),
+        # we MUST trim the old calendar event for the same node, otherwise
+        # allocate tries to UPDATE the stale event and fails with
+        # `Cannot update event in the past`. trim=True is also harmless when
+        # there's nothing to trim.
+        will_create_event = args.allocation_duration > 0
+        print(f"[dispatch] freeing nodes (idempotent, trim={will_create_event}): "
+              f"{' '.join(nodes)}")
         for n in nodes:
             try:
-                pos.allocations.free(n, trim=False)
+                pos.allocations.free(n, trim=will_create_event)
             except Exception:
                 pass  # already free
         print(f"[dispatch] allocating: {' '.join(nodes)}")
