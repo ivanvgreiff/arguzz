@@ -411,6 +411,13 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
         try:
             alloc_resp = pos.allocations.allocate(
                 nodes,
+                # NOTE per pos-examples synthesize_programs:51-58 + anti-pattern §12.29:
+                #  - duration=None  ⇒ "use a PRE-EXISTING calendar event"
+                #    (fails with `You have no calendar event for nodes: <n>` if none)
+                #  - duration=N     ⇒ "create a new calendar event for N minutes"
+                # Default arg is 120 so allocate always works without prior
+                # calendar setup; pass --allocation-duration 0 to use a pre-existing
+                # event (only useful if your TA pre-allocated time for you).
                 duration=None if args.allocation_duration <= 0 else args.allocation_duration,
                 result_folder=f"a4/{name}",
             )
@@ -596,8 +603,11 @@ def _main():
     p.add_argument("--out", default="dispatch_manifest.json", help="output JSON path")
     p.add_argument("--allocation-id", default=None,
                    help="reuse this allocation id (skip allocate/free)")
-    p.add_argument("--allocation-duration", type=int, default=-1,
-                   help="allocation duration in minutes (-1 = poslib default)")
+    p.add_argument("--allocation-duration", type=int, default=120,
+                   help="allocation duration in minutes; ALSO creates the calendar "
+                        "event when one doesn't pre-exist. Set to 0 (NOT recommended) "
+                        "to use a pre-existing calendar event. Default 120 matches "
+                        "pos-examples synthesize_programs:53.")
     p.add_argument("--await", dest="await_completion", action="store_true",
                    help="block on each command id and report exit codes")
     p.add_argument("--await-timeout", type=int, default=60 * 60 * 24,
