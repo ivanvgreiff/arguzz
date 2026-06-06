@@ -40,11 +40,47 @@
 
 set -euo pipefail
 
+# ----- 0. emergency diagnostics: dump all pos vars to /tmp -------------
+# Captures evidence regardless of whether the rest of the script crashes.
+# Useful when set_variables silently no-ops and pos_get_variable fails.
+{
+    echo "=== run_campaign_pos.sh boot diagnostic ==="
+    date -u +"%Y-%m-%dT%H:%M:%SZ"
+    echo "node=$(hostname)"
+    echo "uid=$(id -u) euid=$(id -u)"
+    echo "PATH=$PATH"
+    command -v pos_get_variable && pos_get_variable --help 2>&1 | head -5 || \
+        echo "ERROR: pos_get_variable not on PATH"
+    echo "--- attempted pos vars ---"
+    for key in A4_STRATEGY A4_SEED A4_NUM A4_CAMPAIGN_NAME A4_B_COUNT A4_HOST_ARGS A4_RUN_ID A4_NO_INTERNET hostname; do
+        val=$(pos_get_variable "$key" 2>&1 || echo "<failed>")
+        echo "  $key = $val"
+    done
+} > /tmp/a4_boot_diag.log 2>&1
+
 # ----- 1. read pos variables --------------------------------------------
-A4_STRATEGY=$(pos_get_variable A4_STRATEGY)
-A4_SEED=$(pos_get_variable A4_SEED)
-A4_NUM=$(pos_get_variable A4_NUM)
-A4_CAMPAIGN_NAME=$(pos_get_variable A4_CAMPAIGN_NAME)
+# Wrap each required read with an informative failure message so we don't
+# crash with the bare cryptic `variable X unknown` line.
+_required() {
+    local key="$1"
+    local val
+    if ! val=$(pos_get_variable "$key" 2>&1); then
+        echo "[run_campaign_pos] FATAL: required variable '$key' not set on this node." >&2
+        echo "[run_campaign_pos] pos_get_variable said: $val" >&2
+        echo "[run_campaign_pos] Boot diagnostic dumped to /tmp/a4_boot_diag.log:" >&2
+        cat /tmp/a4_boot_diag.log >&2 || true
+        echo "[run_campaign_pos] This typically means the dispatcher's set_variables call" >&2
+        echo "[run_campaign_pos] silently failed. Verify on mgmt node:" >&2
+        echo "[run_campaign_pos]   pos allocations get_variable <node-or-alloc> $key" >&2
+        exit 87
+    fi
+    printf '%s' "$val"
+}
+
+A4_STRATEGY=$(_required A4_STRATEGY)
+A4_SEED=$(_required A4_SEED)
+A4_NUM=$(_required A4_NUM)
+A4_CAMPAIGN_NAME=$(_required A4_CAMPAIGN_NAME)
 
 # Optional vars: pos_get_variable returns non-zero if missing; tolerate.
 A4_B_COUNT=$(pos_get_variable A4_B_COUNT 2>/dev/null || echo "16")

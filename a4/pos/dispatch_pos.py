@@ -63,6 +63,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
 import time
 import tempfile
@@ -248,12 +249,80 @@ def _extract_cmd_id(resp: Any, node: str) -> str:
     return str(resp)
 
 
+def _normalise_exit_code(rc: Any) -> int:
+    """Coerce whatever `await_id` returns into an int exit code.
+
+    poslib's `await_id` return shape varies (observed Jun 6 07:14):
+      - None  -> treat as success (await contract is "blocks until done")
+      - int / numeric str -> use directly
+      - dict like {'nodes': {<n>: <rc>}}, {'exit_status': <rc>}, {'rc': <rc>}
+      - tuple/list -> first usable element
+    Returns 0 if we cannot extract a numeric exit code (don't fail the dispatch
+    just because we can't introspect a status; the cmd id is still recorded).
+    """
+    if rc is None:
+        return 0
+    if isinstance(rc, bool):
+        return 0 if rc else 1
+    if isinstance(rc, int):
+        return rc
+    if isinstance(rc, str):
+        try:
+            return int(rc.strip())
+        except ValueError:
+            return 0
+    if isinstance(rc, dict):
+        for k in ("exit_status", "exit_code", "rc", "returncode"):
+            if k in rc:
+                return _normalise_exit_code(rc[k])
+        if "nodes" in rc and isinstance(rc["nodes"], dict):
+            vals = list(rc["nodes"].values())
+            if vals:
+                return _normalise_exit_code(vals[0])
+        return 0
+    if isinstance(rc, (list, tuple)):
+        for part in rc:
+            if part is None:
+                continue
+            try:
+                return _normalise_exit_code(part)
+            except Exception:  # noqa: BLE001
+                continue
+        return 0
+    return 0
+
+
+def _set_variables_cli(node: str, yml_path: str) -> None:
+    """Push variables for a node by SHELLING OUT to `pos allocations set_variables`.
+
+    Why subprocess instead of `pos.allocations.set_variables(...)`:
+      - Verified Jun 6 07:14: the Python API call returned without raising,
+        but the variables did not show up on the test node
+        (`pos_get_variable A4_STRATEGY` returned `variable A4_STRATEGY unknown`).
+      - pos-examples ONLY uses the CLI form for this operation:
+        `pos allocations set_variables $NODE1 ./node1.yml`
+        (see pos-examples/tutorials/simple/experiment.sh:24).
+      - The CLI is the proven canonical path.
+    """
+    cmd = ["pos", "allocations", "set_variables", node, yml_path]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"`pos allocations set_variables {node} {yml_path}` failed "
+            f"(rc={proc.returncode}). stderr:\n{proc.stderr.strip()}"
+        )
+    # Stdout/err often contain useful confirmation lines; log them at info level.
+    if proc.stdout.strip():
+        print(f"  [set_variables] {proc.stdout.strip()}")
+
+
 def _await_id_silently(cid: str, timeout_s: int) -> tuple[int, str]:
     """Wait for one POS command id; return (exit_code, error_message).
 
     NOTE per official docs: `poslib.api.commands.await_id(command_id)` takes
     EXACTLY one argument (no timeout kwarg). Timeout enforcement is up to us.
     We do a coarse external deadline via signal.alarm to avoid hanging forever.
+    Return shapes from poslib vary (see _normalise_exit_code).
     """
     try:
         import signal
@@ -270,9 +339,7 @@ def _await_id_silently(cid: str, timeout_s: int) -> tuple[int, str]:
         finally:
             signal.alarm(0)
             signal.signal(signal.SIGALRM, old)
-        if rc is None:
-            return 0, ""  # treat None return as success-ish; await contract is "blocks until done"
-        return int(rc), ""
+        return _normalise_exit_code(rc), ""
     except TimeoutError as e:
         return 254, str(e)
     except Exception as e:
@@ -451,20 +518,13 @@ def _dispatch_after_alloc(args, result, nodes, image, bundle_path,
             yaml.safe_dump(vars_dict, f)
             yml_path = f.name
         try:
-            # NOTE per anti-pattern §12.24 (verified Jun 6 07:02):
-            # `set_variables(allocation, datafile, ...)` takes a FILE OBJECT
-            # for datafile, NOT a path. The CLI accepts a path; the Python API
-            # does `datafile.name` internally (for extension auto-detection),
-            # so a string raises `'str' object has no attribute 'name'`.
-            with open(yml_path, "r") as datafile:
-                pos.allocations.set_variables(
-                    a.node,
-                    datafile,
-                    extension=None,
-                    as_global=False,
-                    as_loop=False,
-                    print_variables=False,
-                )
+            # NOTE Jun 6 07:14: the Python API `pos.allocations.set_variables(...)`
+            # ran without raising but the variables DID NOT show up on the test node
+            # (`pos_get_variable A4_STRATEGY` returned `variable A4_STRATEGY unknown`).
+            # pos-examples ONLY uses the CLI form `pos allocations set_variables NODE FILE`
+            # for this operation. So we shell out to the proven CLI path to be safe.
+            # Anti-pattern §12.26.
+            _set_variables_cli(a.node, yml_path)
             # `infile=` must also be a FILE OBJECT (anti-pattern §12.23).
             with open(str(runner_local), "r") as fh:
                 cmd_resp = pos.commands.launch(
