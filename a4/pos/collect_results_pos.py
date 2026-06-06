@@ -118,10 +118,27 @@ def collect(result_folder: Path, out_dir: Path, in_place: bool,
         "runs": [],
     }
 
-    # Each campaign run uploaded a results folder; on the management node those
-    # appear as subdirectories under result_folder, one per run_id.
-    for run_dir in sorted(p for p in result_folder.iterdir() if p.is_dir()):
-        # Each run_dir has *.db, *.log, *.meta.json
+    # POS result layout (verified Jun 6 IV.POS.3):
+    #   <result_folder>/<alloc_timestamp>/<node>/<run_id>.db
+    #   <result_folder>/<alloc_timestamp>/<node>/<run_id>.meta.json
+    #   <result_folder>/<alloc_timestamp>/<node>/<run_id>.log
+    # plus sibling dirs `config/`, `setup/`, `energy/` that we ignore.
+    #
+    # scp -r can also double-nest the top dir (e.g. when the source path has a
+    # trailing slash but the destination dir was just created), giving
+    # <result_folder>/<result_folder>/<alloc_timestamp>/<node>/*.db.
+    #
+    # We just recursively glob for *.db and treat each containing directory as
+    # a run_dir; the *.meta.json / *.log siblings are guaranteed by the runner.
+    seen_dirs: set[Path] = set()
+    candidate_run_dirs: list[Path] = []
+    for db_path in sorted(result_folder.rglob("*.db")):
+        d = db_path.parent
+        if d in seen_dirs:
+            continue
+        seen_dirs.add(d)
+        candidate_run_dirs.append(d)
+    for run_dir in candidate_run_dirs:
         dbs   = sorted(run_dir.glob("*.db"))
         logs  = sorted(run_dir.glob("*.log"))
         metas = sorted(run_dir.glob("*.meta.json"))

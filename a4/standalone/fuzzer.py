@@ -16,6 +16,7 @@ import json
 import os
 import random
 import subprocess
+import sys
 import tempfile
 import time
 from dataclasses import dataclass, field
@@ -299,6 +300,22 @@ class A4Fuzzer:
 
         # 3. Pilot calibration
         N_pilot = compute_N_pilot(num_mutations)
+        # Defensive guardrail (IV.POS.3 finding): if N_pilot >= num_mutations
+        # then the main bandit loop iterates ZERO times, scheduler is never
+        # updated, mutation_rewards table stays empty, and the run is useless
+        # for any bandit-vs-uniform comparison. Warn loudly so the operator
+        # immediately knows to increase N or switch strategy.
+        if N_pilot >= num_mutations:
+            print(
+                f"\n*** WARNING: bandit budget N={num_mutations} <= N_pilot={N_pilot}.\n"
+                f"*** The pilot phase will consume the entire budget; the main\n"
+                f"*** bandit loop will run ZERO post-pilot mutations. The DB will\n"
+                f"*** have ~{N_pilot} mutations rows but ZERO mutation_rewards rows\n"
+                f"*** and the DiscountedUCBScheduler will report t=0.\n"
+                f"*** Set N >= {N_pilot + 30} (recommend N >= 100) for meaningful\n"
+                f"*** bandit data. See playbook §12.35.",
+                file=sys.stderr,
+            )
         if self.verbose:
             print(f"\nRunning {N_pilot} pilot mutations (uniform random)...")
 

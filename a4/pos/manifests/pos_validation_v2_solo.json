@@ -1,0 +1,10 @@
+{
+  "_doc": "IV.POS.4 part B (solo bandit dispatch). 1 job, 1 node. bandit-16 N=250. Recommended node: --nodes flare (Tier S EPYC 9354) OR --nodes algofi (Tier A EPYC 7543). Expected wall ~14-16 min on EPYC. Sized so post-pilot main loop has 220 iterations (N_pilot=30 for N=250), the minimum for the DiscountedUCBScheduler to produce meaningful arm statistics. Anti-pattern §12.35 reminder: bandit requires N >= 100 (recommended) for the scheduler to advance past t=0. N=250 here is well above that floor. To run the other two strategies (uniform + zoned), see pos_validation_v2_pair.json (separate dispatch).",
+  "name": "pos_validation_v2_solo",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "bandit-16", "seed": 1234, "n": 250, "b_count": 16}
+  ]
+}

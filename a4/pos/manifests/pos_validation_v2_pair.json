@@ -1,0 +1,11 @@
+{
+  "_doc": "IV.POS.4 part A (paired dispatch). 2 jobs on 2 nodes, ONE dispatcher invocation. uniform on nodes[0], zoned on nodes[1]. N=250 each. Recommended nodes: --nodes flare algofi (Tier S + Tier A). Expected wall ~14-16 min on EPYC (250 invocations at ~3.3s/inv = 825s + boot/setup ~360s + serial await on the slower node). Anti-pattern §12.36 reminder: dispatcher's design is 1 job per node per allocation; do NOT pack >1 job per node in one manifest. To run the third strategy (bandit-16 N=250), see pos_validation_v2_solo.json (separate dispatch).",
+  "name": "pos_validation_v2_pair",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "uniform", "seed": 1234, "n": 250, "b_count": 16},
+    {"strategy": "zoned",   "seed": 1234, "n": 250, "b_count": 16}
+  ]
+}
