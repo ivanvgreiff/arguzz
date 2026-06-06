@@ -62,6 +62,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 import tempfile
@@ -179,15 +180,31 @@ def _vars_yaml_for_job(job: JobSpec, manifest_name: str,
     }
 
 
-def _extract_bundle_inline(bundle_basename: str) -> str:
-    """Returns an inline bash one-liner to extract the bundle tarball.
-    This is `pos.commands.launch`-ed before the per-job runner."""
-    return (
-        f"set -e && cd /root && "
-        f"rm -rf a4_campaign && "
-        f"tar -xzf {bundle_basename} && "
-        f"ls -la a4_campaign/"
+def _make_extract_bundle_script(bundle_basename: str) -> str:
+    """Writes a temp bash script that extracts the bundle tarball on the test node
+    and returns its path. We ship this via `--infile` rather than inline `command=`
+    because the latter trips the server's "commandlist" type check:
+        `"command" list is required for type "commandlist"`
+    even when `queued=True`. The `--infile` path is known to work (it's how the
+    main runner is launched). Verified Jun 6 06:35 after two failed attempts with
+    inline `command=`.
+    """
+    content = (
+        "#!/bin/bash\n"
+        "set -euo pipefail\n"
+        "cd /root\n"
+        f"rm -rf a4_campaign\n"
+        f"tar -xzf {bundle_basename}\n"
+        f"ls -la a4_campaign/\n"
     )
+    with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False,
+                                     prefix="a4_extract_") as f:
+        f.write(content)
+        path = f.name
+    # NOTE: poslib uploads the file to /tmp/<cmd-id> on the test node and execs
+    # it directly; chmod here is for sanity but not strictly required.
+    os.chmod(path, 0o755)
+    return path
 
 
 def _extract_cmd_id(resp: Any, node: str) -> str:
@@ -382,21 +399,30 @@ def _dispatch_after_alloc(args, result, nodes, image, bundle_path,
         pos.nodes.copy(n, str(bundle_path), "/root/", recursive=False)
 
     print(f"[dispatch] extracting bundle on each node (synchronous)")
-    extract_cmd = _extract_bundle_inline(bundle_basename)
-    extract_ids: list[str] = []
-    for n in nodes:
-        # NOTE per pos-examples synthesize_programs:201 — `command=<str>` works ONLY when
-        # combined with `queued=True` (or `blocking=True`). With `queued=False, blocking=False`
-        # the server enters "commandlist" mode and rejects the string with
-        # `"command" list is required for type "commandlist"`. Use queued+await.
-        cid_resp = pos.commands.launch(n, command=extract_cmd, blocking=False,
-                                       queued=True, name="extract_bundle")
-        extract_ids.append((n, _extract_cmd_id(cid_resp, n)))
-    for n, cid in extract_ids:
-        rc, err = _await_id_silently(cid, timeout_s=300)
-        if rc != 0:
-            print(f"[dispatch] WARN: extract on {n} cmd={cid} rc={rc} ({err})",
-                  file=sys.stderr)
+    # Write the extract script ONCE to a temp file, ship via --infile to every
+    # node. We can't use inline `command=str` because the server requires a
+    # LIST for that path (`"command" list is required for type "commandlist"`)
+    # regardless of queued/blocking flags. `--infile` is the same code path the
+    # main runner launch uses, so we know it works.
+    extract_script_path = _make_extract_bundle_script(bundle_basename)
+    extract_ids: list[tuple[str, str]] = []
+    try:
+        for n in nodes:
+            cid_resp = pos.commands.launch(
+                n,
+                infile=extract_script_path,
+                blocking=False,
+                queued=True,
+                name="extract_bundle",
+            )
+            extract_ids.append((n, _extract_cmd_id(cid_resp, n)))
+        for n, cid in extract_ids:
+            rc, err = _await_id_silently(cid, timeout_s=300)
+            if rc != 0:
+                print(f"[dispatch] WARN: extract on {n} cmd={cid} rc={rc} ({err})",
+                      file=sys.stderr)
+    finally:
+        Path(extract_script_path).unlink(missing_ok=True)
 
     # ----- 4. push per-job variables + launch -------------------------------
     runner_local = Path(__file__).parent / "run_campaign_pos.sh"
