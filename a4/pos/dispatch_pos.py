@@ -399,22 +399,24 @@ def _dispatch_after_alloc(args, result, nodes, image, bundle_path,
         pos.nodes.copy(n, str(bundle_path), "/root/", recursive=False)
 
     print(f"[dispatch] extracting bundle on each node (synchronous)")
-    # Write the extract script ONCE to a temp file, ship via --infile to every
-    # node. We can't use inline `command=str` because the server requires a
-    # LIST for that path (`"command" list is required for type "commandlist"`)
-    # regardless of queued/blocking flags. `--infile` is the same code path the
-    # main runner launch uses, so we know it works.
+    # Write the extract script ONCE to a temp file, ship via `infile=` to every
+    # node. NOTE per poslib source (`api/commands.py:67`) `infile` must be a
+    # FILE OBJECT (`.read()` is called on it), NOT a path string. Only the
+    # `pos commands launch --infile <path>` CLI form takes a path; the Python
+    # API takes the open file. pos-examples `synthesize_programs:69` confirms:
+    # `return open(full_path, 'r')`. Verified Jun 6 06:54.
     extract_script_path = _make_extract_bundle_script(bundle_basename)
     extract_ids: list[tuple[str, str]] = []
     try:
         for n in nodes:
-            cid_resp = pos.commands.launch(
-                n,
-                infile=extract_script_path,
-                blocking=False,
-                queued=True,
-                name="extract_bundle",
-            )
+            with open(extract_script_path, "r") as fh:
+                cid_resp = pos.commands.launch(
+                    n,
+                    infile=fh,
+                    blocking=False,
+                    queued=True,
+                    name="extract_bundle",
+                )
             extract_ids.append((n, _extract_cmd_id(cid_resp, n)))
         for n, cid in extract_ids:
             rc, err = _await_id_silently(cid, timeout_s=300)
@@ -451,13 +453,16 @@ def _dispatch_after_alloc(args, result, nodes, image, bundle_path,
                 as_loop=False,
                 print_variables=False,
             )
-            cmd_resp = pos.commands.launch(
-                a.node,
-                infile=str(runner_local),
-                blocking=False,
-                queued=True,
-                name=a.run_id,
-            )
+            # NOTE: `infile=` must be a FILE OBJECT, not a path. See extract
+            # block above + anti-pattern §12.23.
+            with open(str(runner_local), "r") as fh:
+                cmd_resp = pos.commands.launch(
+                    a.node,
+                    infile=fh,
+                    blocking=False,
+                    queued=True,
+                    name=a.run_id,
+                )
             a.command_id = _extract_cmd_id(cmd_resp, a.node)
             print(f"  + {a.node:20s} -> cmd {a.command_id} ({a.run_id})")
         except Exception as e:
