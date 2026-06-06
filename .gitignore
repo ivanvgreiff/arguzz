@@ -11,6 +11,9 @@ a4/runs/
 bundles/
 dispatch_manifest.json
 collection_report.json
+
+# Local reference clone — NOT part of arguzz
+pos-examples/
 postfix_bandit_16_1000.*
 *.db
 .cursor
