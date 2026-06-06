@@ -1,0 +1,32 @@
+{
+  "_doc": "IV.POS.5 dispatch d4/5 (by-seed Option D, 3-parallel). N=6000 per job (3 strategies x 1 seed). Node mapping (round-robin, --nodes flare octorand opulous): uniform_1237->flare, zoned_1237->octorand, bandit-16_1237->opulous. Wall: ~5.1 hr per dispatch (5 hr compute + 10 min setup). Pre-reserve flare+octorand+opulous via web calendar for 6 hr blocks; use --allocation-duration 0 so the dispatcher uses the existing reservation instead of creating new calendar entries (would hit 2-cap).",
+  "name": "pos_ab_v1_d4",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": [
+    "--in1",
+    "5",
+    "--in4",
+    "10"
+  ],
+  "jobs": [
+    {
+      "strategy": "uniform",
+      "seed": 1237,
+      "n": 6000,
+      "b_count": 16
+    },
+    {
+      "strategy": "zoned",
+      "seed": 1237,
+      "n": 6000,
+      "b_count": 16
+    },
+    {
+      "strategy": "bandit-16",
+      "seed": 1237,
+      "n": 6000,
+      "b_count": 16
+    }
+  ]
+}

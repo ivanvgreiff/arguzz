@@ -1,0 +1,68 @@
+{
+  "_doc": "IV.POS.5 dispatch plan v2 (Jun 6 PM, post-3-parallel discovery). N=6000, 5 dispatches x 3 jobs each = 15 jobs total. By-seed pairing: each dispatch is a complete seed snapshot. Per-dispatch wall ~5.1 hr; fits comfortably in a 6-hr pre-reservation (54-min buffer). 5 dispatches = 5 reservations = ~30 hr clock time. User-managed rolling 6-hr reservations of flare+octorand+opulous; dispatcher uses --allocation-duration 0 to claim existing reservations. See a4/pos/auto_run_ab_v1.sh.",
+  "N": 6000,
+  "total_jobs": 15,
+  "total_dispatches": 5,
+  "estimated_total_clock_hr": 30,
+  "estimated_total_compute_hr": 25.5,
+  "per_dispatch_wall_hr": 5.1,
+  "reservation_pattern": "user-managed rolling 6-hr blocks for flare+octorand+opulous",
+  "dispatcher_alloc_duration": 0,
+  "per_dispatch": [
+    {
+      "d_id": "d1",
+      "seed": 1234,
+      "n_jobs": 3,
+      "node_mapping": {
+        "flare": "uniform   seed=1234 n=6000",
+        "octorand": "zoned     seed=1234 n=6000",
+        "opulous": "bandit-16 seed=1234 n=6000"
+      },
+      "manifest_path": "a4/pos/manifests/ab_v1/pos_ab_v1_d1.json"
+    },
+    {
+      "d_id": "d2",
+      "seed": 1235,
+      "n_jobs": 3,
+      "node_mapping": {
+        "flare": "uniform   seed=1235 n=6000",
+        "octorand": "zoned     seed=1235 n=6000",
+        "opulous": "bandit-16 seed=1235 n=6000"
+      },
+      "manifest_path": "a4/pos/manifests/ab_v1/pos_ab_v1_d2.json"
+    },
+    {
+      "d_id": "d3",
+      "seed": 1236,
+      "n_jobs": 3,
+      "node_mapping": {
+        "flare": "uniform   seed=1236 n=6000",
+        "octorand": "zoned     seed=1236 n=6000",
+        "opulous": "bandit-16 seed=1236 n=6000"
+      },
+      "manifest_path": "a4/pos/manifests/ab_v1/pos_ab_v1_d3.json"
+    },
+    {
+      "d_id": "d4",
+      "seed": 1237,
+      "n_jobs": 3,
+      "node_mapping": {
+        "flare": "uniform   seed=1237 n=6000",
+        "octorand": "zoned     seed=1237 n=6000",
+        "opulous": "bandit-16 seed=1237 n=6000"
+      },
+      "manifest_path": "a4/pos/manifests/ab_v1/pos_ab_v1_d4.json"
+    },
+    {
+      "d_id": "d5",
+      "seed": 1238,
+      "n_jobs": 3,
+      "node_mapping": {
+        "flare": "uniform   seed=1238 n=6000",
+        "octorand": "zoned     seed=1238 n=6000",
+        "opulous": "bandit-16 seed=1238 n=6000"
+      },
+      "manifest_path": "a4/pos/manifests/ab_v1/pos_ab_v1_d5.json"
+    }
+  ]
+}
