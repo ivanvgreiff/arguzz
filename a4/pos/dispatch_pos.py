@@ -190,6 +190,41 @@ def _extract_bundle_inline(bundle_basename: str) -> str:
     )
 
 
+def _extract_cmd_id(resp: Any, node: str) -> str:
+    """Normalise the return of `pos.commands.launch(...)` into a single cmd id string.
+
+    poslib's return type varies by call shape (per inspection of `pos-examples/`):
+      - single node, queued, no role:  returns a STRING (the cmd id)
+      - role, queued:                  returns a TUPLE `(_, {'nodes': {<n>: <id>, ...}})`
+      - sometimes:                     returns a DICT `{'nodes': {<n>: <id>}}`
+    We tolerate all three.
+    """
+    if isinstance(resp, tuple):
+        # most commonly (cmd_id_or_alias, ids_dict)
+        for part in resp:
+            try:
+                cid = _extract_cmd_id(part, node)
+                if cid:
+                    return cid
+            except Exception:
+                continue
+        return str(resp)
+    if isinstance(resp, dict):
+        if "nodes" in resp and isinstance(resp["nodes"], dict):
+            if node in resp["nodes"]:
+                return str(resp["nodes"][node])
+            # single-entry fallback
+            vals = list(resp["nodes"].values())
+            if len(vals) == 1:
+                return str(vals[0])
+        # raw id sometimes sits under 'id' / 'cmd_id'
+        for k in ("id", "cmd_id", "command_id"):
+            if k in resp:
+                return str(resp[k])
+        return str(resp)
+    return str(resp)
+
+
 def _await_id_silently(cid: str, timeout_s: int) -> tuple[int, str]:
     """Wait for one POS command id; return (exit_code, error_message).
 
@@ -268,6 +303,10 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
     _require_poslib()
 
     # ----- 1. allocate ------------------------------------------------------
+    # NOTE: when we allocate ourselves (not via --allocation-id reuse), we keep
+    # track of whether we should free on error. Reused allocations belong to
+    # the caller and we never free them implicitly.
+    we_own_allocation = False
     if args.allocation_id:
         alloc = args.allocation_id
         print(f"[dispatch] reusing existing allocation: {alloc}")
@@ -289,8 +328,39 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
             alloc = alloc_resp[0]
         except (TypeError, IndexError):
             alloc = alloc_resp
+        we_own_allocation = True
         print(f"[dispatch] allocation = {alloc}")
     result.allocation = alloc
+
+    # From here on, any uncaught exception leaves the allocation orphaned.
+    # We print a CLEAR hint so the user knows the exact `pos allocations free`
+    # command to run for cleanup (we don't auto-free because the user may want
+    # to inspect partial state).
+    def _print_orphan_hint(exc: BaseException) -> None:
+        if we_own_allocation:
+            print(
+                f"\n[dispatch] !!! UNCAUGHT ERROR after allocation: {exc}\n"
+                f"[dispatch] !!! Allocation {alloc} is still held by you and will\n"
+                f"[dispatch] !!! tick down its full duration unless you free it manually:\n"
+                f"[dispatch] !!!   pos allocations free {alloc}\n",
+                file=sys.stderr,
+            )
+
+    try:
+        _dispatch_after_alloc(args, result, nodes, image, bundle_path,
+                              assignments, name, guest_args, no_internet)
+    except BaseException as e:
+        _print_orphan_hint(e)
+        raise
+
+    result.ended_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    return result
+
+
+def _dispatch_after_alloc(args, result, nodes, image, bundle_path,
+                          assignments, name, guest_args, no_internet) -> None:
+    """Steps 2–5 of dispatch, factored out so the caller can wrap in a
+    try/except that prints a free-the-allocation hint on uncaught errors."""
 
     # ----- 2. image + reset ------------------------------------------------
     # NOTE per official poslib docs (verified Jun 6) `pos.nodes.image` and
@@ -315,15 +385,18 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
     extract_cmd = _extract_bundle_inline(bundle_basename)
     extract_ids: list[str] = []
     for n in nodes:
-        cid = pos.commands.launch(n, command=extract_cmd, blocking=False,
-                                  queued=False, name="extract_bundle")
-        # poslib returns either a cmd id directly or a dict with ['nodes'][node]
-        cid_v = cid["nodes"][n] if isinstance(cid, dict) and "nodes" in cid else cid
-        extract_ids.append(cid_v)
-    for cid in extract_ids:
+        # NOTE per pos-examples synthesize_programs:201 — `command=<str>` works ONLY when
+        # combined with `queued=True` (or `blocking=True`). With `queued=False, blocking=False`
+        # the server enters "commandlist" mode and rejects the string with
+        # `"command" list is required for type "commandlist"`. Use queued+await.
+        cid_resp = pos.commands.launch(n, command=extract_cmd, blocking=False,
+                                       queued=True, name="extract_bundle")
+        extract_ids.append((n, _extract_cmd_id(cid_resp, n)))
+    for n, cid in extract_ids:
         rc, err = _await_id_silently(cid, timeout_s=300)
         if rc != 0:
-            print(f"[dispatch] WARN: extract cmd {cid} rc={rc} ({err})", file=sys.stderr)
+            print(f"[dispatch] WARN: extract on {n} cmd={cid} rc={rc} ({err})",
+                  file=sys.stderr)
 
     # ----- 4. push per-job variables + launch -------------------------------
     runner_local = Path(__file__).parent / "run_campaign_pos.sh"
@@ -339,9 +412,11 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
             yml_path = f.name
         try:
             # Per official docs: set_variables(allocation, datafile, extension,
-            # as_global, as_loop, print_variables). All but the first two have
-            # safe defaults documented at the CLI level; pass them explicitly
-            # as kwargs to match the API while not relying on positional order.
+            # as_global, as_loop, print_variables). pos-examples CLI form is
+            # `pos allocations set_variables <node> <file.yml>` with NO extension
+            # arg — poslib auto-detects from filename. Our temp file ends in .yml
+            # so auto-detect works; we still pass the other kwargs explicitly
+            # so the call is unambiguous.
             pos.allocations.set_variables(
                 a.node,
                 yml_path,
@@ -357,11 +432,7 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
                 queued=True,
                 name=a.run_id,
             )
-            # Extract command id
-            if isinstance(cmd_resp, dict) and "nodes" in cmd_resp:
-                a.command_id = cmd_resp["nodes"][a.node]
-            else:
-                a.command_id = cmd_resp
+            a.command_id = _extract_cmd_id(cmd_resp, a.node)
             print(f"  + {a.node:20s} -> cmd {a.command_id} ({a.run_id})")
         except Exception as e:
             a.error = str(e)
@@ -379,9 +450,6 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
             print(f"  = {a.node:20s} {a.command_id} rc={rc} {err}")
             if rc != 0 and not a.error:
                 a.error = err or f"rc={rc}"
-
-    result.ended_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    return result
 
 
 # --------------------------------------------------------------------- #
