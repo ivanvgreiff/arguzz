@@ -1,0 +1,10 @@
+{
+  "_doc": "IV.POS.2 single-strategy benchmark (zoned). N=50 on ONE node so we measure per-mutation wall time end-to-end on the testbed. Pair with pos_bench_uniform.json and pos_bench_bandit.json, ideally dispatched simultaneously on 3 different Xeon D-1518 nodes via tmux. Output drives N choice for IV.POS.5.",
+  "name": "pos_bench_zoned",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "zoned", "seed": 1234, "n": 50, "b_count": 16}
+  ]
+}
