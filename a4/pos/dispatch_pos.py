@@ -408,11 +408,29 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
             except Exception:
                 pass  # already free
         print(f"[dispatch] allocating: {' '.join(nodes)}")
-        alloc_resp = pos.allocations.allocate(
-            nodes,
-            duration=None if args.allocation_duration <= 0 else args.allocation_duration,
-            result_folder=f"a4/{name}",
-        )
+        try:
+            alloc_resp = pos.allocations.allocate(
+                nodes,
+                duration=None if args.allocation_duration <= 0 else args.allocation_duration,
+                result_folder=f"a4/{name}",
+            )
+        except Exception as e:
+            msg = str(e)
+            # Decode poslib's misleading messages into actionable hints
+            # (anti-pattern §12.28: pos allocate failure modes).
+            if "no calendar event" in msg.lower() or "Maximum number of future entries" in msg:
+                print(
+                    f"\n[dispatch] !!! ALLOCATE FAILED: {e}\n"
+                    f"[dispatch] !!! Most likely cause: stale calendar entries for these\n"
+                    f"[dispatch] !!! nodes are filling your per-user quota (max 2 future\n"
+                    f"[dispatch] !!! entries). Run:\n"
+                    f"[dispatch] !!!   pos calendar list\n"
+                    f"[dispatch] !!!   pos calendar delete <node>            # or --id <id>\n"
+                    f"[dispatch] !!! Or pick a different free node:\n"
+                    f"[dispatch] !!!   pos nodes list | awk '$2==\"host\" && $3==\"booted\" && $4==\"None\"'\n",
+                    file=sys.stderr,
+                )
+            raise
         # poslib usually returns (alloc_id, _, result_dir); fall back if shape differs
         try:
             alloc = alloc_resp[0]
