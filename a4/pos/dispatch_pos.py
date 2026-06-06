@@ -452,7 +452,28 @@ def _dispatch_after_alloc(args, result, nodes, image, bundle_path,
     """Steps 2–5 of dispatch, factored out so the caller can wrap in a
     try/except that prints a free-the-allocation hint on uncaught errors."""
 
-    # ----- 2. image + reset ------------------------------------------------
+    # ----- 2. push per-job variables BEFORE reset --------------------------
+    # CRITICAL ordering rule (verified Jun 6 07:30 from ALL 5 pos-examples):
+    # `set_variables` MUST be called BEFORE `nodes reset`. On-node
+    # `pos_get_variable` reads BOOTSTRAP-CACHED values, so vars set after
+    # reset are INVISIBLE to the booted node. Anti-pattern §12.27.
+    # NB: this assumes one job per node per allocation (true for smoke and
+    # the v1 manifests). For multi-job-per-node we'd need to reset between
+    # jobs, which is a bigger redesign.
+    print(f"[dispatch] pushing per-job variables BEFORE reset ({len(assignments)} jobs)")
+    per_job_yml: dict[str, str] = {}  # node -> tmp yml path (for cleanup)
+    for a in assignments:
+        vars_dict = _vars_yaml_for_job(a.job, name, guest_args, no_internet)
+        with tempfile.NamedTemporaryFile("w", suffix=".yml", delete=False) as f:
+            yaml.safe_dump(vars_dict, f)
+            yml_path = f.name
+        per_job_yml[a.node] = yml_path
+        # Use the CLI path because pos-examples uses it universally; the
+        # Python API works too but the CLI is the canonical reference.
+        _set_variables_cli(a.node, yml_path)
+        print(f"  + {a.node:20s} variables set ({len(vars_dict)} keys)")
+
+    # ----- 3. image + reset ------------------------------------------------
     # NOTE per official poslib docs (verified Jun 6) `pos.nodes.image` and
     # `pos.nodes.reset` take a SINGLE NODE STRING (or a role), NOT a list.
     # Passing a list trips poslib's URL builder ('/'.join with a list inside).
@@ -465,7 +486,7 @@ def _dispatch_after_alloc(args, result, nodes, image, bundle_path,
     for n in nodes:
         pos.nodes.reset(n, blocking=True)
 
-    # ----- 3. ship bundle to each node -------------------------------------
+    # ----- 4. ship bundle to each node -------------------------------------
     bundle_basename = bundle_path.name
     print(f"[dispatch] copying bundle to {len(nodes)} nodes: {bundle_basename}")
     for n in nodes:
@@ -505,27 +526,15 @@ def _dispatch_after_alloc(args, result, nodes, image, bundle_path,
     finally:
         Path(extract_script_path).unlink(missing_ok=True)
 
-    # ----- 4. push per-job variables + launch -------------------------------
+    # ----- 5. launch runners ------------------------------------------------
     runner_local = Path(__file__).parent / "run_campaign_pos.sh"
     if not runner_local.is_file():
         raise SystemExit(f"runner not found: {runner_local}")
 
-    print(f"[dispatch] pushing per-job variables and launching {len(assignments)} jobs")
+    print(f"[dispatch] launching {len(assignments)} jobs")
     for a in assignments:
-        vars_dict = _vars_yaml_for_job(a.job, name, guest_args, no_internet)
-        # Write to a temp file, push as per-node (non-global, non-loop)
-        with tempfile.NamedTemporaryFile("w", suffix=".yml", delete=False) as f:
-            yaml.safe_dump(vars_dict, f)
-            yml_path = f.name
         try:
-            # NOTE Jun 6 07:14: the Python API `pos.allocations.set_variables(...)`
-            # ran without raising but the variables DID NOT show up on the test node
-            # (`pos_get_variable A4_STRATEGY` returned `variable A4_STRATEGY unknown`).
-            # pos-examples ONLY uses the CLI form `pos allocations set_variables NODE FILE`
-            # for this operation. So we shell out to the proven CLI path to be safe.
-            # Anti-pattern §12.26.
-            _set_variables_cli(a.node, yml_path)
-            # `infile=` must also be a FILE OBJECT (anti-pattern §12.23).
+            # `infile=` must be a FILE OBJECT (anti-pattern §12.23).
             with open(str(runner_local), "r") as fh:
                 cmd_resp = pos.commands.launch(
                     a.node,
@@ -539,10 +548,13 @@ def _dispatch_after_alloc(args, result, nodes, image, bundle_path,
         except Exception as e:
             a.error = str(e)
             print(f"  ! {a.node:20s} FAILED: {e}", file=sys.stderr)
-        finally:
-            Path(yml_path).unlink(missing_ok=True)
 
-    # ----- 5. optionally wait -----------------------------------------------
+    # Clean up the temp YAML files now that variables have been persisted
+    # by the master and launches are queued.
+    for _node, _yml in per_job_yml.items():
+        Path(_yml).unlink(missing_ok=True)
+
+    # ----- 6. optionally wait -----------------------------------------------
     if args.await_completion:
         print(f"[dispatch] awaiting {len(assignments)} commands (per-job timeout {args.await_timeout}s)")
         for a in assignments:
