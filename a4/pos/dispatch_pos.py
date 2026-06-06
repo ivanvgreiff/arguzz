@@ -69,7 +69,7 @@ import time
 import tempfile
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
-from typing import Any
+from typing import Any, List
 
 try:
     import yaml  # PyYAML — pre-installed on the management node
@@ -292,6 +292,61 @@ def _normalise_exit_code(rc: Any) -> int:
     return 0
 
 
+def _delete_stale_calendar_entries(nodes: List[str]) -> None:
+    """Remove any calendar entries for our nodes owned by the current user.
+
+    Why: per anti-pattern §12.32, `free(node, trim=True)` only clips end_date
+    on the calendar entry — it does NOT delete it. If start_date is already
+    in the past (e.g. an allocation we created an hour ago), the next
+    `allocate(...)` call tries to UPDATE that stale entry and fails with
+    `Cannot update event in the past`. The clean fix is to explicitly
+    delete those entries via `pos calendar delete --id <id> <node>`.
+
+    We shell out to the CLI because the poslib Python API for
+    `calendar.delete(nodes, _id=...)` exists but mirroring it via CLI is
+    one less surface to debug.
+    """
+    target = set(nodes)
+    user = os.environ.get("USER", "")
+    try:
+        cal_json = subprocess.run(
+            ["pos", "calendar", "list", "-j"],
+            capture_output=True, text=True, check=False,
+        ).stdout
+        entries = json.loads(cal_json) if cal_json.strip() else []
+    except (json.JSONDecodeError, FileNotFoundError) as e:
+        print(f"[dispatch] WARN: could not list calendar ({e}); skipping cleanup",
+              file=sys.stderr)
+        return
+
+    # entries shape: [{"id": <int>, "nodes": [<n>...], "owner": <str>,
+    #                  "start_date": "...", "end_date": "..."}, ...]
+    deleted = 0
+    for e in entries if isinstance(entries, list) else []:
+        ent_nodes = e.get("nodes") or []
+        ent_owner = e.get("owner", "")
+        ent_id = e.get("id")
+        # Only touch entries OWNED BY US for our target nodes (safety)
+        if (user and ent_owner != user) or ent_id is None:
+            continue
+        match = [n for n in ent_nodes if n in target]
+        if not match:
+            continue
+        for n in match:
+            try:
+                subprocess.run(
+                    ["pos", "calendar", "delete", "--id", str(ent_id), n],
+                    capture_output=True, text=True, check=False,
+                )
+                deleted += 1
+                print(f"  [calendar] deleted entry id={ent_id} for {n}")
+            except Exception as exc:
+                print(f"  [calendar] WARN could not delete id={ent_id} on {n}: {exc}",
+                      file=sys.stderr)
+    if deleted == 0:
+        print(f"  [calendar] no stale entries found for {sorted(target)}")
+
+
 def _set_variables_cli(node: str, yml_path: str) -> None:
     """Push variables for a node by SHELLING OUT to `pos allocations set_variables`.
 
@@ -403,12 +458,13 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
         alloc = args.allocation_id
         print(f"[dispatch] reusing existing allocation: {alloc}")
     else:
-        # NOTE per pos-examples synthesize_programs:47-49 + anti-pattern §12.31:
-        # When we're about to CREATE a new calendar event below (duration > 0),
-        # we MUST trim the old calendar event for the same node, otherwise
-        # allocate tries to UPDATE the stale event and fails with
-        # `Cannot update event in the past`. trim=True is also harmless when
-        # there's nothing to trim.
+        # Anti-pattern §12.31 (trim=True helps) + §12.32 (trim alone is NOT
+        # enough when start_date is already in the past — trim clips end_date
+        # but leaves the stale event in place, and the next allocate trying
+        # to update it fails with `Cannot update event in the past`).
+        # Verified Jun 6 08:54.
+        # Fix: free with trim AND explicitly delete any matching calendar
+        # entries for our nodes before allocating.
         will_create_event = args.allocation_duration > 0
         print(f"[dispatch] freeing nodes (idempotent, trim={will_create_event}): "
               f"{' '.join(nodes)}")
@@ -417,6 +473,9 @@ def dispatch(args: argparse.Namespace) -> DispatchResult:
                 pos.allocations.free(n, trim=will_create_event)
             except Exception:
                 pass  # already free
+
+        if will_create_event:
+            _delete_stale_calendar_entries(nodes)
         print(f"[dispatch] allocating: {' '.join(nodes)}")
         try:
             alloc_resp = pos.allocations.allocate(
