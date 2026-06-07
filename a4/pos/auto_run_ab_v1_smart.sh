@@ -220,11 +220,20 @@ else:
 # (i.e., a pos_ab_v1_dN command owned by us in status=running on a target node).
 # Returns 1 otherwise. Used to avoid killing in-flight work if the user starts
 # the smart runner while a previous dispatch is still active.
+#
+# CRITICAL BASH QUOTING NOTE: the original version of this function had
+# `noderx="^("node_re")$"` (no $ in front of node_re) which Bash parses as
+# string concatenation with the LITERAL word "node_re" in the middle, NOT
+# the variable. The awk regex then never matched any real node, so the
+# function ALWAYS returned false. This bug killed the d2 run at Jun 7 03:17
+# CEST when the smart runner was launched with d3 while d2 was still running.
+# Fix: build the awk regex in a Bash variable first, then pass it directly.
 has_previous_dispatch_running() {
-    local node_re
+    local node_re node_regex
     node_re=$(echo "$NODES" | tr ' ' '|')
+    node_regex="^(${node_re})\$"
     local count
-    count=$(pos commands list -a 2>/dev/null | awk -v user="$USER_NAME" -v noderx="^("node_re")$" '
+    count=$(pos commands list -a 2>/dev/null | awk -v user="$USER_NAME" -v noderx="$node_regex" '
         $1==user && $5=="running" && $3 ~ noderx && $2 ~ /pos_ab_v1_d/
     ' | wc -l)
     [[ $count -gt 0 ]]
