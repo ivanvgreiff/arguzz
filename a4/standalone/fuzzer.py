@@ -39,7 +39,27 @@ from a4.standalone.value_generator import (
 )
 
 from a4.standalone.bandit import DiscountedUCBScheduler
+from a4.standalone.bandit_ts import (
+    ConstrainedTSScheduler,
+    KindLevelUCBScheduler,
+    KindLevelTSScheduler,
+    BanditDecision,
+)
 from a4.standalone.arm_universe import ArmUniverse
+from a4.standalone.semantic_arm_universe import SemanticArmUniverse
+from a4.standalone.step_selector import SemanticZoneStepSelector
+from a4.standalone.zone_classifier import classify_zones
+from a4.standalone.reward_v2 import (
+    compute_reward_v2,
+    compute_reward_v2_components,
+    compute_bandit_success,
+)
+from a4.standalone.telemetry_v2 import (
+    TELEMETRY_LEVELS,
+    default_telemetry_level,
+    record_full_telemetry,
+)
+from a4.standalone.structural_cells import StructuralCell
 from a4.standalone.pilot_calibration import (
     CalibratedParams, calibrate_from_pilot, collect_pilot_stat, compute_N_pilot,
 )
@@ -72,6 +92,15 @@ from a4.standalone.mutations.instr_word_mod_sur import (
     create_config as create_instr_word_sur_config,
     InstrWordModSurTarget,
 )
+
+
+# IV.POS.7 bandit variants (cloud1 Phase 5 — Pro §8.1 / §7.C–D)
+V2_BANDIT_STRATEGIES = frozenset({
+    "kindUCB_zoned_v1",
+    "kindUCB_zoned_v2_noQ",
+    "kindTS_zoned_v2",
+    "cTS_semantic_v2",
+})
 
 
 @dataclass
@@ -124,6 +153,37 @@ class CampaignStats:
     local_only: int = 0
 
 
+# =============================================================================
+# Strategy display names (Pro ProG_Report_2.md §14.2)
+#
+# These map internal selector identifiers (used everywhere in DBs and CLI) to
+# the display names ChatGPT Pro recommended in §14.2 of ProG_Report_2.md.
+# Internal names are kept unchanged so all existing IV.POS.1-5 DBs remain
+# readable by analyze_campaign.py and the boss notebook. Display names should
+# be used in human-facing reports, plots, and notebook output going forward.
+# =============================================================================
+STRATEGY_DISPLAY_NAMES = {
+    "uniform":   "arm_uniform_b128",
+    "zoned":     "kind_uniform_zoned_step",
+    "bandit":    "ucb_kindbucket_b16",
+    "bandit-16": "ucb_kindbucket_b16",  # alias used in IV.POS.5 plots
+    # cloud1 (IV.POS.7) additions — populated in Phase 5:
+    "kindUCB_zoned_v1":     "kindUCB_zoned_v1",      # Variant 2
+    "kindUCB_zoned_v2_noQ": "kindUCB_zoned_v2_noQ",  # Variant 3
+    "kindTS_zoned_v2":      "kindTS_zoned_v2",       # Variant 4
+    "cTS_semantic_v2":      "cTS_semantic_v2",       # Variant 5 (main candidate)
+}
+
+
+def display_strategy_name(internal_name: str) -> str:
+    """Return the Pro §14.2 display name for an internal selector identifier.
+
+    Falls back to the internal name unchanged if not in the map (forward-compat
+    for future variants added without updating this dict).
+    """
+    return STRATEGY_DISPLAY_NAMES.get(internal_name, internal_name)
+
+
 class A4Fuzzer:
     """
     Standalone A4 Fuzzer
@@ -160,6 +220,7 @@ class A4Fuzzer:
         seed: Optional[int] = None,
         verbose: bool = False,
         b_count_override: Optional[int] = None,
+        telemetry_level: Optional[str] = None,
     ):
         """
         Initialize the fuzzer.
@@ -174,6 +235,7 @@ class A4Fuzzer:
             seed: Random seed for reproducibility
             verbose: Print detailed output
             b_count_override: Override bucket count for bandit arm universe
+            telemetry_level: `none` | `standard` | `full` (D35: default full for v2 selectors)
         """
         self.host_binary = host_binary
         self.host_args = host_args
@@ -183,11 +245,20 @@ class A4Fuzzer:
         self.seed = seed if seed is not None else random.randint(0, 2**32)
         
         self.selector_strategy = selector_strategy
+        if telemetry_level is not None and telemetry_level not in TELEMETRY_LEVELS:
+            raise ValueError(
+                f"telemetry_level must be one of {sorted(TELEMETRY_LEVELS)}, got {telemetry_level!r}"
+            )
+        self.telemetry_level = (
+            telemetry_level
+            if telemetry_level is not None
+            else default_telemetry_level(selector_strategy, V2_BANDIT_STRATEGIES)
+        )
         
         # Initialize components
         self.db = CoverageDB(db_path)
-        if selector_strategy in ("bandit", "uniform"):
-            # Both need an ArmUniverse, which needs InspectionData; defer construction.
+        if selector_strategy in ("bandit", "uniform") or selector_strategy in V2_BANDIT_STRATEGIES:
+            # Deferred: needs InspectionData (and arm universe for uniform / v2 bandit).
             self.selector: Optional[StepSelector] = None
         else:
             self.selector = create_selector(selector_strategy, self.seed, self.db)
@@ -207,6 +278,16 @@ class A4Fuzzer:
         self.arm_universe: Optional[ArmUniverse] = None
         self._pilot_count: int = 0
         self.b_count_override: Optional[int] = b_count_override
+
+        # cloud1 Phase 5: IV.POS.7 v2 bandit schedulers
+        self.v2_scheduler = None
+        self.semantic_arm_universe: Optional[SemanticArmUniverse] = None
+        self.semantic_zone_selector: Optional[SemanticZoneStepSelector] = None
+        self._step_to_zone: Dict[int, str] = {}
+        self._seen_local_v2: Set[Tuple[str, int, int]] = set()
+        self._seen_compressed_global: Set[str] = set()
+        self._seen_structural: Set[StructuralCell] = set()
+        self._v2_mutation_count: int = 0
         
         # Temp directory for config files
         self.temp_dir = Path(tempfile.mkdtemp(prefix="a4_fuzz_"))
@@ -419,6 +500,8 @@ class A4Fuzzer:
             print(f"\n--- BANDIT READY ({self.arm_universe.num_arms} arms, "
                   f"budget remaining: {num_mutations - self._pilot_count}) ---\n")
 
+        self._init_full_telemetry_state()
+
     def _setup_coverage_tracking(self) -> None:
         """Initialize CoverageState for non-bandit mode (reward diagnostics only)."""
         if self.verbose:
@@ -444,6 +527,120 @@ class A4Fuzzer:
             print(f"  Calibrated: \u03c4_T={params.tau_new:.1f}, \u03c4_d={params.tau_d:.1f}, "
                   f"K_T_rare={params.K_T_rare}, \u03b3={params.gamma:.4f}")
             print("--- COVERAGE TRACKING READY ---\n")
+
+        self._init_full_telemetry_state()
+
+    def _init_full_telemetry_state(self) -> None:
+        """Initialize seen_* sets for Phase 6 full telemetry on any selector path."""
+        if self.telemetry_level != "full" or self.data is None:
+            return
+        if not self._step_to_zone:
+            self._step_to_zone = classify_zones(self.data)
+        self._seen_local_v2 = set()
+        self._seen_compressed_global = set()
+        self._seen_structural = set()
+
+    def _record_full_telemetry(
+        self,
+        mutation_id: int,
+        *,
+        kind: str,
+        step: int,
+        exec_result: MutationExecutionResult,
+        config: dict,
+        original_value: int,
+        mutated_value: int,
+        legacy_reward_diag: Optional[dict],
+        components: Optional[dict] = None,
+    ) -> None:
+        """Phase 6: populate v2 telemetry tables when telemetry_level is full."""
+        if self.telemetry_level != "full":
+            return
+        if self.data is not None and not self._step_to_zone:
+            self._step_to_zone = classify_zones(self.data)
+        cycle = self.data.get_cycle(step) if self.data is not None else None
+        mutation_major = cycle.major if cycle is not None else 0
+        setattr(exec_result, "_mutation_major", mutation_major)
+        record_full_telemetry(
+            self.db,
+            self.campaign_id,
+            mutation_id,
+            kind=kind,
+            step=step,
+            exec_result=exec_result,
+            config=config,
+            original_value=original_value,
+            mutated_value=mutated_value,
+            legacy_reward_diag=legacy_reward_diag or {},
+            step_to_zone=self._step_to_zone,
+            seen_local_v2=self._seen_local_v2,
+            seen_compressed_global=self._seen_compressed_global,
+            seen_structural=self._seen_structural,
+            components=components,
+        )
+
+    def _active_mutation_kinds(self) -> List[str]:
+        """Kinds for this campaign (all 8 or a single kind)."""
+        if self.kind == "all":
+            return list(self.MUTATION_KINDS)
+        return [self.kind]
+
+    def _setup_v2_bandit(self, num_mutations: int) -> None:
+        """Initialize IV.POS.7 v2 bandit schedulers — no pilot (D2)."""
+        if self.verbose:
+            print(f"\n--- V2 BANDIT SETUP ({self.selector_strategy}) ---")
+
+        baseline = capture_baseline_touch(self.host_binary, self.host_args)
+        if self.verbose:
+            print(f"  Baseline: {baseline.distinct_buckets} bitmap buckets")
+
+        params = CalibratedParams(
+            tau_new=35.0,
+            tau_d=3.0,
+            K_T_rare=31,
+            gamma=0.9965,
+        )
+        self.coverage_state = CoverageState(params)
+        self.coverage_state.seed_from_baseline(baseline.bitmap)
+
+        self._step_to_zone = classify_zones(self.data)
+        self._seen_local_v2 = set()
+        self._seen_compressed_global = set()
+        self._seen_structural = set()
+        self._v2_mutation_count = 0
+
+        kinds = self._active_mutation_kinds()
+
+        if self.selector_strategy == "cTS_semantic_v2":
+            self.semantic_arm_universe = SemanticArmUniverse.build(self.data, kinds)
+            self.v2_scheduler = ConstrainedTSScheduler(
+                self.semantic_arm_universe, seed=self.seed,
+            )
+            self.semantic_zone_selector = SemanticZoneStepSelector(
+                self.semantic_arm_universe, seed=self.seed + 1,
+            )
+            if self.verbose:
+                print(self.semantic_arm_universe.summary())
+        elif self.selector_strategy in ("kindUCB_zoned_v1", "kindUCB_zoned_v2_noQ"):
+            self.v2_scheduler = KindLevelUCBScheduler(
+                kinds, c_explore=params.c_explore, seed=self.seed,
+            )
+            self.selector = ZonedStepSelector(seed=self.seed + 1)
+        elif self.selector_strategy == "kindTS_zoned_v2":
+            self.v2_scheduler = KindLevelTSScheduler(kinds, seed=self.seed)
+            self.selector = ZonedStepSelector(seed=self.seed + 1)
+        else:
+            raise ValueError(f"unknown v2 strategy: {self.selector_strategy}")
+
+        if self.verbose:
+            n_arms = (
+                self.semantic_arm_universe.num_arms
+                if self.semantic_arm_universe is not None
+                else len(kinds)
+            )
+            print(f"--- V2 BANDIT READY ({n_arms} arms, budget {num_mutations}) ---\n")
+
+        self._init_full_telemetry_state()
 
     def _persist_campaign_params(self) -> None:
         """
@@ -606,11 +803,194 @@ class A4Fuzzer:
         # Phase III.1: persist global Hook 3 contexts for offline analysis.
         if global_contexts:
             self.db.record_global_failures(mutation_id, global_contexts)
-        # Phase III.3: persist reward components to SQLite for cloud aggregation.
-        self.db.record_reward_diag(mutation_id, diag)
+        if self.telemetry_level != "none":
+            self.db.record_reward_diag(mutation_id, diag)
         result.new_coverage = new_coverage
 
+        self._record_full_telemetry(
+            mutation_id,
+            kind=kind,
+            step=step,
+            exec_result=exec_result,
+            config=config,
+            original_value=original_value,
+            mutated_value=mutated_value,
+            legacy_reward_diag=diag,
+        )
+
         # Touch tracking (separate from CoverageState, for campaign stats)
+        if exec_result.touch_bitmap is not None:
+            new_touch = count_new_bits(exec_result.touch_bitmap, self.global_touch_bitmap)
+            merge_into_global(exec_result.touch_bitmap, self.global_touch_bitmap)
+            result.new_touch = new_touch
+
+        return result
+
+    def _run_v2_bandit_mutation(
+        self,
+        mutation_num: int,
+        total: int,
+        stats: 'CampaignStats',
+    ) -> Optional['MutationResult']:
+        """Run one mutation under IV.POS.7 v2 bandit schedulers (Phase 5)."""
+        decision: BanditDecision
+        if self.selector_strategy == "cTS_semantic_v2":
+            decision = self.v2_scheduler.select()
+            kind, zone, step = decision.kind, decision.zone, decision.step
+        else:
+            decision = self.v2_scheduler.select()
+            kind = decision.kind
+            zone = None
+            step = self.selector.select_step(self.data, kind)
+            if step is None:
+                stats.skipped_mutations += 1
+                return None
+
+        config = None
+        mutated_value = 0
+        original_value = 0
+        for attempt in range(10):
+            try:
+                config, mutated_value, original_value = self._create_mutation(kind, step)
+            except ValueGeneratorExhaustedError:
+                raise
+            except Exception:
+                config = None
+            if config is not None:
+                break
+            if self.selector_strategy == "cTS_semantic_v2" and zone is not None:
+                alt = self.semantic_zone_selector.pick_step_in_zone(kind, zone)
+                if alt is not None:
+                    step = alt
+            elif self.selector is not None:
+                step = self.selector.select_step(self.data, kind)
+                if step is None:
+                    break
+
+        if config is None:
+            stats.skipped_mutations += 1
+            return None
+
+        start_time = time.perf_counter()
+        config_path = self.temp_dir / f"mutation_{mutation_num}.json"
+        config_path.write_text(json.dumps(config, indent=2))
+        exec_result = run_a4_mutation(self.host_binary, self.host_args, config_path)
+        execution_time = (time.perf_counter() - start_time) * 1000
+
+        output = exec_result.combined_output
+        failures = exec_result.failures
+        exit_code = exec_result.exit_code
+
+        crash_signals_negative = (-11, -6, -8, -9, -10)
+        crash_signals_shell = (139, 134, 136, 137, 138)
+        crashed = exit_code in crash_signals_negative or exit_code in crash_signals_shell
+        proof_generated = self._check_proof_generated(output, exit_code)
+        proof_verify_failed = self._check_proof_verification_failure(output)
+        verifier_accepted = self._check_verifier_acceptance(output)
+        raw_errors = self._extract_raw_error(exec_result.stdout, exec_result.stderr)
+        raw_output_truncated = output[-2000:] if len(output) > 2000 else output
+
+        broken_families, broken_addresses, is_global_only, global_contexts = (
+            self._derive_global_info(exec_result, failures)
+        )
+
+        result = MutationResult(
+            kind=kind, step=step,
+            original_value=original_value, mutated_value=mutated_value,
+            config=config, failures=failures, verifier_accepted=verifier_accepted,
+            execution_time_ms=execution_time, exit_code=exit_code, crashed=crashed,
+            proof_generated=proof_generated, proof_verify_failed=proof_verify_failed,
+            raw_errors=raw_errors, raw_output=raw_output_truncated,
+            broken_families=broken_families, broken_addresses=broken_addresses,
+            is_global_only=is_global_only,
+            family_details=exec_result.family_details,
+            global_contexts=global_contexts,
+        )
+
+        outcome = self._classify_outcome(result)
+        reward, diag = compute_reward(
+            exec_result.touch_bitmap, failures, exit_code,
+            outcome, proof_generated, self.coverage_state,
+            global_contexts=global_contexts,
+        )
+        result.reward = reward
+        result.reward_diag = diag
+
+        setattr(exec_result, "config", config)
+        mutation_zone = self._step_to_zone.get(step, "core_other")
+        cycle = self.data.get_cycle(step)
+        mutation_major = cycle.major if cycle is not None else 0
+
+        components = compute_reward_v2_components(
+            exec_result,
+            self._seen_local_v2,
+            self._seen_compressed_global,
+            self._seen_structural,
+            kind,
+            mutation_zone,
+            mutation_major,
+        )
+        reward_v2 = compute_reward_v2(
+            components["l_new"], components["f_new"], components["g_new"],
+            components["s_new"], components["crash"], components["repeat"],
+        )
+        bandit_success = compute_bandit_success(
+            components["l_new"], components["g_new"], components["s_new"],
+        )
+
+        if self.selector_strategy == "kindUCB_zoned_v1":
+            self.v2_scheduler.update(kind, reward)
+        elif self.selector_strategy == "kindUCB_zoned_v2_noQ":
+            self.v2_scheduler.update(kind, reward_v2)
+        elif self.selector_strategy == "kindTS_zoned_v2":
+            self.v2_scheduler.update(kind, bandit_success)
+        elif self.selector_strategy == "cTS_semantic_v2":
+            self.v2_scheduler.update(kind, zone, bandit_success)
+
+        update_state(
+            exec_result.touch_bitmap, failures, exit_code, self.coverage_state,
+            global_contexts=global_contexts,
+        )
+
+        txn_idx = config.get("txn_idx")
+        mutation_id = self.db.record_mutation(
+            self.campaign_id, kind, step, mutated_value, config, txn_idx, verifier_accepted
+        )
+        total_recorded, new_coverage = self.db.record_failures(mutation_id, failures)
+        if global_contexts:
+            self.db.record_global_failures(mutation_id, global_contexts)
+        if self.telemetry_level != "none":
+            self.db.record_reward_diag(mutation_id, diag)
+        result.new_coverage = new_coverage
+
+        if self.telemetry_level == "full":
+            self._record_full_telemetry(
+                mutation_id,
+                kind=kind,
+                step=step,
+                exec_result=exec_result,
+                config=config,
+                original_value=original_value,
+                mutated_value=mutated_value,
+                legacy_reward_diag=diag,
+                components=components,
+            )
+            self.db.record_bandit_decision(
+                mutation_id,
+                selected_arm=decision.arm_id,
+                mode=decision.mode,
+                score=decision.score,
+                runnerup_arm=decision.runnerup_arm,
+                runnerup_score=decision.runnerup_score,
+                exploration=decision.exploration,
+            )
+            if mutation_num % 100 == 0:
+                self.db.record_arm_state_snapshot(
+                    self.campaign_id,
+                    mutation_num,
+                    self.v2_scheduler.arm_state_rows(),
+                )
+
         if exec_result.touch_bitmap is not None:
             new_touch = count_new_bits(exec_result.touch_bitmap, self.global_touch_bitmap)
             merge_into_global(exec_result.touch_bitmap, self.global_touch_bitmap)
@@ -668,6 +1048,10 @@ class A4Fuzzer:
             self._setup_uniform(num_mutations, stats)
             main_budget = num_mutations
             start_idx = 0
+        elif self.selector_strategy in V2_BANDIT_STRATEGIES:
+            self._setup_v2_bandit(num_mutations)
+            main_budget = num_mutations
+            start_idx = 0
         else:
             main_budget = num_mutations
             start_idx = 0
@@ -678,7 +1062,9 @@ class A4Fuzzer:
         for i in range(main_budget):
             mutation_num = start_idx + i + 1
             
-            if self.scheduler is not None:
+            if self.v2_scheduler is not None:
+                result = self._run_v2_bandit_mutation(mutation_num, num_mutations, stats)
+            elif self.scheduler is not None:
                 result = self._run_bandit_mutation(mutation_num, num_mutations, stats)
             else:
                 result = self._run_single_mutation(mutation_num, num_mutations, stats)
@@ -868,8 +1254,18 @@ class A4Fuzzer:
                 exec_result.touch_bitmap, failures, exit_code, self.coverage_state,
                 global_contexts=global_contexts,
             )
-            # Phase III.3: persist reward components to SQLite for cloud aggregation.
-            self.db.record_reward_diag(mutation_id, diag)
+            if self.telemetry_level != "none":
+                self.db.record_reward_diag(mutation_id, diag)
+            self._record_full_telemetry(
+                mutation_id,
+                kind=kind,
+                step=step,
+                exec_result=exec_result,
+                config=config,
+                original_value=original_value,
+                mutated_value=mutated_value,
+                legacy_reward_diag=diag,
+            )
 
         # Update guided selector if applicable
         if hasattr(self.selector, 'record_mutation'):

@@ -55,6 +55,7 @@ def cmd_fuzz(args):
         seed=args.seed,
         verbose=True,
         b_count_override=args.b_count,
+        telemetry_level=args.telemetry_level,
     ) as fuzzer:
         # Run campaign
         stats = fuzzer.run_campaign(args.num)
@@ -200,17 +201,29 @@ Examples:
                                     "INSTR_WORD_MOD_FULL", "INSTR_WORD_MOD_SUR"],
                             help="Mutation kind (default: all)")
     fuzz_parser.add_argument("--selector", default="zoned",
-                            choices=["zoned", "guided", "bandit", "uniform"],
-                            help="Step selection strategy (default: zoned; "
-                                 "bandit: coverage-guided UCB; "
-                                 "uniform: Phase III.2 fair baseline that draws "
-                                 "(kind, bucket) uniformly over the bandit's arm universe)")
+                            choices=[
+                                "zoned", "guided", "bandit", "uniform",
+                                "kindUCB_zoned_v1", "kindUCB_zoned_v2_noQ",
+                                "kindTS_zoned_v2", "cTS_semantic_v2",
+                            ],
+                            help="Step/selection strategy (default: zoned). "
+                                 "IV.POS.7 variants: kindUCB_zoned_v1, "
+                                 "kindUCB_zoned_v2_noQ, kindTS_zoned_v2, "
+                                 "cTS_semantic_v2 (cloud1 Phase 5).")
     fuzz_parser.add_argument("--b-count", type=int, default=None,
                             help="Override bucket count for bandit arm universe (default: auto)")
     fuzz_parser.add_argument("--values", default="mixed",
                             choices=["random", "bitflip", "boundary", "arithmetic", "smart", "mixed"],
                             help="Value generation strategy (default: mixed)")
     fuzz_parser.add_argument("--seed", type=int, help="Random seed for reproducibility")
+    fuzz_parser.add_argument(
+        "--telemetry-level",
+        dest="telemetry_level",
+        default=None,
+        choices=["none", "standard", "full"],
+        help="Logging depth: none (minimal), standard (legacy default), "
+             "full (all v2 tables; default for IV.POS.7 selectors)",
+    )
     fuzz_parser.add_argument("--db", default="./a4_coverage.db", help="Coverage database path")
     fuzz_parser.add_argument("host_args", nargs="*", help="Arguments for risc0-host (after --)")
     

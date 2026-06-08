@@ -455,6 +455,81 @@ class UniformArmSelector(StepSelector):
 
 
 # =============================================================================
+# Semantic-Zone Step Selector (cloud1 Phase 2 — ProG_Report_2.md §7.A/§7.B)
+# =============================================================================
+
+class SemanticZoneStepSelector(StepSelector):
+    """Pick a step using the (kind, semantic_zone) arm structure.
+
+    This is the structural-sampler half of `cTS_semantic_v2` (cloud1
+    Variant 5). The bandit upstream picks an arm `(kind, zone)`; this
+    selector then samples a step uniformly inside the zone's step list
+    for that kind.
+
+    For singleton zones the sample is deterministic (only one step).
+    For broad core zones it is uniform.
+
+    Pro §7.B verbatim:
+        Replace [nested per-step UCB] with a structural sampler:
+            select kind/zone
+            then sample a valid step inside that zone
+        For singleton zones, this deterministically picks the singleton.
+        For broad core zones, sample uniformly or by opcode/txn role.
+
+    We sample uniformly within zones for now. Per-opcode-role weighting
+    inside core zones is a future refinement (out of scope for IV.POS.7
+    per cloud1 plan §Phase 2).
+
+    Interface note (mirrors UniformArmSelector):
+        `select_step(data, kind)` raises NotImplementedError because this
+        selector requires the bandit to have ALREADY chosen (kind, zone)
+        jointly. The fuzzer dispatches via `pick_step_in_zone(kind, zone)`
+        for this selector.
+    """
+
+    def __init__(
+        self,
+        arm_universe: 'SemanticArmUniverse',
+        seed: Optional[int] = None,
+    ):
+        if arm_universe is None:
+            raise ValueError(
+                "SemanticZoneStepSelector requires a non-None arm_universe; "
+                "build one with SemanticArmUniverse.build(data, kinds)."
+            )
+        self.au = arm_universe
+        self.rng = random.Random(seed)
+
+    def pick_step_in_zone(self, kind: str, zone: str) -> Optional[int]:
+        """Return a step uniformly chosen from `(kind, zone)`'s step list.
+
+        Returns None if the arm is empty (caller should treat this as a
+        retry signal; normally callers iterate over `au.available_arms`
+        so the empty case shouldn't occur).
+        """
+        steps = self.au.steps_in_arm(kind, zone)
+        if not steps:
+            return None
+        if len(steps) == 1:
+            return steps[0]
+        return self.rng.choice(steps)
+
+    def select_step(self, data: 'InspectionData', kind: str) -> Optional[int]:
+        raise NotImplementedError(
+            "SemanticZoneStepSelector uses pick_step_in_zone(kind, zone); "
+            "the bandit must choose (kind, zone) jointly. The (data, kind) "
+            "contract does not match this selector's arm-coupled sampling."
+        )
+
+
+# Late import for type hint above (avoids hard import-time circular dep)
+try:
+    from a4.standalone.semantic_arm_universe import SemanticArmUniverse  # noqa: F401
+except Exception:
+    SemanticArmUniverse = None  # type: ignore  # forward-declared in TYPE_CHECKING block
+
+
+# =============================================================================
 # Factory Function
 # =============================================================================
 

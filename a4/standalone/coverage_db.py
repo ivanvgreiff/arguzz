@@ -242,7 +242,415 @@ class CoverageDB:
             )
         """)
 
+        # ====================================================================
+        # cloud1 / IV.POS.7 schema additions (Pro ProG_Report_2.md §12)
+        # All tables idempotent (CREATE TABLE IF NOT EXISTS); old IV.POS.5
+        # DBs gain these tables on first open under the v2 codebase without
+        # affecting existing data. Empty rows by default for legacy DBs.
+        # ====================================================================
+
+        # 1. bandit_decisions — one row per mutation under a bandit-style
+        #    selector (cTS_semantic_v2, kindTS_zoned_v2, kindUCB_zoned_*).
+        #    Captures Pro §12 "bandit_decisions" diagnostics:
+        #    mutation_id, selected arm, coldstart vs adaptive, score,
+        #    runner-up arm and score, exploration/exploitation flag.
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS bandit_decisions (
+                mutation_id     INTEGER PRIMARY KEY,
+                selected_arm    TEXT NOT NULL,
+                mode            TEXT NOT NULL,
+                score           REAL,
+                runnerup_arm    TEXT,
+                runnerup_score  REAL,
+                exploration     INTEGER NOT NULL,
+                extra_json      TEXT,
+                FOREIGN KEY (mutation_id) REFERENCES mutations(id) ON DELETE CASCADE
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_bd_mode
+            ON bandit_decisions(mode)
+        """)
+
+        # 2. arm_state_snapshot — periodic (every epoch_size mutations)
+        #    snapshot of every arm's state. For Pro §12 "arm_state_log".
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS arm_state_snapshot (
+                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                campaign_id       INTEGER NOT NULL,
+                mutation_idx      INTEGER NOT NULL,
+                arm_id            TEXT NOT NULL,
+                pulls             INTEGER NOT NULL,
+                discounted_pulls  REAL,
+                mean_reward       REAL,
+                posterior_alpha   REAL,
+                posterior_beta    REAL,
+                ts_extra_json     TEXT,
+                FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_arm_snap_camp_mut
+            ON arm_state_snapshot(campaign_id, mutation_idx)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_arm_snap_arm
+            ON arm_state_snapshot(arm_id)
+        """)
+
+        # 3. reward_counterfactuals — for EVERY mutation, what each of the
+        #    candidate rewards would have computed. Lets us back-test reward
+        #    variants without re-running. Pro §12 "reward_counterfactuals".
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS reward_counterfactuals (
+                mutation_id                INTEGER PRIMARY KEY,
+                current_reward             REAL NOT NULL,
+                no_qloc_reward             REAL NOT NULL,
+                fnew_only_reward           REAL NOT NULL,
+                discovery_binary_reward    INTEGER NOT NULL,
+                compressed_global_reward   REAL NOT NULL,
+                FOREIGN KEY (mutation_id) REFERENCES mutations(id) ON DELETE CASCADE
+            )
+        """)
+
+        # 4. mutation_substrategy — kind-specific decomposition of what
+        #    exactly was mutated. For INSTR_WORD_MOD_SUR this captures
+        #    funct3/funct7/etc.; for MEM_VAL_MOD: byte_lane; etc.
+        #    All fields nullable since each kind populates only its own.
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS mutation_substrategy (
+                mutation_id  INTEGER PRIMARY KEY,
+                opcode       INTEGER,
+                rd           INTEGER,
+                rs1          INTEGER,
+                rs2          INTEGER,
+                funct3       INTEGER,
+                funct7       INTEGER,
+                imm          INTEGER,
+                byte_lane    INTEGER,
+                bit_mask     INTEGER,
+                value_class  TEXT,
+                FOREIGN KEY (mutation_id) REFERENCES mutations(id) ON DELETE CASCADE
+            )
+        """)
+
+        # 5. hook3_raw — per-mutation raw Hook 3 family payload + compressed
+        #    context. `raw_json` is a JSON list of {family,address,...}; the
+        #    `compressed_ctx_json` is a JSON list of the
+        #    GlobalMemoryCtx/GlobalLookupCtx contexts emitted by the
+        #    Phase 3 extractor. For Pro §12 "hook3_raw_or_semantic".
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS hook3_raw (
+                mutation_id          INTEGER PRIMARY KEY,
+                raw_json             TEXT,
+                compressed_ctx_json  TEXT,
+                FOREIGN KEY (mutation_id) REFERENCES mutations(id) ON DELETE CASCADE
+            )
+        """)
+
+        # 6. pilot_runs — raw pilot observations and resulting calibrated
+        #    params, in case we ever re-introduce calibration. For IV.POS.7
+        #    (per cloud1 D2) this table will stay empty because pilot
+        #    calibration is REMOVED for all 5 v2 variants. The schema is
+        #    created for forward-compat. Pro §12 "pilot_runs".
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS pilot_runs (
+                id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+                campaign_id                 INTEGER NOT NULL,
+                pilot_idx                   INTEGER NOT NULL,
+                raw_pilot_observation_json  TEXT,
+                calibrated_params_json      TEXT,
+                recorded_at                 TEXT NOT NULL,
+                FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_pilot_camp
+            ON pilot_runs(campaign_id)
+        """)
+
+        # 7. compressed_global_coverage — first-hit table for compressed
+        #    global contexts. Analog of existing `coverage` table but for
+        #    GlobalMemoryCtx / GlobalLookupCtx. `ctx_key` is a stable
+        #    string serialization (see GlobalMemoryCtx.to_json_str()).
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS compressed_global_coverage (
+                ctx_key                 TEXT NOT NULL,
+                campaign_id             INTEGER NOT NULL,
+                first_hit_mutation_id   INTEGER NOT NULL,
+                family                  TEXT NOT NULL,
+                ctx_json                TEXT NOT NULL,
+                first_hit_at            TEXT NOT NULL,
+                hit_count               INTEGER DEFAULT 1,
+                PRIMARY KEY (ctx_key, campaign_id),
+                FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
+                FOREIGN KEY (first_hit_mutation_id) REFERENCES mutations(id) ON DELETE CASCADE
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_cgc_campaign
+            ON compressed_global_coverage(campaign_id)
+        """)
+
+        # 8. local_coverage_v2 — extends the existing `coverage` table to
+        #    include `major` and `minor` columns. Pro §6.1 defines the new
+        #    local context as `(constraint_loc, major, minor)`, which is
+        #    finer-grained than the existing `coverage.constraint_loc`.
+        #    The legacy `coverage` table is unchanged; this is an additive
+        #    secondary index for the v2 reward function's L_new term.
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS local_coverage_v2 (
+                ctx_key                 TEXT NOT NULL,
+                campaign_id             INTEGER NOT NULL,
+                first_hit_mutation_id   INTEGER NOT NULL,
+                constraint_loc          TEXT NOT NULL,
+                major                   INTEGER NOT NULL,
+                minor                   INTEGER NOT NULL,
+                first_hit_at            TEXT NOT NULL,
+                hit_count               INTEGER DEFAULT 1,
+                PRIMARY KEY (ctx_key, campaign_id),
+                FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
+                FOREIGN KEY (first_hit_mutation_id) REFERENCES mutations(id) ON DELETE CASCADE
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_lcv2_campaign
+            ON local_coverage_v2(campaign_id)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_lcv2_loc
+            ON local_coverage_v2(constraint_loc)
+        """)
+
         self.conn.commit()
+
+    # ========================================================================
+    # cloud1 / IV.POS.7 record_* methods
+    # ========================================================================
+
+    def record_bandit_decision(
+        self,
+        mutation_id: int,
+        selected_arm: str,
+        mode: str,
+        score: Optional[float] = None,
+        runnerup_arm: Optional[str] = None,
+        runnerup_score: Optional[float] = None,
+        exploration: bool = False,
+        extra: Optional[dict] = None,
+    ) -> None:
+        """Insert one row into `bandit_decisions` (Pro §12)."""
+        extra_json = json.dumps(extra, sort_keys=True) if extra is not None else None
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO bandit_decisions
+                (mutation_id, selected_arm, mode, score,
+                 runnerup_arm, runnerup_score, exploration, extra_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (mutation_id, selected_arm, mode, score,
+              runnerup_arm, runnerup_score, 1 if exploration else 0, extra_json))
+        self.conn.commit()
+
+    def record_arm_state_snapshot(
+        self,
+        campaign_id: int,
+        mutation_idx: int,
+        arm_states: List[dict],
+    ) -> None:
+        """Batch-insert a list of arm-state rows (Pro §12 'arm_state_log').
+
+        `arm_states` is a list of dicts with keys:
+          arm_id, pulls, discounted_pulls, mean_reward,
+          posterior_alpha, posterior_beta, ts_extra (optional dict).
+        Missing optional fields are stored as NULL.
+        """
+        cursor = self.conn.cursor()
+        rows = []
+        for s in arm_states:
+            rows.append((
+                campaign_id,
+                mutation_idx,
+                s["arm_id"],
+                int(s["pulls"]),
+                s.get("discounted_pulls"),
+                s.get("mean_reward"),
+                s.get("posterior_alpha"),
+                s.get("posterior_beta"),
+                json.dumps(s["ts_extra"], sort_keys=True) if s.get("ts_extra") else None,
+            ))
+        cursor.executemany("""
+            INSERT INTO arm_state_snapshot
+                (campaign_id, mutation_idx, arm_id, pulls, discounted_pulls,
+                 mean_reward, posterior_alpha, posterior_beta, ts_extra_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, rows)
+        self.conn.commit()
+
+    def record_reward_counterfactuals(
+        self,
+        mutation_id: int,
+        current_reward: float,
+        no_qloc_reward: float,
+        fnew_only_reward: float,
+        discovery_binary_reward: int,
+        compressed_global_reward: float,
+    ) -> None:
+        """Insert one row into `reward_counterfactuals` (Pro §12)."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO reward_counterfactuals
+                (mutation_id, current_reward, no_qloc_reward,
+                 fnew_only_reward, discovery_binary_reward,
+                 compressed_global_reward)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (mutation_id, current_reward, no_qloc_reward,
+              fnew_only_reward, int(discovery_binary_reward),
+              compressed_global_reward))
+        self.conn.commit()
+
+    def record_mutation_substrategy(
+        self,
+        mutation_id: int,
+        opcode: Optional[int] = None,
+        rd: Optional[int] = None,
+        rs1: Optional[int] = None,
+        rs2: Optional[int] = None,
+        funct3: Optional[int] = None,
+        funct7: Optional[int] = None,
+        imm: Optional[int] = None,
+        byte_lane: Optional[int] = None,
+        bit_mask: Optional[int] = None,
+        value_class: Optional[str] = None,
+    ) -> None:
+        """Insert one row into `mutation_substrategy` (Pro §12)."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO mutation_substrategy
+                (mutation_id, opcode, rd, rs1, rs2, funct3, funct7,
+                 imm, byte_lane, bit_mask, value_class)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (mutation_id, opcode, rd, rs1, rs2, funct3, funct7,
+              imm, byte_lane, bit_mask, value_class))
+        self.conn.commit()
+
+    def record_hook3_raw(
+        self,
+        mutation_id: int,
+        raw_entries: Optional[list] = None,
+        compressed_ctx_list: Optional[list] = None,
+    ) -> None:
+        """Insert one row into `hook3_raw` (Pro §12)."""
+        raw_json = json.dumps(raw_entries, sort_keys=True) if raw_entries is not None else None
+        compressed_json = (
+            json.dumps(compressed_ctx_list, sort_keys=True)
+            if compressed_ctx_list is not None else None
+        )
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO hook3_raw
+                (mutation_id, raw_json, compressed_ctx_json)
+            VALUES (?, ?, ?)
+        """, (mutation_id, raw_json, compressed_json))
+        self.conn.commit()
+
+    def record_pilot_run(
+        self,
+        campaign_id: int,
+        pilot_idx: int,
+        raw_pilot_observation: Optional[dict] = None,
+        calibrated_params: Optional[dict] = None,
+    ) -> None:
+        """Insert one row into `pilot_runs` (Pro §12).
+
+        For IV.POS.7 (cloud1 D2: pilot REMOVED) this method will not be
+        called by any v2 variant. Present for forward-compat / legacy.
+        """
+        raw_json = json.dumps(raw_pilot_observation, sort_keys=True) if raw_pilot_observation else None
+        cal_json = json.dumps(calibrated_params, sort_keys=True) if calibrated_params else None
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            INSERT INTO pilot_runs
+                (campaign_id, pilot_idx, raw_pilot_observation_json,
+                 calibrated_params_json, recorded_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (campaign_id, pilot_idx, raw_json, cal_json,
+              datetime.now().isoformat()))
+        self.conn.commit()
+
+    def record_compressed_global_first_hit(
+        self,
+        campaign_id: int,
+        mutation_id: int,
+        ctx_key: str,
+        family: str,
+        ctx_json: str,
+    ) -> bool:
+        """Record a compressed-global context first-hit.
+
+        Returns True if the context was new (i.e. this is a first hit),
+        False if it had been seen before (in which case `hit_count` is
+        incremented).
+        """
+        cursor = self.conn.cursor()
+        # Check existing
+        existing = cursor.execute(
+            "SELECT 1 FROM compressed_global_coverage WHERE ctx_key=? AND campaign_id=?",
+            (ctx_key, campaign_id),
+        ).fetchone()
+        if existing is None:
+            cursor.execute("""
+                INSERT INTO compressed_global_coverage
+                    (ctx_key, campaign_id, first_hit_mutation_id,
+                     family, ctx_json, first_hit_at, hit_count)
+                VALUES (?, ?, ?, ?, ?, ?, 1)
+            """, (ctx_key, campaign_id, mutation_id, family, ctx_json,
+                  datetime.now().isoformat()))
+            self.conn.commit()
+            return True
+        else:
+            cursor.execute("""
+                UPDATE compressed_global_coverage
+                SET hit_count = hit_count + 1
+                WHERE ctx_key=? AND campaign_id=?
+            """, (ctx_key, campaign_id))
+            self.conn.commit()
+            return False
+
+    def record_local_v2_first_hit(
+        self,
+        campaign_id: int,
+        mutation_id: int,
+        constraint_loc: str,
+        major: int,
+        minor: int,
+    ) -> bool:
+        """Record a local-v2 context (constraint_loc, major, minor) first-hit.
+
+        Returns True if new (first hit), False if previously seen.
+        """
+        ctx_key = f"{constraint_loc}|{major}|{minor}"
+        cursor = self.conn.cursor()
+        existing = cursor.execute(
+            "SELECT 1 FROM local_coverage_v2 WHERE ctx_key=? AND campaign_id=?",
+            (ctx_key, campaign_id),
+        ).fetchone()
+        if existing is None:
+            cursor.execute("""
+                INSERT INTO local_coverage_v2
+                    (ctx_key, campaign_id, first_hit_mutation_id,
+                     constraint_loc, major, minor, first_hit_at, hit_count)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+            """, (ctx_key, campaign_id, mutation_id, constraint_loc,
+                  int(major), int(minor), datetime.now().isoformat()))
+            self.conn.commit()
+            return True
+        else:
+            cursor.execute("""
+                UPDATE local_coverage_v2 SET hit_count = hit_count + 1
+                WHERE ctx_key=? AND campaign_id=?
+            """, (ctx_key, campaign_id))
+            self.conn.commit()
+            return False
     
     def start_campaign(
         self, 

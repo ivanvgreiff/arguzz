@@ -1,0 +1,1966 @@
+
+=== 7a run: zoned -> /root/arguzz/a4/smoke_7a/smoke_zoned.db ===
+A4 Standalone Fuzzer
+============================================================
+Running inspection on /root/arguzz/workspace/output/target/release/risc0-host...
+  Args: --in1 5 --in4 10
+Inspection Data Summary:
+  Total cycles: 32768
+  Total steps: 3930
+  Total transactions: 34724
+    - Register transactions: 8780
+    - Memory transactions: 25944
+  Cycles by major category:
+    MISC0: 1386
+    MISC1: 442
+    MISC2: 664
+    MUL0: 100
+    DIV0: 23
+    MEM0 (load): 680
+    MEM1 (store): 596
+    CONTROL0: 9641
+    ECALL0: 87
+    POSEIDON0: 2486
+    POSEIDON1: 16371
+    SHA0: 292
+
+Starting campaign 1
+  Mutations: 20
+  Kind: all
+  Seed: 999
+
+
+--- COVERAGE TRACKING SETUP ---
+Capturing baseline touch...
+  Baseline: 1599 bitmap buckets
+  Calibrated: τ_T=35.0, τ_d=3.0, K_T_rare=31, γ=0.9965
+--- COVERAGE TRACKING READY ---
+
+  [1] ✓ LOAD_VAL_MOD @ step 779: 2 failures, 21231ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] [+1599 touch] G=memory
+       r=0.200  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000001 -> 0x80000000
+       Load destination: rd = x8 (s0/fp)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=17400, step=779, pc=0x002031F0, major=5, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=17400, step=779, pc=0x002031F0, major=5, minor=2
+       Global: memory permutation violated
+         x8/s0: wrote 0x80000000, expected 0x00000001 (cycle 34801)
+  [2] ✓ INSTR_WORD_MOD_SUR @ step 2341: 0 failures, 20153ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.274  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.61 Q_l=1.00 Q_g=0.61 dl=0 dg=3
+       Value: 0x0CE66463 -> 0x0C866463
+       Surgical: rs2 = 14 -> 8
+       Original: BLTU x12, x14, 200
+       Mutated:  BLTU x12, x8, 200
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 18995: preflight=0x3fffc02e, actual=0x3fffc028
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Global: memory permutation violated [GLOBAL-ONLY]
+         x8/s0: expected write missing, needed 0x00000007 (cycle 37987)
+         x14/a4: unexpected write 0x00000007 (cycle 37987)
+         0x00203228 (code): wrote 0x0ce66463, expected 0x0c866463 (cycle 33268)
+  [3] ✓ MEM_VAL_MOD @ step 1304: 2 failures, 19826ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.194  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000000 -> 0x7D9510A7
+       Transaction: other_mem_write (WRITE) at address 0xffff0180
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=17948, step=1304, pc=0x00203448, major=2, minor=1
+         - MemoryWrite@mem.zir:99
+           cycle=17948, step=1304, pc=0x00203448, major=2, minor=1
+       Global: memory permutation violated
+         0xFFFF0180 (data): wrote 0x7d9510a7, expected 0x00000000 (cycle 35897)
+  [4] ✓ PRE_EXEC_REG_MOD @ step 2664: 2 failures, 18263ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory
+       r=0.048  T_new=0.00 F_new=1.00 F_rare=1.00 U=0 Q=0.10 Q_l=0.51 Q_g=0.19 dl=2 dg=10
+       Value: 0x00000000 -> 0x00010000
+       Register: x11 (a1), READ, strategy=next_read
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 19393: preflight=0x00080d1a, actual=0x00080d14
+         • [kernels/cxx/buffers.h:43] SKIP THROW: Inconsistent set
+       Local constraints hit (2 unique):
+         - IsRead@mem.zir:80
+           cycle=19392, step=2664, pc=0x00203468, major=1, minor=5
+         - MemoryWrite@mem.zir:99
+           cycle=19399, step=2671, pc=0x0020530C, major=2, minor=4
+       Global: memory permutation violated (15 addrs: 1 register, 14 code)
+         x11/a1: wrote 0x00010000, expected 0x00000000 (cycle 38784)
+         + 14 code addresses diverged (instruction fetch cascade)
+  [5] ✓ INSTR_TYPE_MOD @ step 407: 1 failures, 19412ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory|cycle
+       r=0.150  T_new=0.00 F_new=0.95 F_rare=1.00 U=0 Q=0.31 Q_l=0.72 Q_g=0.43 dl=1 dg=5
+       Value: 0x00060002 -> 0x00050002
+       Original: Sw [major=6, minor=2]
+       Mutated:  Lw [major=5, minor=2]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 16998: preflight=0x3fffc028, actual=0x000800d6
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (1 unique):
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=16998, step=407, pc=0x00203194, major=5, minor=2
+       Global: memory permutation violated
+         0x00200358 (data): unexpected write 0x00000001 (cycle 33958)
+         x8/s0: expected write missing, needed 0x00000001 (cycle 33958)
+       Global: cycle lookup violated (3 indices broken)
+         index 0: 2254 provides, 1 uses (imbalanced)
+         index 37: 38 provides, 1 uses (imbalanced)
+         index 38: 16 provides, 1 uses (imbalanced)
+  [6] ✓ INSTR_TYPE_MOD @ step 3464: 7 failures, 19205ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+4 new] [+35 touch] G=memory|cycle
+       r=0.029  T_new=0.63 F_new=1.00 F_rare=1.00 U=0 Q=0.04 Q_l=0.10 Q_g=0.43 dl=7 dg=5
+       Value: 0x00000002 -> 0x00060001
+       Original: Xor [major=0, minor=2]
+       Mutated:  Sh [major=6, minor=1]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 20266: preflight=0x3fffc02b, actual=0x00000003
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (7 unique):
+         - AddrDecomposeBits@u32.zir:87
+           cycle=20266, step=3464, pc=0x0021815C, major=6, minor=1
+         - IsRead@mem.zir:79
+           cycle=20266, step=3464, pc=0x0021815C, major=6, minor=1
+         - MemoryWrite@mem.zir:100
+           cycle=20266, step=3464, pc=0x0021815C, major=6, minor=1
+         - MemoryWrite@mem.zir:99
+           cycle=20266, step=3464, pc=0x0021815C, major=6, minor=1
+         - OpSH@inst_mem.zir:148
+           cycle=20266, step=3464, pc=0x0021815C, major=6, minor=1
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=20266, step=3464, pc=0x0021815C, major=6, minor=1
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=20266, step=3464, pc=0x0021815C, major=6, minor=1
+       Global: memory permutation violated
+         0x0000000C (data): expected write missing, needed 0x00b635b3 (cycle 39228)
+         x11/a1: unexpected write 0x00000004 (cycle 40532)
+       Global: cycle lookup violated (3 indices broken)
+         index 0: 2254 provides, 1 uses (imbalanced)
+         index 1304: 1 provides, 1 uses (imbalanced)
+         index 2013265920: orphan provide (1 entries, no matching use)
+  [7] ✓ LOAD_VAL_MOD @ step 1779: 2 failures, 17649ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.191  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000043 -> 0x7FDEFD38
+       Load destination: rd = x14 (a4)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=18423, step=1779, pc=0x002184C4, major=5, minor=3
+         - MemoryWrite@mem.zir:99
+           cycle=18423, step=1779, pc=0x002184C4, major=5, minor=3
+       Global: memory permutation violated
+         x14/a4: wrote 0x7fdefd38, expected 0x00000043 (cycle 36847)
+  [8] ✓ INSTR_TYPE_MOD @ step 3928: 6 failures, 17254ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] [+2 touch] G=memory|cycle
+       r=0.030  T_new=0.06 F_new=1.00 F_rare=1.00 U=0 Q=0.06 Q_l=0.14 Q_g=0.43 dl=6 dg=5
+       Value: 0x00000007 -> 0x00060002
+       Original: AddI [major=0, minor=7]
+       Mutated:  Sw [major=6, minor=2]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 20878: preflight=0x3fffc011, actual=0x00000004
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (6 unique):
+         - AddrDecomposeBits@u32.zir:87
+           cycle=20878, step=3928, pc=0xC00000F8, major=6, minor=2
+         - IsRead@mem.zir:79
+           cycle=20878, step=3928, pc=0xC00000F8, major=6, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=20878, step=3928, pc=0xC00000F8, major=6, minor=2
+         - OpSW@inst_mem.zir:160
+           cycle=20878, step=3928, pc=0xC00000F8, major=6, minor=2
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=20878, step=3928, pc=0xC00000F8, major=6, minor=2
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=20878, step=3928, pc=0xC00000F8, major=6, minor=2
+       Global: memory permutation violated
+         0x00000010 (data): expected write missing, needed 0x00000073 (cycle 30062)
+         0xFFFF0044 (data): unexpected write 0x00000004 (cycle 41362)
+       Global: cycle lookup violated (3 indices broken)
+         index 393: 2 provides, 1 uses (imbalanced)
+         index 394: 1 provides, 1 uses (imbalanced)
+         index 11694: 1 provides, 1 uses (imbalanced)
+  [9] ✓ PRE_EXEC_REG_MOD @ step 1063: 2 failures, 17422ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.190  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00010800 -> 0xFF7EF7FF
+       Register: x3 (gp), READ, strategy=next_read
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - IsRead@mem.zir:79
+           cycle=17702, step=1063, pc=0x0020632C, major=2, minor=5
+         - IsRead@mem.zir:80
+           cycle=17702, step=1063, pc=0x0020632C, major=2, minor=5
+       Global: memory permutation violated
+         x3/gp: wrote 0xff7ef7ff, expected 0x00010800 (cycle 35404)
+  [10] ✓ MEM_VAL_MOD @ step 3929: 0 failures, 16767ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.293  T_new=0.00 F_new=0.39 F_rare=1.00 U=0 Q=0.85 Q_l=1.00 Q_g=0.85 dl=0 dg=1
+       Value: 0x00000000 -> 0x3020F69D
+       Transaction: other_mem_read (READ) at address 0x00221694
+       zkVM errors (2 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [kernels/cxx/buffers.h:43] SKIP THROW: Inconsistent set
+       Global: memory permutation violated [GLOBAL-ONLY]
+         0x00221694 (code): wrote 0x3020f69d, expected 0x00000000 (cycle 43458)
+  [11] ✓ LOAD_VAL_MOD @ step 2306: 2 failures, 17491ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.135  T_new=0.00 F_new=0.39 F_rare=0.85 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000004 -> 0x80000000
+       Load destination: rd = x19 (s3)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=18960, step=2306, pc=0x002012A8, major=5, minor=3
+         - MemoryWrite@mem.zir:99
+           cycle=18960, step=2306, pc=0x002012A8, major=5, minor=3
+       Global: memory permutation violated
+         x19/s3: wrote 0x80000000, expected 0x00000004 (cycle 37921)
+  [12] ✓ INSTR_WORD_MOD_SUR @ step 98: 1 failures, 16510ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory
+       r=0.243  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0x00F686B3 -> 0xBCF686B3
+       Surgical: funct7 = 0 -> 94
+       Original: ADD x13, x13, x15
+       Mutated:  ADD x13, x13, x15
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - VerifyOpcodeF3F7@inst.zir:104
+           cycle=16671, step=98, pc=0x002032C0, major=0, minor=0
+       Global: memory permutation violated
+         0x002032BC (code): wrote 0x00f686b3, expected 0xbcf686b3 (cycle 10378)
+  [13] ✓ STORE_OUT_MOD @ step 3919: 2 failures, 16500ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.174  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x0F745431 -> 0xB08FB3CA
+       Store address: 0xffff025c
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=20869, step=3919, pc=0xC00000D4, major=6, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=20869, step=3919, pc=0xC00000D4, major=6, minor=2
+       Global: memory permutation violated
+         0xFFFF025C (data): wrote 0xb08fb3ca, expected 0x0f745431 (cycle 41739)
+  [14] ✓ INSTR_WORD_MOD_SUR @ step 2782: 0 failures, 16244ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.263  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.61 Q_l=1.00 Q_g=0.61 dl=0 dg=3
+       Value: 0x0244A583 -> 0x02402583
+       Surgical: rs1 = 9 -> 0
+       Original: LW x11, 36(x9)
+       Mutated:  LW x11, 36(x0)
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 19510: preflight=0x3fffc029, actual=0x3fffc020
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Global: memory permutation violated [GLOBAL-ONLY]
+         x0/zero: expected write missing, needed 0x00200300 (cycle 38992)
+         x9/s1: unexpected write 0x00200300 (cycle 38992)
+         0x0020382C (code): wrote 0x0244a583, expected 0x02402583 (cycle 11266)
+  [15] ✓ COMP_OUT_MOD @ step 2199: 2 failures, 16614ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.188  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000002 -> 0x01000000
+       Destination: rd = x12 (a2)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=18853, step=2199, pc=0x00201EB0, major=0, minor=7
+         - MemoryWrite@mem.zir:99
+           cycle=18853, step=2199, pc=0x00201EB0, major=0, minor=7
+       Global: memory permutation violated
+         x12/a2: wrote 0x01000000, expected 0x00000002 (cycle 37707)
+  [16] 💥 PRE_EXEC_REG_MOD @ step 2708: 2 failures, 2278ms, outcome: CRASH, exit: -11 [proof:NOT_GENERATED]
+       r=0.000  T_new=0.00 F_new=0.00 F_rare=0.00 U=0 Q=0.00 Q_l=0.00 Q_g=1.00 dl=0 dg=0
+       Value: 0x0022133C -> 0xFFDDECC3
+       Register: x21 (s5), READ, strategy=next_read
+       Local constraints hit (2 unique):
+         - IsRead@mem.zir:79
+           cycle=19436, step=2708, pc=0x0020164C, major=5, minor=2
+         - IsRead@mem.zir:80
+           cycle=19436, step=2708, pc=0x0020164C, major=5, minor=2
+       Global: no permutation/lookup violations (local-only)
+  [17] ✓ PRE_EXEC_REG_MOD @ step 62: 3 failures, 16901ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.141  T_new=0.00 F_new=0.86 F_rare=1.00 U=0 Q=0.31 Q_l=0.37 Q_g=0.85 dl=3 dg=1
+       Value: 0x00000000 -> 0x92290D1A
+       Register: x11 (a1), READ, strategy=next_read
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (3 unique):
+         - IsRead@mem.zir:79
+           cycle=16635, step=62, pc=0x00203230, major=6, minor=0
+         - IsRead@mem.zir:80
+           cycle=16635, step=62, pc=0x00203230, major=6, minor=0
+         - MemoryWrite@mem.zir:100
+           cycle=16635, step=62, pc=0x00203230, major=6, minor=0
+       Global: memory permutation violated
+         x11/a1: wrote 0x92290d1a, expected 0x00000000 (cycle 33270)
+  [18] ✓ INSTR_TYPE_MOD @ step 1019: 2 failures, 17078ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+37 touch]
+       r=0.306  T_new=0.65 F_new=0.63 F_rare=1.00 U=0 Q=0.51 Q_l=0.51 Q_g=1.00 dl=2 dg=0
+       Value: 0x00050002 -> 0x00050001
+       Original: Lw [major=5, minor=2]
+       Mutated:  Lh [major=5, minor=1]
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=17658, step=1019, pc=0x00200A6C, major=5, minor=1
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=17658, step=1019, pc=0x00200A6C, major=5, minor=1
+       Global: no permutation/lookup violations (local-only)
+  [19] ✓ STORE_OUT_MOD @ step 3919: 2 failures, 16389ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.133  T_new=0.00 F_new=0.39 F_rare=0.85 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x0F745431 -> 0xF08BABCE
+       Store address: 0xffff025c
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=20869, step=3919, pc=0xC00000D4, major=6, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=20869, step=3919, pc=0xC00000D4, major=6, minor=2
+       Global: memory permutation violated
+         0xFFFF025C (data): wrote 0xf08babce, expected 0x0f745431 (cycle 41739)
+  [20] ✓ INSTR_WORD_MOD_SUR @ step 3686: 1 failures, 18076ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.241  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0x00268593 -> 0x002685EF
+       Surgical: opcode = 19 -> 111
+       Original: ADDI x11, x13, 2
+       Mutated:  JAL x11, 425986
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=20562, step=3686, pc=0x002035F8, major=0, minor=7
+       Global: memory permutation violated
+         0x002035F4 (code): wrote 0x00268593, expected 0x002685ef (cycle 10902)
+
+============================================================
+Campaign Summary
+============================================================
+Total mutations:     20
+Successful (caused failures): 19
+Skipped (no valid target):    0
+Total failures:      41
+Unique constraints:  10
+New coverage:        10
+New touch:           1673
+Distinct touched:    1673
+
+Global Constraint Summary:
+  Mutations with global violations: 18
+  Global-only (no local failures):  3
+  Local-only (no global violations):2
+Execution time:      362510ms
+
+Outcome breakdown:
+  REJECTED (mutation detected): 19
+  CRASH (segfault, etc.):       1
+  NO_EFFECT:                    0
+  ACCEPTED (BUG!):              0 
+  SKIPPED:                      0
+
+Mutations by kind:
+  COMP_OUT_MOD: 1
+  INSTR_TYPE_MOD: 4
+  INSTR_WORD_MOD_SUR: 4
+  LOAD_VAL_MOD: 3
+  MEM_VAL_MOD: 2
+  PRE_EXEC_REG_MOD: 4
+  STORE_OUT_MOD: 2
+  exit=0 wall_sec=343.1
+check_smoke_db: /root/arguzz/a4/smoke_7a/smoke_zoned.db variant=zoned phase=7a
+  mutations=20
+  reward_counterfactuals=20
+  reward_counterfactuals=20
+  mutation_substrategy=20
+  hook3_raw=20
+  bandit_decisions=0
+  arm_state_snapshot=0
+  local_coverage_v2=36
+  compressed_global_coverage=0
+  wall_time_sec=343.1
+  sec_per_mutation=17.2
+  PASS
+
+=== 7a run: kindUCB_zoned_v1 -> /root/arguzz/a4/smoke_7a/smoke_kindUCB_zoned_v1.db ===
+A4 Standalone Fuzzer
+============================================================
+Running inspection on /root/arguzz/workspace/output/target/release/risc0-host...
+  Args: --in1 5 --in4 10
+Inspection Data Summary:
+  Total cycles: 32768
+  Total steps: 3930
+  Total transactions: 34724
+    - Register transactions: 8780
+    - Memory transactions: 25944
+  Cycles by major category:
+    MISC0: 1386
+    MISC1: 442
+    MISC2: 664
+    MUL0: 100
+    DIV0: 23
+    MEM0 (load): 680
+    MEM1 (store): 596
+    CONTROL0: 9641
+    ECALL0: 87
+    POSEIDON0: 2486
+    POSEIDON1: 16371
+    SHA0: 292
+
+Starting campaign 1
+  Mutations: 20
+  Kind: all
+  Seed: 999
+
+
+--- V2 BANDIT SETUP (kindUCB_zoned_v1) ---
+  Baseline: 1599 bitmap buckets
+--- V2 BANDIT READY (8 arms, budget 20) ---
+
+  [1] ✓ LOAD_VAL_MOD @ step 935: 2 failures, 16504ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] [+1599 touch] G=memory
+       r=0.200  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000001 -> 0x80000000
+       Load destination: rd = x8 (s0/fp)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=17568, step=935, pc=0x002031F0, major=5, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=17568, step=935, pc=0x002031F0, major=5, minor=2
+       Global: memory permutation violated
+         x8/s0: wrote 0x80000000, expected 0x00000001 (cycle 35137)
+  [2] ✓ INSTR_WORD_MOD_SUR @ step 260: 1 failures, 16542ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory
+       r=0.254  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0x00261313 -> 0x0026137D
+       Surgical: opcode = 19 -> 125
+       Original: SLLI x6, x12, 2
+       Mutated:  UNKNOWN 0x0026137d
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - VerifyOpcodeF3F7@inst.zir:102
+           cycle=16839, step=260, pc=0x00206134, major=3, minor=1
+       Global: memory permutation violated
+         0x00206130 (code): wrote 0x00261313, expected 0x0026137d (cycle 17866)
+  [3] ✓ MEM_VAL_MOD @ step 2191: 4 failures, 16673ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] G=memory
+       r=0.100  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.22 Q_l=0.26 Q_g=0.85 dl=4 dg=1
+       Value: 0x00221488 -> 0x7D9510A7
+       Transaction: load_mem_read (READ) at address 0x002001d4
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (4 unique):
+         - IsRead@mem.zir:79
+           cycle=18845, step=2191, pc=0x00206884, major=5, minor=2
+         - IsRead@mem.zir:80
+           cycle=18845, step=2191, pc=0x00206884, major=5, minor=2
+         - MemoryWrite@mem.zir:100
+           cycle=18845, step=2191, pc=0x00206884, major=5, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=18845, step=2191, pc=0x00206884, major=5, minor=2
+       Global: memory permutation violated
+         0x002001D4 (data): wrote 0x7d9510a7, expected 0x00221488 (cycle 37690)
+  [4] ✓ INSTR_WORD_MOD_FULL @ step 3929: 2 failures, 17113ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] G=memory
+       r=0.193  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000073 -> 0x1DD6D7EF
+       Original: ECALL x0, x0, 0
+       Mutated:  JAL x15, 448988
+       Format changed: I -> J
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MachineECall@inst_ecall.zir:28
+           cycle=20879, step=3929, pc=0xC00000F8, major=8, minor=0
+         - MachineECall@inst_ecall.zir:29
+           cycle=20879, step=3929, pc=0xC00000F8, major=8, minor=0
+       Global: memory permutation violated
+         0xC00000F8 (data): wrote 0x00000073, expected 0x1dd6d7ef (cycle 30062)
+  [5] ✓ INSTR_TYPE_MOD @ step 2781: 4 failures, 19613ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] G=memory|cycle
+       r=0.056  T_new=0.00 F_new=0.99 F_rare=1.00 U=0 Q=0.11 Q_l=0.26 Q_g=0.43 dl=4 dg=5
+       Value: 0x00060002 -> 0x00040002
+       Original: Sw [major=6, minor=2]
+       Mutated:  SrlI [major=4, minor=2]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 19509: preflight=0x00080096, actual=0x3fffc028
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (4 unique):
+         - MemoryWrite@mem.zir:99
+           cycle=19509, step=2781, pc=0x0020382C, major=4, minor=2
+         - VerifyOpcodeF3F7@inst.zir:102
+           cycle=19509, step=2781, pc=0x0020382C, major=4, minor=2
+         - VerifyOpcodeF3F7@inst.zir:103
+           cycle=19509, step=2781, pc=0x0020382C, major=4, minor=2
+         - VerifyOpcodeF3F7@inst.zir:104
+           cycle=19509, step=2781, pc=0x0020382C, major=4, minor=2
+       Global: memory permutation violated
+         0x00200258 (data): unexpected write 0x00000000 (cycle 4522)
+         x8/s0: expected write missing, needed 0x00000000 (cycle 4522)
+       Global: cycle lookup violated (3 indices broken)
+         index 0: 2254 provides, 1 uses (imbalanced)
+         index 34495: orphan use (1 entries, no matching provide)
+         index 34496: 1 provides, 1 uses (imbalanced)
+  [6] ✓ STORE_OUT_MOD @ step 3271: 1 failures, 16742ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.246  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0xB3FEEA77 -> 0xB3FFEA77
+       Store address: 0x0022156c
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=20073, step=3271, pc=0x0020342C, major=6, minor=2
+       Global: memory permutation violated
+         0x0022156C (code): wrote 0xb3ffea77, expected 0xb3feea77 (cycle 40147)
+  [7] ✓ COMP_OUT_MOD @ step 2892: 2 failures, 16344ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.191  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00201388 -> 0x7FFEEEF3
+       Destination: rd = x1 (ra)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=19620, step=2892, pc=0x0020538C, major=2, minor=6
+         - MemoryWrite@mem.zir:99
+           cycle=19620, step=2892, pc=0x0020538C, major=2, minor=6
+       Global: memory permutation violated
+         x1/ra: wrote 0x7ffeeef3, expected 0x00201388 (cycle 39241)
+  [8] ✓ PRE_EXEC_REG_MOD @ step 2811: 4 failures, 17324ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.102  T_new=0.00 F_new=0.86 F_rare=1.00 U=0 Q=0.22 Q_l=0.26 Q_g=0.85 dl=4 dg=1
+       Value: 0x17E32F5A -> 0xE89CD0A5
+       Register: x12 (a2), READ, strategy=next_read
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (4 unique):
+         - IsRead@mem.zir:79
+           cycle=19539, step=2811, pc=0x00203B5C, major=6, minor=2
+         - IsRead@mem.zir:80
+           cycle=19539, step=2811, pc=0x00203B5C, major=6, minor=2
+         - MemoryWrite@mem.zir:100
+           cycle=19539, step=2811, pc=0x00203B5C, major=6, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=19539, step=2811, pc=0x00203B5C, major=6, minor=2
+       Global: memory permutation violated
+         x12/a2: wrote 0xe89cd0a5, expected 0x17e32f5a (cycle 39078)
+  [9] ✓ INSTR_WORD_MOD_SUR @ step 3929: 1 failures, 16870ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.189  T_new=0.00 F_new=0.39 F_rare=0.85 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0x00000073 -> 0x00002073
+       Surgical: funct3 = 0 -> 2
+       Original: ECALL x0, x0, 0
+       Mutated:  SYSTEM.2 x0, x0, 0
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - MachineECall@inst_ecall.zir:29
+           cycle=20879, step=3929, pc=0xC00000F8, major=8, minor=0
+       Global: memory permutation violated
+         0xC00000F8 (data): wrote 0x00000073, expected 0x00002073 (cycle 30062)
+  [10] ✓ STORE_OUT_MOD @ step 2827: 2 failures, 16788ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.135  T_new=0.00 F_new=0.39 F_rare=0.85 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000000 -> 0x3020F69D
+       Store address: 0x002002a4
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=19555, step=2827, pc=0x00203B9C, major=6, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=19555, step=2827, pc=0x00203B9C, major=6, minor=2
+       Global: memory permutation violated
+         0x002002A4 (data): wrote 0x3020f69d, expected 0x00000000 (cycle 39111)
+  [11] ✓ LOAD_VAL_MOD @ step 1489: 2 failures, 16801ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.189  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000005 -> 0x80000000
+       Load destination: rd = x13 (a3)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=18133, step=1489, pc=0x002184C0, major=5, minor=3
+         - MemoryWrite@mem.zir:99
+           cycle=18133, step=1489, pc=0x002184C0, major=5, minor=3
+       Global: memory permutation violated
+         x13/a3: wrote 0x80000000, expected 0x00000005 (cycle 36267)
+  [12] ✓ INSTR_WORD_MOD_FULL @ step 3177: 1 failures, 19193ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.066  T_new=0.00 F_new=1.00 F_rare=1.00 U=0 Q=0.14 Q_l=0.72 Q_g=0.19 dl=1 dg=10
+       Value: 0x00008067 -> 0x02008067
+       Original: JALR x0, x1, 0
+       Mutated:  JALR x0, x1, 32
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 19980: preflight=0x00081518, actual=0x00081520
+         • [kernels/cxx/buffers.h:43] SKIP THROW: Inconsistent set
+       Local constraints hit (1 unique):
+         - MemoryWrite@mem.zir:99
+           cycle=19987, step=3185, pc=0x00204B28, major=2, minor=4
+       Global: memory permutation violated (17 addrs: 17 code)
+         + 17 code addresses diverged (instruction fetch cascade)
+  [13] ✓ COMP_OUT_MOD @ step 3370: 2 failures, 24416ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.174  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00204C3C -> 0xBFDBABC7
+       Destination: rd = x1 (ra)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=20172, step=3370, pc=0x002052DC, major=2, minor=4
+         - MemoryWrite@mem.zir:99
+           cycle=20172, step=3370, pc=0x002052DC, major=2, minor=4
+       Global: memory permutation violated
+         x1/ra: wrote 0xbfdbabc7, expected 0x00204c3c (cycle 40345)
+  [14] ✓ PRE_EXEC_REG_MOD @ step 2893: 4 failures, 21222ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.075  T_new=0.00 F_new=0.92 F_rare=1.00 U=0 Q=0.16 Q_l=0.26 Q_g=0.61 dl=4 dg=3
+       Value: 0x00201388 -> 0x01000000
+       Register: x1 (ra), READ, strategy=next_read
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 19622: preflight=0x000803bd, actual=0x003ffedb
+         • [kernels/cxx/buffers.h:43] SKIP THROW: Inconsistent set
+       Local constraints hit (4 unique):
+         - IsRead@mem.zir:79
+           cycle=19621, step=2893, pc=0x00200EF4, major=2, minor=4
+         - IsRead@mem.zir:80
+           cycle=19621, step=2893, pc=0x00200EF4, major=2, minor=4
+         - MemoryWrite@mem.zir:100
+           cycle=19622, step=2894, pc=0x00205390, major=2, minor=4
+         - MemoryWrite@mem.zir:99
+           cycle=19622, step=2894, pc=0x00205390, major=2, minor=4
+       Global: memory permutation violated
+         0x00FFFB6C (data): expected write missing, needed 0x00008067 (cycle 38194)
+         x1/ra: wrote 0x01000000, expected 0x00201388 (cycle 39242)
+         0x00200EF4 (code): unexpected write 0x00008067 (cycle 38194)
+  [15] ✓ MEM_VAL_MOD @ step 381: 15 failures, 22612ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+3 new] G=memory
+       r=0.002  T_new=0.00 F_new=1.00 F_rare=1.00 U=0 Q=0.00 Q_l=0.02 Q_g=0.19 dl=12 dg=10
+       Value: 0x00008067 -> 0xFFFF7F98
+       Transaction: other_mem_read (READ) at address 0x002061c0
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 16972: preflight=0x3fffc021, actual=0x3fffc03e
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (6 unique):
+         - DecodeInst@inst.zir:29 (x10)
+           cycle=16973, step=382, pc=0x002031BC, major=3, minor=1
+         - IsRead@mem.zir:79
+           cycle=16972, step=381, pc=0x002031B8, major=2, minor=4
+         - IsRead@mem.zir:80
+           cycle=16972, step=381, pc=0x002031B8, major=2, minor=4
+         - MemoryWrite@mem.zir:99
+           cycle=16982, step=391, pc=0x00200890, major=2, minor=4
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=16972, step=381, pc=0x002031B8, major=2, minor=4
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=16972, step=381, pc=0x002031B8, major=2, minor=4
+       Global: memory permutation violated (18 addrs: 4 register, 13 code, 1 data)
+         x0/zero: unexpected write 0x00000000 (cycle 33942)
+         x1/ra: unexpected write 0x002031b8 (cycle 33847)
+         x30/t5: expected write missing, needed 0x002031b8 (cycle 33847)
+         + 13 code addresses diverged (instruction fetch cascade)
+         + 2 more addresses
+  [16] ✓ INSTR_WORD_MOD_SUR @ step 1064: 1 failures, 22193ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.242  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0x07660613 -> 0x0766063B
+       Surgical: opcode = 19 -> 59
+       Original: ADDI x12, x12, 118
+       Mutated:  UNKNOWN 0x0766063b
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=17703, step=1064, pc=0x00206330, major=0, minor=7
+       Global: memory permutation violated
+         0x0020632C (code): wrote 0x07660613, expected 0x0766063b (cycle 18186)
+  [17] ✓ LOAD_VAL_MOD @ step 3183: 2 failures, 21208ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.127  T_new=0.00 F_new=0.39 F_rare=0.79 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000000 -> 0x92290D1A
+       Load destination: rd = x19 (s3)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=19985, step=3183, pc=0x00205478, major=5, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=19985, step=3183, pc=0x00205478, major=5, minor=2
+       Global: memory permutation violated
+         x19/s3: wrote 0x92290d1a, expected 0x00000000 (cycle 39971)
+  [18] ✓ STORE_OUT_MOD @ step 2336: 2 failures, 18433ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.188  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000080 -> 0xFFFFFF7F
+       Store address: 0x0020030c
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=18990, step=2336, pc=0x00203218, major=6, minor=0
+         - MemoryWrite@mem.zir:99
+           cycle=18990, step=2336, pc=0x00203218, major=6, minor=0
+       Global: memory permutation violated
+         0x0020030C (data): wrote 0xffffff7f, expected 0x00000080 (cycle 37981)
+  [19] ✓ INSTR_TYPE_MOD @ step 2729: 3 failures, 32464ms, outcome: REJECTED, exit: 101 [proof:GENERATED]
+       r=0.113  T_new=0.00 F_new=0.39 F_rare=0.85 U=0 Q=0.37 Q_l=0.37 Q_g=1.00 dl=3 dg=0
+       Value: 0x00050002 -> 0x00050003
+       Original: Lw [major=5, minor=2]
+       Mutated:  LbU [major=5, minor=3]
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (3 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=19457, step=2729, pc=0x002016B0, major=5, minor=3
+         - MemoryWrite@mem.zir:99
+           cycle=19457, step=2729, pc=0x002016B0, major=5, minor=3
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=19457, step=2729, pc=0x002016B0, major=5, minor=3
+       Global: no permutation/lookup violations (local-only)
+  [20] ✓ COMP_OUT_MOD @ step 2112: 2 failures, 38581ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.187  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x0021AE5A -> 0x40F2CFEA
+       Destination: rd = x9 (s1)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=18766, step=2112, pc=0x0020251C, major=0, minor=7
+         - MemoryWrite@mem.zir:99
+           cycle=18766, step=2112, pc=0x0020251C, major=0, minor=7
+       Global: memory permutation violated
+         x9/s1: wrote 0x40f2cfea, expected 0x0021ae5a (cycle 37533)
+
+============================================================
+Campaign Summary
+============================================================
+Total mutations:     20
+Successful (caused failures): 20
+Skipped (no valid target):    0
+Total failures:      57
+Unique constraints:  12
+New coverage:        12
+New touch:           1599
+Distinct touched:    1599
+
+Global Constraint Summary:
+  Mutations with global violations: 19
+  Global-only (no local failures):  0
+  Local-only (no global violations):1
+Execution time:      427591ms
+
+Outcome breakdown:
+  REJECTED (mutation detected): 20
+  CRASH (segfault, etc.):       0
+  NO_EFFECT:                    0
+  ACCEPTED (BUG!):              0 
+  SKIPPED:                      0
+
+Mutations by kind:
+  COMP_OUT_MOD: 3
+  INSTR_TYPE_MOD: 2
+  INSTR_WORD_MOD_FULL: 2
+  INSTR_WORD_MOD_SUR: 3
+  LOAD_VAL_MOD: 3
+  MEM_VAL_MOD: 2
+  PRE_EXEC_REG_MOD: 2
+  STORE_OUT_MOD: 3
+  exit=0 wall_sec=401.2
+check_smoke_db: /root/arguzz/a4/smoke_7a/smoke_kindUCB_zoned_v1.db variant=kindUCB_zoned_v1 phase=7a
+  mutations=20
+  reward_counterfactuals=20
+  reward_counterfactuals=20
+  mutation_substrategy=20
+  hook3_raw=20
+  bandit_decisions=20
+  arm_state_snapshot=0
+  local_coverage_v2=38
+  compressed_global_coverage=0
+  wall_time_sec=401.2
+  sec_per_mutation=20.1
+  PASS
+
+=== 7a run: kindUCB_zoned_v2_noQ -> /root/arguzz/a4/smoke_7a/smoke_kindUCB_zoned_v2_noQ.db ===
+A4 Standalone Fuzzer
+============================================================
+Running inspection on /root/arguzz/workspace/output/target/release/risc0-host...
+  Args: --in1 5 --in4 10
+Inspection Data Summary:
+  Total cycles: 32768
+  Total steps: 3930
+  Total transactions: 34724
+    - Register transactions: 8780
+    - Memory transactions: 25944
+  Cycles by major category:
+    MISC0: 1386
+    MISC1: 442
+    MISC2: 664
+    MUL0: 100
+    DIV0: 23
+    MEM0 (load): 680
+    MEM1 (store): 596
+    CONTROL0: 9641
+    ECALL0: 87
+    POSEIDON0: 2486
+    POSEIDON1: 16371
+    SHA0: 292
+
+Starting campaign 1
+  Mutations: 20
+  Kind: all
+  Seed: 999
+
+
+--- V2 BANDIT SETUP (kindUCB_zoned_v2_noQ) ---
+  Baseline: 1599 bitmap buckets
+--- V2 BANDIT READY (8 arms, budget 20) ---
+
+  [1] ✓ LOAD_VAL_MOD @ step 935: 2 failures, 37621ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] [+1599 touch] G=memory
+       r=0.200  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000001 -> 0x80000000
+       Load destination: rd = x8 (s0/fp)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=17568, step=935, pc=0x002031F0, major=5, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=17568, step=935, pc=0x002031F0, major=5, minor=2
+       Global: memory permutation violated
+         x8/s0: wrote 0x80000000, expected 0x00000001 (cycle 35137)
+  [2] ✓ INSTR_WORD_MOD_SUR @ step 260: 1 failures, 37513ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory
+       r=0.254  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0x00261313 -> 0x0026137D
+       Surgical: opcode = 19 -> 125
+       Original: SLLI x6, x12, 2
+       Mutated:  UNKNOWN 0x0026137d
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - VerifyOpcodeF3F7@inst.zir:102
+           cycle=16839, step=260, pc=0x00206134, major=3, minor=1
+       Global: memory permutation violated
+         0x00206130 (code): wrote 0x00261313, expected 0x0026137d (cycle 17866)
+  [3] ✓ MEM_VAL_MOD @ step 2191: 4 failures, 36986ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] G=memory
+       r=0.100  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.22 Q_l=0.26 Q_g=0.85 dl=4 dg=1
+       Value: 0x00221488 -> 0x7D9510A7
+       Transaction: load_mem_read (READ) at address 0x002001d4
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (4 unique):
+         - IsRead@mem.zir:79
+           cycle=18845, step=2191, pc=0x00206884, major=5, minor=2
+         - IsRead@mem.zir:80
+           cycle=18845, step=2191, pc=0x00206884, major=5, minor=2
+         - MemoryWrite@mem.zir:100
+           cycle=18845, step=2191, pc=0x00206884, major=5, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=18845, step=2191, pc=0x00206884, major=5, minor=2
+       Global: memory permutation violated
+         0x002001D4 (data): wrote 0x7d9510a7, expected 0x00221488 (cycle 37690)
+  [4] ✓ INSTR_WORD_MOD_FULL @ step 3929: 2 failures, 49097ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] G=memory
+       r=0.193  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000073 -> 0x1DD6D7EF
+       Original: ECALL x0, x0, 0
+       Mutated:  JAL x15, 448988
+       Format changed: I -> J
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MachineECall@inst_ecall.zir:28
+           cycle=20879, step=3929, pc=0xC00000F8, major=8, minor=0
+         - MachineECall@inst_ecall.zir:29
+           cycle=20879, step=3929, pc=0xC00000F8, major=8, minor=0
+       Global: memory permutation violated
+         0xC00000F8 (data): wrote 0x00000073, expected 0x1dd6d7ef (cycle 30062)
+  [5] ✓ INSTR_TYPE_MOD @ step 2781: 4 failures, 42393ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] G=memory|cycle
+       r=0.056  T_new=0.00 F_new=0.99 F_rare=1.00 U=0 Q=0.11 Q_l=0.26 Q_g=0.43 dl=4 dg=5
+       Value: 0x00060002 -> 0x00040002
+       Original: Sw [major=6, minor=2]
+       Mutated:  SrlI [major=4, minor=2]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 19509: preflight=0x00080096, actual=0x3fffc028
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (4 unique):
+         - MemoryWrite@mem.zir:99
+           cycle=19509, step=2781, pc=0x0020382C, major=4, minor=2
+         - VerifyOpcodeF3F7@inst.zir:102
+           cycle=19509, step=2781, pc=0x0020382C, major=4, minor=2
+         - VerifyOpcodeF3F7@inst.zir:103
+           cycle=19509, step=2781, pc=0x0020382C, major=4, minor=2
+         - VerifyOpcodeF3F7@inst.zir:104
+           cycle=19509, step=2781, pc=0x0020382C, major=4, minor=2
+       Global: memory permutation violated
+         0x00200258 (data): unexpected write 0x00000000 (cycle 4522)
+         x8/s0: expected write missing, needed 0x00000000 (cycle 4522)
+       Global: cycle lookup violated (3 indices broken)
+         index 0: 2254 provides, 1 uses (imbalanced)
+         index 34495: orphan use (1 entries, no matching provide)
+         index 34496: 1 provides, 1 uses (imbalanced)
+  [6] ✓ STORE_OUT_MOD @ step 3271: 1 failures, 41902ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.246  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0xB3FEEA77 -> 0xB3FFEA77
+       Store address: 0x0022156c
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=20073, step=3271, pc=0x0020342C, major=6, minor=2
+       Global: memory permutation violated
+         0x0022156C (code): wrote 0xb3ffea77, expected 0xb3feea77 (cycle 40147)
+  [7] ✓ COMP_OUT_MOD @ step 2892: 2 failures, 43107ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.191  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00201388 -> 0x7FFEEEF3
+       Destination: rd = x1 (ra)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=19620, step=2892, pc=0x0020538C, major=2, minor=6
+         - MemoryWrite@mem.zir:99
+           cycle=19620, step=2892, pc=0x0020538C, major=2, minor=6
+       Global: memory permutation violated
+         x1/ra: wrote 0x7ffeeef3, expected 0x00201388 (cycle 39241)
+  [8] ✓ PRE_EXEC_REG_MOD @ step 2811: 4 failures, 46277ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.102  T_new=0.00 F_new=0.86 F_rare=1.00 U=0 Q=0.22 Q_l=0.26 Q_g=0.85 dl=4 dg=1
+       Value: 0x17E32F5A -> 0xE89CD0A5
+       Register: x12 (a2), READ, strategy=next_read
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (4 unique):
+         - IsRead@mem.zir:79
+           cycle=19539, step=2811, pc=0x00203B5C, major=6, minor=2
+         - IsRead@mem.zir:80
+           cycle=19539, step=2811, pc=0x00203B5C, major=6, minor=2
+         - MemoryWrite@mem.zir:100
+           cycle=19539, step=2811, pc=0x00203B5C, major=6, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=19539, step=2811, pc=0x00203B5C, major=6, minor=2
+       Global: memory permutation violated
+         x12/a2: wrote 0xe89cd0a5, expected 0x17e32f5a (cycle 39078)
+  [9] ✓ LOAD_VAL_MOD @ step 2524: 2 failures, 39386ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.190  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x000000D9 -> 0x3020F69D
+       Load destination: rd = x11 (a1)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=19252, step=2524, pc=0x0020145C, major=5, minor=3
+         - MemoryWrite@mem.zir:99
+           cycle=19252, step=2524, pc=0x0020145C, major=5, minor=3
+       Global: memory permutation violated
+         x11/a1: wrote 0x3020f69d, expected 0x000000d9 (cycle 38505)
+  [10] ✓ INSTR_WORD_MOD_FULL @ step 834: 0 failures, 37547ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.264  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.61 Q_l=1.00 Q_g=0.61 dl=0 dg=3
+       Value: 0x02C22603 -> 0x00C22603
+       Original: LW x12, 44(x4)
+       Mutated:  LW x12, 12(x4)
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 17455: preflight=0x3fffc02b, actual=0x3fffc023
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Global: memory permutation violated [GLOBAL-ONLY]
+         0xC0000140 (data): wrote 0x02c22603, expected 0x00c22603 (cycle 34742)
+         x3/gp: expected write missing, needed 0x00000001 (cycle 34885)
+         x11/a1: unexpected write 0x00000001 (cycle 34885)
+  [11] ✓ INSTR_TYPE_MOD @ step 0: 6 failures, 38158ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+6 new] [+3 touch] G=memory|cycle
+       r=0.042  T_new=0.08 F_new=0.99 F_rare=1.00 U=0 Q=0.08 Q_l=0.14 Q_g=0.61 dl=6 dg=3
+       Value: 0x00020006 -> 0x00060002
+       Original: Auipc [major=2, minor=6]
+       Mutated:  Sw [major=6, minor=2]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 0: preflight=0x44000000, actual=0x00000000
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (6 unique):
+         - AddrDecompose@u32.zir:67
+           cycle=0, step=0, pc=0x00000000, major=6, minor=2
+         - AddrDecomposeBits@u32.zir:87
+           cycle=0, step=0, pc=0x00000000, major=6, minor=2
+         - ControlLoadRootAndNonce@inst_control.zir:23
+           cycle=1, step=0, pc=0x00000000, major=7, minor=0
+         - MemStoreInput@inst_mem.zir:18
+           cycle=0, step=0, pc=0x00000000, major=6, minor=2
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=0, step=0, pc=0x00000000, major=6, minor=2
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=0, step=0, pc=0x00000000, major=6, minor=2
+       Global: memory permutation violated
+         0x00000000 (data): unexpected write 0x00000000 (cycle 1)
+       Global: cycle lookup violated (2 indices broken)
+         index 0: 2256 provides, 1 uses (imbalanced)
+         index 2013265920: orphan provide (3 entries, no matching use)
+  [12] ✓ INSTR_TYPE_MOD @ step 3191: 2 failures, 40134ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+35 touch]
+       r=0.304  T_new=0.63 F_new=0.63 F_rare=1.00 U=0 Q=0.51 Q_l=0.51 Q_g=1.00 dl=2 dg=0
+       Value: 0x00060002 -> 0x00060001
+       Original: Sw [major=6, minor=2]
+       Mutated:  Sh [major=6, minor=1]
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=19993, step=3191, pc=0x00204B40, major=6, minor=1
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=19993, step=3191, pc=0x00204B40, major=6, minor=1
+       Global: no permutation/lookup violations (local-only)
+  [13] ✓ PRE_EXEC_REG_MOD @ step 2260: 2 failures, 38818ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.135  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.31 Q_l=0.51 Q_g=0.61 dl=2 dg=3
+       Value: 0x002213CC -> 0x80000000
+       Register: x14 (a4), READ, strategy=next_read
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 18914: preflight=0x000884f3, actual=0x20000000
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (2 unique):
+         - IsRead@mem.zir:79
+           cycle=18914, step=2260, pc=0x0020341C, major=5, minor=2
+         - IsRead@mem.zir:80
+           cycle=18914, step=2260, pc=0x0020341C, major=5, minor=2
+       Global: memory permutation violated
+         0x80000000 (data): expected write missing, needed 0x00000000 (cycle 33349)
+         x14/a4: wrote 0x80000000, expected 0x002213cc (cycle 37828)
+         0x002213CC (code): unexpected write 0x00000000 (cycle 33349)
+  [14] ✓ COMP_OUT_MOD @ step 621: 2 failures, 37031ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.188  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x80000007 -> 0x3FFBE7FC
+       Destination: rd = x10 (a0)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=17230, step=621, pc=0x002031E4, major=0, minor=7
+         - MemoryWrite@mem.zir:99
+           cycle=17230, step=621, pc=0x002031E4, major=0, minor=7
+       Global: memory permutation violated
+         x10/a0: wrote 0x3ffbe7fc, expected 0x80000007 (cycle 34461)
+  [15] ✓ MEM_VAL_MOD @ step 1287: 1 failures, 38367ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.187  T_new=0.00 F_new=0.39 F_rare=0.85 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0x00000000 -> 0x01000000
+       Transaction: store_rmw_read (READ) at address 0x0020031c
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - IsRead@mem.zir:80
+           cycle=17931, step=1287, pc=0x00203434, major=6, minor=2
+       Global: memory permutation violated
+         0x0020031C (data): wrote 0x01000000, expected 0x00000000 (cycle 35862)
+  [16] ✓ INSTR_TYPE_MOD @ step 2637: 3 failures, 38183ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.105  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.26 Q_l=0.37 Q_g=0.72 dl=3 dg=2
+       Value: 0x00020001 -> 0x00040002
+       Original: BltU [major=2, minor=1]
+       Mutated:  SrlI [major=4, minor=2]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 19365: preflight=0x3fffc060, actual=0x3fffc038
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (3 unique):
+         - VerifyOpcodeF3F7@inst.zir:102
+           cycle=19365, step=2637, pc=0x00203414, major=4, minor=2
+         - VerifyOpcodeF3F7@inst.zir:103
+           cycle=19365, step=2637, pc=0x00203414, major=4, minor=2
+         - VerifyOpcodeF3F7@inst.zir:104
+           cycle=19365, step=2637, pc=0x00203414, major=4, minor=2
+       Global: memory permutation violated
+         x24/s8: expected write missing, needed 0x00000000 (cycle 38727)
+         0xFFFF0180 (data): unexpected write 0x00000000 (cycle 38727)
+  [17] ✓ INSTR_WORD_MOD_SUR @ step 1206: 0 failures, 37079ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.262  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.61 Q_l=1.00 Q_g=0.61 dl=0 dg=3
+       Value: 0x02C12083 -> 0x02C12703
+       Surgical: rd = 1 -> 14
+       Original: LW x1, 44(x2)
+       Mutated:  LW x14, 44(x2)
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 17850: preflight=0x3fffc021, actual=0x3fffc02e
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Global: memory permutation violated [GLOBAL-ONLY]
+         x1/ra: unexpected write 0x00208cdc (cycle 35692)
+         x14/a4: expected write missing, needed 0x00208cdc (cycle 35692)
+         0x00208C30 (code): wrote 0x02c12083, expected 0x02c12703 (cycle 19638)
+  [18] ✓ LOAD_VAL_MOD @ step 3183: 2 failures, 37094ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.127  T_new=0.00 F_new=0.39 F_rare=0.79 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000000 -> 0xFFFFFFFF
+       Load destination: rd = x19 (s3)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=19985, step=3183, pc=0x00205478, major=5, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=19985, step=3183, pc=0x00205478, major=5, minor=2
+       Global: memory permutation violated
+         x19/s3: wrote 0xffffffff, expected 0x00000000 (cycle 39971)
+  [19] ✓ COMP_OUT_MOD @ step 1309: 2 failures, 39024ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.187  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000000 -> 0x92290D1A
+       Destination: rd = x11 (a1)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=17953, step=1309, pc=0x002035D4, major=1, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=17953, step=1309, pc=0x002035D4, major=1, minor=2
+       Global: memory permutation violated
+         x11/a1: wrote 0x92290d1a, expected 0x00000000 (cycle 35907)
+  [20] ✓ COMP_OUT_MOD @ step 3771: 2 failures, 38922ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.187  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x0020580C -> 0xFFDFA7F3
+       Destination: rd = x1 (ra)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=20647, step=3771, pc=0x002061CC, major=2, minor=4
+         - MemoryWrite@mem.zir:99
+           cycle=20647, step=3771, pc=0x002061CC, major=2, minor=4
+       Global: memory permutation violated
+         x1/ra: wrote 0xffdfa7f3, expected 0x0020580c (cycle 41295)
+
+============================================================
+Campaign Summary
+============================================================
+Total mutations:     20
+Successful (caused failures): 20
+Skipped (no valid target):    0
+Total failures:      44
+Unique constraints:  15
+New coverage:        15
+New touch:           1637
+Distinct touched:    1637
+
+Global Constraint Summary:
+  Mutations with global violations: 19
+  Global-only (no local failures):  2
+  Local-only (no global violations):1
+Execution time:      835240ms
+
+Outcome breakdown:
+  REJECTED (mutation detected): 20
+  CRASH (segfault, etc.):       0
+  NO_EFFECT:                    0
+  ACCEPTED (BUG!):              0 
+  SKIPPED:                      0
+
+Mutations by kind:
+  COMP_OUT_MOD: 4
+  INSTR_TYPE_MOD: 4
+  INSTR_WORD_MOD_FULL: 2
+  INSTR_WORD_MOD_SUR: 2
+  LOAD_VAL_MOD: 3
+  MEM_VAL_MOD: 2
+  PRE_EXEC_REG_MOD: 2
+  STORE_OUT_MOD: 1
+  exit=0 wall_sec=790.6
+check_smoke_db: /root/arguzz/a4/smoke_7a/smoke_kindUCB_zoned_v2_noQ.db variant=kindUCB_zoned_v2_noQ phase=7a
+  mutations=20
+  reward_counterfactuals=20
+  reward_counterfactuals=20
+  mutation_substrategy=20
+  hook3_raw=20
+  bandit_decisions=20
+  arm_state_snapshot=0
+  local_coverage_v2=33
+  compressed_global_coverage=0
+  wall_time_sec=790.6
+  sec_per_mutation=39.5
+  PASS
+
+=== 7a run: kindTS_zoned_v2 -> /root/arguzz/a4/smoke_7a/smoke_kindTS_zoned_v2.db ===
+A4 Standalone Fuzzer
+============================================================
+Running inspection on /root/arguzz/workspace/output/target/release/risc0-host...
+  Args: --in1 5 --in4 10
+Inspection Data Summary:
+  Total cycles: 32768
+  Total steps: 3930
+  Total transactions: 34724
+    - Register transactions: 8780
+    - Memory transactions: 25944
+  Cycles by major category:
+    MISC0: 1386
+    MISC1: 442
+    MISC2: 664
+    MUL0: 100
+    DIV0: 23
+    MEM0 (load): 680
+    MEM1 (store): 596
+    CONTROL0: 9641
+    ECALL0: 87
+    POSEIDON0: 2486
+    POSEIDON1: 16371
+    SHA0: 292
+
+Starting campaign 1
+  Mutations: 20
+  Kind: all
+  Seed: 999
+
+
+--- V2 BANDIT SETUP (kindTS_zoned_v2) ---
+  Baseline: 1599 bitmap buckets
+--- V2 BANDIT READY (8 arms, budget 20) ---
+
+  [1] ✓ COMP_OUT_MOD @ step 3313: 2 failures, 37773ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] [+1599 touch] G=memory
+       r=0.200  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x0020029C -> 0x80000000
+       Destination: rd = x20 (s4)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=20115, step=3313, pc=0x00204C54, major=0, minor=7
+         - MemoryWrite@mem.zir:99
+           cycle=20115, step=3313, pc=0x00204C54, major=0, minor=7
+       Global: memory permutation violated
+         x20/s4: wrote 0x80000000, expected 0x0020029c (cycle 40231)
+  [2] ✓ MEM_VAL_MOD @ step 3929: 0 failures, 38864ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.306  T_new=0.00 F_new=0.39 F_rare=1.00 U=0 Q=0.85 Q_l=1.00 Q_g=0.85 dl=0 dg=1
+       Value: 0x00000000 -> 0x7D9510A7
+       Transaction: other_mem_read (READ) at address 0xffff0144
+       zkVM errors (2 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [kernels/cxx/buffers.h:43] SKIP THROW: Inconsistent set
+       Global: memory permutation violated [GLOBAL-ONLY]
+         0xFFFF0144 (data): wrote 0x7d9510a7, expected 0x00000000 (cycle 42614)
+  [3] ✓ MEM_VAL_MOD @ step 2783: 1 failures, 36859ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory
+       r=0.251  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0x00000000 -> 0x00010000
+       Transaction: store_rmw_read (READ) at address 0x0020023c
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - IsRead@mem.zir:80
+           cycle=19511, step=2783, pc=0x00203834, major=6, minor=2
+       Global: memory permutation violated
+         0x0020023C (data): wrote 0x00010000, expected 0x00000000 (cycle 39022)
+  [4] ✓ COMP_OUT_MOD @ step 2187: 2 failures, 37661ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.139  T_new=0.00 F_new=0.39 F_rare=0.85 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x002001D4 -> 0x7FFEFCAF
+       Destination: rd = x10 (a0)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=18841, step=2187, pc=0x00202F4C, major=0, minor=7
+         - MemoryWrite@mem.zir:99
+           cycle=18841, step=2187, pc=0x00202F4C, major=0, minor=7
+       Global: memory permutation violated
+         x10/a0: wrote 0x7ffefcaf, expected 0x002001d4 (cycle 37683)
+  [5] ✓ LOAD_VAL_MOD @ step 2680: 2 failures, 38057ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.192  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0xDFC17121 -> 0x20BE8EDE
+       Load destination: rd = x11 (a1)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=19408, step=2680, pc=0x002015DC, major=5, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=19408, step=2680, pc=0x002015DC, major=5, minor=2
+       Global: memory permutation violated
+         x11/a1: wrote 0x20be8ede, expected 0xdfc17121 (cycle 38817)
+  [6] ✓ INSTR_WORD_MOD_SUR @ step 2797: 0 failures, 38183ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.267  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.61 Q_l=1.00 Q_g=0.61 dl=0 dg=3
+       Value: 0x02C4A583 -> 0x02C42583
+       Surgical: rs1 = 9 -> 8
+       Original: LW x11, 44(x9)
+       Mutated:  LW x11, 44(x8)
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 19525: preflight=0x3fffc029, actual=0x3fffc028
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Global: memory permutation violated [GLOBAL-ONLY]
+         x8/s0: expected write missing, needed 0x00200300 (cycle 39048)
+         x9/s1: unexpected write 0x00200300 (cycle 39048)
+         0x00203868 (code): wrote 0x02c4a583, expected 0x02c42583 (cycle 11306)
+  [7] ✓ INSTR_WORD_MOD_FULL @ step 3929: 2 failures, 37369ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] G=memory
+       r=0.191  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000073 -> 0x1DD6D7EF
+       Original: ECALL x0, x0, 0
+       Mutated:  JAL x15, 448988
+       Format changed: I -> J
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MachineECall@inst_ecall.zir:28
+           cycle=20879, step=3929, pc=0xC00000F8, major=8, minor=0
+         - MachineECall@inst_ecall.zir:29
+           cycle=20879, step=3929, pc=0xC00000F8, major=8, minor=0
+       Global: memory permutation violated
+         0xC00000F8 (data): wrote 0x00000073, expected 0x1dd6d7ef (cycle 30062)
+  [8] ✓ INSTR_WORD_MOD_SUR @ step 2943: 1 failures, 39606ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory
+       r=0.245  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0x02812C23 -> 0x02812C6F
+       Surgical: opcode = 35 -> 111
+       Original: SW x8, 56(x2)
+       Mutated:  JAL x24, 73768
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=19671, step=2943, pc=0x0020561C, major=6, minor=2
+       Global: memory permutation violated
+         0x00205618 (code): wrote 0x02812c23, expected 0x02812c6f (cycle 16074)
+  [9] ✓ LOAD_VAL_MOD @ step 1489: 2 failures, 37851ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.190  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000005 -> 0x3020F69D
+       Load destination: rd = x13 (a3)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=18133, step=1489, pc=0x002184C0, major=5, minor=3
+         - MemoryWrite@mem.zir:99
+           cycle=18133, step=1489, pc=0x002184C0, major=5, minor=3
+       Global: memory permutation violated
+         x13/a3: wrote 0x3020f69d, expected 0x00000005 (cycle 36267)
+  [10] ✓ INSTR_WORD_MOD_FULL @ step 3177: 0 failures, 37713ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.264  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.61 Q_l=1.00 Q_g=0.61 dl=0 dg=3
+       Value: 0x00008067 -> 0x00008167
+       Original: JALR x0, x1, 0
+       Mutated:  JALR x2, x1, 0
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 19979: preflight=0x3fffc060, actual=0x3fffc022
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Global: memory permutation violated [GLOBAL-ONLY]
+         x2/sp: expected write missing, needed 0x00205850 (cycle 39957)
+         0xFFFF0180 (data): unexpected write 0x00205850 (cycle 39957)
+         0x00205E54 (code): wrote 0x00008067, expected 0x00008167 (cycle 37724)
+  [11] ✓ INSTR_TYPE_MOD @ step 2260: 2 failures, 37871ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory
+       r=0.125  T_new=0.00 F_new=0.95 F_rare=1.00 U=0 Q=0.26 Q_l=0.51 Q_g=0.51 dl=2 dg=4
+       Value: 0x00050002 -> 0x00020001
+       Original: Lw [major=5, minor=2]
+       Mutated:  BltU [major=2, minor=1]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 18914: preflight=0x000884f3, actual=0x3fffc020
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (2 unique):
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=18914, step=2260, pc=0x0020341C, major=2, minor=1
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=18914, step=2260, pc=0x0020341C, major=2, minor=1
+       Global: memory permutation violated
+         x0/zero: expected write missing, needed 0x00000000 (cycle 33349)
+         x15/a5: unexpected write 0x00000000 (cycle 37812)
+         0xFFFF0180 (data): expected write missing, needed 0x00000000 (cycle 37812)
+         0x002213CC (code): unexpected write 0x00000000 (cycle 33349)
+  [12] ✓ INSTR_WORD_MOD_SUR @ step 2879: 0 failures, 37729ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.263  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.61 Q_l=1.00 Q_g=0.61 dl=0 dg=3
+       Value: 0x00400593 -> 0x00400F13
+       Surgical: rd = 11 -> 30
+       Original: ADDI x11, x0, 4
+       Mutated:  ADDI x30, x0, 4
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 19607: preflight=0x3fffc02b, actual=0x3fffc03e
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Global: memory permutation violated [GLOBAL-ONLY]
+         x11/a1: unexpected write 0x0000000c (cycle 39208)
+         x30/t5: expected write missing, needed 0x0000000c (cycle 39208)
+         0x00205378 (code): wrote 0x00400593, expected 0x00400f13 (cycle 15650)
+  [13] ✓ INSTR_WORD_MOD_SUR @ step 1045: 1 failures, 40574ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.189  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.72 Q_g=0.61 dl=1 dg=3
+       Value: 0x00050693 -> 0x2D650693
+       Surgical: imm = 0 -> 726
+       Original: ADDI x13, x10, 0
+       Mutated:  ADDI x13, x10, 726
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 17684: preflight=0x3fffc020, actual=0x3fffc036
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (1 unique):
+         - MemoryWrite@mem.zir:99
+           cycle=17684, step=1045, pc=0x00200B48, major=0, minor=7
+       Global: memory permutation violated
+         x0/zero: unexpected write 0x00000000 (cycle 35354)
+         x22/s6: expected write missing, needed 0x00000000 (cycle 35354)
+         0x00200B44 (code): wrote 0x00050693, expected 0x2d650693 (cycle 5326)
+  [14] ✓ INSTR_TYPE_MOD @ step 388: 4 failures, 37998ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] G=memory
+       r=0.090  T_new=0.00 F_new=0.95 F_rare=1.00 U=0 Q=0.19 Q_l=0.26 Q_g=0.72 dl=4 dg=2
+       Value: 0x00050002 -> 0x00000002
+       Original: Lw [major=5, minor=2]
+       Mutated:  Xor [major=0, minor=2]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 16979: preflight=0x000800d6, actual=0x3fffc028
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (4 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=16979, step=388, pc=0x002031F0, major=0, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=16979, step=388, pc=0x002031F0, major=0, minor=2
+         - VerifyOpcodeF3F7@inst.zir:102
+           cycle=16979, step=388, pc=0x002031F0, major=0, minor=2
+         - VerifyOpcodeF3F7@inst.zir:103
+           cycle=16979, step=388, pc=0x002031F0, major=0, minor=2
+       Global: memory permutation violated
+         0x00200358 (data): unexpected write 0x00000001 (cycle 33829)
+         x8/s0: expected write missing, needed 0x00000001 (cycle 33829)
+  [15] ✓ PRE_EXEC_REG_MOD @ step 0: 9 failures, 38397ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory
+       r=0.188  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000000 -> 0x80000000
+       Register: x26 (s10), READ, strategy=next_read
+       zkVM errors (2 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [kernels/cxx/buffers.h:43] SKIP THROW: Inconsistent set
+       Local constraints hit (2 unique):
+         - IsRead@mem.zir:80
+           cycle=15997, step=0, pc=0x00000000, major=9, minor=2
+         - PoseidonCheckOut@inst_p2.zir:265 (x8)
+           cycle=16247, step=0, pc=0x00000000, major=9, minor=5
+       Global: memory permutation violated
+         x26/s10: wrote 0x80000000, expected 0x00000000 (cycle 31994)
+  [16] ✓ PRE_EXEC_REG_MOD @ step 3229: 2 failures, 38412ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory
+       r=0.188  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000000 -> 0xBFFBE7FB
+       Register: x0 (zero), READ, strategy=next_read
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - IsRead@mem.zir:79
+           cycle=20031, step=3229, pc=0x00205E28, major=2, minor=5
+         - IsRead@mem.zir:80
+           cycle=20031, step=3229, pc=0x00205E28, major=2, minor=5
+       Global: memory permutation violated
+         x0/zero: wrote 0xbffbe7fb, expected 0x00000000 (cycle 40062)
+  [17] ✓ INSTR_WORD_MOD_FULL @ step 493: 0 failures, 38061ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.262  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.61 Q_l=1.00 Q_g=0.61 dl=0 dg=3
+       Value: 0x00003097 -> 0x00003497
+       Original: AUIPC x1, 0x3000
+       Mutated:  AUIPC x9, 0x3000
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 17090: preflight=0x3fffc021, actual=0x3fffc029
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Global: memory permutation violated [GLOBAL-ONLY]
+         x1/ra: unexpected write 0x00200900 (cycle 34162)
+         x9/s1: expected write missing, needed 0x00200900 (cycle 34162)
+         0x002031B0 (code): wrote 0x00003097, expected 0x00003497 (cycle 34012)
+  [18] ✓ MEM_VAL_MOD @ step 1197: 1 failures, 37084ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.186  T_new=0.00 F_new=0.39 F_rare=0.85 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0x00000000 -> 0x01000000
+       Transaction: store_rmw_read (READ) at address 0x00221414
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - IsRead@mem.zir:80
+           cycle=17841, step=1197, pc=0x00209C64, major=6, minor=2
+       Global: memory permutation violated
+         0x00221414 (code): wrote 0x01000000, expected 0x00000000 (cycle 35682)
+  [19] ✓ INSTR_TYPE_MOD @ step 2729: 5 failures, 38545ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory
+       r=0.065  T_new=0.00 F_new=0.97 F_rare=1.00 U=0 Q=0.14 Q_l=0.19 Q_g=0.72 dl=5 dg=2
+       Value: 0x00050002 -> 0x00040002
+       Original: Lw [major=5, minor=2]
+       Mutated:  SrlI [major=4, minor=2]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 19457: preflight=0x000800da, actual=0x3fffc028
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (5 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=19457, step=2729, pc=0x002016B0, major=4, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=19457, step=2729, pc=0x002016B0, major=4, minor=2
+         - VerifyOpcodeF3F7@inst.zir:102
+           cycle=19457, step=2729, pc=0x002016B0, major=4, minor=2
+         - VerifyOpcodeF3F7@inst.zir:103
+           cycle=19457, step=2729, pc=0x002016B0, major=4, minor=2
+         - VerifyOpcodeF3F7@inst.zir:104
+           cycle=19457, step=2729, pc=0x002016B0, major=4, minor=2
+       Global: memory permutation violated
+         0x00200368 (data): unexpected write 0x0f4bd989 (cycle 38837)
+         x8/s0: expected write missing, needed 0x0f4bd989 (cycle 38837)
+  [20] 💥 PRE_EXEC_REG_MOD @ step 1489: 2 failures, 4335ms, outcome: CRASH, exit: -11 [proof:NOT_GENERATED]
+       r=0.000  T_new=0.00 F_new=0.00 F_rare=0.00 U=0 Q=0.00 Q_l=0.00 Q_g=1.00 dl=0 dg=0
+       Value: 0x00200325 -> 0xFFDFFCDA
+       Register: x10 (a0), READ, strategy=next_read
+       Local constraints hit (2 unique):
+         - IsRead@mem.zir:79
+           cycle=18133, step=1489, pc=0x002184C0, major=5, minor=3
+         - IsRead@mem.zir:80
+           cycle=18133, step=1489, pc=0x002184C0, major=5, minor=3
+       Global: no permutation/lookup violations (local-only)
+
+============================================================
+Campaign Summary
+============================================================
+Total mutations:     20
+Successful (caused failures): 19
+Skipped (no valid target):    0
+Total failures:      38
+Unique constraints:  12
+New coverage:        12
+New touch:           1599
+Distinct touched:    1599
+
+Global Constraint Summary:
+  Mutations with global violations: 19
+  Global-only (no local failures):  5
+  Local-only (no global violations):1
+Execution time:      768493ms
+
+Outcome breakdown:
+  REJECTED (mutation detected): 19
+  CRASH (segfault, etc.):       1
+  NO_EFFECT:                    0
+  ACCEPTED (BUG!):              0 
+  SKIPPED:                      0
+
+Mutations by kind:
+  COMP_OUT_MOD: 2
+  INSTR_TYPE_MOD: 3
+  INSTR_WORD_MOD_FULL: 3
+  INSTR_WORD_MOD_SUR: 4
+  LOAD_VAL_MOD: 2
+  MEM_VAL_MOD: 3
+  PRE_EXEC_REG_MOD: 3
+  exit=0 wall_sec=725.5
+check_smoke_db: /root/arguzz/a4/smoke_7a/smoke_kindTS_zoned_v2.db variant=kindTS_zoned_v2 phase=7a
+  mutations=20
+  reward_counterfactuals=20
+  reward_counterfactuals=20
+  mutation_substrategy=20
+  hook3_raw=20
+  bandit_decisions=20
+  arm_state_snapshot=0
+  local_coverage_v2=27
+  compressed_global_coverage=0
+  wall_time_sec=725.5
+  sec_per_mutation=36.3
+  PASS
+
+=== 7a run: cTS_semantic_v2 -> /root/arguzz/a4/smoke_7a/smoke_cTS_semantic_v2.db ===
+A4 Standalone Fuzzer
+============================================================
+Running inspection on /root/arguzz/workspace/output/target/release/risc0-host...
+  Args: --in1 5 --in4 10
+Inspection Data Summary:
+  Total cycles: 32768
+  Total steps: 3930
+  Total transactions: 34724
+    - Register transactions: 8780
+    - Memory transactions: 25944
+  Cycles by major category:
+    MISC0: 1386
+    MISC1: 442
+    MISC2: 664
+    MUL0: 100
+    DIV0: 23
+    MEM0 (load): 680
+    MEM1 (store): 596
+    CONTROL0: 9641
+    ECALL0: 87
+    POSEIDON0: 2486
+    POSEIDON1: 16371
+    SHA0: 292
+
+Starting campaign 1
+  Mutations: 20
+  Kind: all
+  Seed: 999
+
+
+--- V2 BANDIT SETUP (cTS_semantic_v2) ---
+  Baseline: 1599 bitmap buckets
+SemanticArmUniverse:
+  Total steps:        3930
+  Mutation kinds (K): 8
+  Total available arms: 53
+  Boundary arms:      22
+  Singleton arms:     9
+
+  Arms per kind (zone counts):
+    COMP_OUT_MOD                6 zones,  2615 steps total
+    LOAD_VAL_MOD                2 zones,   680 steps total
+    STORE_OUT_MOD               1 zones,   596 steps total
+    PRE_EXEC_REG_MOD            8 zones,  3891 steps total
+    INSTR_TYPE_MOD              8 zones,  3891 steps total
+    MEM_VAL_MOD                10 zones,  3930 steps total
+    INSTR_WORD_MOD_FULL         9 zones,  3906 steps total
+    INSTR_WORD_MOD_SUR          9 zones,  3906 steps total
+
+  Arms per zone (kind counts):
+    step0                  6 kinds,     6 steps (singleton)
+    last_step              3 kinds,     3 steps (singleton)
+    pre_ecall              6 kinds,   150 steps (boundary)
+    post_ecall             7 kinds,   192 steps (boundary)
+    pre_mret               0 kinds,     0 steps (boundary)
+    post_mret              0 kinds,     0 steps (boundary)
+    pre_halt               0 kinds,     0 steps (boundary)
+    post_halt              0 kinds,     0 steps (boundary)
+    core_arithmetic        6 kinds, 14658 steps
+    core_memory_load       6 kinds,  4068 steps
+    core_memory_store      6 kinds,  3576 steps
+    core_branch            1 kinds,    24 steps
+    core_mul               6 kinds,   600 steps
+    core_div               6 kinds,   138 steps
+    core_sha               0 kinds,     0 steps
+    core_poseidon          0 kinds,     0 steps
+    core_other             0 kinds,     0 steps
+--- V2 BANDIT READY (53 arms, budget 20) ---
+
+  [1] ✓ COMP_OUT_MOD @ step 510: 2 failures, 35357ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] [+1599 touch] G=memory
+       r=0.200  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x0020036C -> 0x80000000
+       Destination: rd = x10 (a0)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=17107, step=510, pc=0x00206170, major=0, minor=7
+         - MemoryWrite@mem.zir:99
+           cycle=17107, step=510, pc=0x00206170, major=0, minor=7
+       Global: memory permutation violated
+         x10/a0: wrote 0x80000000, expected 0x0020036c (cycle 34215)
+  [2] ✓ COMP_OUT_MOD @ step 3591: 2 failures, 36235ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.196  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000009 -> 0x7D9510A7
+       Destination: rd = x14 (a4)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=20467, step=3591, pc=0x00205680, major=4, minor=2
+         - MemoryWrite@mem.zir:99
+           cycle=20467, step=3591, pc=0x00205680, major=4, minor=2
+       Global: memory permutation violated
+         x14/a4: wrote 0x7d9510a7, expected 0x00000009 (cycle 40935)
+  [3] ✓ COMP_OUT_MOD @ step 2585: 1 failures, 37874ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.251  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0xBC000000 -> 0xBC010000
+       Destination: rd = x13 (a3)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=19313, step=2585, pc=0x00201550, major=3, minor=1
+       Global: memory permutation violated
+         x13/a3: wrote 0xbc010000, expected 0xbc000000 (cycle 38627)
+  [4] ✓ COMP_OUT_MOD @ step 841: 2 failures, 39713ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.193  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.43 Q_l=0.51 Q_g=0.85 dl=2 dg=1
+       Value: 0x00000004 -> 0x7FDEFD7F
+       Destination: rd = x16 (a6)
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=17468, step=841, pc=0x00206178, major=0, minor=0
+         - MemoryWrite@mem.zir:99
+           cycle=17468, step=841, pc=0x00206178, major=0, minor=0
+       Global: memory permutation violated
+         x16/a6: wrote 0x7fdefd7f, expected 0x00000004 (cycle 34937)
+  [7] ✓ INSTR_TYPE_MOD @ step 3228: 4 failures, 36919ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+3 new] [+37 touch] G=memory
+       r=0.127  T_new=0.65 F_new=0.95 F_rare=1.00 U=0 Q=0.19 Q_l=0.26 Q_g=0.72 dl=4 dg=2
+       Value: 0x00020001 -> 0x00050001
+       Original: BltU [major=2, minor=1]
+       Mutated:  Lh [major=5, minor=1]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 20030: preflight=0x3fffc02b, actual=0x0008857e
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (4 unique):
+         - MemoryWrite@mem.zir:99
+           cycle=20030, step=3228, pc=0x00205E24, major=5, minor=1
+         - OpLH@inst_mem.zir:98
+           cycle=20030, step=3228, pc=0x00205E24, major=5, minor=1
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=20030, step=3228, pc=0x00205E24, major=5, minor=1
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=20030, step=3228, pc=0x00205E24, major=5, minor=1
+       Global: memory permutation violated
+         x11/a1: unexpected write 0x0022156c (cycle 40058)
+         0x002215F8 (code): expected write missing, needed 0x0022156c (cycle 40058)
+  [8] ✓ INSTR_TYPE_MOD @ step 610: 4 failures, 37363ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+3 new] [+48 touch]
+       r=0.177  T_new=0.75 F_new=0.86 F_rare=1.00 U=0 Q=0.26 Q_l=0.26 Q_g=1.00 dl=4 dg=0
+       Value: 0x00040002 -> 0x00040004
+       Original: SrlI [major=4, minor=2]
+       Mutated:  Div [major=4, minor=4]
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (4 unique):
+         - MemoryWrite@mem.zir:99
+           cycle=17219, step=610, pc=0x002061A8, major=4, minor=4
+         - VerifyOpcodeF3F7@inst.zir:102
+           cycle=17219, step=610, pc=0x002061A8, major=4, minor=4
+         - VerifyOpcodeF3F7@inst.zir:103
+           cycle=17219, step=610, pc=0x002061A8, major=4, minor=4
+         - VerifyOpcodeF3F7@inst.zir:104
+           cycle=17219, step=610, pc=0x002061A8, major=4, minor=4
+       Global: no permutation/lookup violations (local-only)
+  [9] ✓ INSTR_TYPE_MOD @ step 3880: 3 failures, 37722ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory
+       r=0.124  T_new=0.00 F_new=0.92 F_rare=1.00 U=0 Q=0.26 Q_l=0.37 Q_g=0.72 dl=3 dg=2
+       Value: 0x00050002 -> 0x00020005
+       Original: Lw [major=5, minor=2]
+       Mutated:  Lui [major=2, minor=5]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 20830: preflight=0x000800bb, actual=0x3fffc03c
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (3 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=20830, step=3880, pc=0x00203BFC, major=2, minor=5
+         - MemoryWrite@mem.zir:99
+           cycle=20830, step=3880, pc=0x00203BFC, major=2, minor=5
+         - VerifyOpcode@inst.zir:91
+           cycle=20830, step=3880, pc=0x00203BFC, major=2, minor=5
+       Global: memory permutation violated
+         0x002002EC (data): unexpected write 0x00219e74 (cycle 38975)
+         x28/t3: expected write missing, needed 0x00219e74 (cycle 38975)
+  [10] ✓ INSTR_TYPE_MOD @ step 2386: 3 failures, 37139ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+2 new] G=memory|cycle
+       r=0.056  T_new=0.00 F_new=0.99 F_rare=1.00 U=0 Q=0.11 Q_l=0.37 Q_g=0.31 dl=3 dg=7
+       Value: 0x00060002 -> 0x00050002
+       Original: Sw [major=6, minor=2]
+       Mutated:  Lw [major=5, minor=2]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 19040: preflight=0x3fffc02b, actual=0x000800cc
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (3 unique):
+         - OpLW@inst_mem.zir:108
+           cycle=19040, step=2386, pc=0x002032E0, major=5, minor=2
+         - OpLW@inst_mem.zir:109
+           cycle=19040, step=2386, pc=0x002032E0, major=5, minor=2
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=19040, step=2386, pc=0x002032E0, major=5, minor=2
+       Global: memory permutation violated
+         0x00200330 (data): expected write missing, needed 0x00000000 (cycle 38078)
+         0x00200340 (data): unexpected write 0x00000000 (cycle 38035)
+         x11/a1: unexpected write 0x00000000 (cycle 38078)
+         x24/s8: expected write missing, needed 0x00000000 (cycle 38035)
+       Global: cycle lookup violated (3 indices broken)
+         index 0: 2254 provides, 1 uses (imbalanced)
+         index 44: 16 provides, 1 uses (imbalanced)
+         index 45: 22 provides, 1 uses (imbalanced)
+  [11] ✓ INSTR_TYPE_MOD @ step 3073: 2 failures, 37742ms, outcome: REJECTED, exit: 101 [proof:GENERATED]
+       r=0.207  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.51 Q_l=0.51 Q_g=1.00 dl=2 dg=0
+       Value: 0x00030002 -> 0x00010002
+       Original: Mul [major=3, minor=2]
+       Mutated:  AndI [major=1, minor=2]
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (2 unique):
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=19801, step=3073, pc=0x00203260, major=1, minor=2
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=19801, step=3073, pc=0x00203260, major=1, minor=2
+       Global: no permutation/lookup violations (local-only)
+  [12] ✓ INSTR_TYPE_MOD @ step 447: 3 failures, 36621ms, outcome: REJECTED, exit: 101 [proof:GENERATED]
+       r=0.160  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.37 Q_l=0.37 Q_g=1.00 dl=3 dg=0
+       Value: 0x00000007 -> 0x00010004
+       Original: AddI [major=0, minor=7]
+       Mutated:  SltIU [major=1, minor=4]
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (3 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=17041, step=447, pc=0xC0000158, major=1, minor=4
+         - MemoryWrite@mem.zir:99
+           cycle=17041, step=447, pc=0xC0000158, major=1, minor=4
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=17041, step=447, pc=0xC0000158, major=1, minor=4
+       Global: no permutation/lookup violations (local-only)
+  [13] ✓ INSTR_TYPE_MOD @ step 682: 7 failures, 36392ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+3 new] [+37 touch] G=memory|cycle
+       r=0.011  T_new=0.65 F_new=1.00 F_rare=1.00 U=0 Q=0.02 Q_l=0.10 Q_g=0.16 dl=7 dg=11
+       Value: 0x00000007 -> 0x00060001
+       Original: AddI [major=0, minor=7]
+       Mutated:  Sh [major=6, minor=1]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 17291: preflight=0x3fffc011, actual=0x3fffc000
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (7 unique):
+         - AddrDecomposeBits@u32.zir:87
+           cycle=17291, step=682, pc=0xC000014C, major=6, minor=1
+         - ECallHostReadSetup@inst_ecall.zir:70
+           cycle=17292, step=682, pc=0xC000014C, major=8, minor=2
+         - MemoryWrite@mem.zir:100
+           cycle=17291, step=682, pc=0xC000014C, major=6, minor=1
+         - MemoryWrite@mem.zir:99
+           cycle=17291, step=682, pc=0xC000014C, major=6, minor=1
+         - OpSH@inst_mem.zir:148
+           cycle=17291, step=682, pc=0xC000014C, major=6, minor=1
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=17291, step=682, pc=0xC000014C, major=6, minor=1
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=17291, step=682, pc=0xC000014C, major=6, minor=1
+       Global: memory permutation violated
+         0x00000000 (data): expected write missing, needed 0x0021a0c8 (cycle 34573)
+         0xC0000150 (data): unexpected write 0x00000513 (cycle 34420)
+         0xC0000154 (data): expected write missing, needed 0x00000513 (cycle 34420)
+         0xC0000158 (data): expected write missing, needed 0x02820593 (cycle 34422)
+         0xC000015C (data): expected write missing, needed 0x00800613 (cycle 34424)
+         0xC0000160 (data): expected write missing, needed 0x00000073 (cycle 34426)
+         0xC0000164 (data): expected write missing, needed 0x30200073 (cycle 34432)
+         0xFFFF0000 (data): expected write missing, needed 0x00000001 (cycle 34571)
+         0xFFFF0044 (data): unexpected write 0x00000001 (cycle 34571)
+       Global: cycle lookup violated (2 indices broken)
+         index 7: 280 provides, 1 uses (imbalanced)
+         index 8: 326 provides, 1 uses (imbalanced)
+  [14] ✓ INSTR_TYPE_MOD @ step 0: 5 failures, 37541ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+3 new] [+38 touch] G=memory|cycle
+       r=0.078  T_new=0.66 F_new=0.98 F_rare=1.00 U=0 Q=0.11 Q_l=0.19 Q_g=0.61 dl=5 dg=3
+       Value: 0x00020006 -> 0x00010003
+       Original: Auipc [major=2, minor=6]
+       Mutated:  SltI [major=1, minor=3]
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 0: preflight=0x44000000, actual=0x00000000
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (5 unique):
+         - AddrDecompose@u32.zir:67
+           cycle=0, step=0, pc=0x00000000, major=1, minor=3
+         - ControlLoadRootAndNonce@inst_control.zir:23
+           cycle=1, step=0, pc=0x00000000, major=7, minor=0
+         - MiscInput@inst_misc.zir:7
+           cycle=0, step=0, pc=0x00000000, major=1, minor=3
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=0, step=0, pc=0x00000000, major=1, minor=3
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=0, step=0, pc=0x00000000, major=1, minor=3
+       Global: memory permutation violated
+         0xFFFF0100 (data): expected write missing, needed 0x00000000 (cycle 0)
+       Global: cycle lookup violated (2 indices broken)
+         index 0: 2256 provides, 1 uses (imbalanced)
+         index 2013265920: orphan provide (2 entries, no matching use)
+  [15] ✓ INSTR_WORD_MOD_FULL @ step 940: 1 failures, 44052ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.188  T_new=0.00 F_new=0.39 F_rare=0.85 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0x800005B7 -> 0xA00005B7
+       Original: LUI x11, 0x80000000
+       Mutated:  LUI x11, 0xa0000000
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - MemoryWrite@mem.zir:100
+           cycle=17573, step=940, pc=0x00200A2C, major=2, minor=5
+       Global: memory permutation violated
+         0x00200A28 (code): wrote 0x800005b7, expected 0xa00005b7 (cycle 5146)
+  [16] ✓ INSTR_WORD_MOD_FULL @ step 921: 0 failures, 39932ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.263  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.61 Q_l=1.00 Q_g=0.61 dl=0 dg=3
+       Value: 0x00255593 -> 0x002D5593
+       Original: SRLI x11, x10, 2
+       Mutated:  SRLI x11, x26, 2
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 17554: preflight=0x3fffc02a, actual=0x3fffc03a
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Global: memory permutation violated [GLOBAL-ONLY]
+         x10/a0: unexpected write 0x00000004 (cycle 35106)
+         x26/s10: expected write missing, needed 0x00000004 (cycle 35106)
+         0x002061A4 (code): wrote 0x00255593, expected 0x002d5593 (cycle 34940)
+  [17] ✓ INSTR_WORD_MOD_FULL @ step 3345: 3 failures, 37764ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory
+       r=0.055  T_new=0.00 F_new=0.98 F_rare=1.00 U=0 Q=0.11 Q_l=0.37 Q_g=0.31 dl=3 dg=7
+       Value: 0x00872883 -> 0xBE951697
+       Original: LW x17, 8(x14)
+       Mutated:  AUIPC x13, 0xbe951000
+       Format changed: I -> U
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 20147: preflight=0x3fffc02e, actual=0x3fffc02a
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Local constraints hit (3 unique):
+         - OpLW@inst_mem.zir:108
+           cycle=20147, step=3345, pc=0x00203424, major=5, minor=2
+         - VerifyOpcodeF3@inst.zir:96
+           cycle=20147, step=3345, pc=0x00203424, major=5, minor=2
+         - VerifyOpcodeF3@inst.zir:97
+           cycle=20147, step=3345, pc=0x00203424, major=5, minor=2
+       Global: memory permutation violated
+         0x001FFE74 (data): expected write missing, needed 0x17e32f5a (cycle 39079)
+         0x00200294 (data): unexpected write 0x17e32f5a (cycle 39079)
+         x10/a0: expected write missing, needed 0x0020028c (cycle 40292)
+         x13/a3: wrote 0x0022158c, expected 0xbce109f9 (cycle 40278)
+         x14/a4: unexpected write 0x0020028c (cycle 40292)
+         x17/a7: unexpected write 0xbce109f9 (cycle 40278)
+         0x00203420 (code): wrote 0x00872883, expected 0xbe951697 (cycle 40270)
+  [18] ✓ INSTR_WORD_MOD_FULL @ step 193: 0 failures, 37055ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.262  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.61 Q_l=1.00 Q_g=0.61 dl=0 dg=3
+       Value: 0x00912A23 -> 0x00112A23
+       Original: SW x9, 20(x2)
+       Mutated:  SW x1, 20(x2)
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 16772: preflight=0x3fffc029, actual=0x3fffc021
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Global: memory permutation violated [GLOBAL-ONLY]
+         x1/ra: expected write missing, needed 0x00000000 (cycle 33272)
+         x9/s1: unexpected write 0x00000000 (cycle 33272)
+         0x0020B88C (code): wrote 0x00912a23, expected 0x00112a23 (cycle 23562)
+  [19] ✓ INSTR_WORD_MOD_FULL @ step 3503: 0 failures, 37799ms, outcome: REJECTED, exit: 101 [proof:GENERATED] G=memory[GO]
+       r=0.262  T_new=0.00 F_new=0.78 F_rare=1.00 U=0 Q=0.61 Q_l=1.00 Q_g=0.61 dl=0 dg=3
+       Value: 0x00349793 -> 0x00349593
+       Original: SLLI x15, x9, 3
+       Mutated:  SLLI x11, x9, 3
+       zkVM errors (3 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+         • [ffi.cpp:113] address mismatch at cycle 20305: preflight=0x3fffc02f, actual=0x3fffc02b
+         • [kernels/cxx/ffi.cpp:208] SKIP THROW: memory peek not in preflight
+       Global: memory permutation violated [GLOBAL-ONLY]
+         x11/a1: expected write missing, needed 0x00000000 (cycle 40428)
+         x15/a5: unexpected write 0x00000000 (cycle 40428)
+         0x002053B0 (code): wrote 0x00349793, expected 0x00349593 (cycle 39304)
+  [20] ✓ INSTR_WORD_MOD_FULL @ step 3929: 1 failures, 38405ms, outcome: REJECTED, exit: 101 [proof:GENERATED] [+1 new] G=memory
+       r=0.241  T_new=0.00 F_new=0.63 F_rare=1.00 U=0 Q=0.61 Q_l=0.72 Q_g=0.85 dl=1 dg=1
+       Value: 0x00000073 -> 0x00000473
+       Original: ECALL x0, x0, 0
+       Mutated:  ECALL x8, x0, 0
+       zkVM errors (1 lines):
+         • [prover_impl.rs:280] verify segment (internal proof verification failed)
+       Local constraints hit (1 unique):
+         - MachineECall@inst_ecall.zir:29
+           cycle=20879, step=3929, pc=0xC00000F8, major=8, minor=0
+       Global: memory permutation violated
+         0xC00000F8 (data): wrote 0x00000073, expected 0x00000473 (cycle 30062)
+
+============================================================
+Campaign Summary
+============================================================
+Total mutations:     18
+Successful (caused failures): 18
+Skipped (no valid target):    2
+Total failures:      43
+Unique constraints:  18
+New coverage:        18
+New touch:           1759
+Distinct touched:    1759
+
+Global Constraint Summary:
+  Mutations with global violations: 15
+  Global-only (no local failures):  3
+  Local-only (no global violations):3
+Execution time:      720241ms
+
+Outcome breakdown:
+  REJECTED (mutation detected): 18
+  CRASH (segfault, etc.):       0
+  NO_EFFECT:                    0
+  ACCEPTED (BUG!):              0 
+  SKIPPED:                      2
+
+Mutations by kind:
+  COMP_OUT_MOD: 4
+  INSTR_TYPE_MOD: 8
+  INSTR_WORD_MOD_FULL: 6
+  exit=0 wall_sec=684.7
+check_smoke_db: /root/arguzz/a4/smoke_7a/smoke_cTS_semantic_v2.db variant=cTS_semantic_v2 phase=7a
+  mutations=18
+  reward_counterfactuals=18
+  reward_counterfactuals=18
+  mutation_substrategy=18
+  hook3_raw=18
+  bandit_decisions=18
+  arm_state_snapshot=0
+  local_coverage_v2=40
+  compressed_global_coverage=0
+  skip_rate=10.0%
+  wall_time_sec=684.7
+  sec_per_mutation=38.0
+  wall_time_ratio=2.00
+  PASS
+
+=== 7a summary ===
+  zoned: 343.1s
+  kindUCB_zoned_v1: 401.2s
+  kindUCB_zoned_v2_noQ: 790.6s
+  kindTS_zoned_v2: 725.5s
+  cTS_semantic_v2: 684.7s
+  V5/V1 wall-time ratio: 2.00
+ALL 7a HARD GATES PASSED
