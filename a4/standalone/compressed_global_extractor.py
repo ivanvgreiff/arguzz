@@ -92,13 +92,17 @@ _GLOBAL_COMPRESSED_SAFETY_CAP = 64
 #
 # Verbatim from `CLOUD1_DECISIONS_FOR_PRO_R2.md` D8. Half-open intervals.
 
+# platform.rs (rv32im execute) — G3 resolved Phase 7 via Opus platform.rs audit.
 _ADDRESS_REGION_MAP: List[Tuple[int, int, str]] = [
-    # (lo_inclusive, hi_exclusive, region_label)
-    (0x00000000, 0x00400000, "image"),
-    (0x10000000, 0x70000000, "heap"),
-    (0x70000000, 0x80000000, "stack"),
-    (0x80000000, 0xC0000000, "user"),
-    (0xC0000000, 0x100000000, "kernel"),
+    (0x00000000, 0x00010000, "zero_page"),
+    (0x00010000, 0xBFFF0000, "user"),
+    (0xBFFF0000, 0xC0000000, "user_bigint"),
+    (0xC0000000, 0xFF000000, "kernel"),
+    (0xFFFF0000, 0xFFFF0080, "machine_regs"),
+    (0xFFFF0080, 0xFFFF0100, "user_regs"),
+    (0xFFFF0100, 0xFFFF1000, "machine_special"),
+    (0xFFFF1000, 0xFFFF2000, "ecall_dispatch"),
+    (0xFFFF2000, 0x100000000, "trap_dispatch_and_beyond"),
 ]
 
 
@@ -202,6 +206,43 @@ def cycle_phase_for_zone(zone: str) -> str:
 # =============================================================================
 
 
+def _coerce_broken_addr(raw_addr: object) -> Optional[int]:
+    """Normalize Hook 3 broken_addrs entry (int or rich dict from host)."""
+    if isinstance(raw_addr, bool):
+        return None
+    if isinstance(raw_addr, int):
+        return raw_addr
+    if isinstance(raw_addr, dict):
+        for key in ("addr", "byte_addr", "address"):
+            if key in raw_addr and raw_addr[key] is not None:
+                try:
+                    return int(raw_addr[key])
+                except (TypeError, ValueError):
+                    return None
+    try:
+        return int(raw_addr)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+
+
+def _coerce_broken_index(raw_idx: object) -> Optional[int]:
+    if isinstance(raw_idx, bool):
+        return None
+    if isinstance(raw_idx, int):
+        return raw_idx
+    if isinstance(raw_idx, dict):
+        for key in ("index", "idx", "lookup_index"):
+            if key in raw_idx and raw_idx[key] is not None:
+                try:
+                    return int(raw_idx[key])
+                except (TypeError, ValueError):
+                    return None
+    try:
+        return int(raw_idx)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+
+
 def extract_compressed_global_contexts(
     family_residues: Optional[List[dict]],
     family_details: Optional[List[dict]],
@@ -256,9 +297,8 @@ def extract_compressed_global_contexts(
 
         if is_memory_family(family):
             for raw_addr in fd.get("broken_addrs", []) or []:
-                try:
-                    addr_int = int(raw_addr)
-                except (TypeError, ValueError):
+                addr_int = _coerce_broken_addr(raw_addr)
+                if addr_int is None:
                     continue
                 out.add(GlobalMemoryCtx(
                     family="memory",
@@ -269,9 +309,8 @@ def extract_compressed_global_contexts(
                 ))
         elif is_lookup_family(family):
             for raw_idx in fd.get("broken_indices", []) or []:
-                try:
-                    idx_int = int(raw_idx)
-                except (TypeError, ValueError):
+                idx_int = _coerce_broken_index(raw_idx)
+                if idx_int is None:
                     continue
                 out.add(GlobalLookupCtx(
                     family=family,

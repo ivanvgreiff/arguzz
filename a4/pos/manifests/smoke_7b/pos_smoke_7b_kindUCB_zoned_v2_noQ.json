@@ -1,0 +1,10 @@
+{
+  "_doc": "Phase 7b variant 3/5.",
+  "name": "pos_smoke_7b",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "kindUCB_zoned_v2_noQ", "seed": 999, "n": 200, "telemetry_level": "full"}
+  ]
+}

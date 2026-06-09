@@ -1,0 +1,10 @@
+{
+  "_doc": "Phase 7b variant 5/5. Source DB for Phase 7c semantic verification.",
+  "name": "pos_smoke_7b",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "cTS_semantic_v2", "seed": 999, "n": 200, "telemetry_level": "full"}
+  ]
+}

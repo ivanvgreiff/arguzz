@@ -14,8 +14,29 @@ from typing import List
 
 import pytest
 
-from a4.core.trace_parser import A4CycleInfo
+from a4.core.trace_parser import A4CycleInfo, A4AllTxn
 from a4.core.inspection_data import InspectionData
+
+_USER_REGS = 1073725472
+
+
+def _reg_txn(
+    step: int,
+    reg_idx: int = 10,
+    word: int = 1,
+    *,
+    is_write: bool = True,
+) -> A4AllTxn:
+    return A4AllTxn(
+        txn_idx=step * 100 + reg_idx,
+        step=step,
+        txn_type="reg",
+        addr=_USER_REGS + reg_idx,
+        cycle=1 if is_write else 0,
+        word=word,
+        prev_cycle=0,
+        prev_word=word if not is_write else 0,
+    )
 from a4.standalone.semantic_arm_universe import SemanticArmUniverse
 from a4.standalone.semantic_zones import (
     SEMANTIC_ZONES, SINGLETON_ZONES, BOUNDARY_ZONES,
@@ -29,8 +50,18 @@ def _make_cycle(step: int, major: int, minor: int = 0) -> A4CycleInfo:
     )
 
 
-def _build_data(cycles: List[A4CycleInfo]) -> InspectionData:
-    return InspectionData(cycles=cycles, all_txns=[], reg_txns=[])
+def _build_data(
+    cycles: List[A4CycleInfo],
+    write_steps: List[int] | None = None,
+    read_steps: List[int] | None = None,
+) -> InspectionData:
+    """Synthetic trace with register txns so target getters see real targets."""
+    txns: List[A4AllTxn] = []
+    for s in write_steps or []:
+        txns.append(_reg_txn(s, is_write=True))
+    for s in read_steps or []:
+        txns.append(_reg_txn(s, reg_idx=5, is_write=False))
+    return InspectionData(cycles=cycles, all_txns=txns, reg_txns=txns)
 
 
 # ---------------------------------------------------------------------------
@@ -51,7 +82,11 @@ def small_data():
         _make_cycle(6, major=0),    # post_ecall (e+1)
         _make_cycle(7, major=0),    # last_step
     ]
-    return _build_data(cycles)
+    return _build_data(
+        cycles,
+        write_steps=[0, 1, 2, 3, 4, 6, 7],
+        read_steps=[0],
+    )
 
 
 # ---------------------------------------------------------------------------

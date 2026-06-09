@@ -109,6 +109,7 @@ class JobSpec:
     seed: int
     n: int
     b_count: int = 16
+    telemetry_level: str | None = None
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "JobSpec":
@@ -117,6 +118,7 @@ class JobSpec:
             seed=int(d["seed"]),
             n=int(d["n"]),
             b_count=int(d.get("b_count", 16)),
+            telemetry_level=d.get("telemetry_level"),
         )
 
 
@@ -169,7 +171,7 @@ def _job_run_id(job: JobSpec, manifest_name: str) -> str:
 def _vars_yaml_for_job(job: JobSpec, manifest_name: str,
                        guest_args: list[str], no_internet: bool) -> dict[str, Any]:
     """The dict that will be YAML-dumped + pushed via pos.allocations.set_variables."""
-    return {
+    out = {
         "A4_STRATEGY":      job.strategy,
         "A4_SEED":          str(job.seed),
         "A4_NUM":           str(job.n),
@@ -179,6 +181,9 @@ def _vars_yaml_for_job(job: JobSpec, manifest_name: str,
         "A4_RUN_ID":        _job_run_id(job, manifest_name),
         "A4_NO_INTERNET":   "1" if no_internet else "0",
     }
+    if job.telemetry_level:
+        out["A4_TELEMETRY_LEVEL"] = job.telemetry_level
+    return out
 
 
 def _make_extract_bundle_script(bundle_basename: str) -> str:

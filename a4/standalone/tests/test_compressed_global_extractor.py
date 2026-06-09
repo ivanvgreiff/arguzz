@@ -39,18 +39,25 @@ from a4.standalone.semantic_zones import SEMANTIC_ZONES, SINGLETON_ZONES
 
 
 @pytest.mark.parametrize("addr, expected", [
-    (0x00000000, "image"),
-    (0x003FFFFF, "image"),
-    (0x00400000, "invalid"),         # gap above image
-    (0x0FFFFFFF, "invalid"),         # gap below heap
-    (0x10000000, "heap"),
-    (0x6FFFFFFF, "heap"),
-    (0x70000000, "stack"),
-    (0x7FFFFFFF, "stack"),
-    (0x80000000, "user"),
-    (0xBFFFFFFF, "user"),
+    (0x00000000, "zero_page"),
+    (0x0000FFFF, "zero_page"),
+    (0x00010000, "user"),
+    (0x00020000, "user"),
+    (0xBFFEFFFF, "user"),
+    (0xBFFFFFFF, "user_bigint"),
     (0xC0000000, "kernel"),
-    (0xFFFFFFFF, "kernel"),
+    (0xFEFFFFFF, "kernel"),
+    (0xFF000000, "invalid"),           # gap before machine_regs
+    (0xFFFF0000, "machine_regs"),
+    (0xFFFF007F, "machine_regs"),
+    (0xFFFF0080, "user_regs"),
+    (0xFFFF00FF, "user_regs"),
+    (0xFFFF0100, "machine_special"),
+    (0xFFFF0FFF, "machine_special"),
+    (0xFFFF1000, "ecall_dispatch"),
+    (0xFFFF1FFF, "ecall_dispatch"),
+    (0xFFFF2000, "trap_dispatch_and_beyond"),
+    (0xFFFFFFFF, "trap_dispatch_and_beyond"),
 ])
 def test_address_region_d8_map(addr, expected):
     assert address_region(addr) == expected
@@ -63,19 +70,24 @@ def test_address_region_invalid_for_negatives_and_oversize():
 
 
 def test_every_region_in_d8_map_is_reachable():
-    """All 7 D8 regions should be at least theoretically reachable
-    (covered by at least one parametrized test). 'unknown' isn't used
-    by the address-based map (D8 reserves it for PC-derived contexts
-    not present here)."""
+    """All platform.rs D8 regions reachable (G3 resolved)."""
     seen = {
         address_region(0x00000000),
-        address_region(0x10000000),
-        address_region(0x70000000),
-        address_region(0x80000000),
+        address_region(0x00020000),
+        address_region(0xBFFFFFFF),
         address_region(0xC0000000),
-        address_region(0x00400000),  # invalid (gap)
+        address_region(0xFFFF0000),
+        address_region(0xFFFF0084),
+        address_region(0xFFFF0100),
+        address_region(0xFFFF1000),
+        address_region(0xFFFF2000),
+        address_region(0xFF000000),  # invalid gap
     }
-    assert seen == {"image", "heap", "stack", "user", "kernel", "invalid"}
+    assert seen == {
+        "zero_page", "user", "user_bigint", "kernel",
+        "machine_regs", "user_regs", "machine_special",
+        "ecall_dispatch", "trap_dispatch_and_beyond", "invalid",
+    }
 
 
 # ============================================================================
@@ -236,17 +248,17 @@ def test_extractor_multiple_regions_produce_multiple_contexts():
     """Addresses in different regions remain distinct."""
     fr = [{"family": "memory", "nonzero": True}]
     fd = [{"family": "memory", "broken_addrs": [
-        0x00000100,    # image
-        0x10000000,    # heap
-        0x80000000,    # user
+        0x00000100,    # zero_page
+        0x00020000,    # user
         0xC0000000,    # kernel
+        0xFFFF0084,    # user_regs
     ]}]
     out = extract_compressed_global_contexts(
         fr, fd, "LOAD_VAL_MOD", "core_memory_load", 5,
     )
     assert len(out) == 4
     regions = {c.address_region for c in out}
-    assert regions == {"image", "heap", "user", "kernel"}
+    assert regions == {"zero_page", "user", "kernel", "user_regs"}
 
 
 def test_extractor_lookup_family_produces_lookup_ctx():
@@ -322,6 +334,18 @@ def test_extractor_handles_malformed_addresses_gracefully():
         fr, fd, "INSTR_TYPE_MOD", "step0", 0,
     )
     assert len(out) == 1                   # only the valid one
+
+
+def test_extractor_accepts_rich_broken_addr_dicts_from_host():
+    """Production Hook 3 emits dict broken_addrs (POS 7b shape)."""
+    fr = [{"family": "memory", "nonzero": True}]
+    fd = [{"family": "memory", "broken_addrs": [
+        {"addr": 1073725482, "byte_addr": 0x20036C, "type": "register"},
+    ]}]
+    out = extract_compressed_global_contexts(
+        fr, fd, "STORE_OUT_MOD", "step0", 6,
+    )
+    assert len(out) == 1
 
 
 # ============================================================================

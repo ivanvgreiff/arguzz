@@ -1,0 +1,10 @@
+{
+  "_doc": "Phase 7 Task 3 — V5 bandit-fix validation (single job, N=200). Requires bundle built from WSL with Bug A+B + D8 fixes.",
+  "name": "pos_smoke_7b_v5_fixed",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "cTS_semantic_v2", "seed": 999, "n": 200, "telemetry_level": "full"}
+  ]
+}

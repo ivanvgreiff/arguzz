@@ -28,9 +28,62 @@ from a4.standalone.semantic_zones import (
     SEMANTIC_ZONES, SINGLETON_ZONES, BOUNDARY_ZONES,
 )
 from a4.standalone.zone_classifier import zone_to_steps
+from a4.standalone.mutations import comp_out_mod, load_val_mod, store_out_mod
+from a4.standalone.mutations import pre_exec_reg_mod, instr_type_mod, mem_val_mod
+from a4.standalone.mutations import instr_word_mod, instr_word_mod_sur
 
 if TYPE_CHECKING:
     from a4.core.inspection_data import InspectionData
+
+_MUTATION_MODULES = {
+    "COMP_OUT_MOD": comp_out_mod,
+    "LOAD_VAL_MOD": load_val_mod,
+    "STORE_OUT_MOD": store_out_mod,
+    "PRE_EXEC_REG_MOD": pre_exec_reg_mod,
+    "INSTR_TYPE_MOD": instr_type_mod,
+    "MEM_VAL_MOD": mem_val_mod,
+    "INSTR_WORD_MOD_FULL": instr_word_mod,
+    "INSTR_WORD_MOD_SUR": instr_word_mod_sur,
+}
+
+# Arms that were phantom in Phase 7 §1.4.2 (coarse filter only, zero real targets).
+# MEM_VAL_MOD|core_div excluded: step 3921 has a real target on production trace.
+_PHANTOM_ARMS_PRODUCTION_TRACE = frozenset({
+    ("COMP_OUT_MOD", "pre_ecall"),
+    ("COMP_OUT_MOD", "step0"),
+    ("INSTR_WORD_MOD_FULL", "step0"),
+    ("INSTR_WORD_MOD_SUR", "step0"),
+    ("PRE_EXEC_REG_MOD", "pre_ecall"),
+})
+
+
+def _step_has_real_target(kind: str, step: int, data: "InspectionData") -> bool:
+    mod = _MUTATION_MODULES.get(kind)
+    if mod is None:
+        return True
+    try:
+        if kind == "PRE_EXEC_REG_MOD":
+            t = mod.get_targets_at_step(step, data, strategy="next_read")
+        else:
+            t = mod.get_targets_at_step(step, data)
+    except Exception:
+        return False
+    if isinstance(t, list):
+        return bool(t)
+    return t is not None
+
+
+def _filter_real_target_steps(
+    kind: str,
+    zone_steps: List[int],
+    data: "InspectionData",
+) -> List[int]:
+    """Keep only steps where the mutation module's getter succeeds."""
+    if not zone_steps:
+        return []
+    return sorted(
+        s for s in zone_steps if _step_has_real_target(kind, s, data)
+    )
 
 
 # An arm key is the pair `(mutation_kind, semantic_zone)`. We use string
@@ -70,8 +123,14 @@ class SemanticArmUniverse:
             valid_set = set(valid_by_kind[kind])
             for zone in SEMANTIC_ZONES:
                 zone_steps_in_kind = sorted(valid_set & set(z2s.get(zone, [])))
-                if zone_steps_in_kind:
-                    arms[(kind, zone)] = zone_steps_in_kind
+                if not zone_steps_in_kind:
+                    continue
+                real_steps = _filter_real_target_steps(
+                    kind, zone_steps_in_kind, data,
+                )
+                if not real_steps:
+                    continue
+                arms[(kind, zone)] = real_steps
 
         return cls(
             mutation_kinds=list(mutation_kinds),

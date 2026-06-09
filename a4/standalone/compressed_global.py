@@ -36,7 +36,17 @@ from typing import Union
 # Pro Round 2 reviewers to see what we actually emit).
 
 ADDRESS_REGIONS = (
-    "user", "kernel", "image", "stack", "heap", "invalid", "unknown",
+    "zero_page",
+    "user",
+    "user_bigint",
+    "kernel",
+    "machine_regs",
+    "user_regs",
+    "machine_special",
+    "ecall_dispatch",
+    "trap_dispatch_and_beyond",
+    "invalid",
+    "unknown",
 )
 
 MEMORY_TXN_ROLES = (

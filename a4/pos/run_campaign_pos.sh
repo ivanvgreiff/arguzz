@@ -87,6 +87,7 @@ A4_B_COUNT=$(pos_get_variable A4_B_COUNT 2>/dev/null || echo "16")
 A4_HOST_ARGS=$(pos_get_variable A4_HOST_ARGS 2>/dev/null || echo "--in1 5 --in4 10")
 A4_RUN_ID=$(pos_get_variable A4_RUN_ID 2>/dev/null || echo "${A4_STRATEGY}_seed${A4_SEED}_n${A4_NUM}_$(date +%s)")
 A4_NO_INTERNET=$(pos_get_variable A4_NO_INTERNET 2>/dev/null || echo "0")
+A4_TELEMETRY_LEVEL=$(pos_get_variable A4_TELEMETRY_LEVEL 2>/dev/null || echo "")
 A4_NODE=$(pos_get_variable hostname 2>/dev/null || hostname)
 
 # ----- 2. workdir + result paths (all ABSOLUTE) -------------------------
@@ -203,6 +204,9 @@ declare -a CMD=(
 )
 if [[ "$SELECTOR" = "bandit" ]]; then
     CMD+=(--b-count "$A4_B_COUNT")
+fi
+if [[ -n "$A4_TELEMETRY_LEVEL" ]]; then
+    CMD+=(--telemetry-level "$A4_TELEMETRY_LEVEL")
 fi
 CMD+=(--)
 # Word-split A4_HOST_ARGS into individual args after --

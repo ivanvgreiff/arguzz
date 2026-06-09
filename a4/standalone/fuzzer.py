@@ -844,6 +844,10 @@ class A4Fuzzer:
             step = self.selector.select_step(self.data, kind)
             if step is None:
                 stats.skipped_mutations += 1
+                if self.selector_strategy in ("kindUCB_zoned_v1", "kindUCB_zoned_v2_noQ"):
+                    self.v2_scheduler.update(kind, 0.0)
+                elif self.selector_strategy == "kindTS_zoned_v2":
+                    self.v2_scheduler.update(kind, 0)
                 return None
 
         config = None
@@ -869,6 +873,12 @@ class A4Fuzzer:
 
         if config is None:
             stats.skipped_mutations += 1
+            if self.selector_strategy == "cTS_semantic_v2" and zone is not None:
+                self.v2_scheduler.update(kind, zone, 0)
+            elif self.selector_strategy in ("kindUCB_zoned_v1", "kindUCB_zoned_v2_noQ"):
+                self.v2_scheduler.update(kind, 0.0)
+            elif self.selector_strategy == "kindTS_zoned_v2":
+                self.v2_scheduler.update(kind, 0)
             return None
 
         start_time = time.perf_counter()

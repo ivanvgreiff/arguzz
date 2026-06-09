@@ -2,12 +2,14 @@
 """
 Phase 7c — mutation-semantic verification (G2).
 
-Stratified sample from V5 smoke DB, re-execute each mutation, assert
-kind-specific properties per PHASE_7_SMOKE_TESTS.md §7c.
+Stratified sample from V5 smoke DB; for each row run host with ONLY
+A4_MUTATION_CONFIG (no A4_INSPECT) and assert the mutation hook's own
+<a4_<kind>_mod> stdout line matches the DB record.
 
-Run after 7b completes:
+Spec: a4/docs/cloud1/phases/PHASE_7_INVESTIGATION_REPORT.md §2.6
+
   python a4/tools/verify_mutation_semantics.py \\
-    --db a4/smoke_7b/smoke_cTS_semantic_v2.db \\
+    --db a4/runs/pos_smoke_7b/.../pos_smoke_7b_cTS_semantic_v2_seed999_n200.db \\
     --host workspace/output/target/release/risc0-host \\
     --output a4/docs/cloud1/composer/PHASE_7C_SEMANTIC_RESULTS.json
 """
@@ -16,20 +18,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import sqlite3
+import subprocess
 import sys
 import tempfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-
-import os
-import subprocess
-
-from a4.core.inspection_data import InspectionData
-from a4.core.trace_parser import parse_all_a4_cycles, parse_all_all_txns
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 KINDS = [
     "COMP_OUT_MOD",
@@ -42,6 +43,19 @@ KINDS = [
     "INSTR_WORD_MOD_SUR",
 ]
 
+KIND_TO_TAG: Dict[str, str] = {
+    "COMP_OUT_MOD": "a4_comp_out_mod",
+    "LOAD_VAL_MOD": "a4_load_val_mod",
+    "STORE_OUT_MOD": "a4_store_out_mod",
+    "PRE_EXEC_REG_MOD": "a4_pre_exec_reg_mod",
+    "INSTR_TYPE_MOD": "a4_instr_type_mod",
+    "MEM_VAL_MOD": "a4_mem_val_mod",
+    "INSTR_WORD_MOD_FULL": "a4_instr_word_mod",
+    "INSTR_WORD_MOD_SUR": "a4_instr_word_mod",
+}
+
+_MOD_RE = re.compile(r"<(\w+)>({.*?})</\1>")
+
 
 @dataclass
 class SampleRow:
@@ -53,6 +67,8 @@ class SampleRow:
     config: Dict[str, Any]
     passed: bool
     detail: str
+    hook_tag: Optional[str] = None
+    hook_payload: Optional[Dict[str, Any]] = None
 
 
 def sample_mutations(db_path: Path, per_kind: int = 3) -> List[dict]:
@@ -70,118 +86,186 @@ def sample_mutations(db_path: Path, per_kind: int = 3) -> List[dict]:
         ).fetchall()
         for r in rows:
             cfg = json.loads(r["config_json"])
-            orig = cfg.get("word", cfg.get("original_value", 0))
-            if "_info" in cfg and "original_value" in cfg["_info"]:
-                orig = cfg["_info"]["original_value"]
             samples.append({
                 "mutation_id": r["id"],
                 "kind": r["kind"],
                 "step": r["step"],
-                "mutated_value": r["mutated_value"],
-                "original_value": int(orig) if orig is not None else 0,
+                "mutated_value": int(r["mutated_value"]),
+                "original_value": _original_from_config(cfg, r["kind"]),
                 "config": cfg,
             })
     conn.close()
     return samples
 
 
-def assert_kind_property(
+def _original_from_config(cfg: Dict[str, Any], kind: str) -> int:
+    """Best-effort original; word kinds often have no DB original (only new in config)."""
+    info = cfg.get("_info") or {}
+    if kind == "INSTR_TYPE_MOD":
+        om = info.get("original_major")
+        on = info.get("original_minor")
+        if om is not None and on is not None:
+            return (int(om) << 16) | int(on)
+    if "original_value" in info:
+        return int(info["original_value"])
+    if "original_word" in info:
+        return int(info["original_word"])
+    return 0
+
+
+def parse_hook_mod(output: str, tag: str) -> Optional[Dict[str, Any]]:
+    """Return the last JSON payload for <tag>...</tag> in host output."""
+    needle = f"<{tag}>"
+    last: Optional[Dict[str, Any]] = None
+    for line in output.splitlines():
+        if needle not in line:
+            continue
+        for m in _MOD_RE.finditer(line):
+            if m.group(1) != tag:
+                continue
+            try:
+                last = json.loads(m.group(2))
+            except json.JSONDecodeError:
+                continue
+    return last
+
+
+def run_mutation_hook(
+    host: str,
+    host_args: List[str],
+    config_path: Path,
+) -> str:
+    """Run host with mutation config only (no inspect dump)."""
+    env = os.environ.copy()
+    env["A4_MUTATION_CONFIG"] = str(config_path)
+    env["CONSTRAINT_CONTINUE"] = "1"
+    env.pop("A4_INSPECT", None)
+    env.pop("A4_DUMP_ALL_TXNS", None)
+    result = subprocess.run(
+        [host] + host_args,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    return result.stdout + result.stderr
+
+
+def _u32(v: Any) -> int:
+    return int(v) & 0xFFFFFFFF
+
+
+def _int_field(v: Any) -> int:
+    """Parse int or hex string (0x...) from config / hook fields."""
+    if isinstance(v, str):
+        return int(v, 0)
+    return int(v)
+
+
+def assert_hook_matches_db(
     kind: str,
-    baseline: InspectionData,
-    mutated: InspectionData,
+    hook: Dict[str, Any],
     step: int,
     original_value: int,
     mutated_value: int,
     config: Dict[str, Any],
-) -> tuple[bool, str]:
-    """Return (passed, detail) for one sample."""
-    base_cycle = baseline.get_cycle(step)
-    mut_cycle = mutated.get_cycle(step)
+) -> Tuple[bool, str]:
+    if int(hook.get("step", -1)) != step:
+        return False, f"hook step {hook.get('step')} != db step {step}"
 
-    if kind in ("INSTR_WORD_MOD_SUR", "INSTR_WORD_MOD_FULL"):
-        if mut_cycle is None:
-            return False, f"no cycle at step {step} after mutation"
-        if (mut_cycle.word & 0xFFFFFFFF) != (mutated_value & 0xFFFFFFFF):
-            return False, f"word mismatch: got {mut_cycle.word:#x}, want {mutated_value:#x}"
-        if base_cycle and (base_cycle.word & 0xFFFFFFFF) != (original_value & 0xFFFFFFFF):
-            return False, f"baseline word {base_cycle.word:#x} != original {original_value:#x}"
-        return True, f"word={mut_cycle.word:#x}"
+    cfg_txn = config.get("txn_idx")
+    if cfg_txn is not None and "txn_idx" in hook:
+        if int(hook["txn_idx"]) != int(cfg_txn):
+            return False, f"hook txn_idx {hook['txn_idx']} != config {cfg_txn}"
 
     if kind == "INSTR_TYPE_MOD":
-        if mut_cycle is None:
-            return False, f"no cycle at step {step}"
-        if mut_cycle.kind != mutated_value:
-            return False, f"kind {mut_cycle.kind} != mutated {mutated_value}"
-        return True, f"kind={mut_cycle.kind}"
+        exp_new_m = int(config["major"])
+        exp_new_n = int(config["minor"])
+        old_m, old_n = int(hook["old_major"]), int(hook["old_minor"])
+        new_m, new_n = int(hook["new_major"]), int(hook["new_minor"])
+        if new_m != exp_new_m or new_n != exp_new_n:
+            return False, (
+                f"new_major/minor {new_m}/{new_n} != config {exp_new_m}/{exp_new_n}"
+            )
+        if old_m == new_m and old_n == new_n:
+            return False, f"hook reports no type change at step {step}"
+        # Multi-cycle steps: hook may mutate first matching cycle, not universe pick.
+        return True, (
+            f"old={old_m}/{old_n} new={new_m}/{new_n} "
+            "(old cycle may differ from config _info at multi-cycle steps)"
+        )
 
-    if kind == "COMP_OUT_MOD":
-        if mut_cycle is None:
-            return False, "no cycle"
-        # COMP_OUT uses register write txn; compare cycle-associated output if exposed
-        if hasattr(mut_cycle, "word") and (mut_cycle.word & 0xFFFFFFFF) == (mutated_value & 0xFFFFFFFF):
-            return True, f"cycle word={mut_cycle.word:#x}"
-        return True, "cycle present (value check deferred to txn hook)"
+    if kind in ("INSTR_WORD_MOD_FULL", "INSTR_WORD_MOD_SUR", "COMP_OUT_MOD",
+                "LOAD_VAL_MOD", "STORE_OUT_MOD", "PRE_EXEC_REG_MOD", "MEM_VAL_MOD"):
+        exp_new = _u32(config.get("word", mutated_value))
+        if "old_word" not in hook or "new_word" not in hook:
+            return False, "hook missing old_word/new_word"
+        if _u32(hook["new_word"]) != exp_new:
+            return False, f"new_word {hook['new_word']:#x} != expected {exp_new:#x}"
+        if original_value and _u32(hook["old_word"]) != _u32(original_value):
+            return False, (
+                f"old_word {hook['old_word']:#x} != expected {original_value:#x}"
+            )
 
-    if kind in ("LOAD_VAL_MOD", "STORE_OUT_MOD", "MEM_VAL_MOD"):
-        mem_txns = mutated.get_mem_txns_at_step(step)
-        if not mem_txns:
-            return False, f"no memory txns at step {step}"
-        for txn in mem_txns:
-            if (txn.word & 0xFFFFFFFF) == (mutated_value & 0xFFFFFFFF):
-                return True, f"mem txn word={txn.word:#x}"
-        return False, f"no mem txn with word={mutated_value:#x}"
+        if kind == "LOAD_VAL_MOD":
+            reg_idx = (config.get("_info") or {}).get("register_idx")
+            if reg_idx is not None and "addr" in hook:
+                exp_addr = 1073725472 + int(reg_idx)  # USER_REGS_BASE + idx
+                if int(hook["addr"]) != exp_addr:
+                    return False, f"addr {hook['addr']} != reg file addr {exp_addr}"
 
-    if kind == "PRE_EXEC_REG_MOD":
-        reg_idx = config.get("_info", {}).get("register_idx")
-        if reg_idx is None:
-            return False, "missing register_idx in config"
-        return True, f"register_idx={reg_idx} (reg file check via host trace)"
+        if kind == "STORE_OUT_MOD":
+            info = config.get("_info") or {}
+            byte_addr = info.get("byte_addr") or info.get("memory_byte_addr")
+            if byte_addr is not None and "addr" in hook:
+                exp_word_addr = _int_field(byte_addr) // 4
+                if int(hook["addr"]) != exp_word_addr:
+                    return False, (
+                        f"addr {hook['addr']} != byte_addr//4 {exp_word_addr}"
+                    )
+
+        if kind == "MEM_VAL_MOD":
+            info = config.get("_info") or {}
+            byte_addr = info.get("byte_addr")
+            if byte_addr is not None and "byte_addr" in hook:
+                if int(hook["byte_addr"]) != _int_field(byte_addr):
+                    return False, (
+                        f"byte_addr {hook['byte_addr']} != config {byte_addr}"
+                    )
+
+        if kind == "PRE_EXEC_REG_MOD":
+            reg_idx = (config.get("_info") or {}).get("register_idx")
+            if reg_idx is not None and "addr" in hook:
+                exp_addr = 1073725472 + int(reg_idx)
+                if int(hook["addr"]) != exp_addr:
+                    return False, f"addr {hook['addr']} != reg {exp_addr}"
+
+        old_w = _u32(hook["old_word"])
+        return True, f"old_word={old_w:#x} new_word={exp_new:#x}"
 
     return False, f"unsupported kind {kind}"
 
 
-def inspection_with_mutation(
-    host: str,
-    host_args: List[str],
-    config_path: Path,
-) -> InspectionData:
-    """Inspect guest trace while A4_MUTATION_CONFIG is active."""
-    env = os.environ.copy()
-    env["A4_INSPECT"] = "1"
-    env["A4_DUMP_ALL_TXNS"] = "1"
-    env["A4_MUTATION_CONFIG"] = str(config_path)
-    result = subprocess.run(
-        [host] + host_args, capture_output=True, text=True, env=env,
-    )
-    output = result.stdout + result.stderr
-    return InspectionData(
-        cycles=parse_all_a4_cycles(output),
-        all_txns=parse_all_all_txns(output),
-        host_binary=host,
-        host_args=host_args,
-    )
-
-
-def verify_sample(
-    host: str,
-    host_args: List[str],
-    sample: dict,
-) -> SampleRow:
-    baseline = InspectionData.from_inspection(host, host_args)
+def verify_sample(host: str, host_args: List[str], sample: dict) -> SampleRow:
+    tag = KIND_TO_TAG[sample["kind"]]
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(sample["config"], f)
         cfg_path = Path(f.name)
+    hook: Optional[Dict[str, Any]] = None
+    ok, detail = False, "not run"
     try:
-        mutated = inspection_with_mutation(host, host_args, cfg_path)
-        ok, detail = assert_kind_property(
-            sample["kind"],
-            baseline,
-            mutated,
-            sample["step"],
-            sample["original_value"],
-            sample["mutated_value"],
-            sample["config"],
-        )
+        output = run_mutation_hook(host, host_args, cfg_path)
+        hook = parse_hook_mod(output, tag)
+        if hook is None:
+            ok, detail = False, f"no <{tag}> line in host output"
+        else:
+            ok, detail = assert_hook_matches_db(
+                sample["kind"],
+                hook,
+                sample["step"],
+                sample["original_value"],
+                sample["mutated_value"],
+                sample["config"],
+            )
     finally:
         cfg_path.unlink(missing_ok=True)
 
@@ -194,11 +278,13 @@ def verify_sample(
         config=sample["config"],
         passed=ok,
         detail=detail,
+        hook_tag=tag,
+        hook_payload=hook,
     )
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Phase 7c semantic verification")
+    parser = argparse.ArgumentParser(description="Phase 7c semantic verification (G2)")
     parser.add_argument("--db", required=True)
     parser.add_argument("--host", required=True)
     parser.add_argument("--output", required=True)
@@ -209,7 +295,19 @@ def main() -> int:
     samples = sample_mutations(Path(args.db), args.per_kind)
     results: List[SampleRow] = []
     for s in samples:
-        row = verify_sample(args.host, args.host_args, s)
+        try:
+            row = verify_sample(args.host, args.host_args, s)
+        except Exception as exc:
+            row = SampleRow(
+                mutation_id=s["mutation_id"],
+                kind=s["kind"],
+                step=s["step"],
+                original_value=s["original_value"],
+                mutated_value=s["mutated_value"],
+                config=s["config"],
+                passed=False,
+                detail=f"exception: {exc}",
+            )
         results.append(row)
         status = "PASS" if row.passed else "FAIL"
         print(f"[{status}] id={row.mutation_id} {row.kind} step={row.step}: {row.detail}")

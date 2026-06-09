@@ -9,8 +9,12 @@
 #          ./bundles/a4_campaign_<git-short>.bundle.json   (manifest)
 #
 # Pre-conditions:
-#   - workspace/output/target/release/risc0-host exists
+#   - risc0-host exists (default: workspace/output/target/release/risc0-host)
 #   - its sha256 matches ~/arguzz_backups/risc0-host.FIXED.sha256
+#
+# If the default path is missing, locate your binary and pass --host:
+#   find workspace -name risc0-host -type f
+#   bash a4/pos/prepare_bundle.sh --host workspace/output/target/release/risc0-host --allow-dirty
 #   - git working tree is clean (warn if not; pivot §10.2 step 1)
 #
 # Usage:
@@ -63,7 +67,20 @@ fi
 
 # ----- 2. binary verification --------------------------------------------
 if [[ ! -x "$HOST_BINARY" ]]; then
+    for candidate in \
+        workspace/output/target/release/risc0-host \
+        workspace/risc0-modified/target/release/risc0-host; do
+        if [[ -x "$candidate" ]]; then
+            echo "[prepare_bundle] using discovered host: $candidate"
+            HOST_BINARY="$candidate"
+            break
+        fi
+    done
+fi
+if [[ ! -x "$HOST_BINARY" ]]; then
     echo "ERROR: host binary not found or not executable: $HOST_BINARY" >&2
+    echo "  Run: find workspace -name risc0-host -type f" >&2
+    echo "  Then: bash a4/pos/prepare_bundle.sh --host <path> --allow-dirty" >&2
     exit 1
 fi
 HOST_SHA=$(sha256sum "$HOST_BINARY" | awk '{print $1}')
