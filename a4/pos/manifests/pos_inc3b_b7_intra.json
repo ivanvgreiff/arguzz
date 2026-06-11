@@ -1,0 +1,12 @@
+{
+  "_doc": "Inc 3b B7 Phase γ §B.2 — same-node paired zoned runs on flare and octorand (seed=999 n=50).",
+  "name": "pos_inc3b_b7_intra",
+  "image": "debian-trixie",
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "zoned", "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "flareA"},
+    {"strategy": "zoned", "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "flareB"},
+    {"strategy": "zoned", "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "octoA"},
+    {"strategy": "zoned", "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "octoB"}
+  ]
+}

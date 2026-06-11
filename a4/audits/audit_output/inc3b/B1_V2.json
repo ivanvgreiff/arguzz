@@ -1,0 +1,47 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    },
+    "audit": "B1_hook_fidelity",
+    "timestamp": "2026-06-11T18:51:29.135980+00:00",
+    "seed": 999,
+    "n_per_variant": 200,
+    "verifier": "a4/tools/verify_mutation_semantics.py (strict P1)"
+  },
+  "per_variant": {
+    "V2": {
+      "total": 200,
+      "pass": 200,
+      "fail": 0,
+      "stratification": {
+        "LOAD_VAL_MOD": 16,
+        "INSTR_WORD_MOD_SUR": 89,
+        "MEM_VAL_MOD": 18,
+        "INSTR_WORD_MOD_FULL": 23,
+        "INSTR_TYPE_MOD": 8,
+        "STORE_OUT_MOD": 16,
+        "COMP_OUT_MOD": 21,
+        "PRE_EXEC_REG_MOD": 9
+      },
+      "multicycle_flags": 0,
+      "failures": [],
+      "selector": "kindUCB_zoned_v1",
+      "db": "/root/b1_verify/pos_audit_b1_kindUCB_zoned_v1_seed999_n200.db",
+      "verdict": "PASS"
+    }
+  },
+  "prevalidate": null,
+  "verdict": "PASS",
+  "totals": {
+    "pass": 200,
+    "mutations": 200
+  }
+}

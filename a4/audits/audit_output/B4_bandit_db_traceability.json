@@ -11,7 +11,7 @@
       "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
     },
     "audit": "B4_bandit_db_traceability",
-    "timestamp": "2026-06-11T00:20:08.646107+00:00",
+    "timestamp": "2026-06-11T04:07:36.342440+00:00",
     "seed": 999,
     "n_per_variant": 50
   },
@@ -24,8 +24,8 @@
         "bandit_zone_always_none": true
       },
       "disagreements": [],
-      "db": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b4_V1_seed999_n50.db",
-      "trace": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b4_V1_trace.jsonl",
+      "db": "a4/audits/audit_output/inc3_b4/pos_audit_b4_zoned_seed999_n50.db",
+      "trace": "a4/audits/audit_output/inc3_b4/pos_audit_b4_zoned_seed999_n50.bandit_trace.jsonl",
       "verdict": "PASS"
     },
     "V2": {
@@ -36,8 +36,8 @@
         "bandit_zone_always_none": true
       },
       "disagreements": [],
-      "db": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b4_V2_seed999_n50.db",
-      "trace": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b4_V2_trace.jsonl",
+      "db": "a4/audits/audit_output/inc3_b4/pos_audit_b4_kindUCB_zoned_v1_seed999_n50.db",
+      "trace": "a4/audits/audit_output/inc3_b4/pos_audit_b4_kindUCB_zoned_v1_seed999_n50.bandit_trace.jsonl",
       "verdict": "PASS"
     },
     "V3": {
@@ -48,8 +48,8 @@
         "bandit_zone_always_none": true
       },
       "disagreements": [],
-      "db": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b4_V3_seed999_n50.db",
-      "trace": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b4_V3_trace.jsonl",
+      "db": "a4/audits/audit_output/inc3_b4/pos_audit_b4_kindUCB_zoned_v2_noQ_seed999_n50.db",
+      "trace": "a4/audits/audit_output/inc3_b4/pos_audit_b4_kindUCB_zoned_v2_noQ_seed999_n50.bandit_trace.jsonl",
       "verdict": "PASS"
     },
     "V4": {
@@ -60,8 +60,8 @@
         "bandit_zone_always_none": true
       },
       "disagreements": [],
-      "db": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b4_V4_seed999_n50.db",
-      "trace": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b4_V4_trace.jsonl",
+      "db": "a4/audits/audit_output/inc3_b4/pos_audit_b4_kindTS_zoned_v2_seed999_n50.db",
+      "trace": "a4/audits/audit_output/inc3_b4/pos_audit_b4_kindTS_zoned_v2_seed999_n50.bandit_trace.jsonl",
       "verdict": "PASS"
     },
     "V5": {
@@ -73,8 +73,8 @@
         "bandit_zone_never_none": true
       },
       "disagreements": [],
-      "db": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b4_V5_seed999_n50.db",
-      "trace": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b4_V5_trace.jsonl",
+      "db": "a4/audits/audit_output/inc3_b4/pos_audit_b4_cTS_semantic_v2_seed999_n50.db",
+      "trace": "a4/audits/audit_output/inc3_b4/pos_audit_b4_cTS_semantic_v2_seed999_n50.bandit_trace.jsonl",
       "verdict": "PASS"
     }
   },

@@ -1,0 +1,19 @@
+Inspection Data Summary:
+  Total cycles: 32768
+  Total steps: 2950
+  Total transactions: 29468
+    - Register transactions: 6686
+    - Memory transactions: 22782
+  Cycles by major category:
+    MISC0: 984
+    MISC1: 369
+    MISC2: 460
+    MUL0: 60
+    DIV0: 16
+    MEM0 (load): 549
+    MEM1 (store): 493
+    CONTROL0: 12001
+    ECALL0: 27
+    POSEIDON0: 2334
+    POSEIDON1: 15183
+    SHA0: 292

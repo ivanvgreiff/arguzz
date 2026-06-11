@@ -36,6 +36,7 @@ set -euo pipefail
 OUTPUT_DIR="bundles"
 INCLUDE_WHEELS=0
 ALLOW_DIRTY=0
+SKIP_HOST_SHA=0
 HOST_BINARY="workspace/output/target/release/risc0-host"
 EXPECTED_SHA_FILE="$HOME/arguzz_backups/risc0-host.FIXED.sha256"
 
@@ -45,6 +46,7 @@ while [[ $# -gt 0 ]]; do
         --output-dir)   OUTPUT_DIR="$2"; shift 2 ;;
         --include-wheels) INCLUDE_WHEELS=1; shift ;;
         --allow-dirty)  ALLOW_DIRTY=1; shift ;;
+        --skip-host-sha) SKIP_HOST_SHA=1; shift ;;
         --host)         HOST_BINARY="$2"; shift 2 ;;
         -h|--help)
             sed -n '2,30p' "$0"; exit 0 ;;
@@ -84,12 +86,15 @@ if [[ ! -x "$HOST_BINARY" ]]; then
     exit 1
 fi
 HOST_SHA=$(sha256sum "$HOST_BINARY" | awk '{print $1}')
-if [[ -f "$EXPECTED_SHA_FILE" ]]; then
+if [[ $SKIP_HOST_SHA -eq 1 ]]; then
+    echo "[prepare_bundle] host sha256 (unpinned): $HOST_SHA"
+elif [[ -f "$EXPECTED_SHA_FILE" ]]; then
     EXPECTED_SHA=$(awk '{print $1}' "$EXPECTED_SHA_FILE")
     if [[ "$HOST_SHA" != "$EXPECTED_SHA" ]]; then
         echo "ERROR: host binary sha256 mismatch." >&2
         echo "  expected ($EXPECTED_SHA_FILE): $EXPECTED_SHA" >&2
         echo "  actual ($HOST_BINARY):         $HOST_SHA" >&2
+        echo "  Use --skip-host-sha for post-fix Opus host (Inc 3b)." >&2
         exit 1
     fi
     echo "[prepare_bundle] host sha256 verified: $HOST_SHA"

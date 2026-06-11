@@ -6,10 +6,17 @@ These are the core execution primitives shared by all A4 strategies.
 """
 
 import os
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+_A4_VERBOSE_RE = re.compile(
+    r"<a4_touch_verbose>\[.*?\]</a4_touch_verbose>|"
+    r"<a4_accum_touch_verbose>\[.*?\]</a4_accum_touch_verbose>",
+    re.DOTALL,
+)
 
 from a4.core.trace_parser import (
     A4CycleInfo, A4StepTxns, A4Txn,
@@ -208,6 +215,16 @@ def run_a4_mutation(
     touch_bitmap = parse_touch_bitmap(combined)
     family_residues = parse_family_residues(combined)
     family_details = parse_family_detail(combined)
+
+    # Phase 7d Inc 3c (Phase delta): when A4_COVERAGE_TOUCH_VERBOSE=1, host emits
+    # <a4_touch_verbose>[...]</a4_touch_verbose> (and the accum variant) to its
+    # stdout. capture_output=True buffers those into `combined` and the rest of
+    # the fuzzer never re-emits them, so they vanish before reaching the
+    # campaign log. Pass them through here so run_campaign_pos.sh's `tee` lands
+    # them in campaign.log for B7_verbose_touch.py to parse.
+    if os.environ.get("A4_COVERAGE_TOUCH_VERBOSE") == "1":
+        for tag in _A4_VERBOSE_RE.findall(combined):
+            print(tag, flush=True)
     
     return MutationExecutionResult(
         stdout=result.stdout,

@@ -62,30 +62,47 @@ class InstrTypeModTarget:
 def get_targets_at_step(step: int, data: 'InspectionData') -> Optional[InstrTypeModTarget]:
     """
     Get the INSTR_TYPE_MOD mutation target at a specific step.
-    
+
     For instruction cycles, returns a target allowing mutation of
     the major and/or minor fields.
-    
+
+    Cycle-resolution rule (Phase 7d Inc 3 / B1 Option B fix):
+        Boundary steps (step=0 init prelude, step=lastCycle-1 teardown epilogue,
+        ECALL-handler boundaries like step=446) contain MANY cycles sharing the
+        same `user_cycle`, only some of which are user-instruction cycles
+        (`major` in `VALID_MAJORS` = {0..6}). The runtime hook iterates
+        `trace.cycles` and lands on the FIRST cycle matching
+        `cycle.user_cycle == step && cycle.major <= 6` (post-fix). We must
+        return the SAME cycle here so the verifier's `(original_major,
+        original_minor)` matches what the hook reports.
+
+        Previously this called `data.get_cycle(step)` which uses
+        `_step_to_cycle = {c.step: c for c in cycles}` (dict-comp LAST wins) —
+        on boundary steps that returns the last user-instruction cycle, which
+        the hook never sees because it stops at the first match.
+
     Args:
         step: The step number to find targets for
         data: InspectionData containing cycles
-        
+
     Returns:
         InstrTypeModTarget if this step has a valid instruction, None otherwise
     """
-    # Get cycle info for this step
-    cycle = data.get_cycle(step)
-    if not cycle:
+    # Find the FIRST cycle at `step` whose major is a user-instruction class.
+    # This MUST match the runtime hook's selection rule in
+    # workspace/risc0-modified/risc0/circuit/rv32im/src/prove/witgen/mod.rs
+    # (INSTR_TYPE_MOD branch).
+    cycle = None
+    for c in data.cycles:
+        if c.step == step and c.major in VALID_MAJORS:
+            cycle = c
+            break
+    if cycle is None:
         return None
-    
-    # Check if this is an instruction cycle
-    if cycle.major not in VALID_MAJORS:
-        return None
-    
-    # Get instruction name from major/minor (kind = major*8 + minor)
+
     kind = cycle.major * 8 + cycle.minor
     kind_name = INSN_KIND_NAMES.get(kind, f"Unknown({cycle.major},{cycle.minor})")
-    
+
     return InstrTypeModTarget(
         step=step,
         cycle_idx=cycle.cycle_idx,

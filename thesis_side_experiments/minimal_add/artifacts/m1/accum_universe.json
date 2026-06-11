@@ -1,0 +1,2088 @@
+[
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|0|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 0,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|0|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 0,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|0|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 0,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|0|3",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 0,
+    "minor": 3,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|0|4",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 0,
+    "minor": 4,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|0|6",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 0,
+    "minor": 6,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|0|7",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 0,
+    "minor": 7,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|10|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 10,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|10|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 10,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|11|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 11,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|11|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 11,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|11|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 11,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|11|3",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 11,
+    "minor": 3,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|11|4",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 11,
+    "minor": 4,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|1|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 1,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|1|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 1,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|1|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 1,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|1|4",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 1,
+    "minor": 4,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|1|5",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 1,
+    "minor": 5,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|1|6",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 1,
+    "minor": 6,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|2|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 2,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|2|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 2,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|2|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 2,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|2|3",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 2,
+    "minor": 3,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|2|4",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 2,
+    "minor": 4,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|2|5",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 2,
+    "minor": 5,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|2|6",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 2,
+    "minor": 6,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|3|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 3,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|3|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 3,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|4|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 4,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|5|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 5,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|5|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 5,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|5|3",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 5,
+    "minor": 3,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|6|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 6,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|6|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 6,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|7|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 7,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|7|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 7,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|7|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 7,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|7|3",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 7,
+    "minor": 3,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|7|4",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 7,
+    "minor": 4,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|7|5",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 7,
+    "minor": 5,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|7|6",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 7,
+    "minor": 6,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|7|7",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 7,
+    "minor": 7,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|8|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 8,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|8|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 8,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|8|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 8,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|8|5",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 8,
+    "minor": 5,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|9|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 9,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|9|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 9,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|9|5",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 9,
+    "minor": 5,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|9|6",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 9,
+    "minor": 6,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|0|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 0,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|0|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 0,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|0|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 0,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|0|3",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 0,
+    "minor": 3,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|0|4",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 0,
+    "minor": 4,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|0|6",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 0,
+    "minor": 6,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|0|7",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 0,
+    "minor": 7,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|10|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 10,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|10|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 10,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|11|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 11,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|11|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 11,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|11|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 11,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|11|3",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 11,
+    "minor": 3,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|11|4",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 11,
+    "minor": 4,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|1|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 1,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|1|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 1,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|1|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 1,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|1|4",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 1,
+    "minor": 4,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|1|5",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 1,
+    "minor": 5,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|1|6",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 1,
+    "minor": 6,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|2|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 2,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|2|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 2,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|2|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 2,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|2|3",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 2,
+    "minor": 3,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|2|4",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 2,
+    "minor": 4,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|2|5",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 2,
+    "minor": 5,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|2|6",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 2,
+    "minor": 6,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|3|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 3,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|3|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 3,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|4|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 4,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|5|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 5,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|5|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 5,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|5|3",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 5,
+    "minor": 3,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|6|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 6,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|6|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 6,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|7|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 7,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|7|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 7,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|7|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 7,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|7|3",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 7,
+    "minor": 3,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|7|4",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 7,
+    "minor": 4,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|7|5",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 7,
+    "minor": 5,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|7|6",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 7,
+    "minor": 6,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|7|7",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 7,
+    "minor": 7,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|8|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 8,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|8|1",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 8,
+    "minor": 1,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|8|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 8,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|8|5",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 8,
+    "minor": 5,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|9|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 9,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|9|2",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 9,
+    "minor": 2,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|9|5",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 9,
+    "minor": 5,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|9|6",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 9,
+    "minor": 6,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|0|0",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 0,
+    "minor": 0,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|0|1",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 0,
+    "minor": 1,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|0|2",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 0,
+    "minor": 2,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|0|3",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 0,
+    "minor": 3,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|0|4",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 0,
+    "minor": 4,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|0|6",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 0,
+    "minor": 6,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|0|7",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 0,
+    "minor": 7,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|10|0",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 10,
+    "minor": 0,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|10|1",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 10,
+    "minor": 1,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|11|0",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 11,
+    "minor": 0,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|11|1",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 11,
+    "minor": 1,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|11|2",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 11,
+    "minor": 2,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|11|3",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 11,
+    "minor": 3,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|11|4",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 11,
+    "minor": 4,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|1|0",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 1,
+    "minor": 0,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|1|1",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 1,
+    "minor": 1,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|1|2",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 1,
+    "minor": 2,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|1|4",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 1,
+    "minor": 4,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|1|5",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 1,
+    "minor": 5,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|1|6",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 1,
+    "minor": 6,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|2|0",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 2,
+    "minor": 0,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|2|1",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 2,
+    "minor": 1,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|2|2",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 2,
+    "minor": 2,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|2|3",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 2,
+    "minor": 3,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|2|4",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 2,
+    "minor": 4,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|2|5",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 2,
+    "minor": 5,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|2|6",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 2,
+    "minor": 6,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|3|1",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 3,
+    "minor": 1,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|3|2",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 3,
+    "minor": 2,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|4|2",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 4,
+    "minor": 2,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|5|0",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 5,
+    "minor": 0,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|5|2",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 5,
+    "minor": 2,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|5|3",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 5,
+    "minor": 3,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|6|0",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 6,
+    "minor": 0,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|6|2",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 6,
+    "minor": 2,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|7|0",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 7,
+    "minor": 0,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|7|1",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 7,
+    "minor": 1,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|7|2",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 7,
+    "minor": 2,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|7|3",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 7,
+    "minor": 3,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|7|4",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 7,
+    "minor": 4,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|7|5",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 7,
+    "minor": 5,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|7|6",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 7,
+    "minor": 6,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|7|7",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 7,
+    "minor": 7,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|8|0",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 8,
+    "minor": 0,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|8|1",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 8,
+    "minor": 1,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|8|2",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 8,
+    "minor": 2,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|8|5",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 8,
+    "minor": 5,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|9|0",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 9,
+    "minor": 0,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|9|2",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 9,
+    "minor": 2,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|9|5",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 9,
+    "minor": 5,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|9|6",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 9,
+    "minor": 6,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|0|0",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 0,
+    "minor": 0,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|0|1",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 0,
+    "minor": 1,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|0|2",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 0,
+    "minor": 2,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|0|3",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 0,
+    "minor": 3,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|0|4",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 0,
+    "minor": 4,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|0|6",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 0,
+    "minor": 6,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|0|7",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 0,
+    "minor": 7,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|10|0",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 10,
+    "minor": 0,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|10|1",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 10,
+    "minor": 1,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|11|0",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 11,
+    "minor": 0,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|11|1",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 11,
+    "minor": 1,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|11|2",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 11,
+    "minor": 2,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|11|3",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 11,
+    "minor": 3,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|11|4",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 11,
+    "minor": 4,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|1|0",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 1,
+    "minor": 0,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|1|1",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 1,
+    "minor": 1,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|1|2",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 1,
+    "minor": 2,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|1|4",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 1,
+    "minor": 4,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|1|5",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 1,
+    "minor": 5,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|1|6",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 1,
+    "minor": 6,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|2|0",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 2,
+    "minor": 0,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|2|1",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 2,
+    "minor": 1,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|2|2",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 2,
+    "minor": 2,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|2|3",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 2,
+    "minor": 3,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|2|4",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 2,
+    "minor": 4,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|2|5",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 2,
+    "minor": 5,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|2|6",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 2,
+    "minor": 6,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|3|1",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 3,
+    "minor": 1,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|3|2",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 3,
+    "minor": 2,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|4|2",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 4,
+    "minor": 2,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|5|0",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 5,
+    "minor": 0,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|5|2",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 5,
+    "minor": 2,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|5|3",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 5,
+    "minor": 3,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|6|0",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 6,
+    "minor": 0,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|6|2",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 6,
+    "minor": 2,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|7|0",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 7,
+    "minor": 0,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|7|1",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 7,
+    "minor": 1,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|7|2",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 7,
+    "minor": 2,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|7|3",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 7,
+    "minor": 3,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|7|4",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 7,
+    "minor": 4,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|7|5",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 7,
+    "minor": 5,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|7|6",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 7,
+    "minor": 6,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|7|7",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 7,
+    "minor": 7,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|8|0",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 8,
+    "minor": 0,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|8|1",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 8,
+    "minor": 1,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|8|2",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 8,
+    "minor": 2,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|8|5",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 8,
+    "minor": 5,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|9|0",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 9,
+    "minor": 0,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|9|2",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 9,
+    "minor": 2,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|9|5",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 9,
+    "minor": 5,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))|9|6",
+    "loc": "loc(callsite( builtin EqzExt  at  ExtReg ( <preamble> :13:11)))",
+    "major": 9,
+    "minor": 6,
+    "label": "Extension-field register witness \u2014 accum-phase extension column consistency"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|0|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 0,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|0|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 0,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|0|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 0,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|0|3",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 0,
+    "minor": 3,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|0|4",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 0,
+    "minor": 4,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|0|6",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 0,
+    "minor": 6,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|0|7",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 0,
+    "minor": 7,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|10|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 10,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|10|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 10,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|11|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 11,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|11|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 11,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|11|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 11,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|11|3",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 11,
+    "minor": 3,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|11|4",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 11,
+    "minor": 4,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|1|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 1,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|1|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 1,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|1|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 1,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|1|4",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 1,
+    "minor": 4,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|1|5",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 1,
+    "minor": 5,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|1|6",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 1,
+    "minor": 6,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|2|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 2,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|2|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 2,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|2|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 2,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|2|3",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 2,
+    "minor": 3,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|2|4",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 2,
+    "minor": 4,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|2|5",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 2,
+    "minor": 5,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|2|6",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 2,
+    "minor": 6,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|3|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 3,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|3|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 3,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|4|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 4,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|5|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 5,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|5|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 5,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|5|3",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 5,
+    "minor": 3,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|6|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 6,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|6|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 6,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|8|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 8,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|8|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 8,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|8|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 8,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|8|5",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 8,
+    "minor": 5,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|9|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 9,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|9|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 9,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|9|5",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 9,
+    "minor": 5,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:125|9|6",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:125",
+    "major": 9,
+    "minor": 6,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|0|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 0,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|0|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 0,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|0|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 0,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|0|3",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 0,
+    "minor": 3,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|0|4",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 0,
+    "minor": 4,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|0|6",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 0,
+    "minor": 6,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|0|7",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 0,
+    "minor": 7,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|10|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 10,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|10|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 10,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|11|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 11,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|11|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 11,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|11|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 11,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|11|3",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 11,
+    "minor": 3,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|11|4",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 11,
+    "minor": 4,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|1|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 1,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|1|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 1,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|1|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 1,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|1|4",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 1,
+    "minor": 4,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|1|5",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 1,
+    "minor": 5,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|1|6",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 1,
+    "minor": 6,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|2|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 2,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|2|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 2,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|2|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 2,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|2|3",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 2,
+    "minor": 3,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|2|4",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 2,
+    "minor": 4,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|2|5",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 2,
+    "minor": 5,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|2|6",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 2,
+    "minor": 6,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|3|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 3,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|3|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 3,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|4|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 4,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|5|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 5,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|5|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 5,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|5|3",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 5,
+    "minor": 3,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|6|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 6,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|6|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 6,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|7|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 7,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|7|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 7,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|7|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 7,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|7|3",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 7,
+    "minor": 3,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|7|4",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 7,
+    "minor": 4,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|7|5",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 7,
+    "minor": 5,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|7|6",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 7,
+    "minor": 6,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|7|7",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 7,
+    "minor": 7,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|8|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 8,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|8|1",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 8,
+    "minor": 1,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|8|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 8,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|8|5",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 8,
+    "minor": 5,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|9|0",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 9,
+    "minor": 0,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|9|2",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 9,
+    "minor": 2,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|9|5",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 9,
+    "minor": 5,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  },
+  {
+    "context_key": "zirgen/dsl/passes/GenerateAccum.cpp:182|9|6",
+    "loc": "zirgen/dsl/passes/GenerateAccum.cpp:182",
+    "major": 9,
+    "minor": 6,
+    "label": "Accum transition (accum pass) \u2014 row's LogUp delta matches DATA buffer (accumulation machinery; NOT the global multiset closure \u2014 that is Hook 3)"
+  }
+]

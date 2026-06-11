@@ -1,0 +1,116 @@
+{
+  "milestone": "M0",
+  "generated_at": "2026-06-11T18:52:15.459580+00:00",
+  "production_host_before_build": {
+    "path": "/root/arguzz/workspace/output/target/release/risc0-host",
+    "exists": true,
+    "mtime_iso": "2026-06-11T17:00:39.027270+00:00",
+    "size_bytes": 102670504
+  },
+  "production_host_after_build": {
+    "path": "/root/arguzz/workspace/output/target/release/risc0-host",
+    "exists": true,
+    "mtime_iso": "2026-06-11T17:00:39.027270+00:00",
+    "size_bytes": 102670504
+  },
+  "production_host_mtime_unchanged": true,
+  "arguzz_add_site": {
+    "step": 187,
+    "pc": 2099232,
+    "pc_hex": "0x00200820",
+    "assembly": "add s0, a0, a1"
+  },
+  "add_site": {
+    "arguzz_step": 187,
+    "arguzz_pc": 2099232,
+    "assembly": "add s0, a0, a1",
+    "a4_step": 185,
+    "a4_pc": 2099236,
+    "cycle_idx": 15424,
+    "major": 0,
+    "minor": 0,
+    "expected_cycle_idx": 15424,
+    "cycle_idx_matches_expected": true
+  },
+  "instruction_card": [
+    {
+      "txn_idx": 15055,
+      "a4_step": 185,
+      "addr": 524808,
+      "word": 11863091,
+      "prev_word": 11863091,
+      "is_read": true,
+      "is_write": false,
+      "register": null
+    },
+    {
+      "txn_idx": 15056,
+      "a4_step": 185,
+      "addr": 1073725482,
+      "word": 3,
+      "prev_word": 3,
+      "is_read": true,
+      "is_write": false,
+      "register": "a0"
+    },
+    {
+      "txn_idx": 15057,
+      "a4_step": 185,
+      "addr": 1073725483,
+      "word": 4,
+      "prev_word": 4,
+      "is_read": true,
+      "is_write": false,
+      "register": "a1"
+    },
+    {
+      "txn_idx": 15058,
+      "a4_step": 185,
+      "addr": 1073725480,
+      "word": 7,
+      "prev_word": 0,
+      "is_read": false,
+      "is_write": true,
+      "register": "s0"
+    }
+  ],
+  "determinism": {
+    "baseline_local_touch_set_size": 1580,
+    "baseline_accum_touch_set_size": 298,
+    "baseline_local_bitmap_distinct": 1565,
+    "baseline_accum_bitmap_distinct": 294,
+    "runs_identical": true,
+    "run_summaries": [
+      {
+        "run": 1,
+        "path": "artifacts/m0/baseline_touch_run1.txt",
+        "constraint_fail_count": 0,
+        "local_verbose_count": 1580,
+        "accum_verbose_count": 298,
+        "local_bitmap_distinct": 1565,
+        "accum_bitmap_distinct": 294
+      },
+      {
+        "run": 2,
+        "path": "artifacts/m0/baseline_touch_run2.txt",
+        "constraint_fail_count": 0,
+        "local_verbose_count": 1580,
+        "accum_verbose_count": 298,
+        "local_bitmap_distinct": 1565,
+        "accum_bitmap_distinct": 294
+      }
+    ]
+  },
+  "acceptance": {
+    "add_site_auto_derived": [
+      187,
+      2099232
+    ],
+    "a4_step": 185,
+    "cycle_idx": 15424,
+    "baseline_output_7": true,
+    "baseline_verifier_ok": true,
+    "baseline_zero_failures": true,
+    "touch_sets_reproducible": true
+  }
+}

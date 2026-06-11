@@ -1,0 +1,14 @@
+{
+  "_doc": "Phase 7d Inc 3 B1 phase-B strict verifier — 5 parallel shards (one variant DB per node). Replays 200 mutations/variant through verify_mutation_semantics strict P1.",
+  "name": "pos_audit_b1_verify",
+  "image": "debian-trixie",
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "results_dir": "/srv/testbed/results/ivgreiff/a4/pos_audit_b1/2026-06-11_04-48-03_632013",
+  "jobs": [
+    {"variant": "V1", "db": "flare/pos_audit_b1_zoned_seed999_n200.db"},
+    {"variant": "V2", "db": "octorand/pos_audit_b1_kindUCB_zoned_v1_seed999_n200.db"},
+    {"variant": "V3", "db": "opulous/pos_audit_b1_kindUCB_zoned_v2_noQ_seed999_n200.db"},
+    {"variant": "V4", "db": "algofi/pos_audit_b1_kindTS_zoned_v2_seed999_n200.db"},
+    {"variant": "V5", "db": "idex/pos_audit_b1_cTS_semantic_v2_seed999_n200.db"}
+  ]
+}

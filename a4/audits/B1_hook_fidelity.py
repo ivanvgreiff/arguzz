@@ -50,18 +50,26 @@ def _zone_for_step(step: int, max_step: int) -> str:
 def _load_mutations(db_path: Path) -> List[dict]:
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
-    rows = conn.execute(
-        """
-        SELECT id, kind, step, mutated_value, original_value, config_json
-        FROM mutations
-        ORDER BY id
-        """
-    ).fetchall()
+    mut_cols = {row[1] for row in conn.execute("PRAGMA table_info(mutations)")}
+    if "original_value" in mut_cols:
+        rows = conn.execute(
+            """
+            SELECT id, kind, step, mutated_value, original_value, config_json
+            FROM mutations ORDER BY id
+            """
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT id, kind, step, mutated_value, config_json
+            FROM mutations ORDER BY id
+            """
+        ).fetchall()
     conn.close()
     out: List[dict] = []
     for r in rows:
         cfg = json.loads(r["config_json"])
-        orig = r["original_value"]
+        orig = r["original_value"] if "original_value" in r.keys() else None
         if orig is None or int(orig) == 0:
             orig = _original_from_config(cfg, r["kind"])
         out.append({
@@ -151,7 +159,7 @@ def verify_db(
     passed = 0
     multicycle_flags = 0
     for s in samples:
-        row = verify_sample(host, host_args, s)
+        row = verify_sample(host, host_args, s, cwd=Path(__file__).resolve().parents[2])
         if row.passed:
             passed += 1
         else:
@@ -188,11 +196,11 @@ def verify_db(
 def _resolve_db_paths(db_dir: Path) -> Dict[str, Path]:
     mapping: Dict[str, Path] = {}
     patterns = {
-        "V1": ["*zoned*seed999*n200*.db", "V1*.db", "*_zoned_*.db"],
-        "V2": ["*kindUCB_zoned_v1*seed999*n200*.db", "V2*.db"],
-        "V3": ["*kindUCB_zoned_v2_noQ*seed999*n200*.db", "V3*.db"],
-        "V4": ["*kindTS_zoned_v2*seed999*n200*.db", "V4*.db"],
-        "V5": ["*cTS_semantic_v2*seed999*n200*.db", "V5*.db"],
+        "V1": ["*pos_audit_b1_zoned_seed999_n200.db", "*_b1_zoned_*.db"],
+        "V2": ["*pos_audit_b1_kindUCB_zoned_v1_seed999_n200.db"],
+        "V3": ["*pos_audit_b1_kindUCB_zoned_v2_noQ_seed999_n200.db"],
+        "V4": ["*pos_audit_b1_kindTS_zoned_v2_seed999_n200.db"],
+        "V5": ["*pos_audit_b1_cTS_semantic_v2_seed999_n200.db"],
     }
     for vk, globs in patterns.items():
         for pat in globs:
@@ -237,8 +245,20 @@ def main() -> int:
                         help="Run 5-mutation local smoke per variant before POS")
     parser.add_argument("--limit", type=int, default=None,
                         help="Verify only first N mutations per DB (smoke)")
+    parser.add_argument(
+        "--variants",
+        default=None,
+        help="Comma-separated subset to verify (e.g. V1,V2). For POS parallel shards.",
+    )
     parser.add_argument("host_args", nargs="*", default=INC2_HOST_ARGS)
     args = parser.parse_args()
+    variant_filter: Optional[List[str]] = None
+    if args.variants:
+        variant_filter = [v.strip() for v in args.variants.split(",") if v.strip()]
+        bad = [v for v in variant_filter if v not in INC2_VARIANTS]
+        if bad:
+            print(f"ERROR: unknown variants {bad}", file=sys.stderr)
+            return 2
 
     report: Dict[str, Any] = {
         "_meta": {
@@ -278,15 +298,20 @@ def main() -> int:
 
     db_dir = Path(args.db_dir)
     db_map = _resolve_db_paths(db_dir)
-    if len(db_map) < 5:
-        missing = set(INC2_VARIANTS) - set(db_map)
+    wanted = sorted(variant_filter or INC2_VARIANTS.keys())
+    missing = [vk for vk in wanted if vk not in db_map]
+    if missing:
         print(f"ERROR: missing DBs for {missing} in {db_dir}", file=sys.stderr)
+        return 2
+    if variant_filter is None and len(db_map) < 5:
+        missing_all = set(INC2_VARIANTS) - set(db_map)
+        print(f"ERROR: missing DBs for {missing_all} in {db_dir}", file=sys.stderr)
         return 2
 
     all_pass = True
     total_pass = 0
     total_mut = 0
-    for vk in sorted(INC2_VARIANTS):
+    for vk in wanted:
         db_path = db_map[vk]
         print(f"[B1] verifying {vk} from {db_path}", flush=True)
         pv = verify_db(db_path, args.host, args.host_args, vk, limit=args.limit)

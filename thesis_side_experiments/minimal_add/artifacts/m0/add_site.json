@@ -1,0 +1,12 @@
+{
+  "arguzz_step": 187,
+  "arguzz_pc": 2099232,
+  "assembly": "add s0, a0, a1",
+  "a4_step": 185,
+  "a4_pc": 2099236,
+  "cycle_idx": 15424,
+  "major": 0,
+  "minor": 0,
+  "expected_cycle_idx": 15424,
+  "cycle_idx_matches_expected": true
+}

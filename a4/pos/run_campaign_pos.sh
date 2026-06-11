@@ -90,6 +90,7 @@ A4_NO_INTERNET=$(pos_get_variable A4_NO_INTERNET 2>/dev/null || echo "0")
 A4_TELEMETRY_LEVEL=$(pos_get_variable A4_TELEMETRY_LEVEL 2>/dev/null || echo "")
 A4_RUN_SUFFIX=$(pos_get_variable A4_RUN_SUFFIX 2>/dev/null || echo "")
 A4_DEBUG_BANDIT_TRACE=$(pos_get_variable A4_DEBUG_BANDIT_TRACE 2>/dev/null || echo "0")
+A4_COVERAGE_TOUCH_VERBOSE=$(pos_get_variable A4_COVERAGE_TOUCH_VERBOSE 2>/dev/null || echo "0")
 A4_NODE=$(pos_get_variable hostname 2>/dev/null || hostname)
 
 # ----- 2. workdir + result paths (all ABSOLUTE) -------------------------
@@ -112,6 +113,21 @@ fi
 
 RESULTS="/root/results_${A4_RUN_ID}"
 mkdir -p "$RESULTS"
+
+# Inc 3b §B.1 — per-node fingerprint (before campaign work)
+FP="$RESULTS/fingerprint"
+mkdir -p "$FP"
+env | sort > "$FP/env.txt"
+uname -a > "$FP/uname.txt"
+head -50 /proc/cpuinfo > "$FP/cpuinfo.txt" 2>/dev/null || true
+cat /proc/meminfo > "$FP/meminfo.txt" 2>/dev/null || true
+{
+    sha256sum /lib/x86_64-linux-gnu/libstdc++.so.6 2>/dev/null || true
+    sha256sum /lib/x86_64-linux-gnu/libc.so.6 2>/dev/null || true
+    sha256sum /lib/x86_64-linux-gnu/libm.so.6 2>/dev/null || true
+    sha256sum "$HOST_BIN" 2>/dev/null || true
+} > "$FP/lib_shas.txt" 2>/dev/null || true
+numactl --show > "$FP/numa.txt" 2>&1 || true
 
 _NAME_SUFFIX=""
 if [[ -n "$A4_RUN_SUFFIX" ]]; then
@@ -225,6 +241,10 @@ CMD+=(--)
 HOST_ARR=($A4_HOST_ARGS); CMD+=("${HOST_ARR[@]}")
 
 echo "[run_campaign_pos] command: ${CMD[*]}" | tee -a "$LOG"
+if [[ "$A4_COVERAGE_TOUCH_VERBOSE" = "1" ]]; then
+    export A4_COVERAGE_TOUCH_VERBOSE=1
+    echo "[run_campaign_pos] A4_COVERAGE_TOUCH_VERBOSE=1" | tee -a "$LOG"
+fi
 
 "${CMD[@]}" 2>&1 | tee -a "$LOG"
 CAMP_RC=${PIPESTATUS[0]}

@@ -140,11 +140,20 @@ def run_mutation_hook(
     host: str,
     host_args: List[str],
     config_path: Path,
+    *,
+    cwd: Optional[Path] = None,
 ) -> str:
-    """Run host with mutation config only (no inspect dump)."""
-    env = os.environ.copy()
-    env["A4_MUTATION_CONFIG"] = str(config_path)
-    env["CONSTRAINT_CONTINUE"] = "1"
+    """Run host with mutation config only (no inspect dump).
+
+    Env mirrors ``run_a4_mutation`` in executor.py so POS and WSL behave the same.
+    """
+    env = {
+        **dict(os.environ),
+        "A4_MUTATION_CONFIG": str(config_path),
+        "CONSTRAINT_CONTINUE": "1",
+        "A4_COVERAGE_TOUCH": "1",
+        "A4_FAMILY_RESIDUE": "1",
+    }
     env.pop("A4_INSPECT", None)
     env.pop("A4_DUMP_ALL_TXNS", None)
     result = subprocess.run(
@@ -152,6 +161,7 @@ def run_mutation_hook(
         capture_output=True,
         text=True,
         env=env,
+        cwd=str(cwd) if cwd is not None else None,
     )
     return result.stdout + result.stderr
 
@@ -256,7 +266,13 @@ def assert_hook_matches_db(
     return False, f"unsupported kind {kind}"
 
 
-def verify_sample(host: str, host_args: List[str], sample: dict) -> SampleRow:
+def verify_sample(
+    host: str,
+    host_args: List[str],
+    sample: dict,
+    *,
+    cwd: Optional[Path] = None,
+) -> SampleRow:
     tag = KIND_TO_TAG[sample["kind"]]
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(sample["config"], f)
@@ -264,7 +280,7 @@ def verify_sample(host: str, host_args: List[str], sample: dict) -> SampleRow:
     hook: Optional[Dict[str, Any]] = None
     ok, detail = False, "not run"
     try:
-        output = run_mutation_hook(host, host_args, cfg_path)
+        output = run_mutation_hook(host, host_args, cfg_path, cwd=cwd)
         hook = parse_hook_mod(output, tag)
         if hook is None:
             ok, detail = False, f"no <{tag}> line in host output"

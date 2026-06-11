@@ -45,7 +45,7 @@ def _mutation_key(row: dict, nondet: Set[int]) -> Tuple:
     orig = row["original_value"]
     if kind == "MEM_VAL_MOD":
         byte_addr = (cfg.get("_info") or {}).get("byte_addr")
-        if byte_addr is not None and int(byte_addr) in nondet:
+        if byte_addr is not None and int(byte_addr, 0) in nondet:
             orig = "<nondet>"
     return (kind, step, txn, mutated, orig, row.get("verifier_accepted"), row.get("num_failures"))
 
@@ -132,15 +132,27 @@ def run_paired(smoke_dir: Path, host: str, host_args: List[str]) -> None:
                 raise RuntimeError(f"B7 fuzz {vk} run{run} exit {rc}")
 
 
-def _resolve_b7_pair(smoke_dir: Path, vk: str, selector: str) -> Tuple[Path, Path]:
-    patterns_a = [
-        f"pos_audit_b7_{selector}_seed{INC2_SMOKE_SEED}_n{B7_N}_runA.db",
-        f"b7_{vk}_runA_seed{INC2_SMOKE_SEED}_n{B7_N}.db",
-    ]
-    patterns_b = [
-        f"pos_audit_b7_{selector}_seed{INC2_SMOKE_SEED}_n{B7_N}_runB.db",
-        f"b7_{vk}_runB_seed{INC2_SMOKE_SEED}_n{B7_N}.db",
-    ]
+def _resolve_b7_pair(
+    smoke_dir: Path,
+    vk: str,
+    selector: str,
+    *,
+    pair_suffix_a: Optional[str] = None,
+    pair_suffix_b: Optional[str] = None,
+    seed: int = INC2_SMOKE_SEED,
+) -> Tuple[Path, Path]:
+    if pair_suffix_a and pair_suffix_b:
+        patterns_a = [f"*{selector}_seed{seed}_n{B7_N}_{pair_suffix_a}.db"]
+        patterns_b = [f"*{selector}_seed{seed}_n{B7_N}_{pair_suffix_b}.db"]
+    else:
+        patterns_a = [
+            f"pos_audit_b7_{selector}_seed{INC2_SMOKE_SEED}_n{B7_N}_runA.db",
+            f"b7_{vk}_runA_seed{INC2_SMOKE_SEED}_n{B7_N}.db",
+        ]
+        patterns_b = [
+            f"pos_audit_b7_{selector}_seed{INC2_SMOKE_SEED}_n{B7_N}_runB.db",
+            f"b7_{vk}_runB_seed{INC2_SMOKE_SEED}_n{B7_N}.db",
+        ]
     db_a = db_b = None
     for pat in patterns_a:
         hits = sorted(smoke_dir.glob(pat))
@@ -157,8 +169,22 @@ def _resolve_b7_pair(smoke_dir: Path, vk: str, selector: str) -> Tuple[Path, Pat
     return db_a, db_b
 
 
-def audit_variant(vk: str, smoke_dir: Path, nondet: Set[int], selector: str) -> Dict[str, Any]:
-    db_a, db_b = _resolve_b7_pair(smoke_dir, vk, selector)
+def audit_variant(
+    vk: str,
+    smoke_dir: Path,
+    nondet: Set[int],
+    selector: str,
+    *,
+    pair_suffix_a: Optional[str] = None,
+    pair_suffix_b: Optional[str] = None,
+    seed: int = INC2_SMOKE_SEED,
+) -> Dict[str, Any]:
+    db_a, db_b = _resolve_b7_pair(
+        smoke_dir, vk, selector,
+        pair_suffix_a=pair_suffix_a,
+        pair_suffix_b=pair_suffix_b,
+        seed=seed,
+    )
 
     conn_a = sqlite3.connect(str(db_a))
     conn_b = sqlite3.connect(str(db_b))
@@ -196,6 +222,11 @@ def main() -> int:
     parser.add_argument("--host", default=DEFAULT_HOST)
     parser.add_argument("--run", action="store_true", help="Run paired local campaigns")
     parser.add_argument("--output", default=str(OUTPUT_DIR / "B7_seed_reproducibility.json"))
+    parser.add_argument("--pair-suffix-a", default=None, help="Inc3b: e.g. flareA")
+    parser.add_argument("--pair-suffix-b", default=None, help="Inc3b: e.g. flareB")
+    parser.add_argument("--variant", default=None, help="Single variant (e.g. V1)")
+    parser.add_argument("--seed", type=int, default=INC2_SMOKE_SEED,
+                        help="Campaign seed in DB filename (default 999)")
     parser.add_argument("host_args", nargs="*", default=INC2_HOST_ARGS)
     args = parser.parse_args()
 
@@ -211,7 +242,7 @@ def main() -> int:
             **GLOSSARY_META,
             "audit": "B7_seed_reproducibility",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "seed": INC2_SMOKE_SEED,
+            "seed": args.seed,
             "n_per_variant": B7_N,
         },
         "filter_metadata": {
@@ -225,10 +256,22 @@ def main() -> int:
         "verdict": "PENDING",
     }
 
+    variants = sorted(INC2_VARIANTS)
+    if args.variant:
+        if args.variant not in INC2_VARIANTS:
+            print(f"ERROR: unknown variant {args.variant}", file=sys.stderr)
+            return 2
+        variants = [args.variant]
+
     all_pass = True
-    for vk in sorted(INC2_VARIANTS):
+    for vk in variants:
         try:
-            pv = audit_variant(vk, smoke_dir, nondet, INC2_VARIANTS[vk]["selector"])
+            pv = audit_variant(
+                vk, smoke_dir, nondet, INC2_VARIANTS[vk]["selector"],
+                pair_suffix_a=args.pair_suffix_a,
+                pair_suffix_b=args.pair_suffix_b,
+                seed=args.seed,
+            )
         except FileNotFoundError as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 2

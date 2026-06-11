@@ -1,0 +1,9 @@
+{
+  "_doc": "Inc 3b B7 Phase γ §B.3 — cross-node verbose touch capture (one run per node).",
+  "name": "pos_inc3b_b7_verbose",
+  "image": "debian-trixie",
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "zoned", "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "verbose", "coverage_touch_verbose": true}
+  ]
+}

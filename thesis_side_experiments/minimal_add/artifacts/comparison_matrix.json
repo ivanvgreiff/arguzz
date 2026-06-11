@@ -1,0 +1,63 @@
+{
+  "site": {
+    "arguzz_step": 187,
+    "a4_step": 185,
+    "operand_register": "a1 (rs2, value 4)",
+    "a4_mutated_word": 9
+  },
+  "arguzz": {
+    "exit_code": -11,
+    "local_failures": [
+      "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))"
+    ],
+    "hook3_families": null
+  },
+  "a4": {
+    "exit_code": 101,
+    "local_failures": [
+      "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))"
+    ],
+    "hook3_families": [
+      {
+        "family": "memory",
+        "nonzero": true,
+        "e0": 931916743,
+        "e1": 1889778715,
+        "e2": 992631825,
+        "e3": 1791802138
+      },
+      {
+        "family": "u16",
+        "nonzero": false
+      },
+      {
+        "family": "u8",
+        "nonzero": false
+      },
+      {
+        "family": "cycle",
+        "nonzero": false
+      }
+    ],
+    "mutation_config": {
+      "mutation_type": "PRE_EXEC_REG_MOD",
+      "step": 185,
+      "txn_idx": 15057,
+      "word": 9,
+      "strategy": "next_read",
+      "_info": {
+        "register": "a1",
+        "register_idx": 11,
+        "original_value": 4,
+        "original_word": 4,
+        "prev_word": 4,
+        "is_write_target": false,
+        "pc": "0x00200824",
+        "major": 0,
+        "minor": 0,
+        "note": "Modifies READ word to create word != prev_word (triggers IsRead + MemoryWrite)"
+      }
+    }
+  }
+}

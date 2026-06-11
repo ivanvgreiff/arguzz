@@ -112,6 +112,7 @@ class JobSpec:
     telemetry_level: str | None = None
     run_suffix: str | None = None
     debug_bandit_trace: bool = False
+    coverage_touch_verbose: bool = False
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "JobSpec":
@@ -123,6 +124,7 @@ class JobSpec:
             telemetry_level=d.get("telemetry_level"),
             run_suffix=d.get("run_suffix"),
             debug_bandit_trace=bool(d.get("debug_bandit_trace", False)),
+            coverage_touch_verbose=bool(d.get("coverage_touch_verbose", False)),
         )
 
 
@@ -194,6 +196,8 @@ def _vars_yaml_for_job(job: JobSpec, manifest_name: str,
         out["A4_RUN_SUFFIX"] = job.run_suffix
     if job.debug_bandit_trace:
         out["A4_DEBUG_BANDIT_TRACE"] = "1"
+    if job.coverage_touch_verbose:
+        out["A4_COVERAGE_TOUCH_VERBOSE"] = "1"
     return out
 
 

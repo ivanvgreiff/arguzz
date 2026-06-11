@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+cd /root
+rm -rf a4_campaign
+tar -xzf a4_campaign_61a1ba8dfe80.tar.gz
+ls -la a4_campaign/
