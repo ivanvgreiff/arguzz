@@ -1,0 +1,408 @@
+{
+  "audit_id": "E7",
+  "audit_name": "Kernel-PC contamination survey (Theme 5)",
+  "guest": "c0c1_differential_guest",
+  "host_args": [
+    "--in1",
+    "5",
+    "--in4",
+    "10"
+  ],
+  "pc_ranges_used": {
+    "kernel": "0xC0000000..0xC1000000",
+    "user": "0x00200000..0x00400000",
+    "source": "platform.rs USER_START..USER_END vs MEPC kernel base"
+  },
+  "overall": {
+    "total_steps_with_decode_cycle": 3891,
+    "user_steps": 3516,
+    "kernel_steps": 375,
+    "user_pct": 90.36,
+    "kernel_pct": 9.64
+  },
+  "kernel_steps_by_major": {
+    "2": 100,
+    "0": 127,
+    "6": 10,
+    "5": 92,
+    "3": 34,
+    "1": 11,
+    "4": 1
+  },
+  "per_zone_contamination": {
+    "step0": {
+      "total_steps_with_decode": 1,
+      "user_steps": 0,
+      "kernel_steps": 1,
+      "other_steps": 0,
+      "kernel_pct": 100.0,
+      "examples": {
+        "user": [],
+        "kernel": [
+          {
+            "step": 0,
+            "pc": "0xc0000004",
+            "major": 2,
+            "minor": 6
+          }
+        ],
+        "other": []
+      }
+    },
+    "pre_ecall": {
+      "total_steps_with_decode": 18,
+      "user_steps": 0,
+      "kernel_steps": 18,
+      "other_steps": 0,
+      "kernel_pct": 100.0,
+      "examples": {
+        "user": [],
+        "kernel": [
+          {
+            "step": 170,
+            "pc": "0xc0000154",
+            "major": 0,
+            "minor": 7
+          },
+          {
+            "step": 289,
+            "pc": "0xc0000154",
+            "major": 0,
+            "minor": 7
+          },
+          {
+            "step": 368,
+            "pc": "0xc0000154",
+            "major": 0,
+            "minor": 7
+          }
+        ],
+        "other": []
+      }
+    },
+    "post_ecall": {
+      "total_steps_with_decode": 32,
+      "user_steps": 14,
+      "kernel_steps": 18,
+      "other_steps": 0,
+      "kernel_pct": 56.25,
+      "examples": {
+        "user": [
+          {
+            "step": 174,
+            "pc": "0x00203f7c",
+            "major": 2,
+            "minor": 4
+          },
+          {
+            "step": 293,
+            "pc": "0x00206178",
+            "major": 0,
+            "minor": 0
+          },
+          {
+            "step": 372,
+            "pc": "0x00206178",
+            "major": 0,
+            "minor": 0
+          }
+        ],
+        "kernel": [
+          {
+            "step": 171,
+            "pc": "0xc0000158",
+            "major": 0,
+            "minor": 7
+          },
+          {
+            "step": 290,
+            "pc": "0xc0000158",
+            "major": 0,
+            "minor": 7
+          },
+          {
+            "step": 369,
+            "pc": "0xc0000158",
+            "major": 0,
+            "minor": 7
+          }
+        ],
+        "other": []
+      }
+    },
+    "core_arithmetic": {
+      "total_steps_with_decode": 2443,
+      "user_steps": 2242,
+      "kernel_steps": 201,
+      "other_steps": 0,
+      "kernel_pct": 8.23,
+      "examples": {
+        "user": [
+          {
+            "step": 20,
+            "pc": "0x00203704",
+            "major": 2,
+            "minor": 6
+          },
+          {
+            "step": 21,
+            "pc": "0x00203708",
+            "major": 0,
+            "minor": 7
+          },
+          {
+            "step": 22,
+            "pc": "0x0020370c",
+            "major": 2,
+            "minor": 6
+          }
+        ],
+        "kernel": [
+          {
+            "step": 1,
+            "pc": "0xc0000008",
+            "major": 0,
+            "minor": 7
+          },
+          {
+            "step": 2,
+            "pc": "0xc000000c",
+            "major": 2,
+            "minor": 5
+          },
+          {
+            "step": 3,
+            "pc": "0xc0000010",
+            "major": 2,
+            "minor": 5
+          }
+        ],
+        "other": []
+      }
+    },
+    "core_memory_load": {
+      "total_steps_with_decode": 678,
+      "user_steps": 586,
+      "kernel_steps": 92,
+      "other_steps": 0,
+      "kernel_pct": 13.57,
+      "examples": {
+        "user": [
+          {
+            "step": 24,
+            "pc": "0x00203714",
+            "major": 5,
+            "minor": 2
+          },
+          {
+            "step": 41,
+            "pc": "0x0020105c",
+            "major": 5,
+            "minor": 2
+          },
+          {
+            "step": 114,
+            "pc": "0x00201088",
+            "major": 5,
+            "minor": 2
+          }
+        ],
+        "kernel": [
+          {
+            "step": 16,
+            "pc": "0xc0000044",
+            "major": 5,
+            "minor": 2
+          },
+          {
+            "step": 158,
+            "pc": "0xc0000074",
+            "major": 5,
+            "minor": 2
+          },
+          {
+            "step": 165,
+            "pc": "0xc000013c",
+            "major": 5,
+            "minor": 2
+          }
+        ],
+        "other": []
+      }
+    },
+    "core_memory_store": {
+      "total_steps_with_decode": 596,
+      "user_steps": 586,
+      "kernel_steps": 10,
+      "other_steps": 0,
+      "kernel_pct": 1.68,
+      "examples": {
+        "user": [
+          {
+            "step": 28,
+            "pc": "0x00203f5c",
+            "major": 6,
+            "minor": 2
+          },
+          {
+            "step": 32,
+            "pc": "0x00203f6c",
+            "major": 6,
+            "minor": 2
+          },
+          {
+            "step": 34,
+            "pc": "0x00203f74",
+            "major": 6,
+            "minor": 2
+          }
+        ],
+        "kernel": [
+          {
+            "step": 6,
+            "pc": "0xc000001c",
+            "major": 6,
+            "minor": 2
+          },
+          {
+            "step": 18,
+            "pc": "0xc000004c",
+            "major": 6,
+            "minor": 2
+          },
+          {
+            "step": 3905,
+            "pc": "0xc000009c",
+            "major": 6,
+            "minor": 2
+          }
+        ],
+        "other": []
+      }
+    },
+    "core_mul": {
+      "total_steps_with_decode": 100,
+      "user_steps": 66,
+      "kernel_steps": 34,
+      "other_steps": 0,
+      "kernel_pct": 34.0,
+      "examples": {
+        "user": [
+          {
+            "step": 74,
+            "pc": "0x00203260",
+            "major": 3,
+            "minor": 2
+          },
+          {
+            "step": 260,
+            "pc": "0x00206134",
+            "major": 3,
+            "minor": 1
+          },
+          {
+            "step": 303,
+            "pc": "0x002031bc",
+            "major": 3,
+            "minor": 1
+          }
+        ],
+        "kernel": [
+          {
+            "step": 160,
+            "pc": "0xc000007c",
+            "major": 3,
+            "minor": 1
+          },
+          {
+            "step": 168,
+            "pc": "0xc0000148",
+            "major": 3,
+            "minor": 1
+          },
+          {
+            "step": 279,
+            "pc": "0xc000007c",
+            "major": 3,
+            "minor": 1
+          }
+        ],
+        "other": []
+      }
+    },
+    "core_div": {
+      "total_steps_with_decode": 23,
+      "user_steps": 22,
+      "kernel_steps": 1,
+      "other_steps": 0,
+      "kernel_pct": 4.35,
+      "examples": {
+        "user": [
+          {
+            "step": 295,
+            "pc": "0x002061a8",
+            "major": 4,
+            "minor": 2
+          },
+          {
+            "step": 374,
+            "pc": "0x002061a8",
+            "major": 4,
+            "minor": 2
+          },
+          {
+            "step": 452,
+            "pc": "0x002061a8",
+            "major": 4,
+            "minor": 2
+          }
+        ],
+        "kernel": [
+          {
+            "step": 3921,
+            "pc": "0xc00000dc",
+            "major": 4,
+            "minor": 2
+          }
+        ],
+        "other": []
+      }
+    }
+  },
+  "d54_predicted_kernel_other_population": {
+    "note": "Under D54 HYBRID, these kernel-PC steps reclassify into kernel_other. pre_ecall keeps its kernel-PC ECALL cycles (D13).",
+    "total_kernel_steps": 375,
+    "minus_pre_ecall_kernel_steps_staying_in_pre_ecall": 18,
+    "estimated_kernel_other_size": 357
+  },
+  "verdict": {
+    "theme_5_recommendation": "Adopt D54 (HYBRID kernel_other). User dominates (90.4%) so HYBRID one-fat-zone approach is cheaper than per-major splits without losing the user/kernel distinction.",
+    "most_contaminated_zones_before_d54": [
+      [
+        "step0",
+        100.0,
+        1
+      ],
+      [
+        "pre_ecall",
+        100.0,
+        18
+      ],
+      [
+        "post_ecall",
+        56.25,
+        18
+      ],
+      [
+        "core_mul",
+        34.0,
+        34
+      ],
+      [
+        "core_memory_load",
+        13.57,
+        92
+      ]
+    ]
+  }
+}

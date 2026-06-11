@@ -1,0 +1,461 @@
+{
+  "host_args": [
+    "--in1=5",
+    "--in4=10"
+  ],
+  "total_steps": 3930,
+  "num_arms": 48,
+  "kept_arms": [
+    {
+      "kind": "COMP_OUT_MOD",
+      "zone": "post_ecall",
+      "naive": 28,
+      "kept": 16,
+      "real": 16,
+      "phantom": 0
+    },
+    {
+      "kind": "COMP_OUT_MOD",
+      "zone": "core_arithmetic",
+      "naive": 2226,
+      "kept": 1685,
+      "real": 1685,
+      "phantom": 0
+    },
+    {
+      "kind": "COMP_OUT_MOD",
+      "zone": "core_mul",
+      "naive": 66,
+      "kept": 66,
+      "real": 66,
+      "phantom": 0
+    },
+    {
+      "kind": "COMP_OUT_MOD",
+      "zone": "core_shr",
+      "naive": 22,
+      "kept": 22,
+      "real": 22,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "step0",
+      "naive": 1,
+      "kept": 1,
+      "real": 1,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "pre_ecall",
+      "naive": 18,
+      "kept": 18,
+      "real": 18,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "post_ecall",
+      "naive": 32,
+      "kept": 32,
+      "real": 32,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "core_arithmetic",
+      "naive": 2226,
+      "kept": 2226,
+      "real": 2226,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "core_memory_load",
+      "naive": 584,
+      "kept": 584,
+      "real": 584,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "core_memory_store",
+      "naive": 586,
+      "kept": 586,
+      "real": 586,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "core_mul",
+      "naive": 66,
+      "kept": 66,
+      "real": 66,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "core_shr",
+      "naive": 22,
+      "kept": 22,
+      "real": 22,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "kernel_other",
+      "naive": 356,
+      "kept": 356,
+      "real": 356,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "post_ecall",
+      "naive": 32,
+      "kept": 32,
+      "real": 32,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "core_arithmetic",
+      "naive": 2226,
+      "kept": 2226,
+      "real": 2226,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "core_memory_load",
+      "naive": 584,
+      "kept": 584,
+      "real": 584,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "core_memory_store",
+      "naive": 586,
+      "kept": 586,
+      "real": 586,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "core_mul",
+      "naive": 66,
+      "kept": 66,
+      "real": 66,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "core_shr",
+      "naive": 22,
+      "kept": 22,
+      "real": 22,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "kernel_other",
+      "naive": 356,
+      "kept": 356,
+      "real": 356,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "post_ecall",
+      "naive": 32,
+      "kept": 32,
+      "real": 32,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "core_arithmetic",
+      "naive": 2226,
+      "kept": 2226,
+      "real": 2226,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "core_memory_load",
+      "naive": 584,
+      "kept": 584,
+      "real": 584,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "core_memory_store",
+      "naive": 586,
+      "kept": 586,
+      "real": 586,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "core_mul",
+      "naive": 66,
+      "kept": 66,
+      "real": 66,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "core_shr",
+      "naive": 22,
+      "kept": 22,
+      "real": 22,
+      "phantom": 0
+    },
+    {
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "kernel_other",
+      "naive": 356,
+      "kept": 356,
+      "real": 356,
+      "phantom": 0
+    },
+    {
+      "kind": "LOAD_VAL_MOD",
+      "zone": "post_ecall",
+      "naive": 4,
+      "kept": 4,
+      "real": 4,
+      "phantom": 0
+    },
+    {
+      "kind": "LOAD_VAL_MOD",
+      "zone": "core_memory_load",
+      "naive": 584,
+      "kept": 584,
+      "real": 584,
+      "phantom": 0
+    },
+    {
+      "kind": "MEM_VAL_MOD",
+      "zone": "step0",
+      "naive": 1,
+      "kept": 1,
+      "real": 1,
+      "phantom": 0
+    },
+    {
+      "kind": "MEM_VAL_MOD",
+      "zone": "last_step",
+      "naive": 1,
+      "kept": 1,
+      "real": 1,
+      "phantom": 0
+    },
+    {
+      "kind": "MEM_VAL_MOD",
+      "zone": "pre_ecall",
+      "naive": 32,
+      "kept": 32,
+      "real": 32,
+      "phantom": 0
+    },
+    {
+      "kind": "MEM_VAL_MOD",
+      "zone": "post_ecall",
+      "naive": 32,
+      "kept": 16,
+      "real": 16,
+      "phantom": 0
+    },
+    {
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_arithmetic",
+      "naive": 2226,
+      "kept": 636,
+      "real": 636,
+      "phantom": 0
+    },
+    {
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_memory_load",
+      "naive": 584,
+      "kept": 584,
+      "real": 584,
+      "phantom": 0
+    },
+    {
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_memory_store",
+      "naive": 586,
+      "kept": 586,
+      "real": 586,
+      "phantom": 0
+    },
+    {
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_branch",
+      "naive": 24,
+      "kept": 24,
+      "real": 24,
+      "phantom": 0
+    },
+    {
+      "kind": "MEM_VAL_MOD",
+      "zone": "kernel_other",
+      "naive": 356,
+      "kept": 356,
+      "real": 356,
+      "phantom": 0
+    },
+    {
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "step0",
+      "naive": 1,
+      "kept": 1,
+      "real": 1,
+      "phantom": 0
+    },
+    {
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "post_ecall",
+      "naive": 32,
+      "kept": 32,
+      "real": 32,
+      "phantom": 0
+    },
+    {
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "core_arithmetic",
+      "naive": 2226,
+      "kept": 2226,
+      "real": 2226,
+      "phantom": 0
+    },
+    {
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "core_memory_load",
+      "naive": 584,
+      "kept": 584,
+      "real": 584,
+      "phantom": 0
+    },
+    {
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "core_memory_store",
+      "naive": 586,
+      "kept": 586,
+      "real": 586,
+      "phantom": 0
+    },
+    {
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "core_mul",
+      "naive": 66,
+      "kept": 66,
+      "real": 66,
+      "phantom": 0
+    },
+    {
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "core_shr",
+      "naive": 22,
+      "kept": 22,
+      "real": 22,
+      "phantom": 0
+    },
+    {
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "kernel_other",
+      "naive": 356,
+      "kept": 83,
+      "real": 83,
+      "phantom": 0
+    },
+    {
+      "kind": "STORE_OUT_MOD",
+      "zone": "core_memory_store",
+      "naive": 586,
+      "kept": 586,
+      "real": 586,
+      "phantom": 0
+    },
+    {
+      "kind": "STORE_OUT_MOD",
+      "zone": "kernel_other",
+      "naive": 10,
+      "kept": 10,
+      "real": 10,
+      "phantom": 0
+    }
+  ],
+  "dropped_arms": [
+    {
+      "kind": "COMP_OUT_MOD",
+      "zone": "step0",
+      "naive": 1
+    },
+    {
+      "kind": "COMP_OUT_MOD",
+      "zone": "pre_ecall",
+      "naive": 18
+    },
+    {
+      "kind": "COMP_OUT_MOD",
+      "zone": "kernel_other",
+      "naive": 254
+    },
+    {
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "step0",
+      "naive": 1
+    },
+    {
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "last_step",
+      "naive": 1
+    },
+    {
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "pre_ecall",
+      "naive": 32
+    },
+    {
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "step0",
+      "naive": 1
+    },
+    {
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "last_step",
+      "naive": 1
+    },
+    {
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "pre_ecall",
+      "naive": 32
+    },
+    {
+      "kind": "LOAD_VAL_MOD",
+      "zone": "kernel_other",
+      "naive": 92
+    },
+    {
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_mul",
+      "naive": 66
+    },
+    {
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_shr",
+      "naive": 22
+    },
+    {
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "pre_ecall",
+      "naive": 18
+    }
+  ]
+}

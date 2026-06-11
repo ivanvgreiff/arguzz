@@ -1,0 +1,1128 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    }
+  },
+  "host_args": [
+    "--in1",
+    "5",
+    "--in4",
+    "10"
+  ],
+  "n_uncertain_arms": 22,
+  "per_arm": [
+    {
+      "arm_id": "COMP_OUT_MOD|post_ecall",
+      "kind": "COMP_OUT_MOD",
+      "zone": "post_ecall",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 11,
+      "doc_step_count": 11,
+      "notes_from_expected_arms": "comp in cycle e+1 \u2014 but is \"post_ecall = e+1 only\" the right semantic boundary, or should it extend to e+2..e+N? (E3)",
+      "sample_steps": [
+        {
+          "step": 293,
+          "cycle_major": 0,
+          "cycle_minor": 0,
+          "cycle_pc": "0x00206178",
+          "classifier_reasoning": "Rule 3: step 293 is e+1 after ECALL at step 292 \u2192 post_ecall",
+          "decoded_instr": "Add",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 372,
+          "cycle_major": 0,
+          "cycle_minor": 0,
+          "cycle_pc": "0x00206178",
+          "classifier_reasoning": "Rule 3: step 372 is e+1 after ECALL at step 371 \u2192 post_ecall",
+          "decoded_instr": "Add",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 450,
+          "cycle_major": 0,
+          "cycle_minor": 0,
+          "cycle_pc": "0x00206178",
+          "classifier_reasoning": "Rule 3: step 450 is e+1 after ECALL at step 449 \u2192 post_ecall",
+          "decoded_instr": "Add",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 528,
+          "cycle_major": 0,
+          "cycle_minor": 0,
+          "cycle_pc": "0x00206178",
+          "classifier_reasoning": "Rule 3: step 528 is e+1 after ECALL at step 527 \u2192 post_ecall",
+          "decoded_instr": "Add",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 608,
+          "cycle_major": 0,
+          "cycle_minor": 0,
+          "cycle_pc": "0x00206178",
+          "classifier_reasoning": "Rule 3: step 608 is e+1 after ECALL at step 607 \u2192 post_ecall",
+          "decoded_instr": "Add",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 default: retain arm pending joint adjudication",
+      "open_questions_referenced": [
+        "Q2"
+      ]
+    },
+    {
+      "arm_id": "COMP_OUT_MOD|core_div",
+      "kind": "COMP_OUT_MOD",
+      "zone": "core_div",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 22,
+      "doc_step_count": 22,
+      "notes_from_expected_arms": "DIV/REM/SRL/SRA block (major=4) \u2014 DIV0 actually contains shift/right ops too; is this semantically a single zone or should we split? (E1, E3)",
+      "sample_steps": [
+        {
+          "step": 295,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 374,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 452,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 530,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 610,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 zone policy question; needs joint review (see open questions)",
+      "open_questions_referenced": [
+        "Q2",
+        "Q3"
+      ]
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|pre_ecall",
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "pre_ecall",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 18,
+      "doc_step_count": 18,
+      "notes_from_expected_arms": "non-singleton pre_ecall steps with major\u22646 \u2014 but pre_ecall classifier puts the ECALL cycle itself in pre_ecall (D13); some steps in this zone might be \"the ECALL step\" while others are \"the step containing pre-ECALL setup.\" Do we want to split? (E3)",
+      "sample_steps": [
+        {
+          "step": 170,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 170 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 289,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 289 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 368,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 368 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 446,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 446 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 524,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 524 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 zone policy question; needs joint review (see open questions)",
+      "open_questions_referenced": [
+        "Q1",
+        "Q2"
+      ]
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|core_div",
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "core_div",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 23,
+      "doc_step_count": 23,
+      "notes_from_expected_arms": "core_div confusion (E1)",
+      "sample_steps": [
+        {
+          "step": 295,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 374,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 452,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 530,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 610,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 default: retain arm pending joint adjudication",
+      "open_questions_referenced": [
+        "Q1"
+      ]
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|last_step",
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "last_step",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": false,
+      "universe_step_count": 0,
+      "doc_step_count": 1,
+      "notes_from_expected_arms": "is the last step's cycle a real instruction fetch or a halt cycle that's not actually mutable? (E2: does mutation produce any effect?)",
+      "sample_steps": [
+        {
+          "step": 3929,
+          "cycle_major": 7,
+          "cycle_minor": 7,
+          "cycle_pc": "0x00000000",
+          "classifier_reasoning": "Rule 2: step==T-1 \u2192 last_step (singleton)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": false
+        }
+      ],
+      "draft_verdict": "DROP_D40 \u2014 arm removed by D40 multi-cycle filter (Inc 0); no longer in universe; adjudicate whether to restore via cycle_idx (option a) or accept drop",
+      "open_questions_referenced": [
+        "Q6"
+      ]
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|pre_ecall",
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "pre_ecall",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": false,
+      "universe_step_count": 0,
+      "doc_step_count": 32,
+      "notes_from_expected_arms": "includes the ECALL cycle itself (major=8 allowed); does mutating the ECALL fetch produce a different failure class than mutating a pre-ECALL ALU fetch? (E2)",
+      "sample_steps": [
+        {
+          "step": 170,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 170 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": false
+        },
+        {
+          "step": 173,
+          "cycle_major": 7,
+          "cycle_minor": 3,
+          "cycle_pc": "0x0020612c",
+          "classifier_reasoning": "Rule 3: step 173 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": false
+        },
+        {
+          "step": 289,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 289 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": false
+        },
+        {
+          "step": 292,
+          "cycle_major": 7,
+          "cycle_minor": 3,
+          "cycle_pc": "0x00206174",
+          "classifier_reasoning": "Rule 3: step 292 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": false
+        },
+        {
+          "step": 368,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 368 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": false
+        }
+      ],
+      "draft_verdict": "DROP_D40 \u2014 arm removed by D40 multi-cycle filter (Inc 0); no longer in universe; adjudicate whether to restore via cycle_idx (option a) or accept drop",
+      "open_questions_referenced": [
+        "Q6"
+      ]
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|core_div",
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "core_div",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 23,
+      "doc_step_count": 23,
+      "notes_from_expected_arms": "",
+      "sample_steps": [
+        {
+          "step": 295,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 374,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 452,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 530,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 610,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 default: retain arm pending joint adjudication",
+      "open_questions_referenced": [
+        "Q1"
+      ]
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|last_step",
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "last_step",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": false,
+      "universe_step_count": 0,
+      "doc_step_count": 1,
+      "notes_from_expected_arms": "same uncertainty as FULL|last_step",
+      "sample_steps": [
+        {
+          "step": 3929,
+          "cycle_major": 7,
+          "cycle_minor": 7,
+          "cycle_pc": "0x00000000",
+          "classifier_reasoning": "Rule 2: step==T-1 \u2192 last_step (singleton)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": false
+        }
+      ],
+      "draft_verdict": "DROP_D40 \u2014 arm removed by D40 multi-cycle filter (Inc 0); no longer in universe; adjudicate whether to restore via cycle_idx (option a) or accept drop",
+      "open_questions_referenced": [
+        "Q1"
+      ]
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|pre_ecall",
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "pre_ecall",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": false,
+      "universe_step_count": 0,
+      "doc_step_count": 32,
+      "notes_from_expected_arms": "",
+      "sample_steps": [
+        {
+          "step": 170,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 170 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": false
+        },
+        {
+          "step": 173,
+          "cycle_major": 7,
+          "cycle_minor": 3,
+          "cycle_pc": "0x0020612c",
+          "classifier_reasoning": "Rule 3: step 173 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": false
+        },
+        {
+          "step": 289,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 289 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": false
+        },
+        {
+          "step": 292,
+          "cycle_major": 7,
+          "cycle_minor": 3,
+          "cycle_pc": "0x00206174",
+          "classifier_reasoning": "Rule 3: step 292 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": false
+        },
+        {
+          "step": 368,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 368 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": false
+        }
+      ],
+      "draft_verdict": "DROP_D40 \u2014 arm removed by D40 multi-cycle filter (Inc 0); no longer in universe; adjudicate whether to restore via cycle_idx (option a) or accept drop",
+      "open_questions_referenced": [
+        "Q1"
+      ]
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|core_div",
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "core_div",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 23,
+      "doc_step_count": 23,
+      "notes_from_expected_arms": "",
+      "sample_steps": [
+        {
+          "step": 295,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 374,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 452,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 530,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 610,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 default: retain arm pending joint adjudication",
+      "open_questions_referenced": [
+        "Q1"
+      ]
+    },
+    {
+      "arm_id": "LOAD_VAL_MOD|post_ecall",
+      "kind": "LOAD_VAL_MOD",
+      "zone": "post_ecall",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 2,
+      "doc_step_count": 2,
+      "notes_from_expected_arms": "**VERY RARE (2)**. Is this real or is the post_ecall window too narrow? Should LOAD_VAL_MOD also have arms in pre_ecall? (E3 \u2014 investigate why only 2)",
+      "sample_steps": [
+        {
+          "step": 1854,
+          "cycle_major": 5,
+          "cycle_minor": 2,
+          "cycle_pc": "0x00205ff8",
+          "classifier_reasoning": "Rule 3: step 1854 is e+1 after ECALL at step 1853 \u2192 post_ecall",
+          "decoded_instr": "Lw",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 2054,
+          "cycle_major": 5,
+          "cycle_minor": 2,
+          "cycle_pc": "0x00205ff8",
+          "classifier_reasoning": "Rule 3: step 2054 is e+1 after ECALL at step 2053 \u2192 post_ecall",
+          "decoded_instr": "Lw",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 zone policy question; needs joint review (see open questions)",
+      "open_questions_referenced": [
+        "Q5"
+      ]
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|step0",
+      "kind": "MEM_VAL_MOD",
+      "zone": "step0",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 1,
+      "doc_step_count": 1,
+      "notes_from_expected_arms": "step 0 has a mem write but the host I/O variance (D42) affects MEM_VAL targets; should we permit MEM_VAL_MOD on step 0 at all? (E2: does mutation actually take effect?)",
+      "sample_steps": [
+        {
+          "step": 0,
+          "cycle_major": 2,
+          "cycle_minor": 6,
+          "cycle_pc": "0xc0000004",
+          "classifier_reasoning": "Rule 1: step==0 \u2192 step0 (singleton; overrides all)",
+          "decoded_instr": "Auipc",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_E2 \u2014 categorization plausible; mutation-effect confirmation deferred to E2/B1",
+      "open_questions_referenced": [
+        "Q4",
+        "Q6"
+      ]
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|last_step",
+      "kind": "MEM_VAL_MOD",
+      "zone": "last_step",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 1,
+      "doc_step_count": 1,
+      "notes_from_expected_arms": "similar I/O concern",
+      "sample_steps": [
+        {
+          "step": 3929,
+          "cycle_major": 7,
+          "cycle_minor": 7,
+          "cycle_pc": "0x00000000",
+          "classifier_reasoning": "Rule 2: step==T-1 \u2192 last_step (singleton)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 default: retain arm pending joint adjudication",
+      "open_questions_referenced": [
+        "Q1"
+      ]
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|pre_ecall",
+      "kind": "MEM_VAL_MOD",
+      "zone": "pre_ecall",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 32,
+      "doc_step_count": 32,
+      "notes_from_expected_arms": "every pre_ecall step has mem txn \u2014 but ECALL steps' mem txns may be host-controlled (D42 allow-list); some may be non-targetable. (E2)",
+      "sample_steps": [
+        {
+          "step": 170,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 170 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 173,
+          "cycle_major": 7,
+          "cycle_minor": 3,
+          "cycle_pc": "0x0020612c",
+          "classifier_reasoning": "Rule 3: step 173 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 289,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 289 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 292,
+          "cycle_major": 7,
+          "cycle_minor": 3,
+          "cycle_pc": "0x00206174",
+          "classifier_reasoning": "Rule 3: step 292 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 368,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000154",
+          "classifier_reasoning": "Rule 3: step 368 is ECALL cycle (major=8) \u2192 pre_ecall (D13: ECALL cycle classified as pre_ecall boundary zone)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 default: retain arm pending joint adjudication",
+      "open_questions_referenced": [
+        "Q4",
+        "Q6"
+      ]
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|post_ecall",
+      "kind": "MEM_VAL_MOD",
+      "zone": "post_ecall",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 21,
+      "doc_step_count": 21,
+      "notes_from_expected_arms": "",
+      "sample_steps": [
+        {
+          "step": 171,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000158",
+          "classifier_reasoning": "Rule 3: step 171 is e+1 after ECALL at step 170 \u2192 post_ecall",
+          "decoded_instr": "AddI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 174,
+          "cycle_major": 2,
+          "cycle_minor": 4,
+          "cycle_pc": "0x00203f7c",
+          "classifier_reasoning": "Rule 3: step 174 is e+1 after ECALL at step 173 \u2192 post_ecall",
+          "decoded_instr": "JalR",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 290,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000158",
+          "classifier_reasoning": "Rule 3: step 290 is e+1 after ECALL at step 289 \u2192 post_ecall",
+          "decoded_instr": "AddI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 369,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000158",
+          "classifier_reasoning": "Rule 3: step 369 is e+1 after ECALL at step 368 \u2192 post_ecall",
+          "decoded_instr": "AddI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 447,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000158",
+          "classifier_reasoning": "Rule 3: step 447 is e+1 after ECALL at step 446 \u2192 post_ecall",
+          "decoded_instr": "AddI",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 default: retain arm pending joint adjudication",
+      "open_questions_referenced": [
+        "Q1"
+      ]
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|core_arithmetic",
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_arithmetic",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 848,
+      "doc_step_count": 848,
+      "notes_from_expected_arms": "only 848/2443 arith steps have mem txns. Why these and not the others? (E1 + E2)",
+      "sample_steps": [
+        {
+          "step": 1,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000008",
+          "classifier_reasoning": "Rule 6: fallback major=0 \u2192 core_arithmetic (assigned zone in trace: core_arithmetic)",
+          "decoded_instr": "AddI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 2,
+          "cycle_major": 2,
+          "cycle_minor": 5,
+          "cycle_pc": "0xc000000c",
+          "classifier_reasoning": "Rule 6: fallback major=2 \u2192 core_arithmetic (assigned zone in trace: core_arithmetic)",
+          "decoded_instr": "Lui",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 3,
+          "cycle_major": 2,
+          "cycle_minor": 5,
+          "cycle_pc": "0xc0000010",
+          "classifier_reasoning": "Rule 6: fallback major=2 \u2192 core_arithmetic (assigned zone in trace: core_arithmetic)",
+          "decoded_instr": "Lui",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 4,
+          "cycle_major": 2,
+          "cycle_minor": 6,
+          "cycle_pc": "0xc0000014",
+          "classifier_reasoning": "Rule 6: fallback major=2 \u2192 core_arithmetic (assigned zone in trace: core_arithmetic)",
+          "decoded_instr": "Auipc",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 5,
+          "cycle_major": 0,
+          "cycle_minor": 7,
+          "cycle_pc": "0xc0000018",
+          "classifier_reasoning": "Rule 6: fallback major=0 \u2192 core_arithmetic (assigned zone in trace: core_arithmetic)",
+          "decoded_instr": "AddI",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 rare arm; enumerate why steps qualify/don't qualify",
+      "open_questions_referenced": [
+        "Q1",
+        "Q6"
+      ]
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|core_branch",
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_branch",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 24,
+      "doc_step_count": 24,
+      "notes_from_expected_arms": "branch steps with mem txns?? branches don't load/store. Are these branch instructions doing memory access via JAL/JALR PC update, or is this an unexpected classification? (E1 + E3)",
+      "sample_steps": [
+        {
+          "step": 19,
+          "cycle_major": 7,
+          "cycle_minor": 3,
+          "cycle_pc": "0x00203700",
+          "classifier_reasoning": "Rule 6: fallback major=7 \u2192 core_branch (assigned zone in trace: core_branch)",
+          "decoded_instr": "Mret",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 157,
+          "cycle_major": 7,
+          "cycle_minor": 2,
+          "cycle_pc": "0xc0000070",
+          "classifier_reasoning": "Rule 6: fallback major=7 \u2192 core_branch (assigned zone in trace: core_branch)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 276,
+          "cycle_major": 7,
+          "cycle_minor": 2,
+          "cycle_pc": "0xc0000070",
+          "classifier_reasoning": "Rule 6: fallback major=7 \u2192 core_branch (assigned zone in trace: core_branch)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 355,
+          "cycle_major": 7,
+          "cycle_minor": 2,
+          "cycle_pc": "0xc0000070",
+          "classifier_reasoning": "Rule 6: fallback major=7 \u2192 core_branch (assigned zone in trace: core_branch)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 433,
+          "cycle_major": 7,
+          "cycle_minor": 2,
+          "cycle_pc": "0xc0000070",
+          "classifier_reasoning": "Rule 6: fallback major=7 \u2192 core_branch (assigned zone in trace: core_branch)",
+          "decoded_instr": "Eany",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_E1 \u2014 likely JAL/JALR fetch txn at major=7 steps; confirm via E1 mismatches",
+      "open_questions_referenced": [
+        "Q1",
+        "Q4"
+      ]
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|core_mul",
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_mul",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 34,
+      "doc_step_count": 34,
+      "notes_from_expected_arms": "subset of mul steps with mem txns \u2014 same question as core_arithmetic above. (E1)",
+      "sample_steps": [
+        {
+          "step": 160,
+          "cycle_major": 3,
+          "cycle_minor": 1,
+          "cycle_pc": "0xc000007c",
+          "classifier_reasoning": "Rule 6: fallback major=3 \u2192 core_mul (assigned zone in trace: core_mul)",
+          "decoded_instr": "SllI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 168,
+          "cycle_major": 3,
+          "cycle_minor": 1,
+          "cycle_pc": "0xc0000148",
+          "classifier_reasoning": "Rule 6: fallback major=3 \u2192 core_mul (assigned zone in trace: core_mul)",
+          "decoded_instr": "SllI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 279,
+          "cycle_major": 3,
+          "cycle_minor": 1,
+          "cycle_pc": "0xc000007c",
+          "classifier_reasoning": "Rule 6: fallback major=3 \u2192 core_mul (assigned zone in trace: core_mul)",
+          "decoded_instr": "SllI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 287,
+          "cycle_major": 3,
+          "cycle_minor": 1,
+          "cycle_pc": "0xc0000148",
+          "classifier_reasoning": "Rule 6: fallback major=3 \u2192 core_mul (assigned zone in trace: core_mul)",
+          "decoded_instr": "SllI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 358,
+          "cycle_major": 3,
+          "cycle_minor": 1,
+          "cycle_pc": "0xc000007c",
+          "classifier_reasoning": "Rule 6: fallback major=3 \u2192 core_mul (assigned zone in trace: core_mul)",
+          "decoded_instr": "SllI",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 default: retain arm pending joint adjudication",
+      "open_questions_referenced": [
+        "Q1"
+      ]
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|core_div",
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_div",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 1,
+      "doc_step_count": 1,
+      "notes_from_expected_arms": "the famous one \u2014 step 3921 only. We accept this empirically; is the mem txn at this step actually mutable? (E2)",
+      "sample_steps": [
+        {
+          "step": 3921,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0xc00000dc",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_E2 \u2014 categorization plausible; mutation-effect confirmation deferred to E2/B1",
+      "open_questions_referenced": [
+        "Q6"
+      ]
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|step0",
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "step0",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 1,
+      "doc_step_count": 1,
+      "notes_from_expected_arms": "step 0 has reg writes from POSEIDON setup; PRE_EXEC_REG_MOD assumes a normal RV32IM instruction. Does the mutation actually achieve its semantic purpose at step 0? (E2)",
+      "sample_steps": [
+        {
+          "step": 0,
+          "cycle_major": 2,
+          "cycle_minor": 6,
+          "cycle_pc": "0xc0000004",
+          "classifier_reasoning": "Rule 1: step==0 \u2192 step0 (singleton; overrides all)",
+          "decoded_instr": "Auipc",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 default: retain arm pending joint adjudication",
+      "open_questions_referenced": [
+        "Q6"
+      ]
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|post_ecall",
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "post_ecall",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 14,
+      "doc_step_count": 14,
+      "notes_from_expected_arms": "only 14 of 32 post_ecall steps have a real PRE_EXEC_REG target. Why? (E3)",
+      "sample_steps": [
+        {
+          "step": 174,
+          "cycle_major": 2,
+          "cycle_minor": 4,
+          "cycle_pc": "0x00203f7c",
+          "classifier_reasoning": "Rule 3: step 174 is e+1 after ECALL at step 173 \u2192 post_ecall",
+          "decoded_instr": "JalR",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 293,
+          "cycle_major": 0,
+          "cycle_minor": 0,
+          "cycle_pc": "0x00206178",
+          "classifier_reasoning": "Rule 3: step 293 is e+1 after ECALL at step 292 \u2192 post_ecall",
+          "decoded_instr": "Add",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 372,
+          "cycle_major": 0,
+          "cycle_minor": 0,
+          "cycle_pc": "0x00206178",
+          "classifier_reasoning": "Rule 3: step 372 is e+1 after ECALL at step 371 \u2192 post_ecall",
+          "decoded_instr": "Add",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 450,
+          "cycle_major": 0,
+          "cycle_minor": 0,
+          "cycle_pc": "0x00206178",
+          "classifier_reasoning": "Rule 3: step 450 is e+1 after ECALL at step 449 \u2192 post_ecall",
+          "decoded_instr": "Add",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 528,
+          "cycle_major": 0,
+          "cycle_minor": 0,
+          "cycle_pc": "0x00206178",
+          "classifier_reasoning": "Rule 3: step 528 is e+1 after ECALL at step 527 \u2192 post_ecall",
+          "decoded_instr": "Add",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 rare arm; enumerate why steps qualify/don't qualify",
+      "open_questions_referenced": [
+        "Q1"
+      ]
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|core_div",
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "core_div",
+      "current_marker": "\ud83d\udfe1",
+      "in_current_universe": true,
+      "universe_step_count": 22,
+      "doc_step_count": 22,
+      "notes_from_expected_arms": "",
+      "sample_steps": [
+        {
+          "step": 295,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 374,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 452,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 530,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        },
+        {
+          "step": 610,
+          "cycle_major": 4,
+          "cycle_minor": 2,
+          "cycle_pc": "0x002061a8",
+          "classifier_reasoning": "Rule 6: fallback major=4 \u2192 core_div (assigned zone in trace: core_div)",
+          "decoded_instr": "SrlI",
+          "in_arm_step_list": true
+        }
+      ],
+      "draft_verdict": "KEEP_PENDING_REVIEW \u2014 default: retain arm pending joint adjudication",
+      "open_questions_referenced": [
+        "Q1"
+      ]
+    }
+  ]
+}

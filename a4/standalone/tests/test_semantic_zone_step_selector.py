@@ -6,8 +6,10 @@ from typing import List
 
 import pytest
 
-from a4.core.trace_parser import A4CycleInfo
+from a4.core.trace_parser import A4CycleInfo, A4AllTxn
 from a4.core.inspection_data import InspectionData
+
+_USER_REGS = 1073725472
 from a4.standalone.semantic_arm_universe import SemanticArmUniverse
 from a4.standalone.step_selector import SemanticZoneStepSelector
 
@@ -19,8 +21,22 @@ def _make_cycle(step: int, major: int) -> A4CycleInfo:
     )
 
 
+def _reg_write(step: int, reg_idx: int = 10, word: int = 1) -> A4AllTxn:
+    return A4AllTxn(
+        txn_idx=step * 100 + reg_idx,
+        step=step,
+        txn_type="reg",
+        addr=_USER_REGS + reg_idx,
+        cycle=1,
+        word=word,
+        prev_cycle=0,
+        prev_word=0,
+    )
+
+
 def _build_data(cycles: List[A4CycleInfo]) -> InspectionData:
-    return InspectionData(cycles=cycles, all_txns=[], reg_txns=[])
+    txns = [_reg_write(2), _reg_write(3)]
+    return InspectionData(cycles=cycles, all_txns=txns, reg_txns=txns)
 
 
 @pytest.fixture

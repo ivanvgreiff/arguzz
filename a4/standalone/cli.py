@@ -56,6 +56,8 @@ def cmd_fuzz(args):
         verbose=True,
         b_count_override=args.b_count,
         telemetry_level=args.telemetry_level,
+        debug_coverage_delta_path=args.debug_coverage_delta,
+        debug_bandit_trace_path=args.debug_bandit_trace,
     ) as fuzzer:
         # Run campaign
         stats = fuzzer.run_campaign(args.num)
@@ -225,6 +227,20 @@ Examples:
              "full (all v2 tables; default for IV.POS.7 selectors)",
     )
     fuzz_parser.add_argument("--db", default="./a4_coverage.db", help="Coverage database path")
+    fuzz_parser.add_argument(
+        "--debug-coverage-delta",
+        dest="debug_coverage_delta",
+        default=None,
+        metavar="PATH",
+        help="B6 audit-only: write per-mutation coverage-delta JSONL (default OFF)",
+    )
+    fuzz_parser.add_argument(
+        "--debug-bandit-trace",
+        dest="debug_bandit_trace",
+        default=None,
+        metavar="PATH",
+        help="B4 audit-only: write per-mutation bandit trace JSONL (default OFF)",
+    )
     fuzz_parser.add_argument("host_args", nargs="*", help="Arguments for risc0-host (after --)")
     
     # Inspect command

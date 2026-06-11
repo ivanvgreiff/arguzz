@@ -1,0 +1,62 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    }
+  },
+  "seed": 999,
+  "check1_db": {
+    "n_rows": 21,
+    "n_with_address_region": 10,
+    "distinct_regions": [
+      "user",
+      "zero_page"
+    ],
+    "unknown_violations": [],
+    "pass": true
+  },
+  "check2_round_trip": {
+    "address_region_cases": [
+      {
+        "addr": "0xffff0080",
+        "expected_region": "user_regs",
+        "actual_region": "user_regs",
+        "pass": true
+      },
+      {
+        "addr": "0x42000020",
+        "expected_region": "user",
+        "actual_region": "user",
+        "pass": true
+      },
+      {
+        "addr": "0xc0000004",
+        "expected_region": "kernel",
+        "actual_region": "kernel",
+        "pass": true
+      },
+      {
+        "addr": "0x00203f7c",
+        "expected_region": "user",
+        "actual_region": "user",
+        "pass": true
+      }
+    ],
+    "synthetic_extractor": {
+      "pass": true,
+      "regions": [
+        "user",
+        "user_regs"
+      ]
+    },
+    "pass": true
+  },
+  "verdict": "PASS"
+}

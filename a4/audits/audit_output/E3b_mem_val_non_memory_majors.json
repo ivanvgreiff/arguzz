@@ -1,0 +1,92 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    }
+  },
+  "audit_id": "E3b",
+  "guest": "c0c1_differential_guest",
+  "host_args": [
+    "--in1",
+    "5",
+    "--in4",
+    "10"
+  ],
+  "arms_analyzed": [
+    "MEM_VAL_MOD|core_arithmetic",
+    "MEM_VAL_MOD|core_mul"
+  ],
+  "per_arm": {
+    "MEM_VAL_MOD|core_arithmetic": {
+      "total_steps": 636,
+      "total_mem_txns": 902,
+      "txn_type_breakdown": {
+        "other_mem_read": 361,
+        "other_mem_write": 541
+      },
+      "addr_region_breakdown": {
+        "user_code_0x00200000+": 361,
+        "register_file_0xffff0000+": 541
+      },
+      "examples": [
+        {
+          "step": 26,
+          "primary_decode_pc": "0x00203f54",
+          "txn_idx": 15510,
+          "addr": "0x00203718",
+          "txn_type": "other_mem_read",
+          "interpretation": "MEM_VAL target at user_code_0x00200000+; major=2 minor=4"
+        },
+        {
+          "step": 36,
+          "primary_decode_pc": "0x00201048",
+          "txn_idx": 15552,
+          "addr": "0x00203f78",
+          "txn_type": "other_mem_read",
+          "interpretation": "MEM_VAL target at user_code_0x00200000+; major=2 minor=4"
+        },
+        {
+          "step": 42,
+          "primary_decode_pc": "0x00201060",
+          "txn_idx": 15580,
+          "addr": "0xffff0180",
+          "txn_type": "other_mem_write",
+          "interpretation": "MEM_VAL target at register_file_0xffff0000+; major=1 minor=6"
+        },
+        {
+          "step": 49,
+          "primary_decode_pc": "0x002031fc",
+          "txn_idx": 15604,
+          "addr": "0x00201078",
+          "txn_type": "other_mem_read",
+          "interpretation": "MEM_VAL target at user_code_0x00200000+; major=2 minor=4"
+        },
+        {
+          "step": 50,
+          "primary_decode_pc": "0x00203200",
+          "txn_idx": 15611,
+          "addr": "0xffff0180",
+          "txn_type": "other_mem_write",
+          "interpretation": "MEM_VAL target at register_file_0xffff0000+; major=1 minor=5"
+        }
+      ],
+      "interpretation": "Most targets are register-file or user-data mem txns co-located with ALU steps \u2014 RAM consistency / permutation proof witnesses, not standalone loads."
+    },
+    "MEM_VAL_MOD|core_mul": {
+      "total_steps": 0,
+      "total_mem_txns": 0,
+      "txn_type_breakdown": {},
+      "addr_region_breakdown": {},
+      "examples": [],
+      "interpretation": "MUL-zone mem txns are sparse co-located memory witnesses during multiply micro-ops; subset of steps with mem activity at user PC."
+    }
+  },
+  "verdict": "Targets are real mem-txn mutation sites (register-file and user-data consistency witnesses), not scratch-buffer phantoms. Keep arms; restrict D42 nondet addresses in Inc 2+."
+}

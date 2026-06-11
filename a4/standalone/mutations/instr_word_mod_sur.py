@@ -733,6 +733,7 @@ def create_config(
             "description": f"INSTR_WORD_MOD_SUR: Mutate {surgical_field.value} field",
             "fetch_word_addr": target.fetch_addr,
             "fetch_byte_addr": f"0x{target.fetch_addr * 4:08x}",
+            "original_value": target.original_word,
             "original_word": f"0x{target.original_word:08x}",
             "mutated_word": f"0x{mutated_value:08x}",
             "disasm_original": target.instruction.disassemble(),

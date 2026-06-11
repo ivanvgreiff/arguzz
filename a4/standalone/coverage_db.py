@@ -101,6 +101,7 @@ class CoverageDB:
                 step INTEGER NOT NULL,
                 txn_idx INTEGER,
                 mutated_value INTEGER NOT NULL,
+                original_value INTEGER NOT NULL DEFAULT 0,
                 config_json TEXT NOT NULL,
                 executed_at TEXT NOT NULL,
                 num_failures INTEGER DEFAULT 0,
@@ -108,6 +109,12 @@ class CoverageDB:
                 FOREIGN KEY (campaign_id) REFERENCES campaigns(id)
             )
         """)
+        # Phase 7d (P2): add original_value to legacy DBs (pre-mutation txn.word).
+        mut_cols = {row[1] for row in cursor.execute("PRAGMA table_info(mutations)")}
+        if "original_value" not in mut_cols:
+            cursor.execute(
+                "ALTER TABLE mutations ADD COLUMN original_value INTEGER NOT NULL DEFAULT 0"
+            )
         
         # Failures table
         cursor.execute("""
@@ -696,7 +703,8 @@ class CoverageDB:
         mutated_value: int,
         config: dict,
         txn_idx: Optional[int] = None,
-        verifier_accepted: bool = False
+        verifier_accepted: bool = False,
+        original_value: int = 0,
     ) -> int:
         """
         Record a mutation attempt.
@@ -709,6 +717,7 @@ class CoverageDB:
             config: Full config dict (will be JSON serialized)
             txn_idx: Transaction index (if applicable)
             verifier_accepted: Whether the verifier accepted the proof
+            original_value: Pre-mutation txn.word (or encoded major/minor for INSTR_TYPE_MOD)
             
         Returns:
             Mutation ID
@@ -716,10 +725,11 @@ class CoverageDB:
         cursor = self.conn.cursor()
         cursor.execute("""
             INSERT INTO mutations 
-            (campaign_id, kind, step, txn_idx, mutated_value, config_json, executed_at, verifier_accepted)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (campaign_id, kind, step, txn_idx, mutated_value, original_value,
+             config_json, executed_at, verifier_accepted)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            campaign_id, kind, step, txn_idx, mutated_value,
+            campaign_id, kind, step, txn_idx, mutated_value, int(original_value),
             json.dumps(config), datetime.now().isoformat(), int(verifier_accepted)
         ))
         

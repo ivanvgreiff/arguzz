@@ -18,23 +18,30 @@ from a4.standalone import structural_cells as sc
 # =============================================================================
 
 
-def test_17_zones_present():
-    """Pro §7.A lists exactly 17 semantic zones; we should match."""
-    assert len(sz.SEMANTIC_ZONES) == 17
+def test_19_zones_present():
+    """Pro §7.A base 17 + D50 core_shr + D54 kernel_other."""
+    assert len(sz.SEMANTIC_ZONES) == 19
 
 
 def test_zones_match_pro_spec():
-    """All 17 zone names match ProG_Report_2.md §7.A verbatim."""
     expected = {
         "step0", "last_step",
         "pre_ecall", "post_ecall",
         "pre_mret", "post_mret",
         "pre_halt", "post_halt",
         "core_arithmetic", "core_memory_load", "core_memory_store",
-        "core_branch", "core_mul", "core_div",
+        "core_branch", "core_mul", "core_div", "core_shr",
         "core_sha", "core_poseidon", "core_other",
+        "kernel_other",
     }
     assert set(sz.SEMANTIC_ZONES) == expected
+
+
+def test_major_minor_to_core_zone_d50():
+    assert sz.major_minor_to_core_zone(4, 0) == "core_shr"
+    assert sz.major_minor_to_core_zone(4, 3) == "core_shr"
+    assert sz.major_minor_to_core_zone(4, 4) == "core_div"
+    assert sz.major_minor_to_core_zone(4, 7) == "core_div"
 
 
 def test_singleton_and_boundary_zones():

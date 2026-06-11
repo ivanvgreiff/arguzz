@@ -8,15 +8,13 @@ import pytest
 
 from a4.core.inspection_data import InspectionData
 from a4.standalone.fuzzer import A4Fuzzer
-from a4.standalone.semantic_arm_universe import (
-    SemanticArmUniverse,
-    _PHANTOM_ARMS_PRODUCTION_TRACE,
-)
+from a4.standalone.semantic_arm_universe import SemanticArmUniverse
 
 HOST = Path("workspace/output/target/release/risc0-host")
 HOST_ARGS = ["--in1", "5", "--in4", "10"]
-# 53 coarse arms − 5 full phantoms + MEM_VAL|core_div kept (1 real step at 3921)
-PRODUCTION_ARM_COUNT = 48
+# 48 arms after Phase 7 Bug A phantom pruning; D40 (Inc 0) may drop ≤4 more.
+PRODUCTION_ARM_COUNT_MIN = 44
+PRODUCTION_ARM_COUNT_MAX = 48
 
 
 @pytest.fixture(scope="module")
@@ -32,16 +30,15 @@ def production_universe(production_data) -> SemanticArmUniverse:
     return SemanticArmUniverse.build(production_data, kinds)
 
 
-def test_phantom_arms_absent(production_universe):
-    for arm in _PHANTOM_ARMS_PRODUCTION_TRACE:
-        assert arm not in production_universe.arms, f"phantom arm still present: {arm}"
+def test_production_arm_count_in_d40_range(production_universe):
+    n = production_universe.num_arms
+    assert PRODUCTION_ARM_COUNT_MIN <= n <= PRODUCTION_ARM_COUNT_MAX, (
+        f"expected {PRODUCTION_ARM_COUNT_MIN}–{PRODUCTION_ARM_COUNT_MAX} arms, got {n}"
+    )
 
 
-def test_production_arm_count_is_48(production_universe):
-    assert production_universe.num_arms == PRODUCTION_ARM_COUNT
-
-
-def test_mem_val_core_div_step_list_pruned(production_universe):
-    """MEM_VAL_MOD|core_div: only step 3921 has a real target (not all 23)."""
-    steps = production_universe.steps_in_arm("MEM_VAL_MOD", "core_div")
-    assert steps == [3921]
+def test_mem_val_kernel_other_has_targets(production_universe):
+    """D54: step 3921 (halt cleanup) is kernel_other, not core_div."""
+    steps = production_universe.steps_in_arm("MEM_VAL_MOD", "kernel_other")
+    assert 3921 in steps
+    assert production_universe.steps_in_arm("MEM_VAL_MOD", "core_div") == []

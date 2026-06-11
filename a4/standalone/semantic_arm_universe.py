@@ -46,18 +46,43 @@ _MUTATION_MODULES = {
     "INSTR_WORD_MOD_SUR": instr_word_mod_sur,
 }
 
-# Arms that were phantom in Phase 7 §1.4.2 (coarse filter only, zero real targets).
-# MEM_VAL_MOD|core_div excluded: step 3921 has a real target on production trace.
-_PHANTOM_ARMS_PRODUCTION_TRACE = frozenset({
-    ("COMP_OUT_MOD", "pre_ecall"),
-    ("COMP_OUT_MOD", "step0"),
-    ("INSTR_WORD_MOD_FULL", "step0"),
-    ("INSTR_WORD_MOD_SUR", "step0"),
-    ("PRE_EXEC_REG_MOD", "pre_ecall"),
+def _cycle_matches_kind_filter(kind: str, cycle, data: "InspectionData") -> bool:
+    """True if this cycle would contribute the step to get_valid_steps_for_kind."""
+    if kind == "COMP_OUT_MOD":
+        return cycle.major in (0, 1, 2, 3, 4)
+    if kind == "LOAD_VAL_MOD":
+        return cycle.major == 5
+    if kind == "STORE_OUT_MOD":
+        return cycle.major == 6
+    if kind in ("PRE_EXEC_REG_MOD", "INSTR_TYPE_MOD"):
+        return cycle.major <= 6
+    if kind == "MEM_VAL_MOD":
+        return cycle.step in data._step_to_mem_txns
+    if kind in ("INSTR_WORD_MOD_FULL", "INSTR_WORD_MOD_SUR"):
+        return cycle.major <= 6 or cycle.major == 8
+    return True
+
+
+def _matching_cycles_at_step(kind: str, step: int, data: "InspectionData") -> int:
+    """Count cycles at step that match the kind's major/txn filter (D40)."""
+    return sum(
+        1 for c in data.cycles
+        if c.step == step and _cycle_matches_kind_filter(kind, c, data)
+    )
+
+
+_MAJOR_FILTER_KINDS = frozenset({
+    "COMP_OUT_MOD", "LOAD_VAL_MOD", "STORE_OUT_MOD",
+    "PRE_EXEC_REG_MOD", "INSTR_TYPE_MOD",
+    "INSTR_WORD_MOD_FULL", "INSTR_WORD_MOD_SUR",
 })
 
 
 def _step_has_real_target(kind: str, step: int, data: "InspectionData") -> bool:
+    # D40 option (b): drop multi-cycle steps for major-filter kinds only.
+    # MEM_VAL_MOD has no major filter (D40 brief: "match the kind's major filter").
+    if kind in _MAJOR_FILTER_KINDS and _matching_cycles_at_step(kind, step, data) > 1:
+        return False
     mod = _MUTATION_MODULES.get(kind)
     if mod is None:
         return True

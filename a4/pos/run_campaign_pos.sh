@@ -88,6 +88,8 @@ A4_HOST_ARGS=$(pos_get_variable A4_HOST_ARGS 2>/dev/null || echo "--in1 5 --in4 
 A4_RUN_ID=$(pos_get_variable A4_RUN_ID 2>/dev/null || echo "${A4_STRATEGY}_seed${A4_SEED}_n${A4_NUM}_$(date +%s)")
 A4_NO_INTERNET=$(pos_get_variable A4_NO_INTERNET 2>/dev/null || echo "0")
 A4_TELEMETRY_LEVEL=$(pos_get_variable A4_TELEMETRY_LEVEL 2>/dev/null || echo "")
+A4_RUN_SUFFIX=$(pos_get_variable A4_RUN_SUFFIX 2>/dev/null || echo "")
+A4_DEBUG_BANDIT_TRACE=$(pos_get_variable A4_DEBUG_BANDIT_TRACE 2>/dev/null || echo "0")
 A4_NODE=$(pos_get_variable hostname 2>/dev/null || hostname)
 
 # ----- 2. workdir + result paths (all ABSOLUTE) -------------------------
@@ -111,9 +113,15 @@ fi
 RESULTS="/root/results_${A4_RUN_ID}"
 mkdir -p "$RESULTS"
 
-LOG="$RESULTS/${A4_CAMPAIGN_NAME}_${A4_STRATEGY}_seed${A4_SEED}_n${A4_NUM}.log"
-DB="$RESULTS/${A4_CAMPAIGN_NAME}_${A4_STRATEGY}_seed${A4_SEED}_n${A4_NUM}.db"
-META="$RESULTS/${A4_CAMPAIGN_NAME}_${A4_STRATEGY}_seed${A4_SEED}_n${A4_NUM}.meta.json"
+_NAME_SUFFIX=""
+if [[ -n "$A4_RUN_SUFFIX" ]]; then
+    _NAME_SUFFIX="_${A4_RUN_SUFFIX}"
+fi
+_LOG_STEM="${A4_CAMPAIGN_NAME}_${A4_STRATEGY}_seed${A4_SEED}_n${A4_NUM}${_NAME_SUFFIX}"
+LOG="$RESULTS/${_LOG_STEM}.log"
+DB="$RESULTS/${_LOG_STEM}.db"
+TRACE="$RESULTS/${_LOG_STEM}.bandit_trace.jsonl"
+META="$RESULTS/${_LOG_STEM}.meta.json"
 
 # ----- 3. upload-on-EXIT trap -------------------------------------------
 EXIT_CODE_SAVED=255
@@ -207,6 +215,9 @@ if [[ "$SELECTOR" = "bandit" ]]; then
 fi
 if [[ -n "$A4_TELEMETRY_LEVEL" ]]; then
     CMD+=(--telemetry-level "$A4_TELEMETRY_LEVEL")
+fi
+if [[ "$A4_DEBUG_BANDIT_TRACE" = "1" ]]; then
+    CMD+=(--debug-bandit-trace "$TRACE")
 fi
 CMD+=(--)
 # Word-split A4_HOST_ARGS into individual args after --

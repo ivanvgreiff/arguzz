@@ -1,0 +1,1372 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    }
+  },
+  "host_args": [
+    "--in1",
+    "5",
+    "--in4",
+    "10"
+  ],
+  "num_arms": 48,
+  "summary": {
+    "n_arms": 48,
+    "n_arms_success_rate_lt_1_0": 0,
+    "n_arms_zero_targets": 0
+  },
+  "per_arm": [
+    {
+      "arm_id": "COMP_OUT_MOD|core_arithmetic",
+      "kind": "COMP_OUT_MOD",
+      "zone": "core_arithmetic",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "COMP_OUT_MOD",
+          "txn_idx": 28186,
+          "original_value": 4294967283,
+          "step": 3042
+        },
+        {
+          "kind": "COMP_OUT_MOD",
+          "txn_idx": 17532,
+          "original_value": 0,
+          "step": 500
+        },
+        {
+          "kind": "COMP_OUT_MOD",
+          "txn_idx": 15923,
+          "original_value": 989155328,
+          "step": 121
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "COMP_OUT_MOD|core_mul",
+      "kind": "COMP_OUT_MOD",
+      "zone": "core_mul",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "COMP_OUT_MOD",
+          "txn_idx": 26126,
+          "original_value": 3741319168,
+          "step": 2552
+        },
+        {
+          "kind": "COMP_OUT_MOD",
+          "txn_idx": 26077,
+          "original_value": 14876672,
+          "step": 2540
+        },
+        {
+          "kind": "COMP_OUT_MOD",
+          "txn_idx": 26032,
+          "original_value": 4915200,
+          "step": 2529
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "COMP_OUT_MOD|core_shr",
+      "kind": "COMP_OUT_MOD",
+      "zone": "core_shr",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "COMP_OUT_MOD",
+          "txn_idx": 18000,
+          "original_value": 1,
+          "step": 610
+        },
+        {
+          "kind": "COMP_OUT_MOD",
+          "txn_idx": 17666,
+          "original_value": 1,
+          "step": 530
+        },
+        {
+          "kind": "COMP_OUT_MOD",
+          "txn_idx": 31371,
+          "original_value": 1,
+          "step": 3766
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "COMP_OUT_MOD|post_ecall",
+      "kind": "COMP_OUT_MOD",
+      "zone": "post_ecall",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "COMP_OUT_MOD",
+          "txn_idx": 17004,
+          "original_value": 4,
+          "step": 372
+        },
+        {
+          "kind": "COMP_OUT_MOD",
+          "txn_idx": 19297,
+          "original_value": 4,
+          "step": 919
+        },
+        {
+          "kind": "COMP_OUT_MOD",
+          "txn_idx": 18319,
+          "original_value": 4,
+          "step": 686
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|core_arithmetic",
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "core_arithmetic",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 0,
+          "original_minor": 7,
+          "step": 257
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 0,
+          "original_minor": 7,
+          "step": 245
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 2,
+          "original_minor": 4,
+          "step": 705
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|core_memory_load",
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "core_memory_load",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 5,
+          "original_minor": 3,
+          "step": 1786
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 5,
+          "original_minor": 2,
+          "step": 1867
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 5,
+          "original_minor": 2,
+          "step": 3397
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|core_memory_store",
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "core_memory_store",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 6,
+          "original_minor": 2,
+          "step": 100
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 6,
+          "original_minor": 2,
+          "step": 3741
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 6,
+          "original_minor": 2,
+          "step": 1597
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|core_mul",
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "core_mul",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 3,
+          "original_minor": 2,
+          "step": 3073
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 3,
+          "original_minor": 1,
+          "step": 2529
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 3,
+          "original_minor": 1,
+          "step": 3201
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|core_shr",
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "core_shr",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 4,
+          "original_minor": 2,
+          "step": 3591
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 4,
+          "original_minor": 2,
+          "step": 921
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 4,
+          "original_minor": 2,
+          "step": 295
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|kernel_other",
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "kernel_other",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 5,
+          "original_minor": 2,
+          "step": 519
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 3,
+          "original_minor": 1,
+          "step": 2480
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 3,
+          "original_minor": 1,
+          "step": 1075
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|post_ecall",
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "post_ecall",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 2,
+          "original_minor": 2,
+          "step": 842
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 2,
+          "original_minor": 2,
+          "step": 529
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 2,
+          "original_minor": 2,
+          "step": 687
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|pre_ecall",
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "pre_ecall",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 0,
+          "original_minor": 7,
+          "step": 995
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 0,
+          "original_minor": 7,
+          "step": 446
+        },
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 0,
+          "original_minor": 7,
+          "step": 368
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|step0",
+      "kind": "INSTR_TYPE_MOD",
+      "zone": "step0",
+      "steps_tested": 1,
+      "targets_found": 1,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_TYPE_MOD",
+          "original_major": 2,
+          "original_minor": 6,
+          "step": 0
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|core_arithmetic",
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "core_arithmetic",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 18480,
+          "original_word": 394643,
+          "step": 726
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 25988,
+          "original_word": 16535,
+          "step": 2518
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 25454,
+          "original_word": 32871,
+          "step": 2411
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|core_memory_load",
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "core_memory_load",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 23795,
+          "original_word": 345731,
+          "step": 2013
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 18396,
+          "original_word": 16852227,
+          "step": 706
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 28101,
+          "original_word": 468355,
+          "step": 3022
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|core_memory_store",
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "core_memory_store",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 30955,
+          "original_word": 17211939,
+          "step": 3669
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 19442,
+          "original_word": 8463395,
+          "step": 956
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 26956,
+          "original_word": 16852515,
+          "step": 2749
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|core_mul",
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "core_mul",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 18029,
+          "original_word": 2397331,
+          "step": 618
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 26164,
+          "original_word": 17176083,
+          "step": 2562
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 26303,
+          "original_word": 17208979,
+          "step": 2596
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|core_shr",
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "core_shr",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 30642,
+          "original_word": 2578195,
+          "step": 3591
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 18648,
+          "original_word": 2446739,
+          "step": 765
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 17336,
+          "original_word": 2446739,
+          "step": 452
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|kernel_other",
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "kernel_other",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 16098,
+          "original_word": 230686831,
+          "step": 163
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 32059,
+          "original_word": 7546403,
+          "step": 3911
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 18559,
+          "original_word": 21112067,
+          "step": 747
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|post_ecall",
+      "kind": "INSTR_WORD_MOD_FULL",
+      "zone": "post_ecall",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 19294,
+          "original_word": 17106995,
+          "step": 919
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 17005,
+          "original_word": 48592483,
+          "step": 373
+        },
+        {
+          "kind": "INSTR_WORD_MOD_FULL",
+          "txn_idx": 18640,
+          "original_word": 17106995,
+          "step": 763
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|core_arithmetic",
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "core_arithmetic",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 18548,
+          "original_word": 44561507,
+          "step": 744
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 27037,
+          "original_word": 362083,
+          "step": 2767
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 23499,
+          "original_word": 1410451,
+          "step": 1939
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|core_memory_load",
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "core_memory_load",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 27313,
+          "original_word": 62989571,
+          "step": 2829
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 26156,
+          "original_word": 17123075,
+          "step": 2560
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 21785,
+          "original_word": 345731,
+          "step": 1524
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|core_memory_store",
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "core_memory_store",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 26916,
+          "original_word": 49358371,
+          "step": 2741
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 26748,
+          "original_word": 179380259,
+          "step": 2703
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 22232,
+          "original_word": 42017827,
+          "step": 1632
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|core_mul",
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "core_mul",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 26119,
+          "original_word": 17176083,
+          "step": 2551
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 17844,
+          "original_word": 2495251,
+          "step": 575
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 25019,
+          "original_word": 9770515,
+          "step": 2309
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|core_shr",
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "core_shr",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 30218,
+          "original_word": 6772499,
+          "step": 3513
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 18975,
+          "original_word": 2446739,
+          "step": 843
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 18324,
+          "original_word": 2446739,
+          "step": 688
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|kernel_other",
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "kernel_other",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 25805,
+          "original_word": 2202470163,
+          "step": 2500
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 23107,
+          "original_word": 42083715,
+          "step": 1846
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 18918,
+          "original_word": 42083715,
+          "step": 833
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|post_ecall",
+      "kind": "INSTR_WORD_MOD_SUR",
+      "zone": "post_ecall",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 18640,
+          "original_word": 17106995,
+          "step": 763
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 19628,
+          "original_word": 17106995,
+          "step": 999
+        },
+        {
+          "kind": "INSTR_WORD_MOD_SUR",
+          "txn_idx": 16674,
+          "original_word": 48592483,
+          "step": 294
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "LOAD_VAL_MOD|core_memory_load",
+      "kind": "LOAD_VAL_MOD",
+      "zone": "core_memory_load",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "LOAD_VAL_MOD",
+          "txn_idx": 23163,
+          "original_value": 2097316,
+          "step": 1856
+        },
+        {
+          "kind": "LOAD_VAL_MOD",
+          "txn_idx": 17726,
+          "original_value": 0,
+          "step": 545
+        },
+        {
+          "kind": "LOAD_VAL_MOD",
+          "txn_idx": 24538,
+          "original_value": 2104988,
+          "step": 2193
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "LOAD_VAL_MOD|post_ecall",
+      "kind": "LOAD_VAL_MOD",
+      "zone": "post_ecall",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "LOAD_VAL_MOD",
+          "txn_idx": 23977,
+          "original_value": 2097312,
+          "step": 2055
+        },
+        {
+          "kind": "LOAD_VAL_MOD",
+          "txn_idx": 23159,
+          "original_value": 2097312,
+          "step": 1855
+        },
+        {
+          "kind": "LOAD_VAL_MOD",
+          "txn_idx": 23155,
+          "original_value": 2135804,
+          "step": 1854
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|core_arithmetic",
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_arithmetic",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 21529,
+          "original_value": 4261811427,
+          "step": 1460
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 30264,
+          "original_value": 0,
+          "step": 3524
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 23539,
+          "original_value": 4261811427,
+          "step": 1949
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|core_branch",
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_branch",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 17905,
+          "original_value": 115,
+          "step": 591
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 30513,
+          "original_value": 807403635,
+          "step": 3560
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 25716,
+          "original_value": 115,
+          "step": 2477
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|core_memory_load",
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_memory_load",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 26661,
+          "original_value": 3285508313,
+          "step": 2683
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 27932,
+          "original_value": 2233644,
+          "step": 2979
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 21507,
+          "original_value": 2136084049,
+          "step": 1454
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|core_memory_store",
+      "kind": "MEM_VAL_MOD",
+      "zone": "core_memory_store",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 24454,
+          "original_value": 0,
+          "step": 2172
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 20292,
+          "original_value": 16777216,
+          "step": 1161
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 23386,
+          "original_value": 1,
+          "step": 1910
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|kernel_other",
+      "kind": "MEM_VAL_MOD",
+      "zone": "kernel_other",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 30368,
+          "original_value": 1,
+          "step": 3551
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 30321,
+          "original_value": 4294901888,
+          "step": 3539
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 18902,
+          "original_value": 360551,
+          "step": 829
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|last_step",
+      "kind": "MEM_VAL_MOD",
+      "zone": "last_step",
+      "steps_tested": 1,
+      "targets_found": 1,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 32134,
+          "original_value": 115,
+          "step": 3929
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|post_ecall",
+      "kind": "MEM_VAL_MOD",
+      "zone": "post_ecall",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 23158,
+          "original_value": 2097312,
+          "step": 1855
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 17993,
+          "original_value": 48592483,
+          "step": 609
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 17332,
+          "original_value": 48592483,
+          "step": 451
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|pre_ecall",
+      "kind": "MEM_VAL_MOD",
+      "zone": "pre_ecall",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 17622,
+          "original_value": 115,
+          "step": 524
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 31520,
+          "original_value": 115,
+          "step": 3805
+        },
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 16989,
+          "original_value": 115,
+          "step": 371
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|step0",
+      "kind": "MEM_VAL_MOD",
+      "zone": "step0",
+      "steps_tested": 1,
+      "targets_found": 1,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "MEM_VAL_MOD",
+          "txn_idx": 0,
+          "original_value": 0,
+          "step": 0
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|core_arithmetic",
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "core_arithmetic",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 18846,
+          "original_word": 67584,
+          "step": 814
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 20123,
+          "original_word": 2098016,
+          "step": 1120
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 20295,
+          "original_word": 1,
+          "step": 1162
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|core_memory_load",
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "core_memory_load",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 26894,
+          "original_word": 2097920,
+          "step": 2736
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 19689,
+          "original_word": 2098000,
+          "step": 1014
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 26527,
+          "original_word": 2098076,
+          "step": 2651
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|core_memory_store",
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "core_memory_store",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 26991,
+          "original_word": 2097712,
+          "step": 2757
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 28375,
+          "original_word": 2233660,
+          "step": 3086
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 30602,
+          "original_word": 2097504,
+          "step": 3581
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|core_mul",
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "core_mul",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 26079,
+          "original_word": 23,
+          "step": 2541
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 16526,
+          "original_word": 1,
+          "step": 260
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 18681,
+          "original_word": 1,
+          "step": 773
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|core_shr",
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "core_shr",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 31369,
+          "original_word": 16,
+          "step": 3766
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 30219,
+          "original_word": 98,
+          "step": 3513
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 19303,
+          "original_word": 4,
+          "step": 921
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|kernel_other",
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "kernel_other",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 32102,
+          "original_word": 0,
+          "step": 3920
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 19585,
+          "original_word": 1,
+          "step": 992
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 17281,
+          "original_word": 2098028,
+          "step": 442
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|post_ecall",
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "post_ecall",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 19295,
+          "original_word": 4,
+          "step": 919
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 23975,
+          "original_word": 2097248,
+          "step": 2055
+        },
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 17990,
+          "original_word": 4,
+          "step": 608
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|step0",
+      "kind": "PRE_EXEC_REG_MOD",
+      "zone": "step0",
+      "steps_tested": 1,
+      "targets_found": 1,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "PRE_EXEC_REG_MOD",
+          "txn_idx": 14904,
+          "original_word": 0,
+          "step": 0
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "STORE_OUT_MOD|core_memory_store",
+      "kind": "STORE_OUT_MOD",
+      "zone": "core_memory_store",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "STORE_OUT_MOD",
+          "txn_idx": 15564,
+          "original_value": 2113404,
+          "step": 38
+        },
+        {
+          "kind": "STORE_OUT_MOD",
+          "txn_idx": 24397,
+          "original_value": 24,
+          "step": 2158
+        },
+        {
+          "kind": "STORE_OUT_MOD",
+          "txn_idx": 29552,
+          "original_value": 3753996577,
+          "step": 3348
+        }
+      ],
+      "failed_steps": []
+    },
+    {
+      "arm_id": "STORE_OUT_MOD|kernel_other",
+      "kind": "STORE_OUT_MOD",
+      "zone": "kernel_other",
+      "steps_tested": 3,
+      "targets_found": 3,
+      "success_rate": 1.0,
+      "sample_txns": [
+        {
+          "kind": "STORE_OUT_MOD",
+          "txn_idx": 32036,
+          "original_value": 2119460189,
+          "step": 3905
+        },
+        {
+          "kind": "STORE_OUT_MOD",
+          "txn_idx": 32090,
+          "original_value": 2012219820,
+          "step": 3917
+        },
+        {
+          "kind": "STORE_OUT_MOD",
+          "txn_idx": 15484,
+          "original_value": 2111228,
+          "step": 18
+        }
+      ],
+      "failed_steps": []
+    }
+  ]
+}

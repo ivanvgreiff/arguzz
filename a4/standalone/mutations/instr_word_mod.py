@@ -213,6 +213,7 @@ def create_config(target: InstrWordModTarget, mutated_value: int, output_path: P
             "note": "Rust handler sets both word and prev_word to preserve IsRead",
             "fetch_word_addr": target.fetch_addr,
             "fetch_byte_addr": f"0x{target.fetch_addr * 4:08x}",
+            "original_value": target.original_word,
             "original_word": f"0x{target.original_word:08x}",
             "mutated_word": f"0x{mutated_value:08x}",
             "next_pc": f"0x{target.pc:08x}",

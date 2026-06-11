@@ -220,6 +220,7 @@ def create_config(target: PreExecRegModTarget, mutated_value: int, output_path: 
         "_info": {
             "register": target.register_name,
             "register_idx": target.register_idx,
+            "original_value": target.original_word,
             "original_word": target.original_word,
             "prev_word": target.prev_word,
             "is_write_target": target.is_write,

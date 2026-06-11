@@ -1,0 +1,19 @@
+{
+  "_doc": "Phase 7d Inc 3 B7 seed reproducibility — 5 variants × 2 paired runs × 50 mutations = 500 host mutations. Same seed=999 for runA and runB per variant.",
+  "name": "pos_audit_b7",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "zoned",                "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "runA"},
+    {"strategy": "zoned",                "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "runB"},
+    {"strategy": "kindUCB_zoned_v1",     "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "runA"},
+    {"strategy": "kindUCB_zoned_v1",     "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "runB"},
+    {"strategy": "kindUCB_zoned_v2_noQ", "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "runA"},
+    {"strategy": "kindUCB_zoned_v2_noQ", "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "runB"},
+    {"strategy": "kindTS_zoned_v2",      "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "runA"},
+    {"strategy": "kindTS_zoned_v2",      "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "runB"},
+    {"strategy": "cTS_semantic_v2",      "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "runA"},
+    {"strategy": "cTS_semantic_v2",      "seed": 999, "n": 50, "telemetry_level": "full", "run_suffix": "runB"}
+  ]
+}

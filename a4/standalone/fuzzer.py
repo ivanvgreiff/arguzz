@@ -15,6 +15,7 @@ the result to the verifier to check if it accepts or rejects the proof.
 import json
 import os
 import random
+import re
 import subprocess
 import sys
 import tempfile
@@ -221,6 +222,8 @@ class A4Fuzzer:
         verbose: bool = False,
         b_count_override: Optional[int] = None,
         telemetry_level: Optional[str] = None,
+        debug_coverage_delta_path: Optional[str] = None,
+        debug_bandit_trace_path: Optional[str] = None,
     ):
         """
         Initialize the fuzzer.
@@ -236,8 +239,12 @@ class A4Fuzzer:
             verbose: Print detailed output
             b_count_override: Override bucket count for bandit arm universe
             telemetry_level: `none` | `standard` | `full` (D35: default full for v2 selectors)
+            debug_coverage_delta_path: B6 audit-only JSONL side channel (default OFF)
+            debug_bandit_trace_path: B4 audit-only JSONL side channel (default OFF)
         """
         self.host_binary = host_binary
+        self.debug_coverage_delta_path = debug_coverage_delta_path
+        self.debug_bandit_trace_path = debug_bandit_trace_path
         self.host_args = host_args
         self.db_path = db_path
         self.kind = kind
@@ -453,7 +460,8 @@ class A4Fuzzer:
 
             txn_idx = config.get("txn_idx") if config else None
             mutation_id = self.db.record_mutation(
-                self.campaign_id, kind, step or 0, mv, config, txn_idx, verifier_accepted
+                self.campaign_id, kind, step or 0, mv, config, txn_idx,
+                verifier_accepted, original_value=ov,
             )
             self.db.record_failures(mutation_id, failures)
             # Phase III.1: pilot-phase mutations also produce Hook 3 globals; persist them
@@ -797,7 +805,8 @@ class A4Fuzzer:
         # DB recording
         txn_idx = config.get("txn_idx")
         mutation_id = self.db.record_mutation(
-            self.campaign_id, kind, step, mutated_value, config, txn_idx, verifier_accepted
+            self.campaign_id, kind, step, mutated_value, config, txn_idx,
+            verifier_accepted, original_value=original_value,
         )
         total_recorded, new_coverage = self.db.record_failures(mutation_id, failures)
         # Phase III.1: persist global Hook 3 contexts for offline analysis.
@@ -850,6 +859,10 @@ class A4Fuzzer:
                     self.v2_scheduler.update(kind, 0)
                 return None
 
+        bandit_kind = kind
+        bandit_zone = zone if self.selector_strategy == "cTS_semantic_v2" else None
+        bandit_step_at_select = step
+
         config = None
         mutated_value = 0
         original_value = 0
@@ -880,6 +893,9 @@ class A4Fuzzer:
             elif self.selector_strategy == "kindTS_zoned_v2":
                 self.v2_scheduler.update(kind, 0)
             return None
+
+        # B4 trace: step may change during target retries; log final resolved step.
+        bandit_step_at_select = step
 
         start_time = time.perf_counter()
         config_path = self.temp_dir / f"mutation_{mutation_num}.json"
@@ -931,6 +947,15 @@ class A4Fuzzer:
         cycle = self.data.get_cycle(step)
         mutation_major = cycle.major if cycle is not None else 0
 
+        if self.debug_coverage_delta_path:
+            seen_local_before = set(self._seen_local_v2)
+            seen_global_before = set(self._seen_compressed_global)
+            seen_struct_before = set(self._seen_structural)
+            touch_before = bytes(self.global_touch_bitmap)
+        else:
+            seen_local_before = seen_global_before = seen_struct_before = None
+            touch_before = None
+
         components = compute_reward_v2_components(
             exec_result,
             self._seen_local_v2,
@@ -948,6 +973,46 @@ class A4Fuzzer:
             components["l_new"], components["g_new"], components["s_new"],
         )
 
+        if self.debug_coverage_delta_path:
+            touch_delta = (
+                count_new_bits(exec_result.touch_bitmap, bytearray(touch_before))
+                if exec_result.touch_bitmap is not None and touch_before is not None
+                else 0
+            )
+            failures_snap = []
+            for f in failures:
+                failures_snap.append({
+                    "constraint_loc": f.constraint_loc(),
+                    "major": f.major,
+                    "minor": f.minor,
+                })
+            self._append_coverage_delta_debug({
+                "mutation_num": mutation_num,
+                "kind": kind,
+                "step": step,
+                "zone": mutation_zone,
+                "major": mutation_major,
+                "config": config,
+                "reported": {
+                    "l_new": int(components["l_new"]),
+                    "f_new": int(components["f_new"]),
+                    "g_new": int(components["g_new"]),
+                    "s_new": int(components["s_new"]),
+                    "crash": bool(components["crash"]),
+                    "repeat": int(components["repeat"]),
+                },
+                "touch_delta": int(touch_delta),
+                "seen_local_before": [list(x) for x in seen_local_before],
+                "seen_global_before": list(seen_global_before),
+                "seen_struct_before": [
+                    (x.kind, x.semantic_zone, x.opcode_class, x.mode, x.txn_role, x.sub_strategy)
+                    for x in seen_struct_before
+                ],
+                "failures": failures_snap,
+                "family_residues": getattr(exec_result, "family_residues", None),
+                "family_details": getattr(exec_result, "family_details", None),
+            })
+
         if self.selector_strategy == "kindUCB_zoned_v1":
             self.v2_scheduler.update(kind, reward)
         elif self.selector_strategy == "kindUCB_zoned_v2_noQ":
@@ -964,7 +1029,8 @@ class A4Fuzzer:
 
         txn_idx = config.get("txn_idx")
         mutation_id = self.db.record_mutation(
-            self.campaign_id, kind, step, mutated_value, config, txn_idx, verifier_accepted
+            self.campaign_id, kind, step, mutated_value, config, txn_idx,
+            verifier_accepted, original_value=original_value,
         )
         total_recorded, new_coverage = self.db.record_failures(mutation_id, failures)
         if global_contexts:
@@ -1006,7 +1072,98 @@ class A4Fuzzer:
             merge_into_global(exec_result.touch_bitmap, self.global_touch_bitmap)
             result.new_touch = new_touch
 
+        if self.debug_coverage_delta_path:
+            self._patch_coverage_delta_mutation_id(mutation_num, mutation_id)
+
+        if self.debug_bandit_trace_path:
+            hook = self._parse_hook_step(kind, output)
+            hook_step = int(hook["step"]) if hook and "step" in hook else None
+            self._append_bandit_trace_debug({
+                "mutation_num": mutation_num,
+                "bandit_kind": bandit_kind,
+                "bandit_zone": bandit_zone,
+                "bandit_step": bandit_step_at_select,
+                "executed_kind": kind,
+                "executed_step": step,
+                "hook_kind": kind if hook is not None else None,
+                "hook_step": hook_step,
+            })
+            self._patch_bandit_trace_mutation_id(mutation_num, mutation_id)
+
         return result
+
+    def _append_coverage_delta_debug(self, row: dict) -> None:
+        """B6 audit-only: append one JSON line to the debug side channel."""
+        path = Path(self.debug_coverage_delta_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "a") as f:
+            f.write(json.dumps(row) + "\n")
+
+    def _patch_coverage_delta_mutation_id(self, mutation_num: int, mutation_id: int) -> None:
+        """Attach DB mutation_id to the last debug row for this mutation_num."""
+        path = Path(self.debug_coverage_delta_path)
+        if not path.exists():
+            return
+        lines = path.read_text().splitlines()
+        for i in range(len(lines) - 1, -1, -1):
+            row = json.loads(lines[i])
+            if row.get("mutation_num") == mutation_num and "mutation_id" not in row:
+                row["mutation_id"] = mutation_id
+                lines[i] = json.dumps(row)
+                path.write_text("\n".join(lines) + ("\n" if lines else ""))
+                return
+
+    _BANDIT_TRACE_KIND_TAG = {
+        "COMP_OUT_MOD": "a4_comp_out_mod",
+        "LOAD_VAL_MOD": "a4_load_val_mod",
+        "STORE_OUT_MOD": "a4_store_out_mod",
+        "PRE_EXEC_REG_MOD": "a4_pre_exec_reg_mod",
+        "INSTR_TYPE_MOD": "a4_instr_type_mod",
+        "MEM_VAL_MOD": "a4_mem_val_mod",
+        "INSTR_WORD_MOD_FULL": "a4_instr_word_mod",
+        "INSTR_WORD_MOD_SUR": "a4_instr_word_mod",
+    }
+    _BANDIT_TRACE_MOD_RE = re.compile(r"<(\w+)>({.*?})</\1>")
+
+    def _parse_hook_step(self, kind: str, output: str) -> Optional[Dict]:
+        """B4 audit-only: parse mutation hook JSON from host output."""
+        tag = self._BANDIT_TRACE_KIND_TAG.get(kind)
+        if tag is None:
+            return None
+        needle = f"<{tag}>"
+        last = None
+        for line in output.splitlines():
+            if needle not in line:
+                continue
+            for m in self._BANDIT_TRACE_MOD_RE.finditer(line):
+                if m.group(1) != tag:
+                    continue
+                try:
+                    last = json.loads(m.group(2))
+                except json.JSONDecodeError:
+                    continue
+        return last
+
+    def _append_bandit_trace_debug(self, row: dict) -> None:
+        """B4 audit-only: append one JSON line to the debug side channel."""
+        path = Path(self.debug_bandit_trace_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "a") as f:
+            f.write(json.dumps(row) + "\n")
+
+    def _patch_bandit_trace_mutation_id(self, mutation_num: int, mutation_id: int) -> None:
+        """Attach DB mutation_id to the last bandit-trace row for mutation_num."""
+        path = Path(self.debug_bandit_trace_path)
+        if not path.exists():
+            return
+        lines = path.read_text().splitlines()
+        for i in range(len(lines) - 1, -1, -1):
+            row = json.loads(lines[i])
+            if row.get("mutation_num") == mutation_num and "mutation_id" not in row:
+                row["mutation_id"] = mutation_id
+                lines[i] = json.dumps(row)
+                path.write_text("\n".join(lines) + ("\n" if lines else ""))
+                return
 
     def run_campaign(self, num_mutations: int) -> CampaignStats:
         """
@@ -1234,7 +1391,8 @@ class A4Fuzzer:
             mutated_value,
             config,
             txn_idx,
-            verifier_accepted
+            verifier_accepted,
+            original_value=original_value,
         )
         
         total_recorded, new_coverage = self.db.record_failures(mutation_id, failures)
@@ -1280,6 +1438,21 @@ class A4Fuzzer:
         # Update guided selector if applicable
         if hasattr(self.selector, 'record_mutation'):
             self.selector.record_mutation(step, new_coverage + result.new_touch)
+
+        if self.debug_bandit_trace_path:
+            hook = self._parse_hook_step(kind, output)
+            hook_step = int(hook["step"]) if hook and "step" in hook else None
+            self._append_bandit_trace_debug({
+                "mutation_num": mutation_num,
+                "bandit_kind": kind,
+                "bandit_zone": None,
+                "bandit_step": step,
+                "executed_kind": kind,
+                "executed_step": step,
+                "hook_kind": kind if hook is not None else None,
+                "hook_step": hook_step,
+            })
+            self._patch_bandit_trace_mutation_id(mutation_num, mutation_id)
         
         return result
     
@@ -1307,6 +1480,7 @@ class A4Fuzzer:
                 "_info": {
                     "register_idx": target.register_idx,
                     "register_name": target.register_name,
+                    "original_value": target.original_value,
                     "pc": f"0x{target.pc:08x}",
                 },
             }
@@ -1328,6 +1502,7 @@ class A4Fuzzer:
                 "_info": {
                     "register_idx": target.register_idx,
                     "register_name": target.register_name,
+                    "original_value": target.original_value,
                     "pc": f"0x{target.pc:08x}",
                 },
             }
@@ -1348,6 +1523,7 @@ class A4Fuzzer:
                 "word": mutated_value,
                 "_info": {
                     "memory_byte_addr": f"0x{target.memory_byte_addr:08x}",
+                    "original_value": target.original_value,
                     "pc": f"0x{target.pc:08x}",
                 },
             }
@@ -1372,6 +1548,7 @@ class A4Fuzzer:
                     "register_idx": target.register_idx,
                     "register_name": target.register_name,
                     "is_write": target.is_write,
+                    "original_value": target.original_word,
                     "pc": f"0x{target.pc:08x}",
                 },
             }
@@ -1429,6 +1606,7 @@ class A4Fuzzer:
                     "txn_type": target.txn_type,
                     "byte_addr": f"0x{target.byte_addr:08x}",
                     "is_write": target.is_write,
+                    "original_value": target.original_value,
                 },
             }
             return config, mutated_value, target.original_value
@@ -1458,6 +1636,9 @@ class A4Fuzzer:
                 "mutated_disassembly": mut_instr.disassemble(),
                 "original_format": orig_instr.format.value,
                 "mutated_format": mut_instr.format.value,
+                "_info": {
+                    "original_value": target.original_word,
+                },
             }
             return config, mutated_value, target.original_word
         
@@ -1506,6 +1687,9 @@ class A4Fuzzer:
                 "mutated_disassembly": mutated_instr.disassemble(),
                 "instruction_format": instr.format.value,
                 "format_name": instr.format_name,
+                "_info": {
+                    "original_value": target.original_word,
+                },
             }
             return config, mutated_value, target.original_word
         

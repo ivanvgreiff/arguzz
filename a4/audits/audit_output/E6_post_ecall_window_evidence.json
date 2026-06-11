@@ -1,0 +1,511 @@
+{
+  "audit_id": "E6",
+  "audit_name": "post_ecall window evidence (Theme 4)",
+  "guest": "c0c1_differential_guest",
+  "host_args": [
+    "--in1",
+    "5",
+    "--in4",
+    "10"
+  ],
+  "total_ecalls_in_trace": 33,
+  "pc_ranges_used": {
+    "kernel": "0xC0000000..0xC1000000",
+    "user": "0x00200000..0x00400000"
+  },
+  "aggregate_pc_distribution_per_offset": {
+    "e+1": {
+      "sample_count": 32,
+      "unique_pcs": 6,
+      "top3_pcs": [
+        [
+          "0xc0000158",
+          14
+        ],
+        [
+          "0x00206178",
+          10
+        ],
+        [
+          "0xc0000594",
+          4
+        ]
+      ],
+      "region_split": {
+        "kernel": 18,
+        "user": 14
+      }
+    },
+    "e+2": {
+      "sample_count": 32,
+      "unique_pcs": 6,
+      "top3_pcs": [
+        [
+          "0xc000015c",
+          14
+        ],
+        [
+          "0x002061a4",
+          10
+        ],
+        [
+          "0xc000018c",
+          4
+        ]
+      ],
+      "region_split": {
+        "kernel": 18,
+        "user": 14
+      }
+    },
+    "e+3": {
+      "sample_count": 14,
+      "unique_pcs": 4,
+      "top3_pcs": [
+        [
+          "0x002061a8",
+          10
+        ],
+        [
+          "0x00206000",
+          2
+        ],
+        [
+          "0x00200ea4",
+          1
+        ]
+      ],
+      "region_split": {
+        "user": 14
+      }
+    },
+    "e+4": {
+      "sample_count": 32,
+      "unique_pcs": 10,
+      "top3_pcs": [
+        [
+          "0x00206178",
+          10
+        ],
+        [
+          "0x002061ac",
+          10
+        ],
+        [
+          "0x002061f4",
+          3
+        ]
+      ],
+      "region_split": {
+        "user": 32
+      }
+    },
+    "e+5": {
+      "sample_count": 32,
+      "unique_pcs": 10,
+      "top3_pcs": [
+        [
+          "0x002061a4",
+          10
+        ],
+        [
+          "0x002061b0",
+          10
+        ],
+        [
+          "0x00206238",
+          3
+        ]
+      ],
+      "region_split": {
+        "user": 32
+      }
+    }
+  },
+  "d53_first_user_step_distribution": {
+    "first_user_offset_counts": {
+      "4": 18,
+      "1": 14
+    },
+    "no_user_in_window_count": 1,
+    "interpretation": "D53 redefines post_ecall as the smallest k in [1,5] where step e+k has a user-PC Decode cycle. Counts above are the distribution of that k across all ECALLs."
+  },
+  "per_ecall_records": [
+    {
+      "ecall_step": 170,
+      "offsets": {
+        "e+1": {
+          "step": 171,
+          "pc": "0xc0000158",
+          "major": 0,
+          "minor": 7,
+          "region": "kernel"
+        },
+        "e+2": {
+          "step": 172,
+          "pc": "0xc000015c",
+          "major": 0,
+          "minor": 7,
+          "region": "kernel"
+        },
+        "e+3": null,
+        "e+4": {
+          "step": 174,
+          "pc": "0x00203f7c",
+          "major": 2,
+          "minor": 4,
+          "region": "user"
+        },
+        "e+5": {
+          "step": 175,
+          "pc": "0x00203f80",
+          "major": 2,
+          "minor": 6,
+          "region": "user"
+        }
+      }
+    },
+    {
+      "ecall_step": 173,
+      "offsets": {
+        "e+1": {
+          "step": 174,
+          "pc": "0x00203f7c",
+          "major": 2,
+          "minor": 4,
+          "region": "user"
+        },
+        "e+2": {
+          "step": 175,
+          "pc": "0x00203f80",
+          "major": 2,
+          "minor": 6,
+          "region": "user"
+        },
+        "e+3": {
+          "step": 176,
+          "pc": "0x00200ea4",
+          "major": 2,
+          "minor": 4,
+          "region": "user"
+        },
+        "e+4": {
+          "step": 177,
+          "pc": "0x00200ea8",
+          "major": 0,
+          "minor": 7,
+          "region": "user"
+        },
+        "e+5": {
+          "step": 178,
+          "pc": "0x00200eac",
+          "major": 6,
+          "minor": 2,
+          "region": "user"
+        }
+      }
+    },
+    {
+      "ecall_step": 289,
+      "offsets": {
+        "e+1": {
+          "step": 290,
+          "pc": "0xc0000158",
+          "major": 0,
+          "minor": 7,
+          "region": "kernel"
+        },
+        "e+2": {
+          "step": 291,
+          "pc": "0xc000015c",
+          "major": 0,
+          "minor": 7,
+          "region": "kernel"
+        },
+        "e+3": null,
+        "e+4": {
+          "step": 293,
+          "pc": "0x00206178",
+          "major": 0,
+          "minor": 0,
+          "region": "user"
+        },
+        "e+5": {
+          "step": 294,
+          "pc": "0x002061a4",
+          "major": 2,
+          "minor": 2,
+          "region": "user"
+        }
+      }
+    },
+    {
+      "ecall_step": 292,
+      "offsets": {
+        "e+1": {
+          "step": 293,
+          "pc": "0x00206178",
+          "major": 0,
+          "minor": 0,
+          "region": "user"
+        },
+        "e+2": {
+          "step": 294,
+          "pc": "0x002061a4",
+          "major": 2,
+          "minor": 2,
+          "region": "user"
+        },
+        "e+3": {
+          "step": 295,
+          "pc": "0x002061a8",
+          "major": 4,
+          "minor": 2,
+          "region": "user"
+        },
+        "e+4": {
+          "step": 296,
+          "pc": "0x002061ac",
+          "major": 1,
+          "minor": 2,
+          "region": "user"
+        },
+        "e+5": {
+          "step": 297,
+          "pc": "0x002061b0",
+          "major": 0,
+          "minor": 1,
+          "region": "user"
+        }
+      }
+    },
+    {
+      "ecall_step": 368,
+      "offsets": {
+        "e+1": {
+          "step": 369,
+          "pc": "0xc0000158",
+          "major": 0,
+          "minor": 7,
+          "region": "kernel"
+        },
+        "e+2": {
+          "step": 370,
+          "pc": "0xc000015c",
+          "major": 0,
+          "minor": 7,
+          "region": "kernel"
+        },
+        "e+3": null,
+        "e+4": {
+          "step": 372,
+          "pc": "0x00206178",
+          "major": 0,
+          "minor": 0,
+          "region": "user"
+        },
+        "e+5": {
+          "step": 373,
+          "pc": "0x002061a4",
+          "major": 2,
+          "minor": 2,
+          "region": "user"
+        }
+      }
+    },
+    {
+      "ecall_step": 371,
+      "offsets": {
+        "e+1": {
+          "step": 372,
+          "pc": "0x00206178",
+          "major": 0,
+          "minor": 0,
+          "region": "user"
+        },
+        "e+2": {
+          "step": 373,
+          "pc": "0x002061a4",
+          "major": 2,
+          "minor": 2,
+          "region": "user"
+        },
+        "e+3": {
+          "step": 374,
+          "pc": "0x002061a8",
+          "major": 4,
+          "minor": 2,
+          "region": "user"
+        },
+        "e+4": {
+          "step": 375,
+          "pc": "0x002061ac",
+          "major": 1,
+          "minor": 2,
+          "region": "user"
+        },
+        "e+5": {
+          "step": 376,
+          "pc": "0x002061b0",
+          "major": 0,
+          "minor": 1,
+          "region": "user"
+        }
+      }
+    },
+    {
+      "ecall_step": 446,
+      "offsets": {
+        "e+1": {
+          "step": 447,
+          "pc": "0xc0000158",
+          "major": 0,
+          "minor": 7,
+          "region": "kernel"
+        },
+        "e+2": {
+          "step": 448,
+          "pc": "0xc000015c",
+          "major": 0,
+          "minor": 7,
+          "region": "kernel"
+        },
+        "e+3": null,
+        "e+4": {
+          "step": 450,
+          "pc": "0x00206178",
+          "major": 0,
+          "minor": 0,
+          "region": "user"
+        },
+        "e+5": {
+          "step": 451,
+          "pc": "0x002061a4",
+          "major": 2,
+          "minor": 2,
+          "region": "user"
+        }
+      }
+    },
+    {
+      "ecall_step": 449,
+      "offsets": {
+        "e+1": {
+          "step": 450,
+          "pc": "0x00206178",
+          "major": 0,
+          "minor": 0,
+          "region": "user"
+        },
+        "e+2": {
+          "step": 451,
+          "pc": "0x002061a4",
+          "major": 2,
+          "minor": 2,
+          "region": "user"
+        },
+        "e+3": {
+          "step": 452,
+          "pc": "0x002061a8",
+          "major": 4,
+          "minor": 2,
+          "region": "user"
+        },
+        "e+4": {
+          "step": 453,
+          "pc": "0x002061ac",
+          "major": 1,
+          "minor": 2,
+          "region": "user"
+        },
+        "e+5": {
+          "step": 454,
+          "pc": "0x002061b0",
+          "major": 0,
+          "minor": 1,
+          "region": "user"
+        }
+      }
+    },
+    {
+      "ecall_step": 524,
+      "offsets": {
+        "e+1": {
+          "step": 525,
+          "pc": "0xc0000158",
+          "major": 0,
+          "minor": 7,
+          "region": "kernel"
+        },
+        "e+2": {
+          "step": 526,
+          "pc": "0xc000015c",
+          "major": 0,
+          "minor": 7,
+          "region": "kernel"
+        },
+        "e+3": null,
+        "e+4": {
+          "step": 528,
+          "pc": "0x00206178",
+          "major": 0,
+          "minor": 0,
+          "region": "user"
+        },
+        "e+5": {
+          "step": 529,
+          "pc": "0x002061a4",
+          "major": 2,
+          "minor": 2,
+          "region": "user"
+        }
+      }
+    },
+    {
+      "ecall_step": 527,
+      "offsets": {
+        "e+1": {
+          "step": 528,
+          "pc": "0x00206178",
+          "major": 0,
+          "minor": 0,
+          "region": "user"
+        },
+        "e+2": {
+          "step": 529,
+          "pc": "0x002061a4",
+          "major": 2,
+          "minor": 2,
+          "region": "user"
+        },
+        "e+3": {
+          "step": 530,
+          "pc": "0x002061a8",
+          "major": 4,
+          "minor": 2,
+          "region": "user"
+        },
+        "e+4": {
+          "step": 531,
+          "pc": "0x002061ac",
+          "major": 1,
+          "minor": 2,
+          "region": "user"
+        },
+        "e+5": {
+          "step": 532,
+          "pc": "0x002061b0",
+          "major": 0,
+          "minor": 1,
+          "region": "user"
+        }
+      }
+    }
+  ],
+  "per_ecall_records_truncated_at": 10,
+  "per_ecall_records_total": 33,
+  "verdict": {
+    "theme_4_recommendation": "Adopt D53 (window definition); original Pro recommendation of \"post_ecall = e+1\" misses the kernel-handler steps in 46-58% of cases.",
+    "theme_5_relationship": "Under D54 (HYBRID kernel_other), intermediate kernel-handler steps automatically fall into kernel_other, so post_ecall cleanly captures only the user-side return point."
+  }
+}

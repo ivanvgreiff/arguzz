@@ -98,8 +98,8 @@ def sample_mutations(db_path: Path, per_kind: int = 3) -> List[dict]:
     return samples
 
 
-def _original_from_config(cfg: Dict[str, Any], kind: str) -> int:
-    """Best-effort original; word kinds often have no DB original (only new in config)."""
+def _original_from_config(cfg: Dict[str, Any], kind: str) -> Optional[int]:
+    """Pre-mutation value from config _info; None if the field was not recorded."""
     info = cfg.get("_info") or {}
     if kind == "INSTR_TYPE_MOD":
         om = info.get("original_major")
@@ -107,10 +107,16 @@ def _original_from_config(cfg: Dict[str, Any], kind: str) -> int:
         if om is not None and on is not None:
             return (int(om) << 16) | int(on)
     if "original_value" in info:
-        return int(info["original_value"])
+        v = info["original_value"]
+        if isinstance(v, str):
+            return int(v, 0)
+        return int(v)
     if "original_word" in info:
-        return int(info["original_word"])
-    return 0
+        v = info["original_word"]
+        if isinstance(v, str):
+            return int(v, 0)
+        return int(v)
+    return None
 
 
 def parse_hook_mod(output: str, tag: str) -> Optional[Dict[str, Any]]:
@@ -188,11 +194,16 @@ def assert_hook_matches_db(
             )
         if old_m == new_m and old_n == new_n:
             return False, f"hook reports no type change at step {step}"
-        # Multi-cycle steps: hook may mutate first matching cycle, not universe pick.
-        return True, (
-            f"old={old_m}/{old_n} new={new_m}/{new_n} "
-            "(old cycle may differ from config _info at multi-cycle steps)"
-        )
+        info = config.get("_info") or {}
+        exp_old_m = info.get("original_major")
+        exp_old_n = info.get("original_minor")
+        if exp_old_m is not None and exp_old_n is not None:
+            if old_m != int(exp_old_m) or old_n != int(exp_old_n):
+                return False, (
+                    f"cycle_shift_at_step: hook old={old_m}/{old_n} "
+                    f"!= config exp_old={exp_old_m}/{exp_old_n}"
+                )
+        return True, f"old={old_m}/{old_n} new={new_m}/{new_n}"
 
     if kind in ("INSTR_WORD_MOD_FULL", "INSTR_WORD_MOD_SUR", "COMP_OUT_MOD",
                 "LOAD_VAL_MOD", "STORE_OUT_MOD", "PRE_EXEC_REG_MOD", "MEM_VAL_MOD"):
@@ -201,7 +212,7 @@ def assert_hook_matches_db(
             return False, "hook missing old_word/new_word"
         if _u32(hook["new_word"]) != exp_new:
             return False, f"new_word {hook['new_word']:#x} != expected {exp_new:#x}"
-        if original_value and _u32(hook["old_word"]) != _u32(original_value):
+        if original_value is not None and _u32(hook["old_word"]) != _u32(original_value):
             return False, (
                 f"old_word {hook['old_word']:#x} != expected {original_value:#x}"
             )

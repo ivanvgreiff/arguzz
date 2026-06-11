@@ -39,13 +39,21 @@ def _reg_txn(
     )
 from a4.standalone.semantic_arm_universe import SemanticArmUniverse
 from a4.standalone.semantic_zones import (
-    SEMANTIC_ZONES, SINGLETON_ZONES, BOUNDARY_ZONES,
+    SEMANTIC_ZONES, SINGLETON_ZONES, BOUNDARY_ZONES, USER_PC_RANGE,
 )
 
+_USER_PC = USER_PC_RANGE[0] + 0x1000
 
-def _make_cycle(step: int, major: int, minor: int = 0) -> A4CycleInfo:
+
+def _make_cycle(
+    step: int,
+    major: int,
+    minor: int = 0,
+    *,
+    pc: int = 0,
+) -> A4CycleInfo:
     return A4CycleInfo(
-        cycle_idx=step, step=step, pc=0, txn_idx=0,
+        cycle_idx=step, step=step, pc=pc, txn_idx=0,
         major=major, minor=minor,
     )
 
@@ -79,7 +87,7 @@ def small_data():
         _make_cycle(3, major=5),    # LOAD
         _make_cycle(4, major=6),    # STORE
         _make_cycle(5, major=8),    # ECALL → pre_ecall
-        _make_cycle(6, major=0),    # post_ecall (e+1)
+        _make_cycle(6, major=0, pc=_USER_PC),  # D53 post_ecall (user PC at e+1)
         _make_cycle(7, major=0),    # last_step
     ]
     return _build_data(

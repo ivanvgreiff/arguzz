@@ -1,0 +1,14 @@
+{
+  "_doc": "Phase 7d Inc 3 B1 hook fidelity audit — 5 variants × 200 stratified mutations = 1000 host mutations. POS dispatch parallelizes across variants. Each job runs --seed 999 with --telemetry-level full so verifier can read original_value from DB.",
+  "name": "pos_audit_b1",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "zoned",                "seed": 999, "n": 200, "telemetry_level": "full"},
+    {"strategy": "kindUCB_zoned_v1",     "seed": 999, "n": 200, "telemetry_level": "full"},
+    {"strategy": "kindUCB_zoned_v2_noQ", "seed": 999, "n": 200, "telemetry_level": "full"},
+    {"strategy": "kindTS_zoned_v2",      "seed": 999, "n": 200, "telemetry_level": "full"},
+    {"strategy": "cTS_semantic_v2",      "seed": 999, "n": 200, "telemetry_level": "full"}
+  ]
+}

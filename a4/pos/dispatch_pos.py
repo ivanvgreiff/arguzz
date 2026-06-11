@@ -110,6 +110,8 @@ class JobSpec:
     n: int
     b_count: int = 16
     telemetry_level: str | None = None
+    run_suffix: str | None = None
+    debug_bandit_trace: bool = False
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "JobSpec":
@@ -119,6 +121,8 @@ class JobSpec:
             n=int(d["n"]),
             b_count=int(d.get("b_count", 16)),
             telemetry_level=d.get("telemetry_level"),
+            run_suffix=d.get("run_suffix"),
+            debug_bandit_trace=bool(d.get("debug_bandit_trace", False)),
         )
 
 
@@ -165,7 +169,10 @@ class DispatchResult:
 # Helpers
 # --------------------------------------------------------------------- #
 def _job_run_id(job: JobSpec, manifest_name: str) -> str:
-    return f"{manifest_name}_{job.strategy}_seed{job.seed}_n{job.n}"
+    base = f"{manifest_name}_{job.strategy}_seed{job.seed}_n{job.n}"
+    if job.run_suffix:
+        return f"{base}_{job.run_suffix}"
+    return base
 
 
 def _vars_yaml_for_job(job: JobSpec, manifest_name: str,
@@ -183,6 +190,10 @@ def _vars_yaml_for_job(job: JobSpec, manifest_name: str,
     }
     if job.telemetry_level:
         out["A4_TELEMETRY_LEVEL"] = job.telemetry_level
+    if job.run_suffix:
+        out["A4_RUN_SUFFIX"] = job.run_suffix
+    if job.debug_bandit_trace:
+        out["A4_DEBUG_BANDIT_TRACE"] = "1"
     return out
 
 
