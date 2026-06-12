@@ -6,8 +6,8 @@ import json
 import re
 from typing import List, Optional, Set
 
-LOCAL_VERBOSE_RE = re.compile(r"<a4_touch_verbose>\[(.*?)\]</a4_touch_verbose>", re.DOTALL)
-ACCUM_VERBOSE_RE = re.compile(r"<a4_accum_touch_verbose>\[(.*?)\]</a4_accum_touch_verbose>", re.DOTALL)
+LOCAL_VERBOSE_RE = re.compile(r"<a4_touch_verbose[^>]*>\[(.*?)\]</a4_touch_verbose>", re.DOTALL)
+ACCUM_VERBOSE_RE = re.compile(r"<a4_accum_touch_verbose[^>]*>\[(.*?)\]</a4_accum_touch_verbose>", re.DOTALL)
 
 
 def parse_local_verbose_set(output: str) -> Optional[Set[str]]:

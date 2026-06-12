@@ -1,0 +1,182 @@
+{
+  "kind": "INSTR_WORD_MOD",
+  "role": "add",
+  "seed": 24,
+  "inject_step": 195,
+  "mutated_value": null,
+  "mutated_word": 12944691,
+  "mutated_word_hex": "0x00c58533",
+  "decoded_instruction": {
+    "word_hex": "0x00c58533",
+    "disassembly": "ADD x10, x11, x12",
+    "format_name": "OP",
+    "opcode": 51,
+    "rd": 10,
+    "funct3": 0,
+    "rs1": 11,
+    "rs2": 12,
+    "funct7": 0
+  },
+  "outcome_class": "CONSTRAINT_REJECT",
+  "preflight_crash": false,
+  "verifier_success": false,
+  "soundness_escape": false,
+  "determinism_ok": true,
+  "failure_count": 6,
+  "layers": {
+    "intrastep-local": 6,
+    "interstep-local": 0,
+    "global": 1
+  },
+  "buckets": {
+    "intrastep-local": [
+      {
+        "constraint_type": "L1",
+        "constraint_loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+        "cycle": 14867,
+        "step": 194,
+        "pc": 2099272,
+        "major": 6,
+        "minor": 2,
+        "value": 1,
+        "full_loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+        "phase": "local",
+        "category": "L1"
+      },
+      {
+        "constraint_type": "L2",
+        "constraint_loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+        "cycle": 14867,
+        "step": 194,
+        "pc": 2099272,
+        "major": 6,
+        "minor": 2,
+        "value": 1,
+        "full_loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+        "phase": "local",
+        "category": "L2"
+      },
+      {
+        "constraint_type": "L2",
+        "constraint_loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+        "cycle": 14867,
+        "step": 194,
+        "pc": 2099272,
+        "major": 6,
+        "minor": 2,
+        "value": 1,
+        "full_loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+        "phase": "local",
+        "category": "L2"
+      },
+      {
+        "constraint_type": "L1",
+        "constraint_loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+        "cycle": 14868,
+        "step": 195,
+        "pc": 2099276,
+        "major": 5,
+        "minor": 2,
+        "value": 1,
+        "full_loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+        "phase": "local",
+        "category": "L1"
+      },
+      {
+        "constraint_type": "L2",
+        "constraint_loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+        "cycle": 14868,
+        "step": 195,
+        "pc": 2099276,
+        "major": 5,
+        "minor": 2,
+        "value": 1,
+        "full_loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+        "phase": "local",
+        "category": "L2"
+      },
+      {
+        "constraint_type": "L2",
+        "constraint_loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+        "cycle": 14868,
+        "step": 195,
+        "pc": 2099276,
+        "major": 5,
+        "minor": 2,
+        "value": 1,
+        "full_loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+        "phase": "local",
+        "category": "L2"
+      }
+    ],
+    "interstep-local": [],
+    "global": []
+  },
+  "global_families": [
+    {
+      "family": "memory",
+      "address": null
+    }
+  ],
+  "provenance": [
+    {
+      "layer": "intrastep-local",
+      "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+      "value": 1,
+      "verified": false,
+      "reason": "non-scalar mutation"
+    },
+    {
+      "layer": "intrastep-local",
+      "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem",
+      "value": 1,
+      "verified": false,
+      "reason": "non-scalar mutation"
+    },
+    {
+      "layer": "intrastep-local",
+      "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem",
+      "value": 1,
+      "verified": false,
+      "reason": "non-scalar mutation"
+    },
+    {
+      "layer": "intrastep-local",
+      "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+      "value": 1,
+      "verified": false,
+      "reason": "non-scalar mutation"
+    },
+    {
+      "layer": "intrastep-local",
+      "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem",
+      "value": 1,
+      "verified": false,
+      "reason": "non-scalar mutation"
+    },
+    {
+      "layer": "intrastep-local",
+      "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem",
+      "value": 1,
+      "verified": false,
+      "reason": "non-scalar mutation"
+    }
+  ],
+  "example_loc_residue": "global family memory nonzero",
+  "log_path": "/root/arguzz/thesis_side_experiments/minimal_add/artifacts/e1/INSTR_WORD_MOD_seed24.log",
+  "original_instruction": {
+    "word_hex": "0x00c585b3",
+    "disassembly": "ADD x11, x11, x12",
+    "format_name": "OP",
+    "opcode": 51,
+    "rd": 11,
+    "funct3": 0,
+    "rs1": 11,
+    "rs2": 12,
+    "funct7": 0
+  },
+  "fields_changed": [
+    "rd"
+  ],
+  "field_class": "dest_reg_a0"
+}

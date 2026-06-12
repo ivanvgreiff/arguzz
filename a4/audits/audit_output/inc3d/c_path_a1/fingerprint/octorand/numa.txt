@@ -1,0 +1,1 @@
+/tmp/2026-06-12_08-23-42_032461_pos_inc3d_phase_c_path_a1_zoned_seed999_n50_octobA: line 138: numactl: command not found

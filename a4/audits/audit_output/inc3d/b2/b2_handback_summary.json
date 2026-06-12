@@ -1,0 +1,642 @@
+{
+  "host_sha": "625e722e201a85fead62cef993fe4ec9399a1aface99c5967256bec29412b515",
+  "pairs": [
+    {
+      "pair": "alpha",
+      "seed": 999,
+      "log_mb": 35.7,
+      "mem_blocks": 49,
+      "racy_count": 0,
+      "racy_mutations": [],
+      "mem_hash_diff_mutations": 49,
+      "mem_divergences_sample": [
+        {
+          "mutation_index": 0,
+          "mutation_id_guess": 1,
+          "total_hash_a": "8bc44a380f39a5d4",
+          "total_hash_b": "da78fd2bf2ad9904",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "400ae021046f4cd0",
+            "hash_b": "001d73ee5702faa0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 1,
+          "mutation_id_guess": 2,
+          "total_hash_a": "7cbb5e5518db8f4d",
+          "total_hash_b": "2c3b04dda92a9a7d",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "407df8200def24e0",
+            "hash_b": "000b60312c82d6e0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 2,
+          "mutation_id_guess": 3,
+          "total_hash_a": "c87c5fbc4674a0a8",
+          "total_hash_b": "3570e1a97e577048",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "0020d0311bbce720",
+            "hash_b": "402bd0e00883ea50",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 3,
+          "mutation_id_guess": 4,
+          "total_hash_a": "f9eafe34dabe6eb0",
+          "total_hash_b": "7ae36c3422f2bd70",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "4014d00ec5e9e7b0",
+            "hash_b": "800b68038c066800",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 4,
+          "mutation_id_guess": 5,
+          "total_hash_a": "2ab2a85b3658e77c",
+          "total_hash_b": "e20ff0dab790447c",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "c035c80ec8ea8b80",
+            "hash_b": "8072187093a31330",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 5,
+          "mutation_id_guess": 6,
+          "total_hash_a": "fc9c058090798849",
+          "total_hash_b": "fc1eedba46ed5a79",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "0019f8c2976c57e0",
+            "hash_b": "803667f0b08c4a40",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 6,
+          "mutation_id_guess": 7,
+          "total_hash_a": "414703cfdc929c76",
+          "total_hash_b": "4a770fb077ed0016",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "40fc104087e7d3c0",
+            "hash_b": "40012823a598df20",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 7,
+          "mutation_id_guess": 8,
+          "total_hash_a": "8108297b7828edec",
+          "total_hash_b": "86ce6f6f75977b3c",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "c01ca87157f29fb0",
+            "hash_b": "0012d017b4d92560",
+            "count_a": 8,
+            "count_b": 8
+          }
+        }
+      ]
+    },
+    {
+      "pair": "beta",
+      "seed": 999,
+      "log_mb": 35.7,
+      "mem_blocks": 49,
+      "racy_count": 0,
+      "racy_mutations": [],
+      "mem_hash_diff_mutations": 49,
+      "mem_divergences_sample": [
+        {
+          "mutation_index": 0,
+          "mutation_id_guess": 1,
+          "total_hash_a": "0daad4ffe0ab3104",
+          "total_hash_b": "8a832c8a393633d4",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "403d0040c5275f90",
+            "hash_b": "803d3000496c7000",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 1,
+          "mutation_id_guess": 2,
+          "total_hash_a": "517084fcd12a16dd",
+          "total_hash_b": "504a9cf7eeb9954d",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "002e68135fb78470",
+            "hash_b": "4000c001dc1d1070",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 2,
+          "mutation_id_guess": 3,
+          "total_hash_a": "c939cab0650e8958",
+          "total_hash_b": "8a91f4d065b58398",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "0037e07fd0a2ed60",
+            "hash_b": "c001c01194b51440",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 3,
+          "mutation_id_guess": 4,
+          "total_hash_a": "3e6f13cc357997d0",
+          "total_hash_b": "26d8404f746425f0",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "803fb0f0150dcc80",
+            "hash_b": "000bf832dc71b5e0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 4,
+          "mutation_id_guess": 5,
+          "total_hash_a": "226494e709f0646c",
+          "total_hash_b": "63f04cabd7aa784c",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "4010502729d8c9f0",
+            "hash_b": "802c10011c8e0110",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 5,
+          "mutation_id_guess": 6,
+          "total_hash_a": "3ece3af7c46d2629",
+          "total_hash_b": "71dcb995e6b73239",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "c05530e0edd3c850",
+            "hash_b": "801850f17c365980",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 6,
+          "mutation_id_guess": 7,
+          "total_hash_a": "c55be4e4e1f38436",
+          "total_hash_b": "d79773aebdc51686",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "400a7800502d6ad0",
+            "hash_b": "c03e48e00d333ec0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 7,
+          "mutation_id_guess": 8,
+          "total_hash_a": "82e16a55d0e7f16c",
+          "total_hash_b": "87201cc51fa5f7fc",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "c012e0208005ede0",
+            "hash_b": "c0355803e7839fb0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        }
+      ]
+    },
+    {
+      "pair": "opulous",
+      "seed": 1000,
+      "log_mb": 36.4,
+      "mem_blocks": 50,
+      "racy_count": 1,
+      "racy_mutations": [
+        {
+          "mutation_id": 29,
+          "kind": "INSTR_WORD_MOD_SUR",
+          "step": 3718,
+          "delta_T_a": 0,
+          "delta_T_b": 1,
+          "mem_divergence": {
+            "mutation_index": 27,
+            "mutation_id_guess": 28,
+            "total_hash_a": "f56aec15dfe2e236",
+            "total_hash_b": "a5d47b69a36d9c06",
+            "first_divergent_cycle": {
+              "cycle": 33491,
+              "hash_a": "4029e830433b6d20",
+              "hash_b": "406f0001918951b0",
+              "count_a": 8,
+              "count_b": 8
+            }
+          }
+        }
+      ],
+      "mem_hash_diff_mutations": 50,
+      "mem_divergences_sample": [
+        {
+          "mutation_index": 0,
+          "mutation_id_guess": 1,
+          "total_hash_a": "bfde2c6ed0582195",
+          "total_hash_b": "7cc60d49dc26fba5",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "4039580688a22ce0",
+            "hash_b": "80093031ec687870",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 1,
+          "mutation_id_guess": 2,
+          "total_hash_a": "742c22b9a1164a85",
+          "total_hash_b": "b243294276f5b345",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "8014d83313e373e0",
+            "hash_b": "400e38ee480a6750",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 2,
+          "mutation_id_guess": 3,
+          "total_hash_a": "c471d4734e9ade15",
+          "total_hash_b": "d8da02b7d1b83a25",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "803431c904c7bfc0",
+            "hash_b": "c005a851798fbb70",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 3,
+          "mutation_id_guess": 4,
+          "total_hash_a": "1d1bbd26dcca0b85",
+          "total_hash_b": "c7a7aa072fe542c5",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "801470608cacf070",
+            "hash_b": "41b16bff1340e5c0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 4,
+          "mutation_id_guess": 5,
+          "total_hash_a": "b9a88c30acfb1c7c",
+          "total_hash_b": "472d52ea00093d9c",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "0030a0ff6096c440",
+            "hash_b": "00251807f02edf10",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 5,
+          "mutation_id_guess": 6,
+          "total_hash_a": "344d115a452f2185",
+          "total_hash_b": "b7f6117f9a7f47b5",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "c0fb38104445d790",
+            "hash_b": "400ba800135bb9a0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 6,
+          "mutation_id_guess": 7,
+          "total_hash_a": "cefdc656ae8ed1fd",
+          "total_hash_b": "d366807b403a515d",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "80ef9872f39516b0",
+            "hash_b": "000aa02f3c7f3b50",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 7,
+          "mutation_id_guess": 8,
+          "total_hash_a": "3d2bd6c465a91f1b",
+          "total_hash_b": "76e2af7c59bbc75b",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "40c9c070b4eb6d10",
+            "hash_b": "4007a83361defe80",
+            "count_a": 8,
+            "count_b": 8
+          }
+        }
+      ]
+    },
+    {
+      "pair": "meld",
+      "seed": 1001,
+      "log_mb": 35.7,
+      "mem_blocks": 49,
+      "racy_count": 0,
+      "racy_mutations": [],
+      "mem_hash_diff_mutations": 49,
+      "mem_divergences_sample": [
+        {
+          "mutation_index": 0,
+          "mutation_id_guess": 1,
+          "total_hash_a": "370bbd0decc672fc",
+          "total_hash_b": "8345488133fdefdc",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "8004d847b8ec4ca0",
+            "hash_b": "000a0011831c9840",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 1,
+          "mutation_id_guess": 2,
+          "total_hash_a": "f116b8eca8431865",
+          "total_hash_b": "7afc439269742ab5",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "c0ed00e3cc14d240",
+            "hash_b": "801ae856b04a4e40",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 2,
+          "mutation_id_guess": 3,
+          "total_hash_a": "a9e00b6a11cdbc44",
+          "total_hash_b": "66070a28658a9834",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "c00ce00164887800",
+            "hash_b": "800b48106cefcd00",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 3,
+          "mutation_id_guess": 4,
+          "total_hash_a": "5f7aac0a4f5679e4",
+          "total_hash_b": "de6b7472f1a68a44",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "0064481024370dc0",
+            "hash_b": "c0155821cea31540",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 4,
+          "mutation_id_guess": 5,
+          "total_hash_a": "41bef831d0864d2a",
+          "total_hash_b": "80c61f7c0e2215aa",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "401128e125258cb0",
+            "hash_b": "40fc3801381ba980",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 5,
+          "mutation_id_guess": 6,
+          "total_hash_a": "68037cc95c8bdef5",
+          "total_hash_b": "6e88d9c487cd1395",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "c07ae01204098e90",
+            "hash_b": "c0fac1c1bcabf9d0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 6,
+          "mutation_id_guess": 7,
+          "total_hash_a": "8adb2802abba9f9f",
+          "total_hash_b": "05bccb1887abb79f",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "401c98174374e410",
+            "hash_b": "401290008c0a6590",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 7,
+          "mutation_id_guess": 8,
+          "total_hash_a": "c8763a9396ba97ea",
+          "total_hash_b": "4948a3d9106c48ba",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "000d602304003af0",
+            "hash_b": "00e50871c4c27200",
+            "count_a": 8,
+            "count_b": 8
+          }
+        }
+      ]
+    },
+    {
+      "pair": "flareCtrl",
+      "seed": 999,
+      "log_mb": 35.7,
+      "mem_blocks": 49,
+      "racy_count": 2,
+      "racy_mutations": [
+        {
+          "mutation_id": 4,
+          "kind": "PRE_EXEC_REG_MOD",
+          "step": 2664,
+          "delta_T_a": 1,
+          "delta_T_b": 0,
+          "mem_divergence": {
+            "mutation_index": 2,
+            "mutation_id_guess": 3,
+            "total_hash_a": "8baeedd9db6f8088",
+            "total_hash_b": "0e9189410a80d638",
+            "first_divergent_cycle": {
+              "cycle": 33491,
+              "hash_a": "001ae07eb5d77580",
+              "hash_b": "801be0221c1d7900",
+              "count_a": 8,
+              "count_b": 8
+            }
+          }
+        },
+        {
+          "mutation_id": 20,
+          "kind": "INSTR_WORD_MOD_SUR",
+          "step": 3686,
+          "delta_T_a": 0,
+          "delta_T_b": 0,
+          "mem_divergence": {
+            "mutation_index": 18,
+            "mutation_id_guess": 19,
+            "total_hash_a": "c3764c21e7f854e5",
+            "total_hash_b": "9851abf69ccc01b5",
+            "first_divergent_cycle": {
+              "cycle": 33491,
+              "hash_a": "c032787eb9ade2d0",
+              "hash_b": "401830618426cd40",
+              "count_a": 8,
+              "count_b": 8
+            }
+          }
+        }
+      ],
+      "mem_hash_diff_mutations": 49,
+      "mem_divergences_sample": [
+        {
+          "mutation_index": 0,
+          "mutation_id_guess": 1,
+          "total_hash_a": "c8f6103494b2b0e4",
+          "total_hash_b": "c3e3581ba9f48e84",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "406f70160cad9700",
+            "hash_b": "c00aa82060cea380",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 1,
+          "mutation_id_guess": 2,
+          "total_hash_a": "68f4efa5f57d5a6d",
+          "total_hash_b": "a9928345de54175d",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "41804000f0c456c0",
+            "hash_b": "0002403b2593aab0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 2,
+          "mutation_id_guess": 3,
+          "total_hash_a": "8baeedd9db6f8088",
+          "total_hash_b": "0e9189410a80d638",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "001ae07eb5d77580",
+            "hash_b": "801be0221c1d7900",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 3,
+          "mutation_id_guess": 4,
+          "total_hash_a": "f82c02fb94408620",
+          "total_hash_b": "3e9812d73691d500",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "8012c3ff71e82810",
+            "hash_b": "0003e1e01d9dd6a0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 4,
+          "mutation_id_guess": 5,
+          "total_hash_a": "e171fb660d8412dc",
+          "total_hash_b": "9ded130eab1553ac",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "c071c03064203ca0",
+            "hash_b": "803820349880eba0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 5,
+          "mutation_id_guess": 6,
+          "total_hash_a": "31eb1e6238187249",
+          "total_hash_b": "02db71c852ca19f9",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "c009a9f38361fe10",
+            "hash_b": "c01ef89c7234d8a0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 6,
+          "mutation_id_guess": 7,
+          "total_hash_a": "1a45607fd8089626",
+          "total_hash_b": "44d6ad1e55474486",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "4012b793e04668b0",
+            "hash_b": "c034e00079aab6b0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        },
+        {
+          "mutation_index": 7,
+          "mutation_id_guess": 8,
+          "total_hash_a": "c3a8eb434f54810c",
+          "total_hash_b": "9a482fc11df9e8dc",
+          "first_divergent_cycle": {
+            "cycle": 33491,
+            "hash_a": "00240031842b9830",
+            "hash_b": "0000880237146da0",
+            "count_a": 8,
+            "count_b": 8
+          }
+        }
+      ]
+    }
+  ]
+}

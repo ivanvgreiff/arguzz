@@ -1,0 +1,295 @@
+{
+  "milestone": "E0",
+  "generated_at": "2026-06-12T08:08:12.023048+00:00",
+  "host": "/root/arguzz/thesis_side_experiments/minimal_add/target/release/thesis-minimal-host",
+  "guest_args": [],
+  "production_host_before_build": {
+    "path": "/root/arguzz/workspace/output/target/release/risc0-host",
+    "exists": true,
+    "mtime_iso": "2026-06-12T04:04:28.736175+00:00",
+    "size_bytes": 102676656
+  },
+  "production_host_after_build": {
+    "path": "/root/arguzz/workspace/output/target/release/risc0-host",
+    "exists": true,
+    "mtime_iso": "2026-06-12T04:04:28.736175+00:00",
+    "size_bytes": 102676656
+  },
+  "production_host_mtime_unchanged": true,
+  "arguzz_to_a4_step_offset": -2,
+  "site_card": {
+    "offset": -2,
+    "roles": {
+      "load_x": {
+        "arguzz_step": 193,
+        "arguzz_pc": 2099256,
+        "arguzz_pc_hex": "0x00200838",
+        "instruction": "Lw",
+        "assembly": "lw a2, 0(sp)",
+        "a4_step": 191,
+        "a4_pc": 2099260,
+        "cycle_idx": 14464,
+        "major": 5,
+        "minor": 2,
+        "txns": [
+          {
+            "txn_idx": 14289,
+            "txn_type": "mem",
+            "register": null,
+            "op": "READ",
+            "word": 75267,
+            "prev_word": 75267
+          },
+          {
+            "txn_idx": 14290,
+            "txn_type": "reg",
+            "register": "sp",
+            "op": "READ",
+            "word": 2098128,
+            "prev_word": 2098128
+          },
+          {
+            "txn_idx": 14291,
+            "txn_type": "mem",
+            "register": null,
+            "op": "READ",
+            "word": 3,
+            "prev_word": 3
+          },
+          {
+            "txn_idx": 14292,
+            "txn_type": "reg",
+            "register": "a2",
+            "op": "WRITE",
+            "word": 3,
+            "prev_word": 4
+          }
+        ]
+      },
+      "load_y": {
+        "arguzz_step": 194,
+        "arguzz_pc": 2099260,
+        "arguzz_pc_hex": "0x0020083c",
+        "instruction": "Lw",
+        "assembly": "lw a1, 4(sp)",
+        "a4_step": 192,
+        "a4_pc": 2099264,
+        "cycle_idx": 14465,
+        "major": 5,
+        "minor": 2,
+        "txns": [
+          {
+            "txn_idx": 14293,
+            "txn_type": "mem",
+            "register": null,
+            "op": "READ",
+            "word": 4269443,
+            "prev_word": 4269443
+          },
+          {
+            "txn_idx": 14294,
+            "txn_type": "reg",
+            "register": "sp",
+            "op": "READ",
+            "word": 2098128,
+            "prev_word": 2098128
+          },
+          {
+            "txn_idx": 14295,
+            "txn_type": "mem",
+            "register": null,
+            "op": "READ",
+            "word": 4,
+            "prev_word": 4
+          },
+          {
+            "txn_idx": 14296,
+            "txn_type": "reg",
+            "register": "a1",
+            "op": "WRITE",
+            "word": 4,
+            "prev_word": 2098132
+          }
+        ]
+      },
+      "add": {
+        "arguzz_step": 195,
+        "arguzz_pc": 2099264,
+        "arguzz_pc_hex": "0x00200840",
+        "instruction": "Add",
+        "assembly": "add a1, a1, a2",
+        "a4_step": 193,
+        "a4_pc": 2099268,
+        "cycle_idx": 14466,
+        "major": 0,
+        "minor": 0,
+        "txns": [
+          {
+            "txn_idx": 14297,
+            "txn_type": "mem",
+            "register": null,
+            "op": "READ",
+            "word": 12944819,
+            "prev_word": 12944819
+          },
+          {
+            "txn_idx": 14298,
+            "txn_type": "reg",
+            "register": "a1",
+            "op": "READ",
+            "word": 4,
+            "prev_word": 4
+          },
+          {
+            "txn_idx": 14299,
+            "txn_type": "reg",
+            "register": "a2",
+            "op": "READ",
+            "word": 3,
+            "prev_word": 3
+          },
+          {
+            "txn_idx": 14300,
+            "txn_type": "reg",
+            "register": "a1",
+            "op": "WRITE",
+            "word": 7,
+            "prev_word": 4
+          }
+        ]
+      },
+      "store": {
+        "arguzz_step": 196,
+        "arguzz_pc": 2099268,
+        "arguzz_pc_hex": "0x00200844",
+        "instruction": "Sw",
+        "assembly": "sw a1, 8(a0)",
+        "a4_step": 194,
+        "a4_pc": 2099272,
+        "cycle_idx": 14467,
+        "major": 6,
+        "minor": 2,
+        "txns": [
+          {
+            "txn_idx": 14301,
+            "txn_type": "mem",
+            "register": null,
+            "op": "READ",
+            "word": 11871267,
+            "prev_word": 11871267
+          },
+          {
+            "txn_idx": 14302,
+            "txn_type": "reg",
+            "register": "a0",
+            "op": "READ",
+            "word": 2229096,
+            "prev_word": 2229096
+          },
+          {
+            "txn_idx": 14303,
+            "txn_type": "reg",
+            "register": "a1",
+            "op": "READ",
+            "word": 7,
+            "prev_word": 7
+          },
+          {
+            "txn_idx": 14304,
+            "txn_type": "mem",
+            "register": null,
+            "op": "READ",
+            "word": 0,
+            "prev_word": 0
+          },
+          {
+            "txn_idx": 14305,
+            "txn_type": "mem",
+            "register": null,
+            "op": "WRITE",
+            "word": 7,
+            "prev_word": 0
+          }
+        ]
+      },
+      "read_back": {
+        "arguzz_step": 197,
+        "arguzz_pc": 2099272,
+        "arguzz_pc_hex": "0x00200848",
+        "instruction": "Lw",
+        "assembly": "lw s0, 8(a0)",
+        "a4_step": 195,
+        "a4_pc": 2099276,
+        "cycle_idx": 14468,
+        "major": 5,
+        "minor": 2,
+        "txns": [
+          {
+            "txn_idx": 14306,
+            "txn_type": "mem",
+            "register": null,
+            "op": "READ",
+            "word": 8725507,
+            "prev_word": 8725507
+          },
+          {
+            "txn_idx": 14307,
+            "txn_type": "reg",
+            "register": "a0",
+            "op": "READ",
+            "word": 2229096,
+            "prev_word": 2229096
+          },
+          {
+            "txn_idx": 14308,
+            "txn_type": "mem",
+            "register": null,
+            "op": "READ",
+            "word": 7,
+            "prev_word": 7
+          },
+          {
+            "txn_idx": 14309,
+            "txn_type": "reg",
+            "register": "s0",
+            "op": "WRITE",
+            "word": 7,
+            "prev_word": 0
+          }
+        ]
+      }
+    }
+  },
+  "determinism": {
+    "runs_identical": true,
+    "run_summaries": [
+      {
+        "run": 1,
+        "path": "artifacts/e0/baseline_touch_run1.txt",
+        "constraint_fail_count": 0,
+        "global_nonzero": false,
+        "local_verbose_count": 1580,
+        "accum_verbose_count": 298
+      },
+      {
+        "run": 2,
+        "path": "artifacts/e0/baseline_touch_run2.txt",
+        "constraint_fail_count": 0,
+        "global_nonzero": false,
+        "local_verbose_count": 1580,
+        "accum_verbose_count": 298
+      }
+    ]
+  },
+  "acceptance": {
+    "production_host_mtime_unchanged": true,
+    "baseline_output_7": true,
+    "baseline_verifier_ok": true,
+    "baseline_zero_failures": true,
+    "baseline_zero_global": true,
+    "touch_sets_reproducible": true,
+    "five_roles_identified": true,
+    "a4_txn_shapes_validated": true,
+    "gate_pass": true
+  }
+}

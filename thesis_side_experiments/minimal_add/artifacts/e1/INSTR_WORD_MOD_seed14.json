@@ -1,0 +1,60 @@
+{
+  "kind": "INSTR_WORD_MOD",
+  "role": "add",
+  "seed": 14,
+  "inject_step": 195,
+  "mutated_value": null,
+  "mutated_word": 13993395,
+  "mutated_word_hex": "0x00d585b3",
+  "decoded_instruction": {
+    "word_hex": "0x00d585b3",
+    "disassembly": "ADD x11, x11, x13",
+    "format_name": "OP",
+    "opcode": 51,
+    "rd": 11,
+    "funct3": 0,
+    "rs1": 11,
+    "rs2": 13,
+    "funct7": 0
+  },
+  "outcome_class": "GLOBAL_REJECT",
+  "preflight_crash": false,
+  "verifier_success": false,
+  "soundness_escape": false,
+  "determinism_ok": true,
+  "failure_count": 0,
+  "layers": {
+    "intrastep-local": 0,
+    "interstep-local": 0,
+    "global": 1
+  },
+  "buckets": {
+    "intrastep-local": [],
+    "interstep-local": [],
+    "global": []
+  },
+  "global_families": [
+    {
+      "family": "memory",
+      "address": null
+    }
+  ],
+  "provenance": [],
+  "example_loc_residue": "global family memory nonzero",
+  "log_path": "/root/arguzz/thesis_side_experiments/minimal_add/artifacts/e1/INSTR_WORD_MOD_seed14.log",
+  "original_instruction": {
+    "word_hex": "0x00c585b3",
+    "disassembly": "ADD x11, x11, x12",
+    "format_name": "OP",
+    "opcode": 51,
+    "rd": 11,
+    "funct3": 0,
+    "rs1": 11,
+    "rs2": 12,
+    "funct7": 0
+  },
+  "fields_changed": [
+    "rs2"
+  ],
+  "field_class": "src_reg"
+}

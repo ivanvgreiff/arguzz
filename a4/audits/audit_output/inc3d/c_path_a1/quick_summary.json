@@ -1,0 +1,31 @@
+{
+  "pairs": {
+    "alpha": {
+      "complete": true,
+      "delta_T_flips": 0,
+      "delta_T": []
+    },
+    "beta": {
+      "complete": true,
+      "delta_T_flips": 0,
+      "delta_T": []
+    },
+    "opulous": {
+      "complete": true,
+      "delta_T_flips": 0,
+      "delta_T": []
+    },
+    "meld": {
+      "complete": true,
+      "delta_T_flips": 0,
+      "delta_T": []
+    },
+    "flareCtrl": {
+      "complete": true,
+      "delta_T_flips": 0,
+      "delta_T": []
+    }
+  },
+  "total_delta_T_flips": 0,
+  "decision": "CLOSED_A1"
+}

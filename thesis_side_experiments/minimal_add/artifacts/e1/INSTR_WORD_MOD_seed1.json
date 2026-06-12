@@ -1,0 +1,58 @@
+{
+  "kind": "INSTR_WORD_MOD",
+  "role": "add",
+  "seed": 1,
+  "inject_step": 195,
+  "mutated_value": null,
+  "mutated_word": 4184349287,
+  "mutated_word_hex": "0xf9681a67",
+  "decoded_instruction": {
+    "word_hex": "0xf9681a67",
+    "disassembly": "JALR x20, x16, -106",
+    "format_name": "JALR",
+    "opcode": 103,
+    "rd": 20,
+    "funct3": 1,
+    "rs1": 16,
+    "rs2": 22,
+    "funct7": 124
+  },
+  "outcome_class": "PROVE_ERROR",
+  "preflight_crash": false,
+  "verifier_success": false,
+  "soundness_escape": false,
+  "determinism_ok": true,
+  "failure_count": 0,
+  "layers": null,
+  "buckets": {
+    "intrastep-local": [],
+    "interstep-local": [],
+    "global": []
+  },
+  "global_families": [],
+  "provenance": [],
+  "example_loc_residue": null,
+  "log_path": "/root/arguzz/thesis_side_experiments/minimal_add/artifacts/e1/INSTR_WORD_MOD_seed1.log",
+  "crash_stage": "prove",
+  "crash_evidence": "Prover status=error @~37ms; host panic main.rs:106; verifier never ran",
+  "original_instruction": {
+    "word_hex": "0x00c585b3",
+    "disassembly": "ADD x11, x11, x12",
+    "format_name": "OP",
+    "opcode": 51,
+    "rd": 11,
+    "funct3": 0,
+    "rs1": 11,
+    "rs2": 12,
+    "funct7": 0
+  },
+  "fields_changed": [
+    "opcode",
+    "rd",
+    "funct3",
+    "rs1",
+    "rs2",
+    "funct7"
+  ],
+  "field_class": "control_flow"
+}

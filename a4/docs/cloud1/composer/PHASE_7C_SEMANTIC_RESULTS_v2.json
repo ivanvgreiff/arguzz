@@ -1,0 +1,797 @@
+[
+  {
+    "mutation_id": 125,
+    "kind": "COMP_OUT_MOD",
+    "step": 2574,
+    "original_value": 0,
+    "mutated_value": 2550071296,
+    "config": {
+      "mutation_type": "COMP_OUT_MOD",
+      "step": 2574,
+      "txn_idx": 26216,
+      "word": 2550071296,
+      "_info": {
+        "register_idx": 13,
+        "register_name": "a3",
+        "pc": "0x00201524"
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x98000000 new_word=0x97ff0000",
+    "hook_tag": "a4_comp_out_mod",
+    "hook_payload": {
+      "step": 2574,
+      "cycle_idx": 19302,
+      "txn_idx": 26216,
+      "pc": 2102564,
+      "addr": 1073725485,
+      "old_word": 2550136832,
+      "new_word": 2550071296,
+      "prev_word": 152,
+      "major": 3,
+      "minor": 1
+    }
+  },
+  {
+    "mutation_id": 2,
+    "kind": "COMP_OUT_MOD",
+    "step": 3591,
+    "original_value": 0,
+    "mutated_value": 2106921127,
+    "config": {
+      "mutation_type": "COMP_OUT_MOD",
+      "step": 3591,
+      "txn_idx": 30645,
+      "word": 2106921127,
+      "_info": {
+        "register_idx": 14,
+        "register_name": "a4",
+        "pc": "0x00205680"
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x9 new_word=0x7d9510a7",
+    "hook_tag": "a4_comp_out_mod",
+    "hook_payload": {
+      "step": 3591,
+      "cycle_idx": 20467,
+      "txn_idx": 30645,
+      "pc": 2119296,
+      "addr": 1073725486,
+      "old_word": 9,
+      "new_word": 2106921127,
+      "prev_word": 38,
+      "major": 4,
+      "minor": 2
+    }
+  },
+  {
+    "mutation_id": 48,
+    "kind": "COMP_OUT_MOD",
+    "step": 691,
+    "original_value": 0,
+    "mutated_value": 3197441684,
+    "config": {
+      "mutation_type": "COMP_OUT_MOD",
+      "step": 691,
+      "txn_idx": 18339,
+      "word": 3197441684,
+      "_info": {
+        "register_idx": 17,
+        "register_name": "a7",
+        "pc": "0x002061b4"
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x200370 new_word=0xbe951694",
+    "hook_tag": "a4_comp_out_mod",
+    "hook_payload": {
+      "step": 691,
+      "cycle_idx": 17306,
+      "txn_idx": 18339,
+      "pc": 2122164,
+      "addr": 1073725489,
+      "old_word": 2098032,
+      "new_word": 3197441684,
+      "prev_word": 2098028,
+      "major": 0,
+      "minor": 0
+    }
+  },
+  {
+    "mutation_id": 77,
+    "kind": "LOAD_VAL_MOD",
+    "step": 2054,
+    "original_value": 0,
+    "mutated_value": 2070268,
+    "config": {
+      "mutation_type": "LOAD_VAL_MOD",
+      "step": 2054,
+      "txn_idx": 23973,
+      "word": 2070268,
+      "_info": {
+        "register_idx": 1,
+        "register_name": "ra",
+        "pc": "0x00205ff8"
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x2096fc new_word=0x1f96fc",
+    "hook_tag": "a4_load_val_mod",
+    "hook_payload": {
+      "step": 2054,
+      "cycle_idx": 18708,
+      "txn_idx": 23973,
+      "pc": 2121720,
+      "addr": 1073725473,
+      "old_word": 2135804,
+      "new_word": 2070268,
+      "prev_word": 2121680,
+      "major": 5,
+      "minor": 2
+    }
+  },
+  {
+    "mutation_id": 102,
+    "kind": "LOAD_VAL_MOD",
+    "step": 3281,
+    "original_value": 0,
+    "mutated_value": 951218675,
+    "config": {
+      "mutation_type": "LOAD_VAL_MOD",
+      "step": 3281,
+      "txn_idx": 29276,
+      "word": 951218675,
+      "_info": {
+        "register_idx": 17,
+        "register_name": "a7",
+        "pc": "0x00203424"
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0xa33de65b new_word=0x38b271f3",
+    "hook_tag": "a4_load_val_mod",
+    "hook_payload": {
+      "step": 3281,
+      "cycle_idx": 20083,
+      "txn_idx": 29276,
+      "pc": 2110500,
+      "addr": 1073725489,
+      "old_word": 2738742875,
+      "new_word": 951218675,
+      "prev_word": 3621813620,
+      "major": 5,
+      "minor": 2
+    }
+  },
+  {
+    "mutation_id": 113,
+    "kind": "LOAD_VAL_MOD",
+    "step": 2054,
+    "original_value": 0,
+    "mutated_value": 1210309898,
+    "config": {
+      "mutation_type": "LOAD_VAL_MOD",
+      "step": 2054,
+      "txn_idx": 23973,
+      "word": 1210309898,
+      "_info": {
+        "register_idx": 1,
+        "register_name": "ra",
+        "pc": "0x00205ff8"
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x2096fc new_word=0x4823dd0a",
+    "hook_tag": "a4_load_val_mod",
+    "hook_payload": {
+      "step": 2054,
+      "cycle_idx": 18708,
+      "txn_idx": 23973,
+      "pc": 2121720,
+      "addr": 1073725473,
+      "old_word": 2135804,
+      "new_word": 1210309898,
+      "prev_word": 2121680,
+      "major": 5,
+      "minor": 2
+    }
+  },
+  {
+    "mutation_id": 94,
+    "kind": "STORE_OUT_MOD",
+    "step": 3082,
+    "original_value": 0,
+    "mutated_value": 737012150,
+    "config": {
+      "mutation_type": "STORE_OUT_MOD",
+      "step": 3082,
+      "txn_idx": 28359,
+      "word": 737012150,
+      "_info": {
+        "memory_byte_addr": "0x00221564",
+        "pc": "0x00203284"
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x0 new_word=0x2bede9b6",
+    "hook_tag": "a4_store_out_mod",
+    "hook_payload": {
+      "step": 3082,
+      "cycle_idx": 19810,
+      "txn_idx": 28359,
+      "pc": 2110084,
+      "addr": 558425,
+      "old_word": 0,
+      "new_word": 737012150,
+      "prev_word": 0,
+      "major": 6,
+      "minor": 2
+    }
+  },
+  {
+    "mutation_id": 47,
+    "kind": "STORE_OUT_MOD",
+    "step": 1893,
+    "original_value": 0,
+    "mutated_value": 3801153408,
+    "config": {
+      "mutation_type": "STORE_OUT_MOD",
+      "step": 1893,
+      "txn_idx": 23316,
+      "word": 3801153408,
+      "_info": {
+        "memory_byte_addr": "0x00200084",
+        "pc": "0x002096d0"
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x22133c new_word=0xe290ff80",
+    "hook_tag": "a4_store_out_mod",
+    "hook_payload": {
+      "step": 1893,
+      "cycle_idx": 18542,
+      "txn_idx": 23316,
+      "pc": 2135760,
+      "addr": 524321,
+      "old_word": 2233148,
+      "new_word": 3801153408,
+      "prev_word": 2233148,
+      "major": 6,
+      "minor": 2
+    }
+  },
+  {
+    "mutation_id": 116,
+    "kind": "STORE_OUT_MOD",
+    "step": 711,
+    "original_value": 0,
+    "mutated_value": 2535872528,
+    "config": {
+      "mutation_type": "STORE_OUT_MOD",
+      "step": 711,
+      "txn_idx": 18421,
+      "word": 2535872528,
+      "_info": {
+        "memory_byte_addr": "0x0020036c",
+        "pc": "0x0020099c"
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x0 new_word=0x97265810",
+    "hook_tag": "a4_store_out_mod",
+    "hook_payload": {
+      "step": 711,
+      "cycle_idx": 17326,
+      "txn_idx": 18421,
+      "pc": 2099612,
+      "addr": 524507,
+      "old_word": 0,
+      "new_word": 2535872528,
+      "prev_word": 0,
+      "major": 6,
+      "minor": 2
+    }
+  },
+  {
+    "mutation_id": 45,
+    "kind": "PRE_EXEC_REG_MOD",
+    "step": 608,
+    "original_value": 0,
+    "mutated_value": 4194304,
+    "config": {
+      "mutation_type": "PRE_EXEC_REG_MOD",
+      "step": 608,
+      "txn_idx": 17990,
+      "word": 4194304,
+      "strategy": "next_read",
+      "_info": {
+        "register_idx": 10,
+        "register_name": "a0",
+        "is_write": false,
+        "pc": "0x00206178"
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x4 new_word=0x400000",
+    "hook_tag": "a4_pre_exec_reg_mod",
+    "hook_payload": {
+      "step": 608,
+      "strategy": "next_read",
+      "txn_type": "READ",
+      "cycle_idx": 17217,
+      "txn_idx": 17990,
+      "pc": 2122104,
+      "addr": 1073725482,
+      "old_word": 4,
+      "new_word": 4194304,
+      "prev_word": 4,
+      "major": 0,
+      "minor": 0
+    }
+  },
+  {
+    "mutation_id": 93,
+    "kind": "PRE_EXEC_REG_MOD",
+    "step": 0,
+    "original_value": 0,
+    "mutated_value": 195564963,
+    "config": {
+      "mutation_type": "PRE_EXEC_REG_MOD",
+      "step": 0,
+      "txn_idx": 14927,
+      "word": 195564963,
+      "strategy": "next_read",
+      "_info": {
+        "register_idx": 23,
+        "register_name": "s7",
+        "is_write": false,
+        "pc": "0xc0000004"
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x0 new_word=0xba815a3",
+    "hook_tag": "a4_pre_exec_reg_mod",
+    "hook_payload": {
+      "step": 0,
+      "strategy": "next_read",
+      "txn_type": "READ",
+      "cycle_idx": 0,
+      "txn_idx": 14927,
+      "pc": 0,
+      "addr": 1073725495,
+      "old_word": 0,
+      "new_word": 195564963,
+      "prev_word": 0,
+      "major": 7,
+      "minor": 0
+    }
+  },
+  {
+    "mutation_id": 40,
+    "kind": "PRE_EXEC_REG_MOD",
+    "step": 817,
+    "original_value": 0,
+    "mutated_value": 16777216,
+    "config": {
+      "mutation_type": "PRE_EXEC_REG_MOD",
+      "step": 817,
+      "txn_idx": 18858,
+      "word": 16777216,
+      "strategy": "next_read",
+      "_info": {
+        "register_idx": 0,
+        "register_name": "zero",
+        "is_write": false,
+        "pc": "0x00206158"
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x0 new_word=0x1000000",
+    "hook_tag": "a4_pre_exec_reg_mod",
+    "hook_payload": {
+      "step": 817,
+      "strategy": "next_read",
+      "txn_type": "READ",
+      "cycle_idx": 17438,
+      "txn_idx": 18858,
+      "pc": 2122072,
+      "addr": 1073725472,
+      "old_word": 0,
+      "new_word": 16777216,
+      "prev_word": 0,
+      "major": 2,
+      "minor": 5
+    }
+  },
+  {
+    "mutation_id": 12,
+    "kind": "INSTR_TYPE_MOD",
+    "step": 0,
+    "original_value": 131078,
+    "mutated_value": 65539,
+    "config": {
+      "mutation_type": "INSTR_TYPE_MOD",
+      "step": 0,
+      "major": 1,
+      "minor": 3,
+      "_info": {
+        "original_major": 2,
+        "original_minor": 6,
+        "original_kind": "Auipc",
+        "mutated_kind": "SltI",
+        "pc": "0xc0000004",
+        "is_valid_combination": true
+      }
+    },
+    "passed": true,
+    "detail": "old=7/0 new=1/3 (old cycle may differ from config _info at multi-cycle steps)",
+    "hook_tag": "a4_instr_type_mod",
+    "hook_payload": {
+      "step": 0,
+      "cycle_idx": 0,
+      "pc": 0,
+      "old_major": 7,
+      "old_minor": 0,
+      "new_major": 1,
+      "new_minor": 3
+    }
+  },
+  {
+    "mutation_id": 9,
+    "kind": "INSTR_TYPE_MOD",
+    "step": 3073,
+    "original_value": 196610,
+    "mutated_value": 65538,
+    "config": {
+      "mutation_type": "INSTR_TYPE_MOD",
+      "step": 3073,
+      "major": 1,
+      "minor": 2,
+      "_info": {
+        "original_major": 3,
+        "original_minor": 2,
+        "original_kind": "Mul",
+        "mutated_kind": "AndI",
+        "pc": "0x00203260",
+        "is_valid_combination": true
+      }
+    },
+    "passed": true,
+    "detail": "old=3/2 new=1/2 (old cycle may differ from config _info at multi-cycle steps)",
+    "hook_tag": "a4_instr_type_mod",
+    "hook_payload": {
+      "step": 3073,
+      "cycle_idx": 19801,
+      "pc": 2110048,
+      "old_major": 3,
+      "old_minor": 2,
+      "new_major": 1,
+      "new_minor": 2
+    }
+  },
+  {
+    "mutation_id": 53,
+    "kind": "INSTR_TYPE_MOD",
+    "step": 2960,
+    "original_value": 262146,
+    "mutated_value": 327682,
+    "config": {
+      "mutation_type": "INSTR_TYPE_MOD",
+      "step": 2960,
+      "major": 5,
+      "minor": 2,
+      "_info": {
+        "original_major": 4,
+        "original_minor": 2,
+        "original_kind": "SrlI",
+        "mutated_kind": "Lw",
+        "pc": "0x00205680",
+        "is_valid_combination": true
+      }
+    },
+    "passed": true,
+    "detail": "old=4/2 new=5/2 (old cycle may differ from config _info at multi-cycle steps)",
+    "hook_tag": "a4_instr_type_mod",
+    "hook_payload": {
+      "step": 2960,
+      "cycle_idx": 19688,
+      "pc": 2119296,
+      "old_major": 4,
+      "old_minor": 2,
+      "new_major": 5,
+      "new_minor": 2
+    }
+  },
+  {
+    "mutation_id": 34,
+    "kind": "MEM_VAL_MOD",
+    "step": 408,
+    "original_value": 0,
+    "mutated_value": 4294967295,
+    "config": {
+      "mutation_type": "MEM_VAL_MOD",
+      "step": 408,
+      "txn_idx": 17150,
+      "word": 4294967295,
+      "_info": {
+        "txn_type": "store_rmw_read",
+        "byte_addr": "0x00200354",
+        "is_write": false
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x0 new_word=0xffffffff",
+    "hook_tag": "a4_mem_val_mod",
+    "hook_payload": {
+      "step": 408,
+      "txn_type": "READ",
+      "cycle_idx": 16999,
+      "txn_idx": 17150,
+      "pc": 2109848,
+      "addr": 524501,
+      "byte_addr": 2098004,
+      "old_word": 0,
+      "new_word": 4294967295,
+      "major": 6,
+      "minor": 2
+    }
+  },
+  {
+    "mutation_id": 82,
+    "kind": "MEM_VAL_MOD",
+    "step": 366,
+    "original_value": 0,
+    "mutated_value": 65535,
+    "config": {
+      "mutation_type": "MEM_VAL_MOD",
+      "step": 366,
+      "txn_idx": 16962,
+      "word": 65535,
+      "_info": {
+        "txn_type": "other_mem_read",
+        "byte_addr": "0xffff0008",
+        "is_write": false
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0xfff00000 new_word=0xffff",
+    "hook_tag": "a4_mem_val_mod",
+    "hook_payload": {
+      "step": 366,
+      "txn_type": "READ",
+      "cycle_idx": 16951,
+      "txn_idx": 16962,
+      "pc": 3221225800,
+      "addr": 1073725442,
+      "byte_addr": 4294901768,
+      "old_word": 4293918720,
+      "new_word": 65535,
+      "major": 3,
+      "minor": 1
+    }
+  },
+  {
+    "mutation_id": 35,
+    "kind": "MEM_VAL_MOD",
+    "step": 757,
+    "original_value": 0,
+    "mutated_value": 2452163866,
+    "config": {
+      "mutation_type": "MEM_VAL_MOD",
+      "step": 757,
+      "txn_idx": 18600,
+      "word": 2452163866,
+      "_info": {
+        "txn_type": "other_mem_read",
+        "byte_addr": "0xffff0030",
+        "is_write": false
+      }
+    },
+    "passed": true,
+    "detail": "old_word=0x1 new_word=0x92290d1a",
+    "hook_tag": "a4_mem_val_mod",
+    "hook_payload": {
+      "step": 757,
+      "txn_type": "READ",
+      "cycle_idx": 17372,
+      "txn_idx": 18600,
+      "pc": 3221225800,
+      "addr": 1073725452,
+      "byte_addr": 4294901808,
+      "old_word": 1,
+      "new_word": 2452163866,
+      "major": 3,
+      "minor": 1
+    }
+  },
+  {
+    "mutation_id": 126,
+    "kind": "INSTR_WORD_MOD_FULL",
+    "step": 3929,
+    "original_value": 0,
+    "mutated_value": 65651,
+    "config": {
+      "mutation_type": "INSTR_WORD_MOD",
+      "step": 3929,
+      "word": 65651,
+      "original_disassembly": "ECALL x0, x0, 0",
+      "mutated_disassembly": "ECALL x0, x2, 0",
+      "original_format": "I",
+      "mutated_format": "I"
+    },
+    "passed": true,
+    "detail": "old_word=0x73 new_word=0x10073",
+    "hook_tag": "a4_instr_word_mod",
+    "hook_payload": {
+      "step": 3929,
+      "cycle_idx": 20879,
+      "txn_idx": 32134,
+      "pc": 3221225720,
+      "addr": 805306430,
+      "old_word": 115,
+      "new_word": 65651,
+      "major": 8,
+      "minor": 0
+    }
+  },
+  {
+    "mutation_id": 13,
+    "kind": "INSTR_WORD_MOD_FULL",
+    "step": 940,
+    "original_value": 0,
+    "mutated_value": 2684356023,
+    "config": {
+      "mutation_type": "INSTR_WORD_MOD",
+      "step": 940,
+      "word": 2684356023,
+      "original_disassembly": "LUI x11, 0x80000000",
+      "mutated_disassembly": "LUI x11, 0xa0000000",
+      "original_format": "U",
+      "mutated_format": "U"
+    },
+    "passed": true,
+    "detail": "old_word=0x800005b7 new_word=0xa00005b7",
+    "hook_tag": "a4_instr_word_mod",
+    "hook_payload": {
+      "step": 940,
+      "cycle_idx": 17573,
+      "txn_idx": 19378,
+      "pc": 2099756,
+      "addr": 524938,
+      "old_word": 2147485111,
+      "new_word": 2684356023,
+      "major": 2,
+      "minor": 5
+    }
+  },
+  {
+    "mutation_id": 98,
+    "kind": "INSTR_WORD_MOD_FULL",
+    "step": 671,
+    "original_value": 0,
+    "mutated_value": 19159139,
+    "config": {
+      "mutation_type": "INSTR_WORD_MOD",
+      "step": 671,
+      "word": 19159139,
+      "original_disassembly": "BGE x10, x18, 16",
+      "mutated_disassembly": "BGE x8, x18, 16",
+      "original_format": "B",
+      "mutated_format": "B"
+    },
+    "passed": true,
+    "detail": "old_word=0x1255863 new_word=0x1245863",
+    "hook_tag": "a4_instr_word_mod",
+    "hook_payload": {
+      "step": 671,
+      "cycle_idx": 17280,
+      "txn_idx": 18239,
+      "pc": 3221225592,
+      "addr": 805306397,
+      "old_word": 19224675,
+      "new_word": 19159139,
+      "major": 2,
+      "minor": 0
+    }
+  },
+  {
+    "mutation_id": 21,
+    "kind": "INSTR_WORD_MOD_SUR",
+    "step": 1431,
+    "original_value": 0,
+    "mutated_value": 1705235,
+    "config": {
+      "mutation_type": "INSTR_WORD_MOD",
+      "step": 1431,
+      "word": 1705235,
+      "surgical_field": "rs1",
+      "original_field_value": 10,
+      "mutated_field_value": 20,
+      "original_disassembly": "ADDI x10, x10, 1",
+      "mutated_disassembly": "ADDI x10, x20, 1",
+      "instruction_format": "I",
+      "format_name": "OP-IMM"
+    },
+    "passed": true,
+    "detail": "old_word=0x150513 new_word=0x1a0513",
+    "hook_tag": "a4_instr_word_mod",
+    "hook_payload": {
+      "step": 1431,
+      "cycle_idx": 18075,
+      "txn_idx": 21413,
+      "pc": 2196692,
+      "addr": 549172,
+      "old_word": 1377555,
+      "new_word": 1705235,
+      "major": 0,
+      "minor": 7
+    }
+  },
+  {
+    "mutation_id": 74,
+    "kind": "INSTR_WORD_MOD_SUR",
+    "step": 763,
+    "original_value": 0,
+    "mutated_value": 3171223603,
+    "config": {
+      "mutation_type": "INSTR_WORD_MOD",
+      "step": 763,
+      "word": 3171223603,
+      "surgical_field": "funct7",
+      "original_field_value": 0,
+      "mutated_field_value": 94,
+      "original_disassembly": "ADD x16, x10, x16",
+      "mutated_disassembly": "ADD x16, x10, x16",
+      "instruction_format": "R",
+      "format_name": "OP"
+    },
+    "passed": true,
+    "detail": "old_word=0x1050833 new_word=0xbd050833",
+    "hook_tag": "a4_instr_word_mod",
+    "hook_payload": {
+      "step": 763,
+      "cycle_idx": 17384,
+      "txn_idx": 18640,
+      "pc": 2122104,
+      "addr": 530525,
+      "old_word": 17106995,
+      "new_word": 3171223603,
+      "major": 0,
+      "minor": 0
+    }
+  },
+  {
+    "mutation_id": 26,
+    "kind": "INSTR_WORD_MOD_SUR",
+    "step": 3929,
+    "original_value": 0,
+    "mutated_value": 3061842035,
+    "config": {
+      "mutation_type": "INSTR_WORD_MOD",
+      "step": 3929,
+      "word": 3061842035,
+      "surgical_field": "imm",
+      "original_field_value": 0,
+      "mutated_field_value": 2920,
+      "original_disassembly": "ECALL x0, x0, 0",
+      "mutated_disassembly": "SYSTEM.0 x0, x0, -1176",
+      "instruction_format": "I",
+      "format_name": "SYSTEM"
+    },
+    "passed": true,
+    "detail": "old_word=0x73 new_word=0xb6800073",
+    "hook_tag": "a4_instr_word_mod",
+    "hook_payload": {
+      "step": 3929,
+      "cycle_idx": 20879,
+      "txn_idx": 32134,
+      "pc": 3221225720,
+      "addr": 805306430,
+      "old_word": 115,
+      "new_word": 3061842035,
+      "major": 8,
+      "minor": 0
+    }
+  }
+]

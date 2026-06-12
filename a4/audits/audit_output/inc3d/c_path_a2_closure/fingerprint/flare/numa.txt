@@ -1,0 +1,1 @@
+/tmp/2026-06-12_21-48-01_647065_pos_inc3d_phase_c_path_a2_closure_zoned_seed999_n50_flareCtrlB: line 138: numactl: command not found

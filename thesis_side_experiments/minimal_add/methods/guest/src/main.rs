@@ -1,29 +1,21 @@
 #![no_main]
 #![no_std]
 
+use core::hint::black_box;
+use core::ptr::{read_volatile, write_volatile};
 use risc0_zkvm::guest::env;
 
-/// Minimal thesis guest: one R-type add with fixed operands 3 + 4 = 7.
-///
-/// Equivalent assembly intent (as compiled):
-///   li a0, 3
-///   li a1, 4
-///   add s0, a0, a1
 risc0_zkvm::guest::entry!(main);
 
 fn main() {
-    let rs1: u32 = 3;
-    let rs2: u32 = 4;
-    let rd: u32;
-
+    static mut BUF: [u32; 4] = [3, 4, 0, 0];
     unsafe {
-        core::arch::asm!(
-            "add {rd}, {rs1}, {rs2}",
-            rd = out(reg) rd,
-            rs1 = in(reg) rs1,
-            rs2 = in(reg) rs2,
-        );
+        let p = core::ptr::addr_of_mut!(BUF) as *mut u32;
+        let x = read_volatile(p.add(0));
+        let y = read_volatile(p.add(1));
+        let s = black_box(x) + black_box(y);
+        write_volatile(p.add(2), s);
+        let r = read_volatile(p.add(2));
+        env::commit(&r);
     }
-
-    env::commit(&rd);
 }

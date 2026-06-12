@@ -1,0 +1,125 @@
+{
+  "kind": "INSTR_WORD_MOD",
+  "role": "add",
+  "seed": 16,
+  "inject_step": 195,
+  "mutated_value": null,
+  "mutated_word": 549831827,
+  "mutated_word_hex": "0x20c5c493",
+  "decoded_instruction": {
+    "word_hex": "0x20c5c493",
+    "disassembly": "XORI x9, x11, 524",
+    "format_name": "OP-IMM",
+    "opcode": 19,
+    "rd": 9,
+    "funct3": 4,
+    "rs1": 11,
+    "rs2": 12,
+    "funct7": 16
+  },
+  "outcome_class": "CONSTRAINT_REJECT",
+  "preflight_crash": false,
+  "verifier_success": false,
+  "soundness_escape": false,
+  "determinism_ok": true,
+  "failure_count": 3,
+  "layers": {
+    "intrastep-local": 3,
+    "interstep-local": 0,
+    "global": 1
+  },
+  "buckets": {
+    "intrastep-local": [
+      {
+        "constraint_type": "L1",
+        "constraint_loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at  OpXORI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :132:18)))",
+        "cycle": 14466,
+        "step": 193,
+        "pc": 2099268,
+        "major": 1,
+        "minor": 0,
+        "value": 32,
+        "full_loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at  OpXORI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :132:18)))",
+        "phase": "local",
+        "category": "L1"
+      },
+      {
+        "constraint_type": "L1",
+        "constraint_loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at  OpXORI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :132:18)))",
+        "cycle": 14466,
+        "step": 193,
+        "pc": 2099268,
+        "major": 1,
+        "minor": 0,
+        "value": 2013265917,
+        "full_loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at  OpXORI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :132:18)))",
+        "phase": "local",
+        "category": "L1"
+      },
+      {
+        "constraint_type": "L2",
+        "constraint_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+        "cycle": 14466,
+        "step": 193,
+        "pc": 2099268,
+        "major": 1,
+        "minor": 0,
+        "value": 512,
+        "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+        "phase": "local",
+        "category": "L2"
+      }
+    ],
+    "interstep-local": [],
+    "global": []
+  },
+  "global_families": [
+    {
+      "family": "memory",
+      "address": null
+    }
+  ],
+  "provenance": [
+    {
+      "layer": "intrastep-local",
+      "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at  OpXORI ( zirgen/circuit/rv32im/v2/dsl/i",
+      "value": 32,
+      "verified": false,
+      "reason": "non-scalar mutation"
+    },
+    {
+      "layer": "intrastep-local",
+      "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at  OpXORI ( zirgen/circuit/rv32im/v2/dsl/i",
+      "value": 2013265917,
+      "verified": false,
+      "reason": "non-scalar mutation"
+    },
+    {
+      "layer": "intrastep-local",
+      "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "value": 512,
+      "verified": false,
+      "reason": "non-scalar mutation"
+    }
+  ],
+  "example_loc_residue": "global family memory nonzero",
+  "log_path": "/root/arguzz/thesis_side_experiments/minimal_add/artifacts/e1/INSTR_WORD_MOD_seed16.log",
+  "original_instruction": {
+    "word_hex": "0x00c585b3",
+    "disassembly": "ADD x11, x11, x12",
+    "format_name": "OP",
+    "opcode": 51,
+    "rd": 11,
+    "funct3": 0,
+    "rs1": 11,
+    "rs2": 12,
+    "funct7": 0
+  },
+  "fields_changed": [
+    "opcode",
+    "rd",
+    "funct3",
+    "funct7"
+  ],
+  "field_class": "format_change"
+}

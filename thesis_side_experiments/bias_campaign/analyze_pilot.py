@@ -18,6 +18,7 @@ GUEST_ARGS = ["--in1", "5", "--in4", "10"]
 
 sys.path.insert(0, str(ROOT.parent.parent))
 
+from thesis_side_experiments.bias_campaign.categorize import categorize_failures  # noqa: E402
 from thesis_side_experiments.bias_campaign.run_common import ALIGNED_KINDS, PILOT_SEEDS  # noqa: E402
 from thesis_side_experiments.bias_campaign.run_arguzz import run_arguzz  # noqa: E402
 from thesis_side_experiments.bias_campaign.run_a4 import run_a4  # noqa: E402
@@ -169,10 +170,12 @@ def analyze() -> dict:
             continue
         r1 = run_arguzz(str(HOST), GUEST_ARGS, "PRE_EXEC_REG_MOD", step, seed, log_path=ART / f"det_{seed}_1.txt")
         r2 = run_arguzz(str(HOST), GUEST_ARGS, "PRE_EXEC_REG_MOD", step, seed, log_path=ART / f"det_{seed}_2.txt")
+        cats1 = categorize_failures(r1.outcome.failures)
+        cats2 = categorize_failures(r2.outcome.failures)
         match = (
             r1.outcome.outcome_class == r2.outcome.outcome_class
-            and r1.outcome.fail_count == r2.outcome.fail_count
-            and r1.outcome.fail_category_primary == r2.outcome.fail_category_primary
+            and len(r1.outcome.failures) == len(r2.outcome.failures)
+            and cats1 == cats2
         )
         determinism["checked"].append({"seed": seed, "match": match, "class": r1.outcome.outcome_class})
         if not match:
@@ -197,7 +200,10 @@ def analyze() -> dict:
 
     # Acceptance gate
     c0_path = ROOT / "artifacts" / "c0" / "C0_REPORT.json"
-    c0_pass = json.loads(c0_path.read_text())["status"] == "PASS" if c0_path.exists() else False
+    c0_pass = False
+    if c0_path.exists():
+        c0_data = json.loads(c0_path.read_text())
+        c0_pass = c0_data.get("status") == "PASS" or c0_data.get("acceptance", {}).get("all_pass") is True
 
     kind_ok = True
     for a4k, argk in ALIGNED_KINDS:

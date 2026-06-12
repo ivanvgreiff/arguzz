@@ -1,0 +1,32 @@
+{
+  "load_x": {
+    "step": 193,
+    "pc": 2099256,
+    "instruction": "Lw",
+    "assembly": "lw a2, 0(sp)"
+  },
+  "load_y": {
+    "step": 194,
+    "pc": 2099260,
+    "instruction": "Lw",
+    "assembly": "lw a1, 4(sp)"
+  },
+  "add": {
+    "step": 195,
+    "pc": 2099264,
+    "instruction": "Add",
+    "assembly": "add a1, a1, a2"
+  },
+  "store": {
+    "step": 196,
+    "pc": 2099268,
+    "instruction": "Sw",
+    "assembly": "sw a1, 8(a0)"
+  },
+  "read_back": {
+    "step": 197,
+    "pc": 2099272,
+    "instruction": "Lw",
+    "assembly": "lw s0, 8(a0)"
+  }
+}

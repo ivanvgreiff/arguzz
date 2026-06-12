@@ -1,0 +1,549 @@
+{
+  "status": "FAIL",
+  "generated_at": "2026-06-12T05:29:39.490313+00:00",
+  "meta": {
+    "generated_at": "2026-06-12T05:20:23.053809+00:00",
+    "host": "/root/arguzz/workspace/output/target/release/risc0-host",
+    "host_sha256": "625e722e201a85fead62cef993fe4ec9399a1aface99c5967256bec29412b515",
+    "guest_args": [
+      "--in1",
+      "5",
+      "--in4",
+      "10"
+    ],
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49
+    ],
+    "aligned_kinds": [
+      [
+        "PRE_EXEC_REG_MOD",
+        "PRE_EXEC_REG_MOD"
+      ],
+      [
+        "COMP_OUT_MOD",
+        "COMP_OUT_MOD"
+      ],
+      [
+        "LOAD_VAL_MOD",
+        "LOAD_VAL_MOD"
+      ],
+      [
+        "STORE_OUT_MOD",
+        "STORE_OUT_MOD"
+      ],
+      [
+        "MEM_VAL_MOD",
+        "PRE_EXEC_MEM_MOD"
+      ],
+      [
+        "INSTR_WORD_MOD_FULL",
+        "INSTR_WORD_MOD"
+      ]
+    ],
+    "arguzz_to_a4_step_offset": 0,
+    "git_rev": "41128084f473f9fa73a834af1a9946033e41c071",
+    "runtime_seconds": 2962.93,
+    "job_count": 600,
+    "production_error_probe": {
+      "arguzz_sample": {
+        "step": 200,
+        "outcome": "CONSTRAINT_REJECT",
+        "panic_loc": "host/src/main.rs:150",
+        "host_panic": true,
+        "prover_crash": false,
+        "fail_count": 6
+      },
+      "a4_sample": {
+        "outcome": "CONSTRAINT_REJECT",
+        "panic_loc": "host/src/main.rs:150",
+        "host_panic": true,
+        "fail_count": 3
+      }
+    }
+  },
+  "outcome_distribution": {
+    "a4/COMP_OUT_MOD": {
+      "CONSTRAINT_REJECT": 40
+    },
+    "a4/INSTR_WORD_MOD_FULL": {
+      "CONSTRAINT_REJECT": 50
+    },
+    "a4/LOAD_VAL_MOD": {
+      "CONSTRAINT_REJECT": 20
+    },
+    "a4/MEM_VAL_MOD": {
+      "CONSTRAINT_REJECT": 50
+    },
+    "a4/PRE_EXEC_REG_MOD": {
+      "CONSTRAINT_REJECT": 40
+    },
+    "a4/STORE_OUT_MOD": {
+      "CONSTRAINT_REJECT": 50
+    },
+    "arguzz/COMP_OUT_MOD": {
+      "CONSTRAINT_REJECT": 32,
+      "OTHER_CRASH": 3,
+      "VERIFY_REJECT": 15
+    },
+    "arguzz/INSTR_WORD_MOD": {
+      "CONSTRAINT_REJECT": 13,
+      "GLOBAL_REJECT": 6,
+      "VERIFY_REJECT": 31
+    },
+    "arguzz/LOAD_VAL_MOD": {
+      "CONSTRAINT_REJECT": 19,
+      "VERIFY_REJECT": 31
+    },
+    "arguzz/PRE_EXEC_MEM_MOD": {
+      "CONSTRAINT_REJECT": 47,
+      "PREFLIGHT_CRASH": 3
+    },
+    "arguzz/PRE_EXEC_REG_MOD": {
+      "CONSTRAINT_REJECT": 44,
+      "PREFLIGHT_CRASH": 3,
+      "VERIFY_REJECT": 3
+    },
+    "arguzz/STORE_OUT_MOD": {
+      "CONSTRAINT_REJECT": 45,
+      "OTHER_CRASH": 1,
+      "VERIFY_REJECT": 4
+    }
+  },
+  "fail_category_distribution": {
+    "a4/COMP_OUT_MOD": {
+      "L2": 40
+    },
+    "a4/INSTR_WORD_MOD_FULL": {
+      "L1": 22,
+      "L2": 28
+    },
+    "a4/LOAD_VAL_MOD": {
+      "L2": 20
+    },
+    "a4/MEM_VAL_MOD": {
+      "L1": 8,
+      "L2": 42
+    },
+    "a4/PRE_EXEC_REG_MOD": {
+      "L1": 2,
+      "L2": 38
+    },
+    "a4/STORE_OUT_MOD": {
+      "L2": 50
+    },
+    "arguzz/COMP_OUT_MOD": {
+      "L1": 5,
+      "L2": 27,
+      "NONE": 18
+    },
+    "arguzz/INSTR_WORD_MOD": {
+      "G": 6,
+      "L1": 4,
+      "L2": 9,
+      "NONE": 31
+    },
+    "arguzz/LOAD_VAL_MOD": {
+      "L2": 19,
+      "NONE": 31
+    },
+    "arguzz/PRE_EXEC_MEM_MOD": {
+      "L1": 3,
+      "L2": 44,
+      "NONE": 3
+    },
+    "arguzz/PRE_EXEC_REG_MOD": {
+      "L1": 3,
+      "L2": 41,
+      "NONE": 6
+    },
+    "arguzz/STORE_OUT_MOD": {
+      "L2": 45,
+      "NONE": 5
+    }
+  },
+  "target_category_distribution": {
+    "a4/COMP_OUT_MOD": {
+      "L1": 40
+    },
+    "a4/INSTR_WORD_MOD_FULL": {
+      "NONE": 50
+    },
+    "a4/LOAD_VAL_MOD": {
+      "L1": 20
+    },
+    "a4/MEM_VAL_MOD": {
+      "NONE": 50
+    },
+    "a4/PRE_EXEC_REG_MOD": {
+      "L1": 36,
+      "NONE": 4
+    },
+    "a4/STORE_OUT_MOD": {
+      "L1": 30,
+      "NONE": 20
+    },
+    "arguzz/COMP_OUT_MOD": {
+      "L1": 28,
+      "NONE": 22
+    },
+    "arguzz/INSTR_WORD_MOD": {
+      "NONE": 50
+    },
+    "arguzz/LOAD_VAL_MOD": {
+      "L1": 19,
+      "NONE": 31
+    },
+    "arguzz/PRE_EXEC_MEM_MOD": {
+      "NONE": 50
+    },
+    "arguzz/PRE_EXEC_REG_MOD": {
+      "L1": 41,
+      "NONE": 9
+    },
+    "arguzz/STORE_OUT_MOD": {
+      "L1": 26,
+      "NONE": 24
+    }
+  },
+  "reachability": {
+    "a4/COMP_OUT_MOD": {
+      "reached": 40,
+      "total": 40,
+      "rate": "100.0%"
+    },
+    "a4/INSTR_WORD_MOD_FULL": {
+      "reached": 50,
+      "total": 50,
+      "rate": "100.0%"
+    },
+    "a4/LOAD_VAL_MOD": {
+      "reached": 20,
+      "total": 20,
+      "rate": "100.0%"
+    },
+    "a4/MEM_VAL_MOD": {
+      "reached": 50,
+      "total": 50,
+      "rate": "100.0%"
+    },
+    "a4/PRE_EXEC_REG_MOD": {
+      "reached": 40,
+      "total": 40,
+      "rate": "100.0%"
+    },
+    "a4/STORE_OUT_MOD": {
+      "reached": 50,
+      "total": 50,
+      "rate": "100.0%"
+    },
+    "arguzz/COMP_OUT_MOD": {
+      "reached": 50,
+      "total": 50,
+      "rate": "100.0%"
+    },
+    "arguzz/INSTR_WORD_MOD": {
+      "reached": 50,
+      "total": 50,
+      "rate": "100.0%"
+    },
+    "arguzz/LOAD_VAL_MOD": {
+      "reached": 50,
+      "total": 50,
+      "rate": "100.0%"
+    },
+    "arguzz/PRE_EXEC_MEM_MOD": {
+      "reached": 50,
+      "total": 50,
+      "rate": "100.0%"
+    },
+    "arguzz/PRE_EXEC_REG_MOD": {
+      "reached": 50,
+      "total": 50,
+      "rate": "100.0%"
+    },
+    "arguzz/STORE_OUT_MOD": {
+      "reached": 50,
+      "total": 50,
+      "rate": "100.0%"
+    }
+  },
+  "detection_rate": {
+    "a4/COMP_OUT_MOD": {
+      "detected": 40,
+      "total": 40,
+      "rate": "100.0%"
+    },
+    "a4/INSTR_WORD_MOD_FULL": {
+      "detected": 50,
+      "total": 50,
+      "rate": "100.0%"
+    },
+    "a4/LOAD_VAL_MOD": {
+      "detected": 20,
+      "total": 20,
+      "rate": "100.0%"
+    },
+    "a4/MEM_VAL_MOD": {
+      "detected": 50,
+      "total": 50,
+      "rate": "100.0%"
+    },
+    "a4/PRE_EXEC_REG_MOD": {
+      "detected": 40,
+      "total": 40,
+      "rate": "100.0%"
+    },
+    "a4/STORE_OUT_MOD": {
+      "detected": 50,
+      "total": 50,
+      "rate": "100.0%"
+    },
+    "arguzz/COMP_OUT_MOD": {
+      "detected": 32,
+      "total": 50,
+      "rate": "64.0%"
+    },
+    "arguzz/INSTR_WORD_MOD": {
+      "detected": 13,
+      "total": 50,
+      "rate": "26.0%"
+    },
+    "arguzz/LOAD_VAL_MOD": {
+      "detected": 19,
+      "total": 50,
+      "rate": "38.0%"
+    },
+    "arguzz/PRE_EXEC_MEM_MOD": {
+      "detected": 50,
+      "total": 50,
+      "rate": "100.0%"
+    },
+    "arguzz/PRE_EXEC_REG_MOD": {
+      "detected": 47,
+      "total": 50,
+      "rate": "94.0%"
+    },
+    "arguzz/STORE_OUT_MOD": {
+      "detected": 45,
+      "total": 50,
+      "rate": "90.0%"
+    }
+  },
+  "soundness_escapes": {
+    "a4/COMP_OUT_MOD": {
+      "count": 0,
+      "seeds": []
+    },
+    "a4/INSTR_WORD_MOD_FULL": {
+      "count": 0,
+      "seeds": []
+    },
+    "a4/LOAD_VAL_MOD": {
+      "count": 0,
+      "seeds": []
+    },
+    "a4/MEM_VAL_MOD": {
+      "count": 0,
+      "seeds": []
+    },
+    "a4/PRE_EXEC_REG_MOD": {
+      "count": 0,
+      "seeds": []
+    },
+    "a4/STORE_OUT_MOD": {
+      "count": 0,
+      "seeds": []
+    },
+    "arguzz/COMP_OUT_MOD": {
+      "count": 0,
+      "seeds": []
+    },
+    "arguzz/INSTR_WORD_MOD": {
+      "count": 0,
+      "seeds": []
+    },
+    "arguzz/LOAD_VAL_MOD": {
+      "count": 0,
+      "seeds": []
+    },
+    "arguzz/PRE_EXEC_MEM_MOD": {
+      "count": 0,
+      "seeds": []
+    },
+    "arguzz/PRE_EXEC_REG_MOD": {
+      "count": 0,
+      "seeds": []
+    },
+    "arguzz/STORE_OUT_MOD": {
+      "count": 0,
+      "seeds": []
+    }
+  },
+  "throughput": {
+    "avg_duration_ms": 109935.6,
+    "total_runs": 550,
+    "skipped": 50,
+    "estimated_c2_hours_at_500_per_kind": 183.23
+  },
+  "outcome_class_examples": {
+    "CONSTRAINT_REJECT": {
+      "fuzzer": "arguzz",
+      "kind": "PRE_EXEC_REG_MOD",
+      "seed": 0,
+      "step": 0,
+      "log_path": "/root/arguzz/thesis_side_experiments/bias_campaign/artifacts/c1/logs/arguzz_PRE_EXEC_REG_MOD_0.txt",
+      "panic_loc": "host/src/main.rs:150",
+      "host_panic": true,
+      "prover_crash": false,
+      "verifier_success": false,
+      "soundness_escape": false
+    },
+    "VERIFY_REJECT": {
+      "fuzzer": "arguzz",
+      "kind": "PRE_EXEC_REG_MOD",
+      "seed": 5,
+      "step": 5,
+      "log_path": "/root/arguzz/thesis_side_experiments/bias_campaign/artifacts/c1/logs/arguzz_PRE_EXEC_REG_MOD_5.txt",
+      "panic_loc": "host/src/main.rs:150",
+      "host_panic": true,
+      "prover_crash": false,
+      "verifier_success": false,
+      "soundness_escape": false
+    },
+    "PREFLIGHT_CRASH": {
+      "fuzzer": "arguzz",
+      "kind": "PRE_EXEC_REG_MOD",
+      "seed": 10,
+      "step": 10,
+      "log_path": "/root/arguzz/thesis_side_experiments/bias_campaign/artifacts/c1/logs/arguzz_PRE_EXEC_REG_MOD_10.txt",
+      "panic_loc": "/root/arguzz/workspace/risc0-modified/risc0/circuit/rv32im/src/prove/witgen/preflight.rs:227",
+      "host_panic": false,
+      "prover_crash": true,
+      "verifier_success": false,
+      "soundness_escape": false
+    },
+    "OTHER_CRASH": {
+      "fuzzer": "arguzz",
+      "kind": "COMP_OUT_MOD",
+      "seed": 32,
+      "step": 46,
+      "log_path": "/root/arguzz/thesis_side_experiments/bias_campaign/artifacts/c1/logs/arguzz_COMP_OUT_MOD_32.txt",
+      "panic_loc": "/root/arguzz/workspace/risc0-modified/risc0/circuit/rv32im/src/execute/rv32im.rs:163",
+      "host_panic": false,
+      "prover_crash": true,
+      "verifier_success": false,
+      "soundness_escape": false
+    },
+    "GLOBAL_REJECT": {
+      "fuzzer": "arguzz",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 2,
+      "step": 2,
+      "log_path": "/root/arguzz/thesis_side_experiments/bias_campaign/artifacts/c1/logs/arguzz_INSTR_WORD_MOD_2.txt",
+      "panic_loc": "host/src/main.rs:150",
+      "host_panic": true,
+      "prover_crash": false,
+      "verifier_success": false,
+      "soundness_escape": false
+    }
+  },
+  "determinism_spot_check": {
+    "checked": [
+      {
+        "seed": 0,
+        "match": true,
+        "class": "CONSTRAINT_REJECT"
+      },
+      {
+        "seed": 17,
+        "match": true,
+        "class": "CONSTRAINT_REJECT"
+      },
+      {
+        "seed": 42,
+        "match": true,
+        "class": "CONSTRAINT_REJECT"
+      }
+    ],
+    "passed": true
+  },
+  "acceptance_gate": {
+    "c0_still_pass": true,
+    "outcome_classes_ge_5": true,
+    "outcome_classes_observed": 5,
+    "both_fuzzers_all_kinds": false,
+    "sanity_checks": {
+      "a4_register_reach_approx_100pct": true,
+      "arguzz_nonzero_crash_rate": true,
+      "a4_register_l2g_fail_mass": true
+    },
+    "determinism": true,
+    "host_unchanged": true,
+    "passed": false
+  },
+  "production_error_probe": {
+    "arguzz_sample": {
+      "step": 200,
+      "outcome": "CONSTRAINT_REJECT",
+      "panic_loc": "host/src/main.rs:150",
+      "host_panic": true,
+      "prover_crash": false,
+      "fail_count": 6
+    },
+    "a4_sample": {
+      "outcome": "CONSTRAINT_REJECT",
+      "panic_loc": "host/src/main.rs:150",
+      "host_panic": true,
+      "fail_count": 3
+    }
+  }
+}

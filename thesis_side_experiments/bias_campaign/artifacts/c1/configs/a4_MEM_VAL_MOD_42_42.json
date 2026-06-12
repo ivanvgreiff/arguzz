@@ -1,0 +1,18 @@
+{
+  "mutation_type": "MEM_VAL_MOD",
+  "step": 42,
+  "txn_idx": 15580,
+  "word": 2471588027,
+  "_info": {
+    "description": "MEM_VAL_MOD: Mutate memory transaction value",
+    "txn_type": "other_mem_write",
+    "is_write": true,
+    "memory_addr": "0xffff0180",
+    "original_value": 0,
+    "original_value_hex": "0x00000000",
+    "mutated_value": "0x935170bb",
+    "pc": "0x00201060",
+    "major": 1,
+    "minor": 6
+  }
+}

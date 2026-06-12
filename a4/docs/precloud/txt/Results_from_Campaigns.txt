@@ -1,0 +1,1797 @@
+# MAB Architecture Diagnostic — IV.POS.5 Campaign
+
+**Author**: Cursor pair-programming + Ivan Greiff
+**Date**: June 7, 2026 22:30 EDT
+**Purpose**: Detailed diagnostic for ChatGPT Pro to recommend improvements to our Multi-Armed Bandit (MAB) coverage-guided fuzzing architecture for the RISC0 zkVM, after our MAB underperformed a structurally-informed baseline on the IV.POS.5 A/B campaign.
+
+> **TL;DR for Pro**: Our Discounted-UCB bandit (`bandit-16`) reached only **37.4** of the **46** unique constraint contexts in the empirical universe at N=6000 mutations (5 paired seeds, AMD EPYC 9354). A simpler **zoned** baseline (uniform-over-kinds + 5/90/5 zone weighting over trace steps) reached **43.4 (100% of universe)**. Even the **uniform-arm baseline** reached **35.0**. Paired t-test bandit-vs-zoned: t=-4.05 (p≈0.015).
+>
+> **THE MECHANISM** (revealed in §17.16, the most important section of this doc): 4 of the 6 constraints zoned hits but bandit/uniform miss require the **conjunction** `mutation_kind = INSTR_TYPE_MOD AND step = 0`. Without BOTH, those 4 constraints (`MemLoadInput`, `MemStoreInput`, `MulInput`, `DivInput`) never fire. Zoned places **184** `INSTR_TYPE_MOD@step=0` mutations per campaign (5 seeds); uniform places **1**, bandit places **2**. The other 2 gap-constraints are a kind-allocation issue (`MEM_VAL_MOD` under-allocated by uniform/bandit). **The universe of 46 is NOT the total constraint count of the rv32im circuit (which is 200-400+); it is the saturating subset reachable by our specific 8-kind mutation × single-program × preflight-trace instrumentation** — see §17.23 for the full explanation of why 46 and how the universe would grow with new mutations / new guests / new circuits.
+>
+> We need help diagnosing **why** the MAB underperforms and **how** to redesign either the reward, the arm structure, or the selection logic to consistently beat zoned. Specific hypothesis to consider: **replace the nested step-UCB with a zoned step sampler** — keep the kind-level UCB, but copy zoned's 5/90/5 step weighting at the step level. This combines bandit's kind-learning with zoned's mechanical step-zone coverage.
+
+---
+
+## Table of Contents
+
+- [0. Goal](#0-goal)
+- [1. The fuzzing target: RISC0 zkVM constraints](#1-the-fuzzing-target-risc0-zkvm-constraints)
+- [2. The 8 mutation kinds](#2-the-8-mutation-kinds-what-each-modifies-in-the-trace)
+- [3. The three selection strategies (full spec)](#3-the-three-selection-strategies-full-spec)
+- [4. The MAB architecture (deep dive)](#4-the-mab-architecture-deep-dive)
+- [5. Reward function (deep dive)](#5-reward-function-deep-dive)
+- [6. Experimental setup (IV.POS.5)](#6-experimental-setup-ivpos5)
+- [7. Headline results](#7-headline-results)
+- [8. Diagnostic findings](#8-diagnostic-findings--where-each-strategy-spent-its-budget)
+- [9. Why uniform hits different constraints than bandit](#9-why-uniform-hits-different-constraints-than-bandit)
+- [10. Mechanism: why zoned wins](#10-mechanism-why-zoned-wins)
+- [11. Our hypotheses for why MAB underperforms](#11-our-hypotheses-for-why-mab-underperforms-ranked)
+- [12. Possible improvements (parameter tuning)](#12-possible-improvements-parameter-tuning)
+- [13. Possible improvements (architectural redesign)](#13-possible-improvements-architectural-redesign)
+- [14. What the master plan would have done next](#14-what-the-master-plan-would-have-done-next)
+- [15. Open questions for ChatGPT Pro](#15-open-questions-for-chatgpt-pro)
+- [16. Appendix: full data dumps](#16-appendix-full-data-dumps)
+- [17. **NEW DIAGNOSTIC DATA**: per-(strategy, kind), discovery-rate, overlap matrix, timeline, arm-pull distribution](#17-new-diagnostic-data)
+  - §17.1 Discovery rate per kind (THE SMOKING GUN)
+  - §17.2 Constraint overlap (Venn analysis)
+  - §17.3 Per-(strategy, kind) reward composition
+  - §17.4 Per-(strategy, kind) discovery contributions
+  - §17.5 Bandit arm-pull distribution
+  - §17.6 Constraint discovery timeline
+  - §17.7 Global failure coverage
+  - §17.8 d_loc / d_glob distributions
+  - §17.9 Per-kind reward variance
+  - §17.10 Fine-grained coverage growth
+  - §17.11 Per-kind step distribution
+  - §17.12 Wall-time per mutation
+  - §17.13 Total failures per strategy
+  - §17.14 Verifier acceptance rate
+  - §17.15 **Selector labeling verification (proves no mislabeling)**
+  - §17.16 **STEP-0 SMOKING GUN: the zoned-only constraints are step-0 boundary constraints**
+  - §17.17 Pilot calibration parameter instability (bandit-only)
+  - §17.18 Reward time-series decay
+  - §17.19 Crash rate per kind
+  - §17.20 U signal (unknown-rejection) is dead
+  - §17.21 Q_rep firing rate
+  - §17.22 d_ext distribution
+  - §17.23 **Why universe = 46 (and what would expand it)**
+  - §17.24 **What `b_count`, `num_arms`, and "arms" mean for each strategy**
+- [18. Budget feasibility: N=10000+ is achievable](#18-budget-feasibility-n10000-is-achievable)
+- [19. Future planned mutation kinds (taxonomy)](#19-future-planned-mutation-kinds-taxonomy)
+- [20. Data-availability audit: what we have and what we are missing](#20-data-availability-audit-what-we-have-and-what-we-are-missing)
+
+---
+
+## 0. Goal
+
+We want to build a fuzzing **mutation-strategy selector** that:
+
+1. **Maximises the probability of finding bugs (= unique constraint-coverage)** in the RISC0 zkVM execution circuit.
+2. **Does so as fast as possible** — i.e., is more sample-efficient than naive baselines for any given budget N.
+3. **Adapts automatically** to new guest programs / circuit changes / mutation-kind additions, without re-tuning hand-crafted weights per target.
+
+A multi-armed bandit (MAB) layer over mutation kinds and execution-trace regions is the obvious architectural primitive for goal 3 (adaptive). On our IV.POS.5 campaign it failed to clear goal 1 (beat a hand-crafted baseline by far). We want to understand **why** and how to fix it.
+
+We believe an architecture exists that achieves all three goals; we have not yet found it. This document compiles every signal we have so far.
+
+---
+
+## 1. The fuzzing target: RISC0 zkVM constraints
+
+**RISC0** is a zero-knowledge virtual machine (zkVM) that executes RISC-V binaries and produces a STARK proof that the execution is correct. Internally, the prover translates each execution step into a sequence of arithmetic constraints over a finite field; the proof attests that all constraints are satisfied.
+
+A4 (our fuzzer) tries to find inputs to a guest program, or modifications to its execution trace ("preflight trace"), such that:
+- The trace VIOLATES one or more circuit constraints (= a found "bug" in our security model: trace inconsistency that the prover should reject).
+
+For the IV.POS.5 campaign we used a **fixed guest binary**: `risc0-host --in1 5 --in4 10`. This guest performs a deterministic computation (~3000 cycles, several thousand individual constraint evaluations per cycle). We do NOT vary the guest input across mutations — we only mutate the recorded **preflight trace** at the cycle / transaction level.
+
+### The constraint universe
+
+The circuit defines roughly **48 distinct unique constraint locations** (files+line numbers) that, when violated by any trace mutation, are recorded as a unique **(constraint_loc, major, minor) triple** ("local context"). Across all 15 IV.POS.5 runs we observed **46 unique constraint contexts** as the empirical "universe". This is the population from which we draw "coverage".
+
+(There are also **global contexts** = `(family, address)` failures from RISC0's instrumentation hooks — memory addresses, u8/u16/cycle indices — but these are orders of magnitude noisier and are NOT the headline coverage metric.)
+
+The 46 unique constraint contexts cluster into ~10 constraint families:
+
+```
+inst.zir       (instruction decoding):       DecodeInst, VerifyOpcode, VerifyOpcodeF3, VerifyOpcodeF3F7
+inst_misc.zir  (MISC compute):                MiscInput
+inst_mul.zir   (multiplication):              MulInput, IllegalMulOp
+inst_div.zir   (division):                    DivInput
+inst_mem.zir   (memory load/store):           MemLoadInput, MemStoreInput, OpLW, OpLH, OpLHU, OpSW, OpSH, IllegalLoadOp, IllegalStoreOp
+inst_ecall.zir (ECALL system calls):          ECall0, ECallHostReadSetup, ECallHostReadWords, MachineECall
+inst_control.zir (control flow):              ControlLoadRootAndNonce, ControlMRET, ControlUserECALL
+inst_p2.zir    (Poseidon hashing):            PoseidonCheckOut
+inst_sha.zir   (SHA-2):                       Sha0
+mem.zir        (memory consistency):          IsRead, MemoryWrite
+one_hot.zir    (one-hot indicators):          OneHot
+u32.zir        (u32 arithmetic):              AddrDecompose, AddrDecomposeBits
+```
+
+The **3 constraint contexts that bandit never reached** in IV.POS.5 (but zoned did) are all in the `MEM/MUL Input` family:
+
+```
+MemLoadInput@inst_mem.zir:8    — fires when wrong INPUT is presented to a load-mem
+MemStoreInput@inst_mem.zir:18  — fires when wrong INPUT is presented to a store-mem
+MulInput@inst_mul.zir:8        — fires when wrong INPUT is presented to a multiply
+```
+
+These three contexts are reachable **only via mutations of the input-side of compute/memory operations** (not the output). They are precisely what `MEM_VAL_MOD`, `LOAD_VAL_MOD`, and `STORE_OUT_MOD` target — and zoned spends ~12.5% of its budget on each, while bandit reduces those to ~11-12% and shifts that budget to `INSTR_WORD_MOD_SUR/FULL` (~32% combined).
+
+---
+
+## 2. The 8 mutation kinds (what each modifies in the trace)
+
+Each mutation modifies the **preflight trace** (the recorded execution log fed to the prover). The 8 kinds, in source order at `a4/standalone/fuzzer.py:141`:
+
+| # | Kind | Targets in trace | What it tests |
+|---|---|---|---|
+| 1 | `COMP_OUT_MOD` | Compute-instr WRITE txn `word` (RD register) | Memory consistency for ALU output |
+| 2 | `LOAD_VAL_MOD` | Load-instr WRITE txn `word` (RD register) | Memory consistency for loaded value |
+| 3 | `STORE_OUT_MOD` | Store-instr WRITE txn `word` (memory) | Memory consistency for stored value |
+| 4 | `PRE_EXEC_REG_MOD` | Register READ or WRITE txn `word` | Memory consistency (input side) |
+| 5 | `INSTR_TYPE_MOD` | `cycles[].major` and/or `cycles[].minor` | Instruction decoding (opcode mismatch) |
+| 6 | `MEM_VAL_MOD` | Memory READ/WRITE txn `word` (non-RD, non-IF) | Memory consistency for arbitrary mem ops |
+| 7 | `INSTR_WORD_MOD_FULL` | Instruction-fetch txn `word` (all 32 bits) | Instruction-fetch verification |
+| 8 | `INSTR_WORD_MOD_SUR` | Instruction-fetch txn `word` (single field: opcode/rd/funct3/rs1/rs2/funct7/imm) | Surgical instr-fetch verification |
+
+**Key structural asymmetry** (turns out to matter a lot):
+- INSTR_TYPE_MOD, INSTR_WORD_MOD_FULL, INSTR_WORD_MOD_SUR target **EVERY instruction cycle** (~all 3000 user_cycle steps in this trace). They have the **largest valid-step set**.
+- COMP_OUT_MOD targets only major∈{0,1,2,3,4} — about 60% of cycles.
+- LOAD_VAL_MOD targets only major=5 — about 5% of cycles.
+- STORE_OUT_MOD targets only major=6 — about 5% of cycles.
+- MEM_VAL_MOD targets memory txns NOT already covered by LOAD/STORE/COMP/PRE_EXEC — leftover memory ops.
+- PRE_EXEC_REG_MOD targets register txns — many.
+
+This asymmetry **distorts the kind distribution under "uniform arm sampling"** (see §9).
+
+### How each kind exercises specific constraints
+
+Empirically, the kinds that uniquely trigger the 3 *Input* constraints are:
+
+| Constraint | Triggered by mutations of |
+|---|---|
+| `MemLoadInput@inst_mem.zir:8` | INPUT register of LOAD (i.e., PRE_EXEC_REG_MOD on the source-addr register of a LOAD instr, or MEM_VAL_MOD on the address bytes the load reads) |
+| `MemStoreInput@inst_mem.zir:18` | INPUT register of STORE (i.e., PRE_EXEC_REG_MOD on the value-reg of a STORE, or MEM_VAL_MOD on the address) |
+| `MulInput@inst_mul.zir:8` | INPUT register of MUL (i.e., PRE_EXEC_REG_MOD on a multiplier source) |
+
+So they're **PRE_EXEC_REG_MOD / MEM_VAL_MOD discoveries**, not INSTR_WORD discoveries. Bandit gives PRE_EXEC_REG_MOD only **10.86%** of mutations and MEM_VAL_MOD only **11.15%** — vs zoned's 12.78% and 12.53%. Combined with bandit's heavier weighting toward INSTR_WORD families, this is enough to cause it to miss all three.
+
+---
+
+## 3. The three selection strategies (full spec)
+
+All three strategies emit a stream of `(mutation_kind, step)` pairs at each iteration `t = 1..N`. The mutation is then applied to the trace at the chosen step and the resulting prover run is evaluated.
+
+### 3.1 `uniform` (Phase III.2 baseline)
+
+```
+For each mutation:
+  (kind, bucket) ← uniformly_at_random(available_arms)
+  step ← uniformly_at_random(steps_in_arm[kind, bucket])
+  emit (kind, step)
+```
+
+Where `available_arms` are the `(kind, bucket)` pairs with at least one valid step. **Critically**, the universe of arms is built with `b_count=128` for uniform (vs `b_count=16` for bandit-16), giving uniform **967 arms** vs bandit's **128 arms**. (See `campaign_params` table in §16.)
+
+**Implication 1**: Uniform's kind distribution is **NOT uniform over kinds** — it is uniform over `(kind, bucket)` pairs. Kinds with more buckets-with-valid-steps get more mutations. In practice this skews uniform toward INSTR-family mutations (more buckets) and away from MEM/LOAD/STORE (fewer buckets):
+
+- uniform: INSTR_TYPE_MOD=15.27%, INSTR_WORD_MOD_FULL=15.11%, INSTR_WORD_MOD_SUR=15.23%, PRE_EXEC_REG_MOD=14.04%, STORE_OUT_MOD=10.88%, LOAD_VAL_MOD=10.78%, COMP_OUT_MOD=10.07%, MEM_VAL_MOD=8.62%.
+
+**Implication 2**: Uniform's step distribution within a kind is uniform over valid steps — so very few mutations land on step 0 (init, 1 step) or last step (final, 1 step). Empirically: 99.94% core / 0.02% init / 0.04% final.
+
+### 3.2 `zoned` (the surprising winner)
+
+```
+For each mutation:
+  kind ← uniformly_at_random(MUTATION_KINDS)  # uniform over 8 kinds
+  valid ← data.get_valid_steps_for_kind(kind)
+  zones = {
+    init: [s for s in valid if s == 0],
+    final: [s for s in valid if s == max(valid)],
+    core: [s for s in valid if 0 < s < max(valid)]
+  }
+  zone ← weighted_choice([init: 0.05, core: 0.90, final: 0.05])  # only over non-empty zones
+  step ← uniformly_at_random(zones[zone])
+  emit (kind, step)
+```
+
+**Implication 1**: Zoned IS uniform over kinds (12.5% per kind in expectation). Empirically (with skip/retry noise):
+- COMP_OUT_MOD=12.21%, INSTR_TYPE_MOD=12.65%, INSTR_WORD_MOD_FULL=12.68%, INSTR_WORD_MOD_SUR=12.25%, LOAD_VAL_MOD=12.20%, MEM_VAL_MOD=12.53%, PRE_EXEC_REG_MOD=12.78%, STORE_OUT_MOD=12.70%.
+
+**Implication 2**: Zoned biases 5% of mutations toward step 0 and 5% toward the last step. Empirically: 95.16% core / 2.43% init / 2.41% final. The init+final allocation is only ~2.5% each (less than the 5% target) because the per-kind retry/skip loop occasionally re-rolls.
+
+### 3.3 `bandit` / `bandit-16` (Discounted-UCB)
+
+Two-level Discounted-UCB scheduler (see §4 for full architecture):
+
+```
+For each mutation t = 1..N:
+  # Cold-start phase: ~first 128 mutations explore all arms
+  if any arm has m == 0:
+    (kind, bucket) ← uniform over uncold-started arms
+  else:
+    # UCB phase:
+    for arm in arms: decay N, S by gamma^(t - arm_t)
+    n_tot = sum(N over all arms)
+    (kind, bucket) ← argmax(arm.S / arm.N + c * sqrt(log(1+n_tot) / arm.N))
+
+  # Nested UCB for step within bucket (analogous structure)
+  steps_in_bucket ← arm_universe.steps_in_arm(kind, bucket)
+  if any step has m == 0:
+    step ← uniform over uncold-started steps in this arm
+  else:
+    step ← UCB-argmax over steps in this arm
+
+  emit (kind, step)
+```
+
+**Implication 1**: Bandit-16's arms = K × B_count = 8 × 16 = up to 128 arms (only 128 are populated). Cold-start consumes the first ~128 mutations (2% of N=6000 budget). Then UCB takes over.
+
+**Implication 2**: Bandit's kind distribution is EMERGENT from the reward signal. Empirically:
+- INSTR_WORD_MOD_SUR=17.38% (over-selected — has highest mean reward)
+- INSTR_WORD_MOD_FULL=14.72% (over-selected)
+- COMP_OUT_MOD=12.04% (roughly fair)
+- LOAD_VAL_MOD=11.90% (roughly fair)
+- MEM_VAL_MOD=11.15% (under-selected — lower mean reward)
+- STORE_OUT_MOD=11.89% (roughly fair)
+- PRE_EXEC_REG_MOD=10.86% (under-selected)
+- INSTR_TYPE_MOD=10.06% (under-selected — surprisingly, since intuitively it's "highest-yield")
+
+**Implication 3**: Bandit's step distribution within an arm uses nested UCB. In aggregate the step distribution is 99.89% core / 0.04% init / 0.07% final (very similar to uniform). The bandit does NOT discover that init/final steps are unique.
+
+---
+
+## 4. The MAB architecture (deep dive)
+
+### 4.1 Source files
+
+- `a4/standalone/bandit.py` — `DiscountedUCBScheduler` (240 LOC)
+- `a4/standalone/arm_universe.py` — `ArmUniverse` (172 LOC)
+- `a4/standalone/coverage_state.py` — `CoverageState` and `compute_reward` (345 LOC)
+- `a4/standalone/pilot_calibration.py` — `CalibratedParams` and `calibrate_from_pilot` (213 LOC)
+- `a4/standalone/step_selector.py` — `ZonedStepSelector`, `UniformArmSelector` (509 LOC)
+- `a4/standalone/fuzzer.py` — campaign loop, dispatches to selector (1648 LOC)
+
+### 4.2 Arm universe construction
+
+For a given guest binary, inspection determines valid steps per mutation kind `S_k`. The arm universe is built as:
+
+```
+T = 1 + max(union of S_k)              # step horizon
+B_count = 16                           # NUMBER OF BUCKETS (fixed for bandit-16)
+B = ceil(T / B_count)                  # steps per bucket
+arms = { (k, b) : exists step s in S_k with s // B == b }
+```
+
+For the IV.POS.5 guest: T ≈ 3000, B = 188, so each bucket spans ~188 steps. Empirically:
+- bandit-16: **128 arms** = 8 kinds × 16 buckets (every kind has at least one valid step in every bucket)
+- uniform: 967 arms (b_count=128 derived from `budget // (K * 3) = 6000/(8*3) = 250 → pow2_clamp(250, 16, 128) = 128`)
+
+### 4.3 Discounted-UCB scheduler
+
+State per arm `(k, b)`:
+- `N` ∈ ℝ⁺ — discounted pull count
+- `S` ∈ ℝ⁺ — discounted reward sum
+- `t` ∈ ℕ — last update iteration
+- `m` ∈ ℕ — RAW (never decayed) pull count, used for cold-start
+
+Lazy decay: when arm is read, `N *= γ^(t_now - t_arm)`, `S *= γ^(t_now - t_arm)`, `t_arm = t_now`.
+
+Selection rule:
+1. If `∃ arm: m == 0` → pick uniform over uncold-started arms (cold-start exploration).
+2. Else: pick `argmax_a [ S_a / N_a + c · sqrt(log(1 + n_tot) / N_a) ]` where `n_tot = Σ_a N_a`.
+
+Update rule after observing reward `r`:
+```
+N[arm] += 1.0
+S[arm] += r
+m[arm] += 1
+```
+
+A **nested UCB** with the same structure is then run on steps within the chosen arm (i.e., select one step uniformly cold-start, else by UCB index).
+
+### 4.4 Hyperparameters (calibrated + hard)
+
+Calibrated from a `N_pilot` round (~100 random pilot mutations at campaign start):
+
+| Param | Source | IV.POS.5 value |
+|---|---|---|
+| `tau_new` | p75 of nonzero `delta_T` (clamped [8, 128]) | 43.0 (bandit-16); 35.0 (others) |
+| `tau_d` | max(1, p75 of `d_fail` in valid runs) | 2.0 (bandit-16); 3.0 (others) |
+| `K_T_rare` | 2% of median `\|U_t\|` (clamped [16, 64]) | 31 |
+| `gamma` | `2^(-1/H)` where `H = max(50, min(300, budget/5))` | 0.9977 (H=300) for bandit; 0.9965 (H=200) for others |
+| `tau_g` | `2 * tau_d` (or env `A4_TAU_G`) | 4.0 (bandit-16); 6.0 (others) |
+
+Hard-coded (not calibrated):
+
+| Param | Value | Where |
+|---|---|---|
+| `tau_F_new` | 2.0 | `pilot_calibration.py:87` |
+| `K_F_rare` | 2 | `pilot_calibration.py:88` |
+| `r_0` (cascade threshold) | 10 | `pilot_calibration.py:89` |
+| `tau_r` (cascade slope) | 25.0 | `pilot_calibration.py:90` |
+| `c_explore` (UCB coefficient) | 0.25 | `pilot_calibration.py:91` |
+| `a_Tn`, `a_Tr`, `a_Fn`, `a_Fr`, `a_U` (component weights) | 1.0, 0.25, 1.0, 1.0, 1.0 | `pilot_calibration.py:93-97` |
+
+### 4.5 Why the bandit's per-strategy `tau_*` are different
+
+The `tau_new=43` for bandit vs `tau_new=35` for others is because the pilot runs are subject to different sampling: bandit pilots are uniform over arms (so smaller `delta_T` per run), and the p75 ended up at 43. For zoned and uniform, no pilot is done (their selectors don't need calibration), but the reward function STILL uses calibrated params from a single common pilot (the `_setup_uniform` / `_setup_*` paths derive their own).
+
+This is a confound — across strategies we are not comparing apples to apples on the reward function's calibration. **This may be worth fixing in a follow-up: lock all calibration to a single deterministic pilot for all 3 strategies.**
+
+---
+
+## 5. Reward function (deep dive)
+
+Defined in `coverage_state.py:152-291`. For each mutation, given (touch_bitmap, failures, exit_code, outcome, proof_generated):
+
+### 5.1 Components
+
+```
+# Per-run failure analysis
+fail_contexts = set((f.constraint_loc, f.major, f.minor) for f in failures)
+n_fail = len(failures)
+d_loc = len(fail_contexts)
+r_rep = max(0, n_fail - d_loc)                # repeat-mass (cascade)
+g_ctx = derive_global_contexts(...)            # set of ("GLOBAL", family, addr)
+d_glob = len(g_ctx)
+ext_contexts = fail_contexts | g_ctx
+d_ext = len(ext_contexts)
+
+# Touch novelty: how many new "code path" bits this mutation hit
+delta_T = count_new_bits(touch_bitmap, state.global_bitmap)
+T_new = 1 - exp(-delta_T / tau_new)            # in [0, 1]
+
+# Touch rarity: how many touched bits are infrequently visited
+touched_indices = [i where touch_bitmap[i] > 0]
+weights = [1 / sqrt(1 + state.freq[i]) for i in touched_indices]
+T_rare = mean of top K_T_rare weights          # in [0, 1]
+
+# Failure novelty: how many ext-contexts never seen before
+delta_F = sum(1 for c in ext_contexts if c not in state.fail_freq)
+F_new = 1 - exp(-delta_F / tau_F_new)          # in [0, 1]
+
+# Failure rarity: top-K of 1/sqrt(1 + fail_freq[c])
+F_rare = mean of top K_F_rare weights          # in [0, 1]
+
+# Unknown rejection: 1 if rejected + proof_generated + no local + no global failures
+U = 1 if (...) else 0
+
+# Multiplicative penalties:
+Q_loc = exp(-d_loc / tau_d)                    # in (0, 1]; high d_loc → low Q
+Q_rep = exp(-(r_rep - r_0) / tau_r) if r_rep > r_0 else 1
+Q_glob = exp(-d_glob / tau_g)                  # in (0, 1]; high d_glob → low Q
+Q = Q_loc * Q_rep * Q_glob
+
+# Weighted sum
+w_sum = a_Tn + a_Tr + a_Fn + a_Fr + a_U
+S = (a_Tn*T_new + a_Tr*T_rare + a_Fn*F_new + a_Fr*F_rare + a_U*U) / w_sum
+
+reward = min(1, Q * S)
+if outcome == "ACCEPTED": reward = 1.0         # override
+```
+
+### 5.2 Reward design intent (from Pro_Report_6/7)
+
+The reward is supposed to push the bandit toward mutations that:
+1. **Hit new touch bits** (T_new) — exploring new code paths in the executor.
+2. **Hit rare touch bits** (T_rare) — refining coverage of under-visited paths.
+3. **Hit new failure contexts** (F_new) — finding new violation types.
+4. **Hit rare failure contexts** (F_rare) — refining novel failure modes.
+5. **Get unknown rejections** (U) — finding inputs the verifier rejects without obvious failures (rare, usually 0).
+
+And SHOULD AVOID mutations that:
+- Generate many distinct LOCAL failures (Q_loc penalty) — typically because such mutations are "spammy" (e.g., dummy crash mutations).
+- Generate failure CASCADES (Q_rep penalty) — repeats of the same failure.
+- Generate many distinct GLOBAL failures (Q_glob penalty) — similar reasoning for global ctxs.
+
+### 5.3 Empirical reward decomposition (mean over all mutations, all seeds)
+
+| Component | uniform | zoned | bandit-16 |
+|---|---:|---:|---:|
+| `T_new` | 0.0073 | 0.0069 | 0.0056 |
+| `T_rare` | 0.0563 | 0.0527 | 0.0489 |
+| `F_new` | 0.5153 | 0.4935 | 0.5201 |
+| `F_rare` | 0.7105 | 0.6905 | 0.7093 |
+| `U` | 0.0 | 0.0 | 0.0 |
+| **`S`** | **0.2935** | **0.2833** | **0.2934** |
+| `Q_loc` | 0.5449 | 0.5406 | 0.4703 |
+| `Q_rep` | 0.9964 | 0.9967 | 0.9964 |
+| `Q_glob` | 0.7329 | 0.7523 | 0.6695 |
+| **`Q`** | **0.4060** | **0.4129** | **0.3148** |
+| **`reward`** | **0.1123** | **0.1109** | **0.0878** |
+| `d_loc` | 2.16 | 2.16 | 2.03 |
+| `d_glob` | 2.28 | 2.06 | 2.17 |
+| `n_fail` | 2.59 | 2.64 | 2.43 |
+
+**OBSERVATION 1**: Bandit has the LOWEST mean reward (0.088) despite being the strategy that maximises reward! This is because cold-start spends ~128 of 6000 mutations on uniform exploration (≈2% loss), but more importantly because the bandit chases arms with high Q but ends up at lower overall reward than the "fair-spread" baselines.
+
+**OBSERVATION 2**: `T_new` is essentially DEAD (mean 0.005-0.007). After the first ~100 mutations the touch bitmap saturates and `delta_T` ≈ 0 nearly always. The whole touch-novelty component contributes virtually nothing to reward. **This is a known problem from III.6 (the "U=0 / C4 spread" issue) carried forward**: for this guest at this N, touch coverage saturates fast.
+
+**OBSERVATION 3**: `T_rare` is also tiny (0.05-0.06). Most touched bits have been seen many times.
+
+**OBSERVATION 4**: `F_new` (0.49-0.52) and `F_rare` (0.69-0.71) are the dominant **positive** contributors to S. The reward is essentially driven by failure-novelty and failure-rarity, modulated by the Q multiplicative penalty.
+
+**OBSERVATION 5**: `Q_loc * Q_glob` is the dominant **NEGATIVE** modulator. Bandit's Q is 0.31 vs zoned's 0.41 — i.e., bandit picks higher-failure-density mutations, which depresses its reward.
+
+**OBSERVATION 6**: `Q_rep` is ~1.0 across the board — `r_rep > r_0=10` rarely fires; cascade penalty is essentially inactive.
+
+### 5.4 Per-kind reward decomposition (within bandit runs only)
+
+This is the most diagnostic table:
+
+| kind | reward | Q | S | Q_loc | Q_glob | T_new | T_rare | F_new | F_rare | d_loc | d_glob | n_fail | count |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| INSTR_WORD_MOD_SUR | **0.150** | **0.449** | 0.346 | **0.754** | 0.600 | 0.000 | 0.025 | 0.619 | 0.845 | **0.78** | 2.45 | **1.07** | **1031** |
+| INSTR_WORD_MOD_FULL | 0.118 | 0.322 | 0.398 | 0.638 | **0.448** | 0.000 | 0.026 | **0.758** | **0.926** | 1.45 | **4.10** | 2.08 | 870 |
+| COMP_OUT_MOD | 0.079 | 0.340 | 0.231 | 0.429 | 0.790 | 0.000 | 0.026 | 0.397 | 0.578 | 1.84 | 1.00 | 1.84 | 707 |
+| LOAD_VAL_MOD | 0.077 | 0.346 | 0.223 | 0.437 | 0.790 | 0.000 | 0.026 | 0.394 | 0.549 | 1.80 | 1.00 | 1.80 | 702 |
+| STORE_OUT_MOD | 0.077 | 0.346 | 0.222 | 0.436 | 0.790 | 0.000 | 0.026 | 0.393 | 0.543 | 1.81 | 1.00 | 1.81 | 701 |
+| MEM_VAL_MOD | 0.062 | 0.254 | 0.268 | 0.330 | 0.708 | 0.000 | 0.027 | 0.473 | 0.658 | 3.01 | 2.03 | 4.00 | 658 |
+| PRE_EXEC_REG_MOD | 0.055 | 0.201 | 0.276 | 0.288 | 0.696 | 0.000 | 0.025 | 0.488 | 0.681 | 2.66 | 2.00 | 3.00 | 639 |
+| INSTR_TYPE_MOD | **0.036** | **0.158** | 0.338 | **0.211** | 0.614 | 0.055 | 0.258 | 0.533 | 0.786 | **4.06** | 3.38 | **5.12** | 592 |
+
+**CRITICAL OBSERVATIONS:**
+
+1. **The bandit's preferred arm (INSTR_WORD_MOD_SUR) gets reward 0.150**. The next is INSTR_WORD_MOD_FULL at 0.118. The least-preferred (INSTR_TYPE_MOD) gets 0.036.
+2. **The reward ordering is dominated by Q_loc**, not by S. The kinds with the HIGHEST S are INSTR_WORD_MOD_FULL (S=0.40) and INSTR_TYPE_MOD (S=0.34). But INSTR_TYPE_MOD's Q=0.16 KILLS its reward.
+3. **Q_loc is essentially `exp(-d_loc / tau_d)` where tau_d=2**. So:
+   - d_loc=0.78 → Q_loc = exp(-0.78/2) = 0.677 → measured ~0.754 (close enough)
+   - d_loc=4.06 → Q_loc = exp(-4.06/2) = 0.131 → measured 0.211 (small mismatch from averaging)
+4. **The reward function PENALIZES INSTR_TYPE_MOD massively** because it produces 5 failures per mutation, while it REWARDS INSTR_WORD_MOD_SUR because it produces 1.07 failures per mutation (often single-context failures).
+5. **But** INSTR_TYPE_MOD is the kind that on uniform runs DISCOVERED the constraint `VerifyOpcodeF3F7@inst.zir:102` first. It's a high-discovery kind!
+
+### 5.5 Diagnosis: Q-penalty is anti-discovery
+
+The Q_loc penalty was designed to AVOID spammy mutations that crash the prover (many random failures). But it has the unintended side-effect of **penalizing exactly the mutations most likely to explore complex constraint structures**. Constraint discovery often comes from mutations that produce many local failures (because they perturb large regions of the trace), while the Q_loc penalty drives the bandit toward "surgical" mutations that produce few failures but only confirm known constraints.
+
+**Hypothesis**: If we removed Q_loc (i.e., set tau_d = ∞), bandit would shift back toward INSTR_TYPE_MOD / MEM_VAL_MOD / PRE_EXEC_REG_MOD and possibly discover the *Input constraints.
+
+---
+
+## 6. Experimental setup (IV.POS.5)
+
+| Parameter | Value |
+|---|---|
+| Strategies tested | `uniform`, `zoned`, `bandit-16` |
+| Seeds | 1234, 1235, 1236, 1237, 1238 (5 paired) |
+| Mutations per run | N = 6000 |
+| Total mutations | 15 × 6000 = 90,000 |
+| Bandit `b_count` | 16 (so name `bandit-16`) |
+| Guest binary | `risc0-host --in1 5 --in4 10` (fixed, sha256-verified) |
+| Image | `debian-trixie` (sha256-verified) |
+| Hardware | AMD EPYC 9354 (32-core, 250GB RAM, "Tier S" per `POS_PLAYBOOK.md §3.1`) |
+| Test nodes | `flare`, `octorand`, `opulous` (POS testbed @ University) |
+| Dispatcher | `a4/pos/dispatch_pos.py` (3 jobs in parallel) |
+| Wall time per run | ~5 hours |
+| Total compute time | ~75 core-hours over 5 sequential dispatches (Jun 6-7, 2026) |
+| Statistical method | Paired t-test on per-seed coverage |
+
+The 5 seeds are paired across the 3 strategies — i.e., seed=1234 was run on uniform, zoned, AND bandit-16 (same guest, same N, same dispatch round), so we can use a paired test.
+
+---
+
+## 7. Headline results
+
+### 7.1 Per-seed coverage (number of unique constraint contexts discovered)
+
+| Seed | uniform | zoned | bandit-16 |
+|---|---:|---:|---:|
+| 1234 | 35 | 45 | 38 |
+| 1235 | 34 | 44 | 34 |
+| 1236 | 36 | 43 | 42 |
+| 1237 | 34 | 42 | 37 |
+| 1238 | 36 | 43 | 36 |
+| **Mean** | **35.0** | **43.4** | **37.4** |
+| **Std (sample)** | 1.00 | 1.14 | 2.97 |
+| **% of universe** (46) | 76.1% | 94.3% | 81.3% |
+| **% of union** | 89.1% | 100.0% | 93.5% |
+
+### 7.2 Coverage growth quartiles (mean across 5 seeds)
+
+| at mutation | uniform | zoned | bandit-16 |
+|---:|---:|---:|---:|
+| 1500 (Q1) | 30.2 | **37.4** | 32.8 |
+| 3000 (Q2) | 32.6 | **40.0** | 34.8 |
+| 4500 (Q3) | 34.4 | **41.6** | 35.6 |
+| 6000 (Q4) | 35.0 | **43.4** | 37.4 |
+
+**Zoned reaches 37.4 contexts by Q1 (25% of budget) — exactly equal to bandit's Q4 (full budget).** Bandit at N=6000 still falls short of where zoned was at N=1500.
+
+### 7.3 Paired t-tests (5 seeds, 4 d.f.)
+
+| Comparison | Δ contexts | Δ % | t-stat | p-value | Sig |
+|---|---:|---:|---:|---:|---|
+| bandit-16 vs zoned | -6.0 | -13.8% | -4.05 | ≈0.015 | ** |
+| uniform vs zoned | -8.4 | -23.8% | -12.39 | <0.001 | *** |
+| bandit-16 vs uniform | +2.4 | +6.9% | +2.14 | ≈0.099 | ns |
+
+### 7.4 Universe analysis
+
+**Across all 15 runs**, 46 unique constraint contexts were observed. We treat this as the empirical universe.
+
+| Strategy | Unique contexts hit (union over 5 seeds) | % of universe |
+|---|---:|---:|
+| zoned | **46** | **100.0%** |
+| bandit-16 | 43 | 93.5% |
+| uniform | 41 | 89.1% |
+
+**Constraints uniform missed (5)**: `ControlUserECALL@inst_control.zir:77`, `DivInput@inst_div.zir:8`, `MemLoadInput@inst_mem.zir:8`, `MemStoreInput@inst_mem.zir:18`, `MulInput@inst_mul.zir:8`.
+
+**Constraints bandit-16 missed (3)**: `MemLoadInput@inst_mem.zir:8`, `MemStoreInput@inst_mem.zir:18`, `MulInput@inst_mul.zir:8`. (The 3 zoned-only constraints.)
+
+**Constraints zoned missed**: NONE.
+
+---
+
+## 8. Diagnostic findings — where each strategy spent its budget
+
+### 8.1 Kind distribution (% of 6000 mutations per run, mean over 5 seeds)
+
+| Kind | uniform | zoned | bandit-16 |
+|---|---:|---:|---:|
+| COMP_OUT_MOD | 10.07 | 12.21 | 12.04 |
+| INSTR_TYPE_MOD | **15.27** | 12.65 | **10.06** |
+| INSTR_WORD_MOD_FULL | 15.11 | 12.68 | 14.72 |
+| INSTR_WORD_MOD_SUR | 15.23 | 12.25 | **17.38** |
+| LOAD_VAL_MOD | 10.78 | 12.20 | 11.90 |
+| MEM_VAL_MOD | 8.62 | 12.53 | 11.15 |
+| PRE_EXEC_REG_MOD | 14.04 | 12.78 | **10.86** |
+| STORE_OUT_MOD | 10.88 | 12.70 | 11.89 |
+
+Bolded values mark significant deviations from the 12.5% "perfectly uniform across 8 kinds" baseline.
+
+**KEY**: 
+- Zoned is the only strategy with near-uniform per-kind distribution.
+- Uniform skews toward INSTR-family (more valid buckets) and AWAY from MEM_VAL_MOD (fewer buckets).
+- Bandit skews toward INSTR_WORD_MOD_SUR (highest reward) and AWAY from INSTR_TYPE_MOD / PRE_EXEC_REG_MOD (penalised by Q_loc).
+
+### 8.2 Step distribution (% of 6000 mutations per run, mean over 5 seeds)
+
+| Zone | uniform | zoned | bandit-16 |
+|---|---:|---:|---:|
+| init (step 0) | 0.02% | **2.43%** | 0.04% |
+| core (middle) | 99.94% | 95.16% | 99.89% |
+| final (last step) | 0.04% | **2.41%** | 0.07% |
+
+**KEY**: Only zoned visits init/final non-trivially. The trace has ~3000 user_cycle steps, so a "uniform-step" strategy puts only 1/3000 ≈ 0.03% per step. Zoned's 2.5% on init = 75x more frequent than uniform on init.
+
+### 8.3 What the *Input constraints need
+
+The 3 constraints bandit can't reach (`MemLoadInput`, `MemStoreInput`, `MulInput`) are not boundary constraints; they fire mid-execution. **They are NOT in the init/final zones** — that hypothesis is wrong. They are discovered by `MEM_VAL_MOD` / `PRE_EXEC_REG_MOD` mutations on specific mem/mul instruction inputs, which require a sufficient number of such mutations to land on the right cycles.
+
+Bandit only spends 11.15% on MEM_VAL_MOD (669 mutations) and 10.86% on PRE_EXEC_REG_MOD (652 mutations), vs zoned's 12.5% each (~750 each). Zoned's extra ~80-100 PRE_EXEC_REG_MOD / MEM_VAL_MOD mutations per run is enough to discover these contexts, often. Bandit's deficit is enough to MISS them.
+
+**Conclusion**: It's not a step-zone problem; it's a **per-kind allocation problem**. Bandit shifts budget away from MEM/PRE_EXEC kinds because they have lower Q_loc.
+
+---
+
+## 9. Why uniform hits different constraints than bandit
+
+The user observed (correctly) that uniform hits different "parts of the trace" than zoned. Looking at the actual data:
+
+- **Uniform hits more INSTR-family steps than zoned does** (15% vs 12.5% per INSTR kind × 3 kinds = 45.6% vs 37.6%) BUT this is because uniform skews toward INSTR-arms.
+- **Uniform's step DISTRIBUTION within a kind is uniform over all valid steps** (every cycle ≈ 1/3000 probability), so it covers the trace more evenly than zoned (which still puts 95% in "core" but might lump multiple steps in the same bucket via the value-generator).
+
+But the empirical RESULT shows:
+
+| Strategy | What it covers WELL | What it misses |
+|---|---|---|
+| Uniform | Most INSTR-family constraints (15% each), many MEM constraints | The 3 *Input constraints, ControlUserECALL:77, DivInput (5 misses) |
+| Zoned | EVERY constraint (uniform-over-kinds means each kind gets 12.5%, enough to discover its specific contexts) | NONE |
+| Bandit | INSTR_WORD-family constraints (over-allocated), most MEM constraints | The 3 *Input constraints (3 misses) |
+
+**The takeaway**: The "uniform" strategy's bias toward INSTR-arms made it slightly WORSE than bandit (which despite Q-penalty issues, still spends 11-12% per non-INSTR kind). But BOTH miss the *Input constraints that only zoned consistently finds.
+
+---
+
+## 10. Mechanism: why zoned wins
+
+**UPDATED (after §17.16 finding)**: zoned's winning property is **BOTH (a) mechanical fairness across mutation KINDS AND (b) the 5/90/5 STEP-ZONE weighting**. The second factor is dominant. Specifically:
+
+> **(a) Kind uniformity** [contributes ~1 of the 6 missed contexts]: zoned guarantees ~12.5% of budget per kind. Bandit and uniform under-allocate `MEM_VAL_MOD` (8-10% vs 12.5%), and `MEM_VAL_MOD` is the ONLY kind that ever hits `ControlUserECALL@inst_control.zir:77`. So bandit hits it 4/5 seeds and uniform hits it 0/5.
+>
+> **(b) Step-0 (init-zone) coverage of INSTR_TYPE_MOD** [contributes 4 of the 6 missed contexts]: zoned puts ~184 `INSTR_TYPE_MOD` mutations at step=0 (across 5 seeds); uniform puts ~1 and bandit puts ~2. The 4 constraints `MemLoadInput`, `MemStoreInput`, `MulInput`, `DivInput` only fire when the **conjunction** `kind=INSTR_TYPE_MOD AND step=0` holds — when the very first user instruction's `(major, minor)` field is forcibly rewritten to a memory-load/store/mul/div op slot. Mutation at any other step or with any other kind doesn't trigger these. See `§17.16` for the kind set / step set proof tables.
+
+A useful counterfactual decomposition:
+- If zoned were instead "uniform over kinds + uniform over valid steps" (lose factor b), it would cover ~42/46 (the 4 step-0 INSTR_TYPE_MOD constraints missed).
+- If zoned were instead "kind-uniform + uniform-over-steps" (lose factor b), same as above.
+- If zoned were instead "uniform-over-arms" (= the actual uniform strategy), it covers 40/46 (loses both b and factor-a `ControlUserECALL:77`).
+- Actual zoned covers 46/46.
+- **So factor (b) (the 5/90/5 weighting that brings step 0 into play for INSTR_TYPE_MOD) is responsible for ~4 of the 6-context gap; factor (a) is responsible for ~1; the remaining ~1 is bandit-only (`ECallHostReadWords` hit by bandit but missed by uniform).**
+
+**Architectural implication**: any selector with BOTH (a) kind-fairness AND (b) step-zone bias (especially for INSTR_TYPE_MOD at step 0) would close the gap. Pure UCB on (kind, step) arms (the current bandit-16) has neither: the kind axis is bent by the reward function (b under-allocates MEM_VAL_MOD), and the step axis is uniform-over-bucket (which gives step-0 ~0.02% probability).
+
+---
+
+## 11. Our hypotheses for why MAB underperforms (ranked)
+
+### H1 (strongest): The Q_loc penalty is anti-discovery
+
+The reward function multiplies S by Q_loc = exp(-d_loc / tau_d). With tau_d=2, a mutation that produces 4 distinct local failure contexts gets Q_loc = exp(-2) ≈ 0.135 — an 87% reward reduction. But producing 4 distinct failure contexts is often a SIGN that the mutation explored multiple constraint regions; sometimes one of them is novel.
+
+**Fix candidate**: Increase tau_d (e.g., 8 or 16) to flatten Q_loc, OR remove Q_loc entirely and rely on F_new/F_rare to credit novelty.
+
+### H2 (strong): Reward is biased toward failure-count-density, not novelty-rate
+
+The dominant POSITIVE components are `F_new` (0.49-0.52) and `F_rare` (0.69-0.71) — both summarize failure CONTEXTS. But novelty across mutations is much sparser. With only 46 contexts in the universe, after ~50 mutations the bandit has seen 30+ contexts; the marginal gain from the next is small. Yet F_rare keeps rewarding mutations that hit known-rare contexts, not necessarily NEW contexts.
+
+**Fix candidate**: Define a "coverage-greedy" reward that is `1` when a NEW context is discovered and `0` otherwise. Or weight F_new much higher than F_rare.
+
+### H3 (strong): Touch coverage saturates too fast → T_new is dead
+
+T_new is essentially 0 after the first ~100 mutations. The bandit has no signal pushing it toward NEW touch regions. Effectively the bandit operates on a 4-dimensional reward (T_rare, F_new, F_rare, Q) instead of the intended 5-dimensional one.
+
+**Fix candidate**: Re-define T_new in terms of trace-bucket coverage (e.g., new bucket × new kind) rather than touch bitmap; or decay the historical bitmap to "forget" old touches.
+
+### H4 (medium): UCB exploration coefficient `c=0.25` is too low
+
+With c=0.25 and N_arm typical ~50, UCB bonus = 0.25 * sqrt(log(1+6000)/50) ≈ 0.25 * 0.39 ≈ 0.10. Mean reward delta between top arms (0.150) and bottom arms (0.036) is 0.114. So UCB CAN re-explore bottom arms when their N drops, BUT this requires gamma decay to drop N significantly, which happens at gamma=0.9977 with rate -log(2)/log(0.9977) ≈ 300-mutation half-life. So an arm not pulled for 300 mutations halves N. Over 6000 mutations, this is fast enough — but the reward signal keeps pushing back toward INSTR_WORD_MOD_SUR.
+
+**Fix candidate**: Increase c to ~1.0 or use a different exploration mechanism (epsilon-greedy, Thompson sampling).
+
+### H5 (medium): The arm structure is wrong
+
+We have 16 step-buckets × 8 kinds = 128 arms. But the "step bucket" granularity is somewhat arbitrary (B = T / B_count = 3000/16 ≈ 188 steps per bucket). It's possible that the *Input constraints fire only at specific narrow step ranges that none of the 16 buckets captures preferentially.
+
+**Fix candidate**: Instead of bucket-by-step-index, bucket by **(kind, opcode-class)** or **(kind, instruction-type)** so arms are more semantically meaningful.
+
+### H6 (medium): Step-level nested UCB is wasteful
+
+Inside each (kind, bucket), the nested UCB selects one of ~188 individual steps. With 6000 mutations across 128 arms, each arm gets ~47 pulls on average; the nested step UCB does cold-start on all 188 steps in the first 188 pulls of that arm, but most arms NEVER get pulled that many times. So the nested step UCB rarely converges.
+
+**Fix candidate**: Drop the nested UCB; just sample step uniformly within the chosen bucket.
+
+### H7 (weak): N=6000 is too small for convergence
+
+Possible the bandit needs N=20000+ to escape its local optimum. Cold-start consumes 128 arms × 1 mutation = 128 mutations (2%); UCB then has 5872 mutations to learn. This should be plenty for 128 arms, but maybe the reward signal is too noisy.
+
+**Fix candidate**: Run bandit at N=20000 and measure coverage convergence.
+
+---
+
+## 12. Possible improvements (parameter tuning)
+
+These keep the architecture but tune the constants:
+
+### T1. Increase tau_d (Q_loc flattening)
+
+Current: `tau_d = max(1, p75(d_fail))` ≈ 2-3.
+
+Try: `tau_d = max(5, p90(d_fail))` ≈ 8-10. This makes Q_loc ≈ 0.7 even for d_loc=4 instead of 0.13, removing the anti-MEM_VAL_MOD / anti-PRE_EXEC_REG_MOD bias.
+
+### T2. Increase tau_g (Q_glob flattening)
+
+Same logic for global contexts. Current `tau_g = 2*tau_d`. Try `tau_g = 4*tau_d`.
+
+### T3. Rebalance reward weights
+
+Current: `a_Tn=1, a_Tr=0.25, a_Fn=1, a_Fr=1, a_U=1`.
+
+Try: `a_Tn=2, a_Tr=0, a_Fn=4, a_Fr=0.25, a_U=0.5`. Emphasises NEW (touch/failure) coverage over RARE, removes T_rare (which adds noise).
+
+### T4. Increase UCB exploration coefficient
+
+Current: `c_explore = 0.25`.
+
+Try: `c_explore = 1.0` (and rerun). More exploration → less local optimum.
+
+### T5. Re-derive gamma from budget
+
+Current: `H = max(50, min(300, N/5))` → at N=6000, H=300 → half-life = 300 mutations.
+
+Try: `H = N / 10 = 600` (longer memory, more stable) OR `H = N / 50 = 120` (shorter memory, faster adaptation).
+
+### T6. Lock-in single pilot across all strategies
+
+Currently each strategy may run its own pilot. Lock all 3 to a deterministic shared pilot so tau_new, tau_d, etc. are IDENTICAL across uniform/zoned/bandit. (Removes a confound; doesn't change architecture.)
+
+### T7. Larger budget at N=20000 to test convergence
+
+Run bandit alone at N=20000 with current hyperparameters. If it reaches 43+: bandit needs more budget. If it stays at 37: architecture is broken (proceed to §13).
+
+---
+
+## 13. Possible improvements (architectural redesign)
+
+These change the architecture more deeply.
+
+### A1. Coverage-greedy reward
+
+Replace the entire reward with:
+
+```
+reward = 1.0 if (any new unique local context this mutation) else 0.0
+```
+
+This directly targets the goal. The bandit becomes a "discovery rate" maximizer. The drawback is that after ~46 contexts are discovered the reward is always 0 and bandit becomes random.
+
+Variant: reward = `(num_new_contexts_this_run + 1) / (num_failures + 1)` — encourages discovery-per-failure rate.
+
+### A2. Hierarchical structure: kind-level bandit, NOT (kind, bucket)
+
+Reduce arms from 128 to 8. Run UCB at the KIND level only. Step is selected by either uniform-over-valid-steps OR zoned-distribution within kind.
+
+This should converge faster (8 arms = trivial cold-start, 750 pulls each in expectation).
+
+### A3. Diversity-pressured bandit (Thompson sampling)
+
+Replace UCB with Thompson sampling using a Beta-distributed prior. Sample reward distribution per arm; select arm with highest sampled value. This naturally maintains exploration for arms with high reward uncertainty.
+
+### A4. Two-stage bandit: explore-then-exploit
+
+- Stage 1 (first 25% of budget): force uniform-over-kinds sampling (= zoned).
+- Stage 2 (remaining 75%): switch to UCB initialised with the empirical rewards from stage 1.
+
+This combines zoned's coverage with bandit's exploitation. Strong if stage 1 is long enough to find rare contexts.
+
+### A5. Per-kind sub-bandit instead of monolithic
+
+Run 8 independent UCB sub-bandits, one per kind. Each selects a step within its kind. At each iteration, sample which kind to use uniformly (or via a meta-bandit that doesn't have Q-penalty issues).
+
+This decouples step-selection optimization (where UCB might help) from kind-selection (where zoned-uniformity wins).
+
+### A6. Reward includes "kind-coverage diversity bonus"
+
+Add a term to the reward that penalises the bandit for over-selecting a kind:
+
+```
+reward_adj = reward * exp(-pulls_for_this_kind / target_pulls_per_kind)
+```
+
+This is essentially a regularizer toward uniform-kind-distribution, partially recovering zoned's property.
+
+### A7. Decoupled exploration/exploitation: 80/20 mix
+
+At each iteration:
+- 80% chance: pick by UCB (exploit)
+- 20% chance: pick uniformly over arms (explore)
+
+This is a simple bandit hack but might recover the 3 missed constraints.
+
+---
+
+## 14. What the master plan would have done next
+
+Per `a4/docs/precloud/PRECLOUD_MASTER_PLAN.md §16-§18`, IV.POS.5 was the **headline experiment**. After closure, the next phases are:
+
+- **IV.POS.6 — Aggregation & boss notebook**: build `pos_ab_presentation.ipynb` with the 4 publication plots (we generated them already at `a4/runs/iv_pos_5/plots/`), the headline tables (above), and an 8-cell story arc for the advisor.
+- **IV.POS.7 (CONDITIONAL) — Further experiments**: originally specified as "checkpointing / N ≥ 20k / weight A/B". Now reframed as:
+  - **IV.POS.7a**: Bandit at N=20000 to test convergence hypothesis (H7).
+  - **IV.POS.7b**: Bandit-with-modified-reward at N=6000 (test T1-T3 fixes).
+  - **IV.POS.7c**: Coverage-greedy bandit at N=6000 (A1).
+  - **IV.POS.7d**: Hierarchical kind-level bandit at N=6000 (A2).
+
+The MAB architecture survives IV.POS.7 only if some variant outperforms zoned. **If no variant beats zoned by N=6000 budget, then the paper has to be framed as "structured baselines beat MAB on this target", and we ship the lessons (this document) as the main contribution.**
+
+After IV.POS.7, the master plan branches:
+- **V.x**: multi-guest fuzzing (currently single-guest; carry-fwd §H.4)
+- **W.x**: cross-target validation (apply our framework to another zkVM circuit like sp1 or jolt)
+- **X.x**: paper writing
+
+---
+
+## 15. Open questions for ChatGPT Pro
+
+In order of priority:
+
+1. **Is the Q_loc penalty the actual root cause of bandit's underperformance?** If we run bandit with tau_d → ∞ (no Q_loc penalty) at N=6000, will it discover the 3 *Input constraints?
+
+2. **Which of the parameter tunes (T1-T7) gives the biggest expected ROI?** We can run at most 2-3 follow-up campaigns before paper deadline.
+
+3. **Which of the architectural redesigns (A1-A7) is most likely to beat zoned BY FAR?** We want a clear win, not a tie.
+
+4. **Is there a theoretical reason why UCB-with-discount converges to a suboptimal arm on a target with ~46 contexts?** (E.g., is 46 too small for UCB regret bounds to kick in?)
+
+5. **Should we abandon the (kind, step-bucket) arm structure entirely and switch to semantic arms (e.g., kind × opcode-family)?**
+
+6. **Is there a known fuzzing literature result on "coverage-greedy bandits" we should cite/replicate?** E.g., AFL's coverage feedback, libFuzzer's strategies.
+
+7. **For the paper, should we present this as "MAB doesn't work for zkVM fuzzing" (negative result) or "Here's a fixed MAB that beats zoned" (positive result)?** This depends on whether redesign A1-A7 can demonstrably win.
+
+---
+
+## 16. Appendix: full data dumps
+
+### 16.1 Campaign parameters per strategy
+
+| param | uniform | zoned | bandit-16 |
+|---|---:|---:|---:|
+| `tau_new` | 35.0 | 35.0 | 43.0 |
+| `tau_d` | 3.0 | 3.0 | 2.0 |
+| `tau_g` | 6.0 | 6.0 | 4.0 |
+| `gamma` | 0.9965 | 0.9965 | 0.9977 |
+| `K_T_rare` | 31 | 31 | 31 |
+| `b_count` | 128 | n/a | 16 |
+| `selector` | uniform | zoned | bandit |
+| `num_arms` | 967 | n/a | 128 |
+
+### 16.2 Full universe of 46 unique constraint contexts
+
+```
+AddrDecompose@u32.zir:67
+AddrDecomposeBits@u32.zir:87
+ControlLoadRootAndNonce@inst_control.zir:23
+ControlMRET@inst_control.zir:89
+ControlMRET@inst_control.zir:91
+ControlMRET@inst_control.zir:92
+ControlUserECALL@inst_control.zir:75
+ControlUserECALL@inst_control.zir:77  ← uniform missed
+ControlUserECALL@inst_control.zir:78
+DecodeInst@inst.zir:29
+DivInput@inst_div.zir:8                ← uniform missed
+ECall0@inst_ecall.zir:203
+ECallHostReadSetup@inst_ecall.zir:70
+ECallHostReadSetup@inst_ecall.zir:76
+ECallHostReadWords@inst_ecall.zir:171
+IllegalLoadOp@inst_mem.zir:40
+IllegalMulOp@inst_mul.zir:18
+IllegalStoreOp@inst_mem.zir:45
+IsRead@mem.zir:79
+IsRead@mem.zir:80
+MachineECall@inst_ecall.zir:28
+MachineECall@inst_ecall.zir:29
+MachineECall@inst_ecall.zir:32
+MemLoadInput@inst_mem.zir:8            ← uniform missed, bandit missed
+MemStoreInput@inst_mem.zir:18          ← uniform missed, bandit missed
+MemoryWrite@mem.zir:100
+MemoryWrite@mem.zir:99
+MiscInput@inst_misc.zir:7
+MulInput@inst_mul.zir:8                ← uniform missed, bandit missed
+OneHot@one_hot.zir:11
+OneHot@one_hot.zir:9
+OpLH@inst_mem.zir:98
+OpLHU@inst_mem.zir:123
+OpLW@inst_mem.zir:108
+OpLW@inst_mem.zir:109
+OpSH@inst_mem.zir:148
+OpSW@inst_mem.zir:160
+OpSW@inst_mem.zir:161
+PoseidonCheckOut@inst_p2.zir:265
+Sha0@inst_sha.zir:226
+VerifyOpcode@inst.zir:91
+VerifyOpcodeF3@inst.zir:96
+VerifyOpcodeF3@inst.zir:97
+VerifyOpcodeF3F7@inst.zir:102
+VerifyOpcodeF3F7@inst.zir:103
+VerifyOpcodeF3F7@inst.zir:104
+```
+
+### 16.3 Selected source pointers
+
+- Bandit selector: `a4/standalone/bandit.py:134-187` (the `select()` method)
+- Reward: `a4/standalone/coverage_state.py:152-291` (the `compute_reward()` function)
+- Arm universe: `a4/standalone/arm_universe.py:63-141` (the `ArmUniverse.__init__`)
+- Zoned step selector: `a4/standalone/step_selector.py:108-222`
+- Uniform-arm selector: `a4/standalone/step_selector.py:416-454`
+- Campaign loop: `a4/standalone/fuzzer.py:655-700`
+- The 8 mutation kinds: `a4/standalone/fuzzer.py:141-150`
+
+### 16.4 Files generated by this campaign
+
+- `a4/runs/iv_pos_5/CLOSURE.txt` — human-readable headline
+- `a4/runs/iv_pos_5/COLLECTION_REPORT_FINAL.json` — per-DB validation report (15/15 valid)
+- `a4/runs/iv_pos_5/plots/01_cumulative_coverage.png` — cumulative coverage curves (3 strategies × 5 seeds)
+- `a4/runs/iv_pos_5/plots/02_coverage_boxplot.png` — per-seed boxplot with significance bars
+- `a4/runs/iv_pos_5/plots/03_kind_distribution.png` — stacked bars showing each strategy's kind mix
+- `a4/runs/iv_pos_5/plots/04_failure_vs_coverage_yield.png` — scatter showing reward-signal critique
+- `a4/runs/iv_pos_5/validated/<dispatch>/<node>/*.db` — 15 raw SQLite DBs (~5 MB each)
+
+### 16.5 Per-strategy aggregate reward components (mean over all 5 seeds × 6000 mutations = 30000 records each)
+
+```
+                    uniform    zoned     bandit-16
+reward              0.1123     0.1109    0.0878
+T_new               0.0073     0.0069    0.0056
+T_rare              0.0563     0.0527    0.0489
+F_new               0.5153     0.4935    0.5201
+F_rare              0.7105     0.6905    0.7093
+U                   0.0000     0.0000    0.0000
+Q_loc               0.5449     0.5406    0.4703
+Q_rep               0.9964     0.9967    0.9964
+Q_glob              0.7329     0.7523    0.6695
+Q                   0.4060     0.4129    0.3148
+S                   0.2935     0.2833    0.2934
+d_loc               2.1593     2.1581    2.0291
+d_glob              2.2779     2.0574    2.1731
+d_ext               4.4371     4.2155    4.2021
+n_fail              2.5869     2.6394    2.4261
+```
+
+### 16.6 Per-kind reward decomposition (bandit runs only, mean over 5 seeds)
+
+```
+kind                  reward    Q       S       Q_loc   Q_glob  T_new   T_rare  F_new   F_rare  d_loc   d_glob  n_fail  count
+INSTR_WORD_MOD_SUR    0.1504   0.4486   0.3458  0.7544  0.6005  0.0000  0.0252  0.6185  0.8448  0.78    2.45    1.07    1031
+INSTR_WORD_MOD_FULL   0.1179   0.3224   0.3978  0.6383  0.4479  0.0002  0.0258  0.7583  0.9256  1.45    4.10    2.08    870
+COMP_OUT_MOD          0.0785   0.3399   0.2311  0.4291  0.7898  0.0000  0.0263  0.3971  0.5783  1.84    1.00    1.84    707
+LOAD_VAL_MOD          0.0773   0.3463   0.2233  0.4373  0.7898  0.0000  0.0255  0.3935  0.5492  1.80    1.00    1.80    702
+STORE_OUT_MOD         0.0766   0.3456   0.2219  0.4363  0.7898  0.0000  0.0258  0.3932  0.5433  1.81    1.00    1.81    701
+MEM_VAL_MOD           0.0616   0.2537   0.2677  0.3295  0.7077  0.0001  0.0265  0.4728  0.6580  3.01    2.03    4.00    658
+PRE_EXEC_REG_MOD      0.0546   0.2007   0.2764  0.2877  0.6964  0.0000  0.0245  0.4880  0.6807  2.66    2.00    3.00    639
+INSTR_TYPE_MOD        0.0359   0.1575   0.3383  0.2111  0.6143  0.0549  0.2580  0.5328  0.7857  4.06    3.38    5.12    592
+```
+
+---
+
+## 17. NEW DIAGNOSTIC DATA
+
+This section adds the diagnostic data extracted after §16 was first written, in response to a request to surface ALL valuable signal from the 6000-mutation runs.
+
+### 17.1 Discovery rate per mutation kind — THE SMOKING GUN
+
+**For each mutation kind, how many unique constraints does it discover per 1000 mutations of that kind?** (Across all 3 strategies combined, so this is a property of the KIND, not the strategy.)
+
+| kind | total muts (all strategies) | unique discoveries | **discovery rate per 1000 muts** |
+|---|---:|---:|---:|
+| **INSTR_TYPE_MOD** | 11,397 | 284 | **24.92** |
+| **MEM_VAL_MOD** | 9,688 | 121 | **12.49** |
+| INSTR_WORD_MOD_FULL | 12,754 | 61 | 4.78 |
+| PRE_EXEC_REG_MOD | 11,303 | 44 | 3.89 |
+| **INSTR_WORD_MOD_SUR** (bandit favourite) | 13,456 | 49 | **3.64** |
+| COMP_OUT_MOD | 10,294 | 12 | 1.17 |
+| STORE_OUT_MOD | 10,642 | 6 | 0.56 |
+| LOAD_VAL_MOD | 10,465 | 2 | 0.19 |
+
+**OBSERVATION**: INSTR_TYPE_MOD discovers 7x more unique constraints per mutation than INSTR_WORD_MOD_SUR — yet bandit picks INSTR_WORD_MOD_SUR 17.4% of the time and INSTR_TYPE_MOD only 10.1% of the time. **Bandit's reward signal inverts the right ranking on the discovery axis.**
+
+### 17.2 Constraint set overlap (Venn analysis)
+
+Across all 15 runs, the 46-context universe partitions as:
+
+```
+                          Hit by all 3 strategies: 41
+                          Hit by zoned only:        3   → MemLoadInput@inst_mem.zir:8
+                                                          MemStoreInput@inst_mem.zir:18
+                                                          MulInput@inst_mul.zir:8
+                          Hit by zoned + bandit only: 2 → ControlUserECALL@inst_control.zir:77
+                                                          DivInput@inst_div.zir:8
+                          Hit by uniform only:      0
+                          Hit by bandit-16 only:    0
+                          Hit by uniform + zoned only: 0
+                          Hit by uniform + bandit only: 0
+```
+
+**OBSERVATION**: Uniform's coverage is a strict SUBSET of bandit-16's (uniform offers no unique coverage). Bandit-16's coverage is a strict SUBSET of zoned's. **There is no "complementarity": adding bandit-16's discoveries to uniform's gives you exactly bandit-16's set; adding bandit-16's to zoned's gives you exactly zoned's set.** This rules out the "average the three strategies" approach.
+
+### 17.3 Per-(strategy, kind) reward composition — proof that the reward function is the issue, not bandit
+
+This is the same per-kind reward table as §5.4 but extended to ALL THREE strategies. Crucially, **the reward function ranks the kinds the same way regardless of which selector chose them**:
+
+#### uniform strategy (mean reward components per kind):
+
+| kind | reward | S | Q | Q_loc | Q_glob | F_new | F_rare | d_loc | d_glob | n_fail |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| INSTR_WORD_MOD_SUR | **0.185** | 0.342 | **0.556** | 0.803 | 0.692 | 0.611 | 0.838 | 0.79 | 2.43 | 1.18 |
+| INSTR_WORD_MOD_FULL | 0.158 | 0.395 | 0.427 | 0.713 | 0.554 | 0.747 | 0.927 | 1.36 | 4.02 | 1.72 |
+| COMP_OUT_MOD | 0.107 | 0.230 | 0.463 | 0.547 | 0.846 | 0.397 | 0.576 | 1.84 | 1.00 | 1.84 |
+| LOAD_VAL_MOD | 0.105 | 0.223 | 0.469 | 0.554 | 0.846 | 0.392 | 0.549 | 1.80 | 1.00 | 1.80 |
+| STORE_OUT_MOD | 0.103 | 0.221 | 0.465 | 0.549 | 0.846 | 0.392 | 0.542 | 1.82 | 1.00 | 1.82 |
+| MEM_VAL_MOD | 0.087 | 0.271 | 0.353 | 0.433 | 0.762 | 0.479 | 0.664 | 3.04 | 2.15 | 3.89 |
+| PRE_EXEC_REG_MOD | 0.083 | 0.274 | 0.303 | 0.398 | 0.764 | 0.481 | 0.676 | 2.63 | 1.95 | 2.99 |
+| **INSTR_TYPE_MOD** | **0.052** | 0.318 | **0.236** | 0.309 | 0.669 | 0.495 | 0.750 | 4.10 | 3.44 | 5.34 |
+
+#### zoned strategy:
+
+| kind | reward | S | Q | Q_loc | Q_glob | F_new | F_rare | d_loc | d_glob | n_fail |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| INSTR_WORD_MOD_SUR | **0.186** | 0.342 | **0.557** | 0.804 | 0.693 | 0.608 | 0.839 | 0.79 | 2.41 | 0.99 |
+| INSTR_WORD_MOD_FULL | 0.153 | 0.385 | 0.428 | 0.703 | 0.567 | 0.725 | 0.905 | 1.41 | 3.91 | 1.81 |
+| COMP_OUT_MOD | 0.107 | 0.231 | 0.463 | 0.547 | 0.846 | 0.398 | 0.579 | 1.84 | 1.00 | 1.84 |
+| LOAD_VAL_MOD | 0.104 | 0.223 | 0.469 | 0.554 | 0.846 | 0.393 | 0.547 | 1.80 | 1.00 | 1.80 |
+| STORE_OUT_MOD | 0.104 | 0.221 | 0.470 | 0.555 | 0.846 | 0.392 | 0.542 | 1.79 | 1.00 | 1.79 |
+| MEM_VAL_MOD | 0.101 | 0.272 | 0.390 | 0.474 | 0.778 | 0.464 | 0.684 | 2.77 | 1.91 | 4.39 |
+| PRE_EXEC_REG_MOD | 0.081 | 0.272 | 0.299 | 0.391 | 0.768 | 0.479 | 0.672 | 2.66 | 1.91 | 3.29 |
+| **INSTR_TYPE_MOD** | **0.053** | 0.318 | **0.236** | 0.306 | 0.678 | 0.484 | 0.751 | 4.14 | 3.26 | 5.11 |
+
+#### bandit-16 strategy (reproduced from §5.4 for completeness):
+
+| kind | reward | S | Q | Q_loc | Q_glob | F_new | F_rare | d_loc | d_glob | n_fail |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| INSTR_WORD_MOD_SUR | **0.150** | 0.346 | **0.449** | 0.754 | 0.601 | 0.619 | 0.845 | 0.78 | 2.45 | 1.07 |
+| INSTR_WORD_MOD_FULL | 0.118 | 0.398 | 0.322 | 0.638 | 0.448 | 0.758 | 0.926 | 1.45 | 4.10 | 2.08 |
+| COMP_OUT_MOD | 0.079 | 0.231 | 0.340 | 0.429 | 0.790 | 0.397 | 0.578 | 1.84 | 1.00 | 1.84 |
+| LOAD_VAL_MOD | 0.077 | 0.223 | 0.346 | 0.437 | 0.790 | 0.394 | 0.549 | 1.80 | 1.00 | 1.80 |
+| STORE_OUT_MOD | 0.077 | 0.222 | 0.346 | 0.436 | 0.790 | 0.393 | 0.543 | 1.81 | 1.00 | 1.81 |
+| MEM_VAL_MOD | 0.062 | 0.268 | 0.254 | 0.330 | 0.708 | 0.473 | 0.658 | 3.01 | 2.03 | 4.00 |
+| PRE_EXEC_REG_MOD | 0.055 | 0.276 | 0.201 | 0.288 | 0.696 | 0.488 | 0.681 | 2.66 | 2.00 | 3.00 |
+| **INSTR_TYPE_MOD** | **0.036** | 0.338 | **0.157** | 0.211 | 0.614 | 0.533 | 0.786 | 4.06 | 3.38 | 5.12 |
+
+**CRITICAL OBSERVATION**: The reward function ranks INSTR_TYPE_MOD as the WORST kind across all three strategies (0.036-0.053). Yet INSTR_TYPE_MOD is the BEST kind for discovery (24.92 contexts per 1000 mutations). **The reward function and the actual goal are anti-correlated for this kind.**
+
+**Why bandit drops INSTR_TYPE_MOD harder than uniform/zoned**: bandit picks INSTR_TYPE_MOD only 10.06% (3019 mutations across 5 seeds) vs uniform 15.27% (4582) and zoned 12.65% (3796). With 24.92 discoveries per 1000, that's a difference of about (4582 − 3019) × 24.92 / 1000 ≈ **39 missed discoveries** (relative to uniform) just from this one kind's under-allocation. (Numbers are first-hit-credit; the actual unique-context lift is smaller due to overlap, but the directional story holds.)
+
+### 17.4 Per-(strategy, kind) unique constraint discovery contributions
+
+For each strategy, which kinds get FIRST-HIT credit for unique constraints in the coverage table?
+
+#### uniform (41 unique discoveries):
+- COMP_OUT_MOD: 2 (`MemoryWrite:99`, `MemoryWrite:100`)
+- **INSTR_TYPE_MOD: 26**
+- INSTR_WORD_MOD_FULL: 9
+- INSTR_WORD_MOD_SUR: 10
+- LOAD_VAL_MOD: 2
+- MEM_VAL_MOD: 13
+- PRE_EXEC_REG_MOD: 10
+- STORE_OUT_MOD: 2
+
+#### zoned (46 unique discoveries):
+- COMP_OUT_MOD: 2
+- **INSTR_TYPE_MOD: 28**
+- INSTR_WORD_MOD_FULL: 11
+- INSTR_WORD_MOD_SUR: 9
+- LOAD_VAL_MOD: 0
+- **MEM_VAL_MOD: 17** ← these include the 3 zoned-only constraints
+- PRE_EXEC_REG_MOD: 8
+- STORE_OUT_MOD: 2
+
+#### bandit-16 (43 unique discoveries):
+- COMP_OUT_MOD: 2
+- **INSTR_TYPE_MOD: 24**
+- INSTR_WORD_MOD_FULL: 13
+- INSTR_WORD_MOD_SUR: 10
+- LOAD_VAL_MOD: 0
+- MEM_VAL_MOD: 19
+- PRE_EXEC_REG_MOD: 6
+- STORE_OUT_MOD: 2
+
+**Note**: Numbers sum to more than the unique-discoveries total because the "first-hit-credit" is per-DB and aggregated; a constraint discovered by kind X in seed 1234 and by kind Y in seed 1235 counts for both X and Y. (This is a slight overcount of the per-strategy total, but ranking is preserved.)
+
+### 17.5 Bandit arm-pull distribution within INSTR_WORD_MOD_SUR (its favourite kind)
+
+For the most-pulled kind by bandit, how are pulls distributed across the 16 step-buckets?
+
+| bucket | pulls across 5 seeds |
+|---:|---:|
+| 0 | 313 |
+| 1 | 318 |
+| 2 | 323 |
+| 3 | 325 |
+| 4 | 331 |
+| 5 | 331 |
+| 6 | 318 |
+| 7 | 326 |
+| 8 | 322 |
+| 9 | **344** |
+| 10 | 334 |
+| 11 | 308 |
+| 12 | 336 |
+| 13 | 321 |
+| 14 | 325 |
+| 15 | 338 |
+
+**OBSERVATION**: Pulls are almost perfectly uniform across the 16 buckets (range 308-344, std ≈ 9.5 on a mean of 325.8, total = 5213 pulls). **The bandit's nested step-UCB within a kind is doing essentially uniform random selection.** The exploration bonus dominates the mean signal at the bucket level. The nested UCB is wasted compute.
+
+For a single seed (1234), even at the kind level the bucket spread is essentially uniform — every kind covers all 16 buckets, and the most-pulled bucket within a kind has 1.03-1.10x the mean pulls (negligible variation).
+
+### 17.6 Constraint discovery timeline (when did each constraint get discovered?)
+
+Mean first-hit mutation # across seeds (5/5 unless noted as `(n)` for n/5 seeds):
+
+| constraint | uniform | zoned | bandit-16 |
+|---|---:|---:|---:|
+| AddrDecompose@u32.zir:67 | 167 | 61 | 81 |
+| AddrDecomposeBits@u32.zir:87 | 62 | 43 | 67 |
+| ControlLoadRootAndNonce@inst_control.zir:23 | 648 (1) | 170 | 46 (1) |
+| ControlMRET@inst_control.zir:89 | 966 | 726 | 182 |
+| ControlMRET@inst_control.zir:91 | 832 (2) | 3520 (4) | 2687 (3) |
+| ControlMRET@inst_control.zir:92 | 832 (2) | 3520 (4) | 2687 (3) |
+| ControlUserECALL@inst_control.zir:75 | 944 | 416 | 497 |
+| **ControlUserECALL@inst_control.zir:77** | **MISSED** | 2206 | 2424 (4) |
+| ControlUserECALL@inst_control.zir:78 | 3647 (1) | 2206 | 1668 (4) |
+| DecodeInst@inst.zir:29 | 47 | 74 | 91 |
+| **DivInput@inst_div.zir:8** | **MISSED** | 1943 | 49 (1) |
+| ECall0@inst_ecall.zir:203 | 631 | 612 | 1443 |
+| ECallHostReadSetup@inst_ecall.zir:70 | 2433 | 821 | 1856 |
+| ECallHostReadSetup@inst_ecall.zir:76 | 4843 (3) | 1198 (2) | 963 (1) |
+| ECallHostReadWords@inst_ecall.zir:171 | 3641 (2) | 409 (1) | 3357 (2) |
+| IllegalLoadOp@inst_mem.zir:40 | 330 | 1616 | 503 |
+| IllegalMulOp@inst_mul.zir:18 | 1498 | 699 | 655 |
+| IllegalStoreOp@inst_mem.zir:45 | 478 | 870 | 384 |
+| IsRead@mem.zir:79 | 3 | 8 | 3 |
+| IsRead@mem.zir:80 | 3 | 6 | 4 |
+| MachineECall@inst_ecall.zir:28 | 697 | 51 | 300 |
+| MachineECall@inst_ecall.zir:29 | 336 | 57 | 287 |
+| MachineECall@inst_ecall.zir:32 | 5374 (1) | 2722 (3) | 3197 (4) |
+| **MemLoadInput@inst_mem.zir:8** | **MISSED** | **1164** | **MISSED** |
+| **MemStoreInput@inst_mem.zir:18** | **MISSED** | **1747** | **MISSED** |
+| MemoryWrite@mem.zir:100 | 2 | 2 | 2 |
+| MemoryWrite@mem.zir:99 | 2 | 1 | 2 |
+| MiscInput@inst_misc.zir:7 | 648 (1) | 330 | 46 (1) |
+| **MulInput@inst_mul.zir:8** | **MISSED** | **1405** | **MISSED** |
+| OneHot@one_hot.zir:11 | 53 | 97 | 80 |
+| OneHot@one_hot.zir:9 | 53 | 97 | 80 |
+| OpLH@inst_mem.zir:98 | 1064 | 584 | 1162 |
+| OpLHU@inst_mem.zir:123 | 1117 | 1951 | 1185 |
+| OpLW@inst_mem.zir:108 | 77 | 82 | 155 |
+| OpLW@inst_mem.zir:109 | 123 | 122 | 279 |
+| OpSH@inst_mem.zir:148 | 497 | 366 | 1283 |
+| OpSW@inst_mem.zir:160 | 38 | 85 | 112 |
+| OpSW@inst_mem.zir:161 | 72 | 113 | 64 |
+| PoseidonCheckOut@inst_p2.zir:265 | 2581 (3) | 50 | 40 |
+| Sha0@inst_sha.zir:226 | 1361 (4) | 1676 (3) | 2535 (3) |
+| VerifyOpcode@inst.zir:91 | 65 | 73 | 64 |
+| VerifyOpcodeF3@inst.zir:96 | 10 | 11 | 10 |
+| VerifyOpcodeF3@inst.zir:97 | 6 | 11 | 7 |
+| VerifyOpcodeF3F7@inst.zir:102 | 10 | 32 | 19 |
+| VerifyOpcodeF3F7@inst.zir:103 | 18 | 28 | 18 |
+| VerifyOpcodeF3F7@inst.zir:104 | 27 | 39 | 42 |
+
+**Key observations**:
+1. **Easy constraints (discovered by mutation 2-100 by all 3 strategies)**: IsRead, MemoryWrite, OpSW, VerifyOpcodeF3*, OneHot, DecodeInst, AddrDecompose*. These are saturated within the first ~100 mutations.
+2. **The 3 zoned-only constraints (`MemLoadInput`, `MemStoreInput`, `MulInput`)** are all discovered in the 1000-1900 mutation range by zoned, well within the N=6000 budget. They're not "edge-of-budget" discoveries.
+3. **DivInput** is interesting: zoned hits it consistently at mutation 1943 (5/5 seeds), but bandit hits it at mutation 49 in only 1 of 5 seeds. **Bandit gets lucky 20% of the time but typically loses this constraint.**
+4. **Sha0 is rare for all** (3-4/5 seeds), suggesting it requires very specific input patterns.
+5. **PoseidonCheckOut**: zoned finds it at mutation 50 (5/5), bandit at 40 (5/5), uniform at 2581 (3/5). **Uniform is much weaker at this one specifically.**
+
+### 17.7 Global failure (F^glob) coverage
+
+Distinct (family, address) pairs across the union of all 5 seeds, per family:
+
+| strategy | unique (family, addr) ctxs | total global_failures rows | memory ctxs (unique) | cycle ctxs (unique) |
+|---|---:|---:|---:|---:|
+| uniform | **53,828** | 68,336 | 52,878 | 950 |
+| zoned | 50,049 | 61,722 | 49,251 | 798 |
+| bandit-16 | **53,849** | 65,050 | 53,023 | 826 |
+
+(memory + cycle = unique total, by construction.)
+
+**OBSERVATION**: On the GLOBAL context axis, bandit-16 narrowly edges out uniform (53,849 vs 53,828) and BOTH beat zoned (50,049). This is the opposite ranking from local coverage! **Zoned is worse at global F^glob coverage even though it dominates on local F^loc**. This suggests:
+- Bandit's reward correctly trades off some local discovery for global discovery.
+- Zoned's "throw mutations everywhere" approach is less efficient at finding diverse global (memory address) contexts.
+- BUT the global coverage axis is dominated by memory addresses (49k-53k each), most of which have arguably low semantic interest — many are just "different memory bytes touched". So this may be a less meaningful metric than local coverage.
+- Note: uniform has slightly more `cycle` family contexts (950) than bandit (826) — but bandit has more `memory` ctxs (53,023 vs 52,878). Net unique union: bandit wins by 21 contexts (≈0.04%).
+
+### 17.8 Distribution of d_loc and d_glob across all mutations
+
+| strategy | d_loc histogram (bins ≤0,1,2,3,5,8,15,30) | d_loc mean | d_loc median | d_loc p95 | d_loc max |
+|---|---|---:|---:|---:|---:|
+| uniform | [4018, 6294, 12048, 2545, 3966, 650, 430, 49] | 2.16 | 2 | 5 | 28 |
+| zoned | [3510, 6036, 13269, 2526, 3638, 590, 364, 67] | 2.16 | 2 | 5 | 28 |
+| bandit-16 | [4151, 6566, 12560, 2056, 3283, 451, 381, 51] | 2.03 | 2 | 5 | 24 |
+
+| strategy | d_glob histogram | d_glob mean | d_glob median | d_glob max |
+|---|---|---:|---:|---:|
+| uniform | [2160, 17574, 857, 4931, 1216, 1443, 1819, 0] | 2.28 | 1 | 13 |
+| zoned | [1812, 19656, 644, 4218, 1007, 1135, 1528, 0] | 2.06 | 1 | 13 |
+| bandit-16 | [1455, 18675, 572, 5000, 905, 1341, 1551, 0] | 2.17 | 1 | 13 |
+
+**OBSERVATION**:
+- d_loc is similar across strategies (mean 2.03-2.16). Bandit has slightly fewer high-d_loc mutations (which it explicitly down-weights via Q_loc).
+- d_loc=0 mutations (no local failures): uniform 13.4%, zoned 11.7%, bandit 14.1%. Bandit has more "no-effect" mutations (a SIDE EFFECT of picking lower-impact arms).
+- The Q_loc penalty hits HARD at d_loc=8 (Q_loc = exp(-4) = 0.018) and d_loc=15 (Q_loc = exp(-7.5) = 0.0005). For d_loc=15 mutations (1-2% of all mutations), Q kills the reward almost entirely.
+
+### 17.9 Per-kind reward variance (bandit runs)
+
+| kind | n | mean | std | p25 | p50 | p75 | p95 | max |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| INSTR_WORD_MOD_SUR | 5157 | 0.151 | 0.058 | 0.110 | 0.135 | 0.198 | 0.243 | 0.276 |
+| INSTR_WORD_MOD_FULL | 4350 | 0.118 | 0.081 | 0.030 | 0.114 | 0.198 | 0.243 | 0.276 |
+| COMP_OUT_MOD | 3535 | 0.079 | 0.021 | 0.063 | 0.067 | 0.090 | 0.122 | 0.225 |
+| LOAD_VAL_MOD | 3512 | 0.077 | 0.020 | 0.062 | 0.065 | 0.090 | 0.113 | 0.177 |
+| STORE_OUT_MOD | 3503 | 0.077 | 0.020 | 0.062 | 0.064 | 0.089 | 0.110 | 0.185 |
+| MEM_VAL_MOD | 3288 | 0.062 | 0.038 | 0.027 | 0.064 | 0.082 | 0.121 | 0.275 |
+| PRE_EXEC_REG_MOD | 3193 | 0.055 | 0.037 | 0.024 | 0.057 | 0.073 | 0.120 | 0.226 |
+| **INSTR_TYPE_MOD** | 2961 | **0.036** | **0.042** | 0.009 | 0.023 | 0.048 | 0.117 | **0.315** |
+
+**OBSERVATION (subtle, important)**: INSTR_TYPE_MOD has the LOWEST mean reward (0.036) but the HIGHEST MAX reward (0.315) — i.e., a "lottery ticket" arm. Most pulls give low reward (median 0.023), but occasional pulls are jackpots (>0.30). UCB optimizes on the running mean, so it under-explores high-variance arms. **Thompson sampling would handle this better** (it explores arms with high reward UNCERTAINTY, which is roughly variance-weighted).
+
+**Note on `n` discrepancy**: bandit-16 has 29,999 total mutations but only 29,499 `mutation_rewards` rows (500 missing, ~62 per kind). The 500-row gap corresponds to the 100-step pilot-calibration phase per seed (5 seeds × 100 = 500) that runs before the main bandit campaign. Pilot mutations are recorded in `mutations` but skipped in `mutation_rewards`. So §17.5's bucket pull totals (which use the `mutations` table, n_SUR = 5213) are slightly higher than §17.9's per-kind reward variance n's (which use `mutation_rewards`, n_SUR = 5157). Same data, different denominators.
+
+### 17.10 Coverage growth — fine-grained (every 500 mutations)
+
+Mean across 5 seeds:
+
+| at mutation # | uniform | zoned | bandit-16 |
+|---:|---:|---:|---:|
+| 500 | 25.4 | 29.0 | 28.0 |
+| 1000 | 28.2 | 35.0 | 31.4 |
+| 1500 | 30.2 | 37.4 | 32.8 |
+| 2000 | 31.6 | 38.4 | 33.8 |
+| 2500 | 32.4 | 39.4 | 34.4 |
+| 3000 | 32.6 | 40.0 | 34.8 |
+| 3500 | 33.2 | 40.6 | 35.4 |
+| 4000 | 34.0 | 41.6 | 35.6 |
+| 4500 | 34.4 | 41.6 | 35.6 |
+| 5000 | 34.4 | 43.0 | 36.4 |
+| 5500 | 34.6 | 43.0 | 36.4 |
+| 6000 | 35.0 | 43.4 | 37.4 |
+
+**OBSERVATION**:
+- **Bandit's curve plateaus around mutation 3000-4000** (gaining only 1-2 more contexts in last 2000 mutations). This is suggestive of convergence to a local optimum.
+- **Zoned has a similar plateau but ~6 contexts higher**.
+- **Bandit has two flat 500-mutation windows: 4000→4500 (35.6→35.6) and 5000→5500 (36.4→36.4)**. Pure compute waste in those windows. The 4500→5000 window only gained 0.8 contexts on average.
+- **Zoned also has two flat windows: 4000→4500 (41.6→41.6) and 5000→5500 (43.0→43.0)** — but its post-plateau ceiling is higher.
+- For ChatGPT Pro: **diminishing returns are dramatic. N=20000 likely gains only a few more contexts unless the architecture changes.**
+
+### 17.11 Per-kind step distribution (within INSTR_WORD_MOD_SUR)
+
+The most-selected kind by bandit. For each strategy, the spread of step values when this kind is selected:
+
+| strategy | n | step range | mean | std | p25 | p50 | p75 | p95 |
+|---|---:|---|---:|---:|---:|---:|---:|---:|
+| uniform | 4568 | [1, 3929] | 1957 | 1140 | 965 | 1950 | 2953 | 3745 |
+| zoned | 3675 | [2, 3929] | 2079 | 1194 | 1036 | 2098 | 3119 | 3929 |
+| bandit-16 | 5213 | [1, 3929] | 1979 | 1134 | 1000 | 1982 | 2961 | 3746 |
+
+**OBSERVATION**: All three strategies, when they DO pick INSTR_WORD_MOD_SUR, hit essentially the same step distribution (means within 100, p95 within 200). **The strategies differ in HOW MUCH they pick this kind, NOT in WHICH STEPS they pick within it.**
+
+### 17.12 Wall-time per mutation
+
+| strategy | mean (s) | std (s) | min | max |
+|---|---:|---:|---:|---:|
+| uniform | 2.86 | 0.24 | 0.49 | 2.98 |
+| zoned | 2.88 | 0.24 | 0.50 | 3.00 |
+| bandit-16 | 2.89 | 0.03 | 2.83 | 3.10 |
+
+**OBSERVATION**: All three strategies run at ~2.87 s/mutation on AMD EPYC 9354. Bandit has lower variance (consistent 2.83-3.10s) because UCB compute is constant per iteration. Uniform/zoned have outliers (0.49s minimum, probably from cache effects on quick mutations). **Implication for budget planning**: N=10000 mutations → ~28700 s ≈ 8.0 hours wall-clock per run.
+
+### 17.13 Total failures per strategy
+
+| strategy | total `failures` rows | total `global_failures` rows | failures per mutation |
+|---|---:|---:|---:|
+| uniform | 77,606 | 68,336 | 2.59 |
+| zoned | 79,181 | 61,722 | 2.64 |
+| bandit-16 | 72,869 | 65,050 | 2.43 |
+
+**OBSERVATION**: Bandit produces fewer local failures per mutation (2.43 vs 2.59-2.64) because it prefers low-d_loc kinds. It also produces FEWER global-failure rows per mutation (2.17 vs uniform's 2.28). However, on UNIQUE (family, address) global ctxs (the union across 5 seeds, see §17.7), bandit narrowly EDGES OUT uniform (53,849 vs 53,828). So bandit's chosen kinds produce more diverse global ctxs PER ROW, even though they generate fewer rows overall.
+
+### 17.14 Verifier acceptance rate (sanity check)
+
+All three strategies: **0.0000%** verifier acceptance across all mutations. **None of our mutations produced a trace the verifier accepted as valid** — which is the expected behavior for adversarial mutation (we want to find invalid traces). Pipeline integrity confirmed.
+
+**Mutation count caveat**: uniform = 30,000 mutations (5 × 6000), zoned = 30,000, bandit-16 = 29,999 (the d2 retry produced 5,999 instead of 6,000 — one off-by-one in the dispatch). Grand total = 89,999 mutations across the campaign. All percentages and per-strategy summaries above use the actual counts; the difference is cosmetic.
+
+### 17.15 Selector labeling verification (paranoid sanity check)
+
+To rule out a labeling/wiring bug — i.e., "what if 'zoned' is actually bandit and vice versa?" — we performed a 3-way cross-check on all 15 DBs:
+
+| DB filename | `campaign_params.selector` | b_count | num_arms | match? |
+|---|---|---:|---:|---:|
+| `*_uniform_*` | `uniform` | 128 | 967 | ✅ |
+| `*_zoned_*` | `zoned` | NULL | NULL | ✅ |
+| `*_bandit-16_*` | `bandit` | 16 | 128 | ✅ |
+
+(The filename `bandit-16` encodes both the selector name AND b_count for clarity; the selector column itself just stores `bandit`.)
+
+**Behavioral fingerprint sanity check** (seed=1234, just to verify each selector behaves as designed):
+
+| strategy | top 3 kinds (%) | init/core/final % | matches design? |
+|---|---|---|---|
+| uniform | INSTR_TYPE_MOD 15.2, INSTR_WORD_MOD_FULL 14.8, INSTR_WORD_MOD_SUR 14.7 | 0/99.95/0.05 | ✅ uniform-over-arms (NOT uniform-over-kinds!) |
+| zoned | STORE_OUT_MOD 13.2, LOAD_VAL_MOD 13.0, MEM_VAL_MOD 12.9 | 2.43/95.32/2.25 | ✅ uniform-over-kinds + 5/90/5 zone |
+| bandit-16 | INSTR_WORD_MOD_SUR 17.4, INSTR_WORD_MOD_FULL 14.6, COMP_OUT_MOD 12.1 | 0.02/99.88/0.10 | ✅ UCB-skewed toward high-reward kinds |
+
+**KEY CLARIFICATION**: "uniform" is **uniform over the 967-arm universe** (where arms are (kind, step_bucket) pairs with kind-dependent bucket counts), NOT uniform over kinds. Since INSTR-family kinds have more valid steps, they get proportionally more pulls. **This is a subtle but important property — the "uniform" baseline is not as kind-uniform as the name suggests; zoned is actually more kind-uniform than "uniform".**
+
+**No mislabeling. The result that zoned > bandit is real, not a bug.** The mechanism is documented in §17.16 below.
+
+### 17.16 STEP-0 SMOKING GUN: why zoned wins (mechanism revealed)
+
+**The 4 constraints that uniform misses (and that bandit largely misses) are ALL discovered exclusively at step 0, AND only by mutation kind INSTR_TYPE_MOD. The 5th constraint (`ControlUserECALL:77`) is an unrelated MEM_VAL_MOD kind-allocation gap.**
+
+#### 17.16.a — Where (step) each missed constraint is hit, per strategy
+
+For each constraint that's missed by uniform or bandit, the EXACT step at which zoned hit it:
+
+| constraint | uniform first-hit step | zoned first-hit step (across 5 seeds) | bandit first-hit step |
+|---|---|---|---|
+| `MemLoadInput@inst_mem.zir:8`         | MISSED | **[0, 0, 0, 0, 0]** | MISSED |
+| `MemStoreInput@inst_mem.zir:18`       | MISSED | **[0, 0, 0, 0, 0]** | MISSED |
+| `MulInput@inst_mul.zir:8`             | MISSED | **[0, 0, 0, 0, 0]** | MISSED |
+| `DivInput@inst_div.zir:8`             | MISSED | **[0, 0, 0, 0, 0]** | [0] (1 of 5 seeds, INSTR_TYPE_MOD) |
+| `ControlUserECALL@inst_control.zir:77`| MISSED | [511, 1837, 1837, 2477, 3779] | [511, 511, 746, 982] (4 of 5) |
+
+#### 17.16.b — Which (step, kind) pair is the only one that triggers each constraint?
+
+We then queried ALL mutations (any kind, any step) that ever produced these constraint failures, across all 15 DBs:
+
+| constraint | step set (all hits, all strats) | kind set (all hits, all strats) | conjunction required? |
+|---|---|---|---|
+| `MemLoadInput@inst_mem.zir:8`         | **{0}** only                          | **{INSTR_TYPE_MOD}** only          | **kind=INSTR_TYPE_MOD AND step=0** |
+| `MemStoreInput@inst_mem.zir:18`       | **{0}** only                          | **{INSTR_TYPE_MOD}** only          | **kind=INSTR_TYPE_MOD AND step=0** |
+| `MulInput@inst_mul.zir:8`             | **{0}** only                          | **{INSTR_TYPE_MOD}** only          | **kind=INSTR_TYPE_MOD AND step=0** |
+| `DivInput@inst_div.zir:8`             | **{0}** only                          | **{INSTR_TYPE_MOD}** only          | **kind=INSTR_TYPE_MOD AND step=0** |
+| `ControlUserECALL@inst_control.zir:77`| {511, 746, 982, 1837, 2477, 3127, 3779} | **{MEM_VAL_MOD}** only          | **kind=MEM_VAL_MOD** (not step-0)  |
+
+**THIS REFINES THE EARLIER CLAIM**: the 4 zoned-dominated boundary constraints require the **conjunction** `kind = INSTR_TYPE_MOD AND step = 0`. Without BOTH, they do not fire.
+
+#### 17.16.c — INSTR_TYPE_MOD-at-step-0 budget per strategy (the smoking gun count)
+
+Total `INSTR_TYPE_MOD` mutations placed AT step 0, across 5 seeds (30,000 mutations per strategy):
+
+| strategy | ITM @ step=0 | ITM @ step>0 | total ITM | step-0 ITM rate |
+|---|---:|---:|---:|---:|
+| uniform   | **1**   | 4581 | 4582 | 0.02% |
+| zoned     | **184** | 3612 | 3796 | **4.85%** |
+| bandit-16 | **2**   | 3017 | 3019 | 0.07% |
+
+So zoned gives the (INSTR_TYPE_MOD, step=0) conjunction ~184 chances per campaign, vs ~1-2 chances for uniform/bandit. Each step-0 INSTR_TYPE_MOD attempt has a ~30-50% chance of firing one of these constraints (depending on the random new (major, minor) draw — must hit MEM0/MEM1/MUL0/DIV0 = 4 of 11 major slots). So zoned's expected hits per campaign = 184 × ~0.4 ≈ 70+ per kind, virtually guaranteeing discovery. Uniform/bandit get ~1 × 0.4 ≈ 0.4 expected hits per kind, hence "MISSED" in most seeds.
+
+Total step=0 mutations per strategy (across all kinds, 5 seeds × 6000 = 30,000):
+
+| strategy | step=0 mutations | step=0 rate | zone weight target |
+|---|---:|---:|---:|
+| uniform   | 4   | 0.013% | (uniform-over-arms ⇒ ~1/B = 1/128 = 0.78% per arm-bucket containing step 0) |
+| zoned     | 729 | **2.43%** | (5%-init target, partially diluted because only 3 of 8 kinds have step=0 in their valid_steps list) |
+| bandit-16 | 5   | 0.017% | (uniform-over-arms with B=16, same as uniform's per-arm prob ⇒ ~0) |
+
+**Why zoned gets 2.43% and not 5%**: only **3 of the 8 mutation kinds** (`INSTR_TYPE_MOD`, `PRE_EXEC_REG_MOD`, `MEM_VAL_MOD`) include step 0 in their `valid_steps_for_kind` list. The other 5 (`COMP_OUT_MOD`, `LOAD_VAL_MOD`, `STORE_OUT_MOD`, `INSTR_WORD_MOD_FULL`, `INSTR_WORD_MOD_SUR`) require a non-zero step (because step 0 is some specific bootloader-handoff instruction that lacks comparator outputs, load values, store values, etc.). When the fuzzer picks one of those 5 kinds and the zoned selector tries the init zone, the init zone is empty and falls back to core. So the effective step-0 rate ≈ 3/8 × 5% = 1.875%, plus some extra from spillover ≈ 2.43% empirical.
+
+#### 17.16.d — The other "missed" constraint (`ControlUserECALL:77`) is a different mechanism
+
+`ControlUserECALL@inst_control.zir:77` is NOT a step-0 phenomenon. It's hit by `MEM_VAL_MOD` at steps {511..3779}. Bandit hits it 4/5 seeds, uniform hits it 0/5. This is a **kind-allocation gap** (uniform allocates only 8.62% to MEM_VAL_MOD vs zoned's 12.53%, see §17.1), not a step-zone gap.
+
+#### 17.16.e — Architectural implications for ChatGPT Pro
+
+1. **Most of zoned's lead is step-zone coverage** of step 0, not "smarter kind selection".
+2. The bandit's reward function is irrelevant to these 4 constraints — they can ONLY be discovered by INSTR_TYPE_MOD@step=0, and bandit's nested step-UCB happens to put ~0 mutations there.
+3. **ARCHITECTURAL FIX**: Replace the nested step-UCB with a 5/90/5 zoned step sampler **conditioned on step=0 being valid for the chosen kind**, keep the kind-level UCB. This combines bandit's kind-learning with zoned's mechanical step-zone coverage.
+4. **Bonus fix**: Add explicit "boundary cycles" (first, last, and any cycle adjacent to a halt/ECALL/MRET transition) as a separately-weighted zone. The current bootloader-to-user transition at step=0 produces 4+ unique constraints; the user-to-halt transition at step=T-1 may similarly contain hidden constraints we haven't yet probed (zoned reached step T-1 only 2.41% of the time, mostly via COMP_OUT_MOD).
+
+### 17.17 Pilot calibration parameter INSTABILITY (bandit only)
+
+Uniform and zoned use **fixed default calibration parameters** (no pilot). Bandit runs a 100-mutation pilot per seed to calibrate, and the result varies wildly:
+
+| seed | strategy | tau_new | tau_d | tau_g | gamma | K_T_rare | b_count |
+|---:|---|---:|---:|---:|---:|---:|---:|
+| 1234 | uniform | 35.0 | 3.0 | 6.0 | 0.9965 | 31 | 128 |
+| 1234 | zoned | 35.0 | 3.0 | 6.0 | 0.9965 | 31 | NULL |
+| 1234 | **bandit** | **43.0** | **2.0** | **4.0** | 0.99769218 | 31 | 16 |
+| 1235 | uniform | 35.0 | 3.0 | 6.0 | 0.9965 | 31 | 128 |
+| 1235 | zoned | 35.0 | 3.0 | 6.0 | 0.9965 | 31 | NULL |
+| 1235 | **bandit** | **49.0** | **2.0** | **4.0** | 0.99769218 | 31 | 16 |
+| 1236 | uniform | 35.0 | 3.0 | 6.0 | 0.9965 | 31 | 128 |
+| 1236 | zoned | 35.0 | 3.0 | 6.0 | 0.9965 | 31 | NULL |
+| 1236 | **bandit** | **38.0** | **2.75** | **5.5** | 0.99769218 | 31 | 16 |
+| 1237 | uniform | 35.0 | 3.0 | 6.0 | 0.9965 | 31 | 128 |
+| 1237 | zoned | 35.0 | 3.0 | 6.0 | 0.9965 | 31 | NULL |
+| 1237 | **bandit** | **40.5** | **2.0** | **4.0** | 0.99769218 | 31 | 16 |
+| 1238 | uniform | 35.0 | 3.0 | 6.0 | 0.9965 | 31 | 128 |
+| 1238 | zoned | 35.0 | 3.0 | 6.0 | 0.9965 | 31 | NULL |
+| 1238 | **bandit** | **40.75** | **2.0** | **4.0** | 0.99769218 | 31 | 16 |
+
+**Observations**:
+- **bandit's `tau_new` varies 38.0 to 49.0** across 5 seeds (CoV ≈ 10%). One seed (1235) calibrated dramatically higher, suggesting the pilot's first-100 mutations saw an outlier touch-bit influx.
+- **bandit's `tau_d` is 2.0 or 2.75** — only one seed (1236) calibrated to a different value.
+- **bandit's `gamma` is identical** (0.99769218) across seeds — calibrated from a deterministic procedure (not pilot-dependent).
+- **Defaults (35.0, 3.0, 6.0, 0.9965) used by uniform/zoned were higher tau_new and looser tau_d than bandit's calibrated values.**
+
+**Possible issue**: bandit's calibration may be **OVER-tuning to noisy pilot data**, making the reward signal too aggressive (lower tau_new + lower tau_d = more reward sensitivity to small changes). Seed 1235 (tau_new=49) coincides with bandit's WORST seed performance (34 contexts — same as uniform). Worth a deeper look.
+
+### 17.18 Reward time-series decay (rewards die as discoveries exhaust)
+
+For bandit seed=1234, we computed the mean reward per kind over the FIRST 200 vs the LAST 200 pulls (out of 6000 total mutations):
+
+| kind | n pulls | first 200 mean | last 200 mean | change |
+|---|---:|---:|---:|---:|
+| COMP_OUT_MOD | 707 | 0.0773 | 0.0694 | −0.0079 |
+| **INSTR_TYPE_MOD** | 592 | **0.0418** | **0.0223** | **−0.0195** (−47%) |
+| INSTR_WORD_MOD_FULL | 861 | 0.1058 | 0.1103 | +0.0045 (only positive) |
+| INSTR_WORD_MOD_SUR | 1027 | 0.1493 | 0.1436 | −0.0057 |
+| LOAD_VAL_MOD | 706 | 0.0750 | 0.0710 | −0.0039 |
+| MEM_VAL_MOD | 658 | 0.0617 | 0.0499 | −0.0118 |
+| PRE_EXEC_REG_MOD | 643 | 0.0582 | 0.0460 | −0.0122 |
+| STORE_OUT_MOD | 706 | 0.0772 | 0.0699 | −0.0073 |
+
+**Observations**:
+- **All kinds show declining reward over time** (only INSTR_WORD_MOD_FULL slightly positive), confirming the "easy discoveries exhausted" effect.
+- **INSTR_TYPE_MOD declines MOST aggressively** (47% drop in mean reward). Bandit responds by pulling it less and less.
+- BUT **INSTR_TYPE_MOD continues to discover new constraints throughout the run** (see §17.6: many INSTR_TYPE_MOD discoveries happen in 500-3000 mutation range, AFTER the reward has already declined).
+- **The reward signal is anti-predictive of future discovery for INSTR_TYPE_MOD**: as INSTR_TYPE_MOD's mean reward drops, its NEW discoveries DON'T drop proportionally.
+- This means the bandit's discounting (gamma=0.998, half-life ≈ 300 mutations) effectively "downweights" INSTR_TYPE_MOD's historical discoveries faster than it should.
+
+### 17.19 Crash rate per mutation kind (bandit)
+
+How often each kind produces a `mode='crash'` (witness-generation failure rather than constraint check):
+
+| kind | n with rewards | normal | crash | crash % |
+|---|---:|---:|---:|---:|
+| COMP_OUT_MOD | 3535 | 3535 | 0 | 0.00% |
+| **INSTR_TYPE_MOD** | 2961 | 2901 | 60 | **2.03%** |
+| INSTR_WORD_MOD_FULL | 4350 | 4350 | 0 | 0.00% |
+| INSTR_WORD_MOD_SUR | 5157 | 5157 | 0 | 0.00% |
+| LOAD_VAL_MOD | 3512 | 3512 | 0 | 0.00% |
+| MEM_VAL_MOD | 3288 | 3281 | 7 | 0.21% |
+| **PRE_EXEC_REG_MOD** | 3193 | 2973 | 220 | **6.89%** |
+| STORE_OUT_MOD | 3503 | 3503 | 0 | 0.00% |
+
+**Strategy-level totals**:
+- uniform: 370 crashes / 30000 = 1.23%
+- zoned: 334 crashes / 30000 = 1.11%
+- bandit-16: 287 crashes / 29499 = 0.97%
+
+**Observations**:
+- **PRE_EXEC_REG_MOD crashes 6.89% of the time** in bandit — the most-crashing kind by far. Each crash is a wasted mutation that contributes 0 information.
+- **INSTR_TYPE_MOD crashes 2% of the time**. So out of every 100 INSTR_TYPE_MOD pulls, 2 are wasted on crashes.
+- **Other 6 kinds (75% of bandit's pulls) have essentially 0% crash rate**.
+- Bandit's reward function probably penalises crashes (low reward), reinforcing the avoidance of PRE_EXEC_REG_MOD and INSTR_TYPE_MOD — but the discovery-rate data shows those crash-prone kinds are precisely the highest-discovery kinds.
+- **CRASH-AVERSION may be coupled with DISCOVERY-AVERSION**, since the kinds that crash also are the kinds that fail in MANY DIFFERENT WAYS (high d_loc, high d_glob).
+
+### 17.20 U signal (unknown-rejection) is DEAD across all strategies
+
+The reward function includes a fifth positive component `U` (unknown-rejection bonus, supposed to fire when a mutation triggers a rejection from an UNKNOWN context family). Empirical firing rate:
+
+| strategy | U > 0 occurrences | total | % |
+|---|---:|---:|---:|
+| uniform | 0 | 30,000 | **0.0000%** |
+| zoned | 0 | 30,000 | **0.0000%** |
+| bandit-16 | 0 | 29,499 | **0.0000%** |
+
+**U fires 0 times across all 89,499 mutations**. The U component contributes nothing to the reward function in this campaign. **The reward function is effectively a 4-component (T_new, T_rare, F_new, F_rare) × Q-penalty function**, not a 5-component one.
+
+This may be intentional (U is for a rare edge case) or a bug. Either way, ChatGPT Pro should know that **only 4 of the 5 advertised reward components are active**.
+
+### 17.21 Q_rep (cascade penalty) firing rate
+
+The `Q_rep` multiplicative penalty (from the §5.3 reward formula) fires when a mutation produces "too many" failures cascading (r_rep > threshold):
+
+| strategy | mean Q_rep | min Q_rep | % with Q_rep < 0.99 | % with Q_rep < 0.5 |
+|---|---:|---:|---:|---:|
+| uniform | 0.9964 | 0.0000 | 0.73% | 0.36% |
+| zoned | 0.9967 | 0.0003 | 0.69% | 0.33% |
+| bandit-16 | 0.9964 | 0.0002 | 0.76% | 0.35% |
+
+**Observation**: Q_rep is essentially **inactive** — less than 1% of mutations trigger it at all, and only ~0.35% trigger it severely. Q_rep contributes very little to overall reward shaping. The dominant Q penalties are Q_loc and Q_glob.
+
+### 17.22 d_ext distribution (extra-context rejection counter)
+
+`d_ext` represents the number of "external" (unknown family) rejections per mutation. Distribution (top values):
+
+| strategy | total muts | nonzero % | d_ext=0 | d_ext=1 | d_ext=2 | d_ext=3 | d_ext=4 | d_ext=5 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| uniform | 30,000 | 98.77% | 370 | 566 | 5,361 | 14,356 | 1,473 | 2,511 |
+| zoned | 30,000 | 98.89% | 334 | 701 | 5,397 | 15,037 | 1,597 | 2,247 |
+| bandit-16 | 29,499 | 99.03% | 287 | 398 | 5,745 | 15,125 | 1,280 | 2,216 |
+
+**Observation**: d_ext=3 is the modal value across all strategies. ~99% of all mutations produce some external rejection (d_ext>0). Since `U=0` always but `d_ext>0` ~99% of the time, the U-signal apparently checks something stricter than "external rejection exists" — possibly it requires the family to be COMPLETELY novel (not seen before in this run).
+
+### 17.23 Why is the "universe" only 46 contexts? (zkVMs have hundreds)
+
+**A reader asks**: zkVMs have hundreds of constraints; why are we seeing only 46?
+
+The "universe of 46" is **not a property of the circuit**, it is a property of the **(circuit ∩ mutation-kinds ∩ user-program ∩ trace-instrumentation)** tuple:
+
+1. **Circuit scope**: We instrument the `rv32im` execution circuit only — NOT the recursion circuit, the FRI verifier, the Poseidon2 hashing circuit per se, the SHA accelerator inner state, the BigInt subcircuit, the input-mixing rounds, or the seal-finalisation logic. The rv32im DSL itself defines on the order of 200-400 named constraint sites (one per `assert/eqz` in the `.zir` files). We are saturating only the subset reachable from preflight-trace mutations.
+
+2. **User-program scope**: The single guest binary used in IV.POS.5 is `risc0-host --in1 5 --in4 10`, a minimal SHA-2 test. It exercises:
+   - Standard RV32IM ops (ADD, SUB, AND, OR, XOR, SHL, SHR, SLT, AUIPC, JAL, JALR, BEQ/BNE/BLT/BGE, LW/LH/LB/LHU/LBU, SW/SH/SB)
+   - MUL/DIV (a few)
+   - ECALL/MRET (ecall path for I/O)
+   - SHA accelerator (handful of cycles)
+   - Memory reads/writes
+   It does NOT exercise: BigInt (BIGINT0–7), Poseidon2 user mode, Keccak (separate circuit), custom syscalls (HOST_WRITE/HOST_READ_WORDS variants beyond the basic input read), or unusual control transitions. So the constraints specific to those op families are simply never reached by ANY of our 90,000 mutations.
+
+3. **Mutation-kind scope**: Our 8 kinds touch:
+   - `cycles[].major/minor` (INSTR_TYPE_MOD)
+   - `cycles[].pc/instruction` (INSTR_WORD_MOD_*)
+   - load/store/comparator outputs (LOAD_VAL_MOD, STORE_OUT_MOD, COMP_OUT_MOD)
+   - pre-execution register file (PRE_EXEC_REG_MOD)
+   - memory residue cells (MEM_VAL_MOD)
+   They DO NOT touch: page-fault tables, paging metadata, ECALL argument registers (separately from PRE_EXEC_REG_MOD), accelerator argument buffers (SHA acc registers, BigInt arg slots), session metadata, output digest, or the global checksum lanes. Constraints living in those subsystems cannot be triggered.
+
+4. **Coverage table vs failures table**: The 46 IS the empirical universe; we confirmed that the failures table (all individual failures) contains the exact same 46 distinct `constraint_loc` strings — no additional locs hide there. So 46 is the saturating upper bound for **this** (circuit, program, mutations) tuple, not a partial sample of a larger reachable set.
+
+**What would expand the universe?**
+
+| change | expected universe expansion |
+|---|---|
+| Add a Poseidon2/BigInt/Keccak-exercising guest program | +20-40 new constraints (one per accelerator op) |
+| Mutate within recursion circuit (currently untouched) | +50-100 new constraints |
+| Mutate within FRI/poly-commitment (verifier-side) | +30-60 new constraints |
+| New mutation kinds touching paging/session metadata | +10-20 |
+| Bigger user programs (kernel, real workloads) | +5-15 from rare-but-reachable ops |
+
+So the realistic **all-circuits all-programs** universe is plausibly in the 400-800 range, with our current 46 being the saturating subset of a single sha2-host run with 8 preflight-trace mutation kinds.
+
+**Implication for ChatGPT Pro**: the "46" is not a ceiling we should be embarrassed by — it is a baseline that the architecture has saturated. The next architectural expansion vector is **adding mutation kinds that touch additional substructures** (e.g., paging, accelerator args), or **rotating guest programs** to expand the reachable subset.
+
+The full enumeration of the 46 constraints we currently see is in `§16.2`.
+
+### 17.24 What `b_count`, `num_arms`, and "arms" mean for each strategy
+
+**A reader asks**: why does `uniform` have `b_count=128` and `num_arms=967` while `zoned` has `b_count=NULL` and `num_arms=NULL`? If "arms" is a MAB concept, what does it mean for `uniform` and `zoned`?
+
+**The short answer**: "arms" is the MAB term, but in IV.POS.5 it became a **shared bucketing schema** that two of three strategies (bandit, uniform) draw from. Zoned does not use that schema at all.
+
+#### 17.24.a — What is an "arm"?
+
+An **arm** is a `(mutation_kind, step_bucket)` pair, e.g. `(INSTR_TYPE_MOD, bucket=5)`. Where:
+- `mutation_kind ∈ {COMP_OUT_MOD, LOAD_VAL_MOD, ..., INSTR_WORD_MOD_SUR}` (8 values)
+- `step_bucket ∈ {0, 1, ..., B_count-1}` (B_count bins partitioning the step axis)
+
+Each arm corresponds to "a region of the (kind, step) space". The bucket maps to a contiguous range of step values via `bucket = step // B`, where `B = ceil(T / B_count)` (`T` is the step horizon ≈ 3930).
+
+#### 17.24.b — How `b_count` is chosen
+
+`b_count` is the number of step buckets. From `arm_universe.py`:
+
+```python
+_N_TARGET = 3       # desired average samples per arm
+_B_MIN = 16         # minimum step buckets
+_B_MAX = 128        # maximum step buckets
+raw = budget // (K * _N_TARGET)
+B_count = pow2_clamp(raw, _B_MIN, _B_MAX)
+```
+
+For budget N=6000 and K=8 kinds: `raw = 6000 // (8 * 3) = 250 → pow2_clamp → 128`.
+
+So **both** bandit and uniform should compute `B_count = 128`. But:
+
+- `bandit-16` explicitly overrides with `b_count_override=16` (chosen during Phase II.2 to keep arm count small enough for UCB to learn meaningfully in 6000 mutations: 8 kinds × 16 buckets = 128 arms with 6000/128 ≈ 47 samples per arm).
+- `uniform` does NOT override and uses the formula → `b_count=128`. This gives 8×128 = 1024 candidate arms, but many are empty (some kinds have no valid step in some buckets), leaving **967 available arms**. With 6000 mutations across 967 arms, that's ≈ 6.2 samples per arm — fine for a uniform draw (no learning needed) but too sparse for UCB.
+- `zoned` does NOT build an `ArmUniverse` AT ALL — it just calls `selector.select_step(data, kind)` per chosen kind. So `b_count = NULL` and `num_arms = NULL` in the `campaign_params` row (the code writes those columns only if `self.arm_universe is not None`, see `fuzzer.py:_persist_campaign_params`).
+
+#### 17.24.c — Selection algorithm per strategy (clarifying "uniform" vs "zoned")
+
+| strategy | step 1 (pick kind) | step 2 (pick step) | uses ArmUniverse? |
+|---|---|---|---|
+| `uniform` | jointly with step 2 (see right) | **uniform over (kind, bucket) arms**, then uniform over steps within bucket | **YES** (`UniformArmSelector.select_arm_then_step()`) |
+| `zoned` | **uniform over MUTATION_KINDS** | for the chosen kind, uniform over valid_steps_for_kind, weighted by zone: init=5%, core=90%, final=5% | **NO** (`ZonedStepSelector.select_step(data, kind)`) |
+| `bandit-16` | (kind, bucket) selected jointly by UCB; step uniform within bucket | UCB-driven over (kind, bucket) arms | **YES** (`DiscountedUCBScheduler`) |
+
+#### 17.24.d — Why "uniform" does NOT mean "uniform-over-trace"
+
+The user's intuition "uniform should sample uniformly over the entire trace, including step 0 and step T-1" is consistent with naming the strategy "uniform". But the actual implementation is:
+
+> **Uniform over the arm universe** = uniform over (kind, bucket) pairs, where each bucket is `B ≈ T/128 ≈ 31` consecutive steps.
+
+The 128 buckets are roughly equal-sized in step count, but:
+- Bucket 0 contains steps {0, 1, ..., 30}. Within bucket 0, step 0 has probability 1/31 ≈ 3.2%. So uniform's probability of choosing step 0 within "bucket-0 pulls" is 3.2%, NOT 100%.
+- Probability of selecting bucket 0 itself = (number of arms with bucket=0) / 967 ≈ 0.6%.
+- So probability of selecting step=0 over all pulls = 0.6% × 3.2% ≈ 0.02%.
+- For 6000 mutations: 0.02% × 6000 = **1.2 expected step-0 hits per campaign**. Empirically we observe 4 step-0 mutations across uniform's 30,000 mutations (5 seeds × 6000). Matches.
+
+So "uniform" is uniform-over-arms, which is **practically** core-biased simply because step 0 is one single step among 3930.
+
+For **zoned**, step 0 is its OWN zone, weighted at 5%, so the per-pull step-0 probability is `~5% × (3/8 kinds with step 0 valid) = ~1.9%`, giving 2.43% empirical. That's ~120× more step-0 attempts than uniform per campaign.
+
+**Bottom line**: the names "uniform" and "zoned" reflect WHAT THEY SAMPLE UNIFORMLY OVER, not "uniform over the trace":
+- `uniform` ⇒ uniform over (kind, bucket) arms (mirrors bandit's arm space, no learning)
+- `zoned` ⇒ uniform over kinds + zoned over steps (5/90/5)
+- `bandit` ⇒ UCB over (kind, bucket) arms with discount + reward shaping
+
+#### 17.24.e — Why this metadata difference matters
+
+When ChatGPT Pro reads `campaign_params`, the `(b_count, num_arms)` columns are the ONLY persisted record of the "uniform" arm structure (used by analyze scripts to compute pull histograms). For zoned, these columns are deliberately NULL because the strategy never instantiated an arm structure. This is a **correct schema choice**, not a missing-value bug.
+
+---
+
+## 18. Budget feasibility: N=10000+ is achievable
+
+Earlier in the campaign (per `POS_PLAYBOOK.md §12.39-§12.41`), we wrongly believed that the 6-hour POS reservation limit capped per-run budget at ~7000 mutations. **This is no longer true.** We discovered during IV.POS.5 (specifically the d3→d4→d5 handoffs) that:
+
+### 18.1 The "continuous reservation" pattern
+
+POS calendar reservations can be created back-to-back for the same nodes. Per `POS_PLAYBOOK.md §12.40`: **allocations persist past their calendar event end_date if a follow-up reservation for the same nodes/owner immediately succeeds**. Combined with the 2-future-entry cap (`§12.33`), the workflow is:
+
+```
+At reservation N start (say 03:00 CEST):
+  - allocation grants nodes
+  - dispatch starts
+At reservation N+1 start (09:00 CEST), if N+1 was pre-booked at 03:30:
+  - allocation TRANSFERS automatically (no kill, no relaunch)
+  - dispatch keeps running uninterrupted
+```
+
+This means a single run can span MULTIPLE 6-hour reservation windows seamlessly.
+
+### 18.2 N=10000 wall-clock estimate
+
+| N | wall time per run | reservation windows needed | feasible? |
+|---:|---:|---:|---|
+| 6,000 | 4.8h | 1 | ✅ DONE |
+| 10,000 | 8.0h | 2 (with continuity) | ✅ confirmed feasible |
+| 20,000 | 16.0h | 3 (with continuity) | ✅ feasible |
+| 50,000 | 40.0h | 7 (with continuity, manage cap) | ⚠️ doable but tedious; needs auto-renew script |
+
+### 18.3 Parallelism constraint
+
+We run 3 nodes in parallel (`flare`, `octorand`, `opulous`), so a 3-strategy dispatch fits in one reservation window. For N=10000:
+- Per dispatch (1 seed × 3 strategies): ~8h
+- 5 dispatches (5 seeds): ~40h sequential = ~7 reservation windows = ~2 calendar days
+- TOTAL: ~2 days for a complete N=10000 A/B campaign (vs ~1 day for N=6000)
+
+For N=20000, ~4 calendar days total.
+
+### 18.4 Practical implication for ChatGPT Pro
+
+**We are NOT budget-constrained at N≤20000.** If the answer to "would the MAB converge given more budget?" requires testing at N=20000, we can do it within a week. Pro should feel free to recommend N=10000 or N=20000 follow-ups without worrying about feasibility.
+
+Higher Ns (N=50000+) are doable but require:
+- A "renew calendar entry" cron-style script (we have the building blocks in `auto_run_ab_v1_smart.sh`).
+- More careful management of the 2-future-entry cap.
+
+---
+
+## 19. Future planned mutation kinds (taxonomy)
+
+The full mutation taxonomy lives at `a4/docs/standalone/MUTATION_TAXONOMY.md` (43 KB). Below is a summary; ChatGPT Pro should treat this as the menu of mutation kinds we could ADD to the arm universe if architectural changes call for it.
+
+### 19.1 Currently implemented (8 kinds, used in IV.POS.5)
+
+| Kind | Targets | Implemented |
+|---|---|---|
+| INSTR_TYPE_MOD | `cycles[].major`, `cycles[].minor` | ✅ |
+| COMP_OUT_MOD | `txns[].word` (compute output register) | ✅ |
+| LOAD_VAL_MOD | `txns[].word` (load output register) | ✅ |
+| STORE_OUT_MOD | `txns[].word` (store output memory) | ✅ |
+| PRE_EXEC_REG_MOD | `txns[].word` (register read/write) | ✅ |
+| MEM_VAL_MOD | `txns[].word` (non-RD non-IF memory) | ✅ |
+| INSTR_WORD_MOD_FULL | `txns[].word` (instruction fetch, full 32-bit) | ✅ |
+| INSTR_WORD_MOD_SUR | `txns[].word` (instruction fetch, single field) | ✅ |
+
+### 19.2 High-priority unimplemented (2 kinds)
+
+| Kind | Targets | Why high priority |
+|---|---|---|
+| **TXN_PREV_WORD_MOD** | `txns[].prev_word` | Tests IsRead constraint from a NEW angle. **First mutation targeting `prev_word`**. Low implementation risk. Could discover constraints related to memory consistency we currently miss. |
+| **TXN_PREV_CYCLE_MOD** | `txns[].prev_cycle` | Tests memory ORDERING constraints. **First mutation targeting `prev_cycle`**. Low risk. Could discover temporal-consistency constraints. |
+
+### 19.3 Medium-priority (5 kinds)
+
+| Kind | Targets | Notes |
+|---|---|---|
+| TXN_ADDR_MOD | `txns[].addr` | High crash risk (witgen failures). Tests addressing constraints. |
+| TXN_CYCLE_PHASE_MOD | `txns[].cycle` (flips R/W) | Tests read-vs-write classification. |
+| CYCLE_PC_MOD | `cycles[].pc` | Breaks instruction-fetch address. |
+| CYCLE_STATE_MOD | `cycles[].state` | Changes cycle type (Decode→Poseidon, etc.). |
+| CYCLE_MODE_MOD | `cycles[].machine_mode` | Flips user↔machine privilege. |
+
+### 19.4 Low-priority (6 kinds — exotic / high-risk)
+
+| Kind | Targets |
+|---|---|
+| CYCLE_INDEX_MOD | `cycles[].{txn_idx, paging_idx, bigint_idx}` |
+| CYCLE_DIFF_COUNT_MOD | `cycles[].diff_count` |
+| REG_TXN_NON_INSN_MOD | Register txns at non-instruction cycles (gap-filler) |
+| BIGINT_DATA_MOD | `bigint_bytes[]` |
+| CRYPTO_STATE_MOD | `backs[]` (Poseidon2State, Sha2State) |
+| ECALL_BACK_MOD | `backs[]` (Ecall variant) |
+| STRUCTURAL_MOD | `table_split_cycle`, `rand_z` |
+
+### 19.5 Why this matters for the MAB architecture
+
+The taxonomy doc identifies **23 distinct (variable, context) pairs** that are mutable. We currently exercise 8 of them (35%). Adding the high-priority pair (TXN_PREV_WORD_MOD + TXN_PREV_CYCLE_MOD) would expand the arm space from 8 → 10 kinds × 16 buckets = 160 arms (vs current 128). This could:
+
+- **Expand coverage** if these mutations hit currently-unreachable constraints (likely — they're the only mutations targeting `prev_word` and `prev_cycle`, two of the 5 fields in RawMemoryTransaction).
+- **Increase per-kind data sparsity** (each kind gets fewer samples), making bandit convergence harder.
+- **Potentially shift the MAB's pathology** if some new kinds have high discovery rate per mutation (like INSTR_TYPE_MOD does today).
+
+ChatGPT Pro should consider:
+- Whether expanding the kind space is **complementary** or **substitutable** to fixing the reward function.
+- Whether the architecture's reward signal would correctly value the new kinds, or repeat the INSTR_WORD_MOD_SUR pathology with whichever new kind has the highest Q_loc.
+
+### 19.6 Strategic question
+
+**If the current MAB cannot reliably exceed zoned at N=6000 with 8 kinds, will it do so at N=10000 with 10 kinds?** Two competing hypotheses:
+
+- **Pro-expansion**: more kinds = more discovery potential = MAB has more material to work with.
+- **Anti-expansion**: more kinds = sparser data per arm = MAB's learning is slower, and the reward-misranking pathology has more arms to play out on.
+
+Pro should weigh in on this.
+
+---
+
+## 20. Data-availability audit: what we have and what we are missing
+
+In response to the request to surface **all valuable signal** from the 6000-mutation runs, here is the complete inventory of what is in the DBs, what we extracted into this document, and what is **not gettable** from the current data.
+
+### 20.1 What IS in each DB (per the schema)
+
+8 tables per DB:
+
+1. **`campaigns`**: 1 row — `host_binary, host_args, kind, seed, started_at, ended_at`.
+2. **`mutations`**: 6000 rows — `id, campaign_id, kind, step, txn_idx, mutated_value, config_json, executed_at, num_failures, verifier_accepted`.
+3. **`failures`**: ~15-30k rows — per-failure `mutation_id, constraint_type, constraint_loc, cycle, step, pc, major, minor, value, full_loc`.
+4. **`coverage`**: 30-50 rows — `constraint_loc, first_hit_mutation_id, first_hit_at, hit_count`.
+5. **`global_failures`**: ~10-15k rows — `mutation_id, family, address`.
+6. **`mutation_rewards`**: 5900-6000 rows — `mutation_id, reward, T_new, T_rare, F_new, F_rare, U, Q_loc, Q_rep, Q_glob, Q, S, delta_T, delta_F, n_fail, r_rep, d_loc, d_glob, d_ext, mode`.
+7. **`campaign_params`**: 1 row — `tau_new, tau_d, tau_g, gamma, K_T_rare, b_count, selector, extra_json`.
+8. **`sqlite_sequence`**: bookkeeping.
+
+### 20.2 What we EXTRACTED into this document
+
+| Data | Section | Notes |
+|---|---|---|
+| Per-strategy kind distribution | §8.1 | mean across 5 seeds |
+| Per-strategy step zone distribution (init/core/final) | §8.2 | for entire mutation set |
+| Per-strategy reward decomposition (mean) | §5.3 | all components |
+| Per-(strategy, kind) reward decomposition | §17.3 | extends §5.4 to all 3 strategies |
+| Per-seed coverage | §7.1 | universe analysis |
+| Coverage growth (quartiles, every 500) | §7.2, §17.10 | shows plateau |
+| Universe list (46 constraints) | §16.2 | with "missed" annotations |
+| Constraint overlap (Venn) | §17.2 | strict subset structure |
+| **Discovery rate per kind** | §17.1 | THE SMOKING GUN |
+| Per-(strategy, kind) discovery contributions | §17.4 | which kinds discover what |
+| Constraint discovery timeline | §17.6 | when each constraint was first hit |
+| Bandit arm-pull distribution | §17.5 | proves nested step-UCB is wasted |
+| Global failure coverage | §17.7 | bandit narrowly beats uniform on global |
+| d_loc / d_glob histograms | §17.8 | distribution of failure densities |
+| Per-kind reward variance | §17.9 | INSTR_TYPE_MOD lottery-ticket property |
+| Per-kind step distribution | §17.11 | strategies pick same steps within kind |
+| Wall-time per mutation | §17.12 | enables budget planning |
+| Total failures per strategy | §17.13 | bandit produces fewer failures |
+| Verifier acceptance | §17.14 | 0% sanity check |
+| Campaign parameters | §16.1 | tau_*, gamma, b_count, num_arms |
+| **Selector labeling verification** | §17.15 | 3-way cross-check proves no mislabeling |
+| **STEP-0 SMOKING GUN** | §17.16 | reveals zoned wins due to init-zone weighting |
+| Pilot calibration parameter variance | §17.17 | bandit's per-seed tau_new ranges 38-49 |
+| Reward time-series decay | §17.18 | INSTR_TYPE_MOD reward drops 47% mid-run |
+| Crash rate per kind | §17.19 | PRE_EXEC_REG_MOD 6.89% crash rate |
+| U signal dead | §17.20 | U fires 0 times across all 89,499 mutations |
+| Q_rep firing rate | §17.21 | cascade penalty active < 1% of the time |
+| d_ext distribution | §17.22 | external rejection counter, modal value=3 |
+
+### 20.3 What we did NOT extract (still IN the DBs, gettable on request)
+
+This data exists in our 15 DBs but is not currently in the document. ChatGPT Pro can request any of these if needed:
+
+| Data | Why we didn't extract | Effort to extract |
+|---|---|---|
+| **Per-mutation `config_json` parse** | Each row's config_json contains exact mutation details (which txn was mutated, which field/byte, etc.). Currently not aggregated. | Medium — requires JSON parsing of 90,000 rows. |
+| **Per-mutation `mutated_value` distribution** | What specific values were injected (the actual u32 written). May reveal bias in value-generation. | Low — single query, but interpretation depends on context. |
+| **`txn_idx` distribution per (kind, step)** | Which specific transaction within a step was targeted. | Low. |
+| **Per-(kind, constraint_loc) hit matrix** | Beyond first-hit, how many times each kind hits each constraint. | Medium — JOIN failures × mutations. |
+| **Failure-constraint cascading** | When a single mutation triggers many failures across multiple constraints, what's the dependency graph? | High — requires causal analysis. |
+| **Per-mutation executed_at timestamps** | Allows time-series analysis of bandit's choice progression. | Low — already in DB. |
+| **`r_rep` (cascade) distribution per kind** | When does Q_rep actually fire? | Low. |
+| **`hit_count` distribution per constraint** | Which constraints fire most often once discovered. | Trivial. |
+| **`mode` ("normal" vs "crash") distribution per kind** | What % of mutations crash by kind. | Low. |
+| **`global_failures` family distribution per kind** | Which kinds produce which global failure families. | Low. |
+| **`delta_T` and `delta_F` distributions** | Per-mutation touch novelty / failure novelty (separate from T_new/F_new which are normalized). | Low. |
+| **Per-seed reward time-series** | reward vs mutation_id, to see learning curves. | Low. |
+
+### 20.4 What is NOT in the DBs (UNGETTABLE without code changes)
+
+To collect any of these in future campaigns, we would need to modify `a4/standalone/fuzzer.py` and/or `a4/standalone/bandit.py` and/or `a4/standalone/coverage_db.py`:
+
+| Data | Why ungettable today | Code changes needed |
+|---|---|---|
+| **Per-mutation bandit selection details** (cold-start vs UCB, which arm was 2nd-best, UCB index value at selection) | Bandit stats are aggregated only (`stats_coldstart_arm`, `stats_ucb_arm` counters). | Add a `bandit_decisions` table that logs each (kind, step, was_coldstart, ucb_index, runner_up_arm, runner_up_ucb) at each iteration. ~50 LOC change. |
+| **Per-mutation arm state snapshot** (S, N, m for all arms at each iteration) | Only final state implicitly recoverable via mutation_rewards. | Add an `arm_state_log` table snapshotting all arms every K mutations. **Heavy** — 128 arms × 6000 / K rows per run. K=100 = 7680 rows per run. ~30 LOC change. |
+| **Raw touch bitmap content per mutation** | Bitmap is 65,536 bytes per mutation → would be 6000 × 64KB = 384 MB per run. Currently only count of new/touched bits is kept. | Store a hash or sample of the bitmap per mutation. |
+| **Hook 3 raw output per mutation** | Only the canonicalized (family, addr) set is kept. The original broken_addrs / broken_indices lists are discarded after derive_global_contexts. | Add a `hook3_raw` table. ~20 LOC change. |
+| **Specific value_generator strategy used per mutation** | The mutator picks (e.g., for INSTR_WORD_MOD_SUR) between opcode/rd/rs1/funct3/.. but only the final mutated_value is recorded, not which sub-strategy was chosen. | Add `sub_strategy` column to mutations table. ~15 LOC change per mutator. |
+| **Per-cycle/per-instruction reachability map** | We don't record which cycles in the trace were reached by any constraint check, only WHICH constraints were checked at WHICH (cycle, step). | Add reachability instrumentation hook. **Heavy** — requires risc0-side changes. |
+| **Reward decomposition gradient** | We have all components but not "if we removed Q_loc, what would reward be?" — i.e., we can't easily counterfactual without recompute. | Store per-mutation alternate-reward (Q=1, fully exploration-driven). ~20 LOC. |
+| **Bandit's "would-have-picked" alternative arms** | At each iteration, the bandit picks the argmax. The 2nd-best, 3rd-best aren't logged. | Add column to mutations table. ~10 LOC. |
+| **Time spent in pilot vs main phase** | `_setup_bandit` and `_setup_uniform` run pilots but we don't time them separately. | Add phase timestamps. |
+| **State at end of pilot calibration** | We have calibrated params in campaign_params but not the raw pilot stats. | Add `pilot_runs` table. ~15 LOC. |
+
+### 20.5 Recommendation for future campaigns
+
+If the user wants to give ChatGPT Pro maximum diagnostic ammunition for IV.POS.7+ campaigns, the most valuable code changes (ordered by value-per-effort):
+
+1. **Add `bandit_decisions` table** (per-mutation: cold-start flag, UCB index, runner-up arm, runner-up UCB). 50 LOC, 1 hour. **Highest ROI**.
+2. **Add `sub_strategy` column to mutations table** (which sub-strategy of INSTR_WORD_MOD_SUR was used). 15 LOC per mutator, 2 hours total.
+3. **Add `pilot_runs` table** (raw per-pilot-run statistics). 15 LOC, 30 min.
+4. **Add `hook3_raw` table** (broken_addrs / broken_indices per mutation). 20 LOC, 30 min.
+5. **Add `arm_state_log` table** snapshotting all arms every 100 mutations. 30 LOC, 1 hour.
+
+Total: ~150 LOC of changes to make future DBs significantly richer. **Recommended before IV.POS.7.**
+
+### 20.6 Companion notebook with executable analysis
+
+A Jupyter notebook reproducing all this analysis is at:
+
+```
+a4/runs/iv_pos_5/MAB_DIAGNOSTIC_NOTEBOOK.ipynb
+```
+
+It includes the 4 publication plots plus inline code that ChatGPT Pro can ask the user to re-run on the actual DBs to produce additional plots/tables on demand.
+
+---
+
+**END OF DOCUMENT**
+
+Please respond with:
+1. Your assessment of which hypothesis (H1-H7) is most likely the dominant cause.
+2. Which of (T1-T7, A1-A7) you recommend running first, and why.
+3. Any architectural critique we've missed.
+4. Whether the IV.POS.5 result is publishable as-is, or needs IV.POS.7 follow-ups.
+5. Whether to expand the mutation kind universe (§19) before or after the next bandit experiment.
+6. Whether the missing data identified in §20.3-20.4 is worth collecting before running IV.POS.7.
+7. Whether N=10000 or N=20000 (per §18) is the right budget for the next campaign.
+

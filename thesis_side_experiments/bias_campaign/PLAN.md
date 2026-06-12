@@ -223,6 +223,10 @@ Translate the measured bias + chosen example into intuitive constraint language 
 - Verify production `risc0-host` mtime/sha unchanged after each phase.
 
 ## 7. Compute & parallelism
+- **POS testbed for scale-out (C2/C3):** build on WSL, bundle the host (rename custom binary →
+  `risc0-host`), pre-reserve via web UI, dispatch with `--allocation-duration 0`. Full crib in
+  `POS_NOTES.md`; canonical source `a4/docs/precloud/POS_PLAYBOOK.md` (§12 anti-patterns). C0/C1 run
+  locally; C2/C3 use POS. (c0/c1 guest `guest_args=["--in1","5","--in4","10"]`; minimal_add `[]`.)
 - Per-run cost ~30–90s (fast prover, tiny guests). Aggregate campaign is the bottleneck.
 - Parallelize with a process pool (see `verify_crash_condition.py` ThreadPool pattern); A4 already has
   `run_replicates.py` + POS dispatch for multi-seed scale-out if needed.
