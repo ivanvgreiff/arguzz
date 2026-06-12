@@ -17,7 +17,9 @@ _A4_DIAG_LINE_RE = re.compile(
     r"<a4_touch_verbose[^>]*>\[.*?\]</a4_touch_verbose>|"
     r"<a4_accum_touch_verbose[^>]*>\[.*?\]</a4_accum_touch_verbose>|"
     r"<a4_ftw291_95_count[^>]*/>|"
-    r"<a4_ftw cycle=\"[^\"]*\"[^>]*/>",
+    r"<a4_ftw cycle=\"[^\"]*\"[^>]*/>|"
+    r"<a4_mem_total_hash[^>]*/>|"
+    r"<a4_mem_cycle_hash[^>]*/>",
     re.DOTALL,
 )
 
@@ -225,12 +227,15 @@ def run_a4_mutation(
     # run_campaign_pos.sh's tee lands them in campaign.log.
     passthrough_verbose = os.environ.get("A4_COVERAGE_TOUCH_VERBOSE") == "1"
     passthrough_ftw = os.environ.get("A4_FTW291_TRACE") == "1"
+    passthrough_mem = os.environ.get("A4_MEM_FINGERPRINT") == "1"
     for line in combined.splitlines():
         if not _A4_DIAG_LINE_RE.search(line):
             continue
         if "<a4_ftw " in line and not passthrough_ftw:
             continue
         if ("<a4_touch_verbose" in line or "<a4_accum_touch_verbose" in line) and not passthrough_verbose:
+            continue
+        if ("<a4_mem_total_hash" in line or "<a4_mem_cycle_hash" in line) and not passthrough_mem:
             continue
         print(line, flush=True)
     

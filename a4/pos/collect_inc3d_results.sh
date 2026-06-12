@@ -6,7 +6,13 @@ PASS="${INC3D_PASS:-1}"
 OUT="$REPO/a4/audits/audit_output/inc3d/p${PASS}"
 REMOTE="${INC3D_REMOTE:-ivgreiff@coinbase.net.in.tum.de}"
 PORT="${INC3D_PORT:-10022}"
-BASE="/srv/testbed/results/ivgreiff/a4/pos_inc3d_phase_b_p${PASS}"
+# PASS=b2 maps to the B4 mem-fingerprint campaign (Phase B2)
+if [[ "$PASS" = "b2" ]]; then
+    OUT="$REPO/a4/audits/audit_output/inc3d/b2"
+    BASE="/srv/testbed/results/ivgreiff/a4/pos_inc3d_phase_b2"
+else
+    BASE="/srv/testbed/results/ivgreiff/a4/pos_inc3d_phase_b_p${PASS}"
+fi
 
 mkdir -p "$OUT/diffs" "$OUT/fingerprint/"{flare,octorand,opulous,meld}
 
@@ -17,10 +23,12 @@ SUFFIXES=(
 )
 
 echo "Pass $PASS — searching $BASE"
+DB_PREFIX="pos_inc3d_phase_b_p${PASS}"
+[[ "$PASS" = "b2" ]] && DB_PREFIX="pos_inc3d_phase_b2"
 for suffix in "${SUFFIXES[@]}"; do
     for seed in 999 1000 1001; do
         remote_db=$(ssh -p "$PORT" "$REMOTE" \
-            "find $BASE -name 'pos_inc3d_phase_b_p${PASS}_zoned_seed${seed}_n50_${suffix}.db' 2>/dev/null | sort -r | head -1" || true)
+            "find $BASE -name '${DB_PREFIX}_zoned_seed${seed}_n50_${suffix}.db' 2>/dev/null | sort -r | head -1" || true)
         if [[ -n "$remote_db" ]]; then
             scp -P "$PORT" "$REMOTE:$remote_db" "$OUT/" 2>/dev/null || true
             remote_log="${remote_db%.db}.log"

@@ -92,6 +92,7 @@ A4_RUN_SUFFIX=$(pos_get_variable A4_RUN_SUFFIX 2>/dev/null || echo "")
 A4_DEBUG_BANDIT_TRACE=$(pos_get_variable A4_DEBUG_BANDIT_TRACE 2>/dev/null || echo "0")
 A4_COVERAGE_TOUCH_VERBOSE=$(pos_get_variable A4_COVERAGE_TOUCH_VERBOSE 2>/dev/null || echo "0")
 A4_FTW291_TRACE=$(pos_get_variable A4_FTW291_TRACE 2>/dev/null || echo "0")
+A4_MEM_FINGERPRINT=$(pos_get_variable A4_MEM_FINGERPRINT 2>/dev/null || echo "0")
 A4_NODE=$(pos_get_variable hostname 2>/dev/null || hostname)
 
 # ----- 2. workdir + result paths (all ABSOLUTE) -------------------------
@@ -249,6 +250,10 @@ fi
 if [[ "$A4_FTW291_TRACE" = "1" ]]; then
     export A4_FTW291_TRACE=1
     echo "[run_campaign_pos] A4_FTW291_TRACE=1" | tee -a "$LOG"
+fi
+if [[ "$A4_MEM_FINGERPRINT" = "1" ]]; then
+    export A4_MEM_FINGERPRINT=1
+    echo "[run_campaign_pos] A4_MEM_FINGERPRINT=1" | tee -a "$LOG"
 fi
 export A4_COVERAGE_TOUCH=1
 export A4_FAMILY_RESIDUE=1

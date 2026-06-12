@@ -1,0 +1,396 @@
+{
+  "pass1": [
+    {
+      "pair": "alpha",
+      "seed": 999,
+      "racy_count": 0,
+      "delta_T_flips": 0,
+      "racy_mutations": [],
+      "log_a": {
+        "size_mb": 10.0,
+        "verbose_open_tags": 49,
+        "verbose_with_mut_attr": 49,
+        "a4_ftw_lines": 22344,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      },
+      "log_b": {
+        "size_mb": 10.0,
+        "verbose_open_tags": 49,
+        "verbose_with_mut_attr": 49,
+        "a4_ftw_lines": 22344,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      }
+    },
+    {
+      "pair": "beta",
+      "seed": 999,
+      "racy_count": 0,
+      "delta_T_flips": 0,
+      "racy_mutations": [],
+      "log_a": {
+        "size_mb": 10.0,
+        "verbose_open_tags": 49,
+        "verbose_with_mut_attr": 49,
+        "a4_ftw_lines": 22344,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      },
+      "log_b": {
+        "size_mb": 10.0,
+        "verbose_open_tags": 49,
+        "verbose_with_mut_attr": 49,
+        "a4_ftw_lines": 22344,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      }
+    },
+    {
+      "pair": "opulous",
+      "seed": 1000,
+      "racy_count": 0,
+      "delta_T_flips": 0,
+      "racy_mutations": [],
+      "log_a": {
+        "size_mb": 10.2,
+        "verbose_open_tags": 50,
+        "verbose_with_mut_attr": 50,
+        "a4_ftw_lines": 22800,
+        "ftw291_95_count_tags": 100,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      },
+      "log_b": {
+        "size_mb": 10.2,
+        "verbose_open_tags": 50,
+        "verbose_with_mut_attr": 50,
+        "a4_ftw_lines": 22800,
+        "ftw291_95_count_tags": 100,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      }
+    },
+    {
+      "pair": "meld",
+      "seed": 1001,
+      "racy_count": 0,
+      "delta_T_flips": 0,
+      "racy_mutations": [],
+      "log_a": {
+        "size_mb": 10.0,
+        "verbose_open_tags": 49,
+        "verbose_with_mut_attr": 49,
+        "a4_ftw_lines": 22344,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      },
+      "log_b": {
+        "size_mb": 10.0,
+        "verbose_open_tags": 49,
+        "verbose_with_mut_attr": 49,
+        "a4_ftw_lines": 22344,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      }
+    },
+    {
+      "pair": "flareCtrl",
+      "seed": 999,
+      "racy_count": 1,
+      "delta_T_flips": 1,
+      "racy_mutations": [
+        {
+          "mutation_id": 30,
+          "kind": "INSTR_WORD_MOD_FULL",
+          "step": 3541,
+          "delta_T_a": 0,
+          "delta_T_b": 1,
+          "reward_a": 0.19534507032767412,
+          "reward_b": 0.19889949759248765
+        }
+      ],
+      "log_a": {
+        "size_mb": 10.0,
+        "verbose_open_tags": 49,
+        "verbose_with_mut_attr": 49,
+        "a4_ftw_lines": 22344,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      },
+      "log_b": {
+        "size_mb": 10.0,
+        "verbose_open_tags": 49,
+        "verbose_with_mut_attr": 49,
+        "a4_ftw_lines": 22344,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      }
+    }
+  ],
+  "pass2": [
+    {
+      "pair": "alpha",
+      "seed": 999,
+      "racy_count": 0,
+      "delta_T_flips": 0,
+      "racy_mutations": [],
+      "log_a": {
+        "size_mb": 0.1,
+        "verbose_open_tags": 0,
+        "verbose_with_mut_attr": 0,
+        "a4_ftw_lines": 0,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      },
+      "log_b": {
+        "size_mb": 0.1,
+        "verbose_open_tags": 0,
+        "verbose_with_mut_attr": 0,
+        "a4_ftw_lines": 0,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      }
+    },
+    {
+      "pair": "beta",
+      "seed": 999,
+      "racy_count": 0,
+      "delta_T_flips": 0,
+      "racy_mutations": [],
+      "log_a": {
+        "size_mb": 0.1,
+        "verbose_open_tags": 0,
+        "verbose_with_mut_attr": 0,
+        "a4_ftw_lines": 0,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      },
+      "log_b": {
+        "size_mb": 0.1,
+        "verbose_open_tags": 0,
+        "verbose_with_mut_attr": 0,
+        "a4_ftw_lines": 0,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      }
+    },
+    {
+      "pair": "opulous",
+      "seed": 1000,
+      "racy_count": 0,
+      "delta_T_flips": 0,
+      "racy_mutations": [],
+      "log_a": {
+        "size_mb": 0.1,
+        "verbose_open_tags": 0,
+        "verbose_with_mut_attr": 0,
+        "a4_ftw_lines": 0,
+        "ftw291_95_count_tags": 100,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      },
+      "log_b": {
+        "size_mb": 0.1,
+        "verbose_open_tags": 0,
+        "verbose_with_mut_attr": 0,
+        "a4_ftw_lines": 0,
+        "ftw291_95_count_tags": 100,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      }
+    },
+    {
+      "pair": "meld",
+      "seed": 1001,
+      "racy_count": 1,
+      "delta_T_flips": 1,
+      "racy_mutations": [
+        {
+          "mutation_id": 5,
+          "kind": "PRE_EXEC_REG_MOD",
+          "step": 834,
+          "delta_T_a": 1,
+          "delta_T_b": 0,
+          "reward_a": 0.19646889582530966,
+          "reward_b": 0.19313270729548804
+        }
+      ],
+      "log_a": {
+        "size_mb": 0.0,
+        "verbose_open_tags": 0,
+        "verbose_with_mut_attr": 0,
+        "a4_ftw_lines": 0,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      },
+      "log_b": {
+        "size_mb": 0.0,
+        "verbose_open_tags": 0,
+        "verbose_with_mut_attr": 0,
+        "a4_ftw_lines": 0,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      }
+    },
+    {
+      "pair": "flareCtrl",
+      "seed": 999,
+      "racy_count": 0,
+      "delta_T_flips": 0,
+      "racy_mutations": [],
+      "log_a": {
+        "size_mb": 0.1,
+        "verbose_open_tags": 0,
+        "verbose_with_mut_attr": 0,
+        "a4_ftw_lines": 0,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      },
+      "log_b": {
+        "size_mb": 0.1,
+        "verbose_open_tags": 0,
+        "verbose_with_mut_attr": 0,
+        "a4_ftw_lines": 0,
+        "ftw291_95_count_tags": 98,
+        "ftw291_samples": [
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"witgen\" value=\"0\"/>",
+          "<a4_ftw291_95_count phase=\"accum\" value=\"0\"/>"
+        ]
+      }
+    }
+  ]
+}

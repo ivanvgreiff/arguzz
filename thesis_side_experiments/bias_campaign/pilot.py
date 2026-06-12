@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
 import subprocess
 import sys
 import time
@@ -39,6 +40,24 @@ from thesis_side_experiments.bias_campaign.run_common import (  # noqa: E402
     build_run_record,
 )
 from thesis_side_experiments.bias_campaign.classify import classify_run  # noqa: E402
+
+A4_ELIGIBLE_KEY = {
+    "PRE_EXEC_REG_MOD": "PRE_EXEC_REG_MOD",
+    "COMP_OUT_MOD": "COMP_OUT_MOD",
+    "LOAD_VAL_MOD": "LOAD_VAL_MOD",
+    "STORE_OUT_MOD": "STORE_OUT_MOD",
+    "MEM_VAL_MOD": "PRE_EXEC_MEM_MOD",
+    "INSTR_WORD_MOD_FULL": "INSTR_WORD_MOD",
+}
+
+
+def existing_run_keys(db_path: Path) -> set[tuple[str, str, int]]:
+    if not db_path.exists():
+        return set()
+    conn = sqlite3.connect(str(db_path))
+    rows = conn.execute("SELECT fuzzer, kind, seed FROM runs").fetchall()
+    conn.close()
+    return {(f, k, s) for f, k, s in rows}
 
 
 def file_sha256(path: Path) -> str:
@@ -129,19 +148,29 @@ def run_one(job: dict) -> RunRecord:
             return rec
         return run_arguzz(str(HOST), GUEST_ARGS, arguzz_kind, step, seed, log_path=log_path)
 
-    # A4
+    # A4 — retry up to 10 eligible steps (not just consecutive offsets)
     step = job["step"]
     data = job["data"]
     offset = job["offset"]
-    for attempt in range(10):
-        try_step = step + attempt if attempt else step
+    eligible = job["eligible_steps"]
+    if not eligible:
+        eligible = [step] if step is not None else []
+    for attempt in range(min(10, len(eligible) or 1)):
+        try_step = eligible[(seed + attempt) % len(eligible)] if eligible else step
         cfg = CFG_DIR / f"a4_{a4_kind}_{seed}_{try_step}.json"
         built = build_a4_config(a4_kind, try_step, seed + attempt, data, cfg, offset)
         if built is None:
             continue
         path, desc = built
         return run_a4(
-            str(HOST), GUEST_ARGS, path, desc, try_step, a4_kind, seed, log_path=log_path
+            str(HOST),
+            GUEST_ARGS,
+            path,
+            target_desc=desc,
+            inject_step=try_step,
+            kind=a4_kind,
+            seed=seed,
+            log_path=log_path,
         )
     rec = build_run_record(
         fuzzer, GUEST_NAME, a4_kind, seed, step, "",
@@ -166,33 +195,71 @@ def main() -> None:
 
     sites = ensure_guest_sites(HOST, GUEST_ARGS, ART / "guest_sites.json")
     offset = sites["arguzz_to_a4_step_offset"]
-    probe = probe_production_error_behavior()
-    (ART / "production_error_probe.json").write_text(json.dumps(probe, indent=2))
+    probe_path = ART / "production_error_probe.json"
+    if probe_path.exists():
+        probe = json.loads(probe_path.read_text())
+    else:
+        probe = probe_production_error_behavior()
+        probe_path.write_text(json.dumps(probe, indent=2))
 
     print("Loading InspectionData (one-time)…", flush=True)
     data = InspectionData.from_inspection(str(HOST), GUEST_ARGS)
 
     jobs = []
     for a4_kind, arguzz_kind in ALIGNED_KINDS:
+        eligible_arguzz = sites["eligible_steps_by_kind"].get(arguzz_kind, [])
+        eligible_a4 = sites["eligible_steps_by_kind"].get(A4_ELIGIBLE_KEY[a4_kind], [])
         for seed in PILOT_SEEDS:
             step = sample_eligible_step(arguzz_kind, seed, sites)
-            jobs.append({"fuzzer": "arguzz", "a4_kind": a4_kind, "arguzz_kind": arguzz_kind, "seed": seed, "step": step})
-            jobs.append({"fuzzer": "a4", "a4_kind": a4_kind, "arguzz_kind": arguzz_kind, "seed": seed, "step": step, "data": data, "offset": offset})
+            jobs.append(
+                {
+                    "fuzzer": "arguzz",
+                    "a4_kind": a4_kind,
+                    "arguzz_kind": arguzz_kind,
+                    "seed": seed,
+                    "step": step,
+                }
+            )
+            jobs.append(
+                {
+                    "fuzzer": "a4",
+                    "a4_kind": a4_kind,
+                    "arguzz_kind": arguzz_kind,
+                    "seed": seed,
+                    "step": step,
+                    "data": data,
+                    "offset": offset,
+                    "eligible_steps": eligible_a4,
+                }
+            )
 
-    if DB_PATH.exists():
-        DB_PATH.unlink()
+    done_keys = existing_run_keys(DB_PATH)
+    pending = []
+    for j in jobs:
+        kind = j["a4_kind"] if j["fuzzer"] == "a4" else j["arguzz_kind"]
+        if (j["fuzzer"], kind, j["seed"]) in done_keys:
+            continue
+        pending.append(j)
+
     db = CampaignDB(DB_PATH)
-
-    print(f"Running {len(jobs)} jobs with {MAX_WORKERS} workers…", flush=True)
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-        futs = {ex.submit(run_one, j): j for j in jobs}
-        done = 0
-        for fut in as_completed(futs):
-            rec = fut.result()
-            db.insert_run(rec)
-            done += 1
-            if done % 20 == 0:
-                print(f"  {done}/{len(jobs)}", flush=True)
+    if not pending:
+        print(f"All {len(jobs)} jobs already in {DB_PATH}", flush=True)
+    else:
+        print(
+            f"Running {len(pending)} pending jobs ({len(done_keys)} already done) "
+            f"with {MAX_WORKERS} workers…",
+            flush=True,
+        )
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
+            futs = {ex.submit(run_one, j): j for j in pending}
+            done = len(done_keys)
+            total = len(jobs)
+            for fut in as_completed(futs):
+                rec = fut.result()
+                db.insert_run(rec)
+                done += 1
+                if done % 20 == 0 or done == total:
+                    print(f"  {done}/{total}", flush=True)
 
     db.close()
     meta = {
