@@ -1,0 +1,14 @@
+{
+  "by_context": [
+    {
+      "loc": "FieldToWord(zirgen/circuit/rv32im/v2/dsl/inst_p2.zir:291)",
+      "major": 9,
+      "minor": 5,
+      "occurrences": 5
+    }
+  ],
+  "total_racy_bits": 5,
+  "plan": "spread",
+  "n_pairs_analyzed": 5,
+  "verbose_files": 5
+}

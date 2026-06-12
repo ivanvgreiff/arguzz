@@ -1,0 +1,13 @@
+{
+  "mutation_type": "LOAD_VAL_MOD",
+  "step": 24,
+  "txn_idx": 15506,
+  "word": 2417183545,
+  "_info": {
+    "register": "sp",
+    "original_value": 2098176,
+    "pc": "0x00203714",
+    "major": 5,
+    "minor": 2
+  }
+}

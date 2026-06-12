@@ -7,20 +7,21 @@ REMOTE="${INC3C_REMOTE:-ivgreiff@coinbase.net.in.tum.de}"
 PORT="${INC3C_PORT:-10022}"
 BASE="/srv/testbed/results/ivgreiff/a4/pos_inc3c_phase_delta"
 
-mkdir -p "$OUT/diffs" "$OUT/fingerprint/flare" "$OUT/fingerprint/octorand"
+mkdir -p "$OUT/diffs" "$OUT/fingerprint/"{flare,octorand,opulous,meld}
 
-# Latest allocation dir on POS
-ALLOC=$(ssh -p "$PORT" "$REMOTE" "ls -td ${BASE}/*/ 2>/dev/null | head -1" || true)
-if [[ -z "$ALLOC" ]]; then
-    echo "ERROR: no results under $BASE" >&2
-    exit 1
-fi
-echo "Collecting from $ALLOC"
+# SPREAD + DEFAULT suffixes
+SUFFIXES=(
+    octoaA octoaB octobA octobB
+    octogA octogB octodA octodB
+    opugA opugB melddA melddB
+    flareCtrlA flareCtrlB
+)
 
-for suffix in octoaA octoaB octobA octobB octogA octogB octodA octodB flareCtrlA flareCtrlB; do
+echo "Searching all allocations under $BASE"
+for suffix in "${SUFFIXES[@]}"; do
     for seed in 999 1000 1001; do
-        pat="*zoned_seed${seed}_n50_${suffix}.db"
-        remote_db=$(ssh -p "$PORT" "$REMOTE" "find $ALLOC -name 'pos_inc3c_phase_delta_zoned_seed${seed}_n50_${suffix}.db' 2>/dev/null | head -1" || true)
+        remote_db=$(ssh -p "$PORT" "$REMOTE" \
+            "find $BASE -name 'pos_inc3c_phase_delta_zoned_seed${seed}_n50_${suffix}.db' 2>/dev/null | sort -r | head -1" || true)
         if [[ -n "$remote_db" ]]; then
             scp -P "$PORT" "$REMOTE:$remote_db" "$OUT/" 2>/dev/null || true
             remote_log="${remote_db%.db}.log"
@@ -30,8 +31,9 @@ for suffix in octoaA octoaB octobA octobB octogA octogB octodA octodB flareCtrlA
     done
 done
 
-for node in flare octorand; do
-    fp=$(ssh -p "$PORT" "$REMOTE" "find $ALLOC -path '*/${node}/fingerprint/env.txt' 2>/dev/null | head -1 | xargs dirname 2>/dev/null" || true)
+for node in flare octorand opulous meld; do
+    fp=$(ssh -p "$PORT" "$REMOTE" \
+        "find $BASE -path '*/${node}/fingerprint/env.txt' 2>/dev/null | sort -r | head -1 | xargs dirname 2>/dev/null" || true)
     if [[ -n "$fp" ]]; then
         scp -P "$PORT" "$REMOTE:${fp}/*" "$OUT/fingerprint/${node}/" 2>/dev/null || true
     fi

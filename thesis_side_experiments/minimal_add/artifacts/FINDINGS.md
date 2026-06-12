@@ -96,7 +96,86 @@ breaks {IsRead, MemoryWrite}; executor-stage breaks {IsRead} only. (To be tested
 
 ---
 
-## M3 — Arguzz (executor) ground-truth on a1   ⬜ (pending)
+## M3 — Arguzz (executor) ground-truth on a1   ⛔ BLOCKED by preflight panic — root cause verified
+
+**What/why:** run the executor-stage half of the comparison (inject a1 before the add) to test the
+sharpened prediction (executor breaks {IsRead} only; MemoryWrite passes). Seed sweep found 64 seeds
+that hit a1 at step 187; chosen seed 385 → a1=5. **Every a1-targeted seed panics**, so no constraint
+data could be collected.
+
+**Blocker (panic):** `preflight.rs:227` in `wrap_memory_txns` — `cycle diff index OOB`.
+
+**Root cause — verified from source (not inferred from the flag layer):**
+1. The panic is a raw slice index `self.trace.cycles[(diff/2) as usize]` with
+   `diff = txn.cycle - 1 - txn.prev_cycle` (u32). The guard that would catch a bad diff is
+   **commented out** (`preflight.rs:225 // ensure!(...)`). On `prev_cycle >= cycle` the u32 underflows
+   to ~2³¹ → out-of-bounds index → hard panic.
+2. `wrap_memory_txns` runs in the **preflight phase** (`preflight.rs:105`), strictly **upstream** of
+   the witgen `StepMode` (`hal/mod.rs`) and of every C++ `eqz` / `FAULT_INJECTION_ENABLED` /
+   `CONSTRAINT_CONTINUE` bypass. `preflight.rs` has **zero** env-flag checks — no flag can intercept it.
+3. **Preflight re-executes the program and the Arguzz injection re-fires there.** Each `Emulator`
+   builds a fresh `RV32IMFaultInjectionContext{ current_step:0, rng:seed_from_u64(seed) }`
+   (`rv32im.rs:45-52`) and injects when `current_step == injection_step` (`rv32im.rs:152-156`) — so the
+   same seed deterministically re-injects a1=5 during preflight.
+4. `PRE_EXEC_REG_MOD` does an **extra `store_register` to the operand at the same cycle** the add then
+   accesses it (`rv32im.rs:626-637`, before the ADD at `:887`). So at the add cycle C, a1 gets a WRITE
+   (injected) then a READ (add source). The READ's `prev_cycle` becomes C → `diff = C-1-C` underflows →
+   OOB. (Same for a0 read / s0 write.)
+5. **Why t0 (seed 42) completes:** t0 is dead — injected WRITE at C with no same-cycle follow-up access,
+   so no self-referential `prev_cycle`, no underflow. Hence t0 produced 7 clean fails and a txn dump.
+6. **Why A4 is immune despite carrying all the continuation flags:** A4 never injects in the executor.
+   Preflight wraps a clean trace; `witgen/mod.rs` overwrites `trace.txns[…].word` 4→9 **after**
+   `wrap_memory_txns`. The cycle-diff bookkeeping never sees an inconsistency.
+
+**Flag-hypothesis verdict:** A4 *does* enable more continuation machinery (`CONSTRAINT_CONTINUE`,
+auto `FAULT_INJECTION_ENABLED`, `A4_COVERAGE_TOUCH`→`SeqForward` to avoid parallel SIGSEGV,
+`A4_FAMILY_RESIDUE`). But composer's M3 Arguzz run already set `CONSTRAINT_CONTINUE` +
+`A4_COVERAGE_TOUCH`(SeqForward) and the host set `FAULT_INJECTION_ENABLED` + `disable_assertions`.
+It still panics, because the crash is in preflight — before any of those flags act — and its only
+guard is commented out. **Not a missing-flag problem; it is structural.**
+
+**Open (99%→100%):** confirm by a single traced run that the PRE_EXEC `store_register` records a
+distinct WRITE txn in the same cycle as the operand READ (vs. silently overwriting pager state).
+
+**Thesis value:** this is itself a propagation-vs-isolation result — Arguzz operand corruption fails
+in a *different phase* (preflight memory bookkeeping) than A4 (constraint eval). Decision on
+remediation (restore `ensure!` to make it a catchable crash outcome / reframe / guest variant)
+pending.
+
+**EXHAUSTIVE EMPIRICAL VERIFICATION (`verify_crash_condition.py`, existing binary, no rebuild;
+full report in `artifacts/verify_crash/verify_report.json`):**
+
+*Part A — inject all 31 distinct register targets at step 187 (`add s0,a0,a1`), full prove each:*
+**Exactly 3** registers crash at `preflight.rs:227` with **0** constraint failures — `a0`, `a1`, `s0`
+(the add's two source operands + destination). The **other 28** registers all **complete witgen** and
+emit **4–7 constraint failures** (normal Arguzz fault detection). `PART A holds (crash ⇔ operand) = True`.
+
+*Part B — fix seed 32 (always picks `a1`; register is seed-determined, step-independent), sweep the
+inject step:*
+
+| inject step | instruction | touches a1? | outcome |
+|---|---|---|---|
+| 184 | (pre-add) | no | witgen completes, 6 fails |
+| 185 | `li a0,3` | no | witgen completes, 5 fails |
+| 186 | `li a1,4` | **writes a1** | **crash `preflight.rs:227`**, 0 fails |
+| 187 | `add s0,a0,a1` | **reads a1** | **crash `preflight.rs:227`**, 0 fails |
+| 188 | (post-add) | no | witgen completes, 6 fails |
+| 189 | (post-add) | no | witgen completes, 5 fails |
+
+**Conclusion (proven, not inferred): the crash is NOT pathological to Arguzz/PRE_EXEC_REG_MOD.** It
+fires **iff** the injected register is one the instruction at the inject step accesses *that same
+cycle* (read or write). Part B nails it: the *same* register `a1` crashes only at the two steps that
+touch a1 (186 write, 187 read) and injects cleanly everywhere else. Mechanism: the injected
+`store_register` adds a second memory transaction to that register's address within one cycle, so the
+second txn's `prev_cycle == cycle`, `diff = cycle-1-prev_cycle` underflows u32, and the unguarded index
+at `preflight.rs:227` goes OOB. Non-consumed registers get a single monotonic txn → no underflow →
+witgen proceeds and the corrupted value trips downstream constraints (the 4–7 fails). This is why
+random-register Arguzz "mutates fine" in practice: only ~3 of 31 registers are operands at any
+consumed step, so uniform random selection almost never hits the crash case — our seed sweep
+*deliberately* forces it. (Note: the non-operand "panic" line is the *host's own* `panic!` at
+`main.rs:106` after `prove` returns Err; the constraint failures were already emitted. A production
+`risc0-host` returns cleanly and the fuzzer buckets it as a detected fault. `sp` is a special case:
+completes preflight but yields a non-constraint error since it's the stack pointer.)
 
 ## M4 — Bias comparison matrix   ⬜ (pending)
 

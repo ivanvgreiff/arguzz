@@ -15,11 +15,19 @@ REPO = Path(__file__).resolve().parents[2]
 INC3C = REPO / "a4/audits/audit_output/inc3c"
 DIFFS = INC3C / "diffs"
 
-PAIRS: List[Tuple[str, int, str, str]] = [
+# DEFAULT plan pairs (set INC3C_PLAN=default). SPREAD plan is default after Opus §2.4.
+DEFAULT_PAIRS: List[Tuple[str, int, str, str]] = [
     ("alpha", 999, "octoaA", "octoaB"),
     ("beta", 999, "octobA", "octobB"),
     ("gamma", 1000, "octogA", "octogB"),
     ("delta", 1001, "octodA", "octodB"),
+    ("flareCtrl", 999, "flareCtrlA", "flareCtrlB"),
+]
+SPREAD_PAIRS: List[Tuple[str, int, str, str]] = [
+    ("alpha", 999, "octoaA", "octoaB"),
+    ("beta", 999, "octobA", "octobB"),
+    ("opulous", 1000, "opugA", "opugB"),
+    ("meld", 1001, "melddA", "melddB"),
     ("flareCtrl", 999, "flareCtrlA", "flareCtrlB"),
 ]
 
@@ -70,14 +78,16 @@ def resolve_log(smoke_dir: Path, seed: int, suffix: str) -> Path:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--smoke-dir", default=str(INC3C))
+    parser.add_argument("--plan", choices=("spread", "default"), default="spread")
     args = parser.parse_args()
     smoke = Path(args.smoke_dir)
     DIFFS.mkdir(parents=True, exist_ok=True)
+    pairs = SPREAD_PAIRS if args.plan == "spread" else DEFAULT_PAIRS
 
     pair_summaries: List[Dict[str, Any]] = []
     verbose_paths: List[Path] = []
 
-    for name, seed, sa, sb in PAIRS:
+    for name, seed, sa, sb in pairs:
         out_audit = DIFFS / f"B7_{name}.json"
         cmd = [
             sys.executable,
@@ -129,7 +139,8 @@ def main() -> int:
             for (l, m, n), cnt in contexts.most_common()
         ],
         "total_racy_bits": sum(contexts.values()),
-        "n_pairs_analyzed": 4,
+        "plan": args.plan,
+        "n_pairs_analyzed": len(pairs),
         "verbose_files": len(verbose_paths),
     }
     (DIFFS / "racy_context_summary.json").write_text(json.dumps(cluster, indent=2))

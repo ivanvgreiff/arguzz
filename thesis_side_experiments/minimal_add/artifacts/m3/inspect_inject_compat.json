@@ -1,0 +1,5 @@
+{
+  "works_for_chosen_seed": false,
+  "witgen_panic_before_dump": true,
+  "note": "A4_INSPECT+A4_DUMP_STEP produces txn dump when witgen completes; all probed a1-targeted seeds panic in preflight wrap_memory_txns before dump."
+}

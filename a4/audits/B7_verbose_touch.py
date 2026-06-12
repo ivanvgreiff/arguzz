@@ -11,12 +11,21 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 VERBOSE_RE = re.compile(r"<a4_touch_verbose>\[(.*?)\]</a4_touch_verbose>", re.DOTALL)
-CTX_RE = re.compile(r"\(([^)]+)\)")
+# Host emits quoted "loc|major|minor" entries (pipe-separated), not (loc, major, minor).
+CTX_PIPE_RE = re.compile(r'"([^"]+)\|(\d+)\|(\d+)"')
+CTX_PAREN_RE = re.compile(r"\(([^)]+)\)")
 
 
 def parse_contexts(blob: str) -> Set[Tuple[str, int, int]]:
     out: Set[Tuple[str, int, int]] = set()
-    for m in CTX_RE.finditer(blob):
+    for m in CTX_PIPE_RE.finditer(blob):
+        try:
+            out.add((m.group(1), int(m.group(2)), int(m.group(3))))
+        except ValueError:
+            continue
+    if out:
+        return out
+    for m in CTX_PAREN_RE.finditer(blob):
         parts = [p.strip() for p in m.group(1).split(",")]
         if len(parts) >= 3:
             try:
@@ -26,12 +35,57 @@ def parse_contexts(blob: str) -> Set[Tuple[str, int, int]]:
     return out
 
 
+def _candidate_block_indices(block_count: int, mutation_index: int) -> List[int]:
+    """Return plausible verbose-block indices for a DB mutation_id."""
+    if mutation_index < 1 or block_count < 1:
+        return []
+    out: List[int] = []
+    for idx in (mutation_index - 2, mutation_index - 1):
+        if 0 <= idx < block_count and idx not in out:
+            out.append(idx)
+    return out
+
+
 def contexts_for_mutation(log_text: str, mutation_index: int) -> Set[Tuple[str, int, int]]:
-    """mutation_index is 1-based index in campaign (matches mutation id in sequential run)."""
     blocks = VERBOSE_RE.findall(log_text)
-    if mutation_index < 1 or mutation_index > len(blocks):
+    if mutation_index < 1 or not blocks:
         return set()
-    return parse_contexts(blocks[mutation_index - 1])
+    cands = _candidate_block_indices(len(blocks), mutation_index)
+    if not cands:
+        return set()
+    return parse_contexts(blocks[cands[0]])
+
+
+def contexts_for_mutation_pair(
+    log_a: str, log_b: str, mutation_index: int
+) -> Tuple[Set[Tuple[str, int, int]], Set[Tuple[str, int, int]], Optional[int]]:
+    """Resolve verbose contexts for a pair-mate diff at mutation_index.
+
+    Tries mutation_id-2 and mutation_id-1 block indices (49 blocks / 50 muts)
+    and picks the index whose symmetric context diff is non-empty.
+    """
+    blocks_a = VERBOSE_RE.findall(log_a)
+    blocks_b = VERBOSE_RE.findall(log_b)
+    n = min(len(blocks_a), len(blocks_b))
+    if mutation_index < 1 or n < 1:
+        return set(), set(), None
+
+    hits: List[Tuple[int, Set[Tuple[str, int, int]], Set[Tuple[str, int, int]]]] = []
+    for idx in _candidate_block_indices(n, mutation_index):
+        ca = parse_contexts(blocks_a[idx])
+        cb = parse_contexts(blocks_b[idx])
+        if ca != cb:
+            hits.append((idx, ca, cb))
+
+    if len(hits) == 1:
+        _, ca, cb = hits[0]
+        return ca, cb, hits[0][0]
+    if len(hits) > 1:
+        idx, ca, cb = min(hits, key=lambda h: abs(len(h[1] ^ h[2])))
+        return ca, cb, idx
+
+    idx = _candidate_block_indices(n, mutation_index)[0]
+    return parse_contexts(blocks_a[idx]), parse_contexts(blocks_b[idx]), idx
 
 
 def find_mutation_id_for_step(db_path: Path, step: int, kind: str = "MEM_VAL_MOD") -> Optional[int]:
@@ -55,8 +109,9 @@ def main() -> int:
     flare_log = Path(args.flare_log).read_text(errors="replace")
     octo_log = Path(args.octo_log).read_text(errors="replace")
 
-    flare_set = contexts_for_mutation(flare_log, args.mutation_id)
-    octo_set = contexts_for_mutation(octo_log, args.mutation_id)
+    flare_set, octo_set, block_idx = contexts_for_mutation_pair(
+        flare_log, octo_log, args.mutation_id
+    )
     extra_on_octo = sorted(octo_set - flare_set)
     missing_on_octo = sorted(flare_set - octo_set)
 
@@ -65,6 +120,7 @@ def main() -> int:
             "audit": "B7_verbose_touch",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "mutation_id": args.mutation_id,
+            "verbose_block_index": block_idx,
         },
         "flare_context_count": len(flare_set),
         "octo_context_count": len(octo_set),

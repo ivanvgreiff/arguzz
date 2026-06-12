@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "audit": "B7_verbose_touch",
+    "timestamp": "2026-06-11T22:17:09.758107+00:00",
+    "mutation_id": 48,
+    "verbose_block_index": 46
+  },
+  "flare_context_count": 1614,
+  "octo_context_count": 1615,
+  "extra_on_octo": [
+    {
+      "loc": "FieldToWord(zirgen/circuit/rv32im/v2/dsl/inst_p2.zir:291)",
+      "major": 9,
+      "minor": 5
+    }
+  ],
+  "missing_on_octo": [],
+  "delta_extra_count": 1,
+  "delta_missing_count": 0,
+  "interpretation": "single extra bit on octorand"
+}

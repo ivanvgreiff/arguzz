@@ -1,0 +1,22 @@
+{
+  "a0": {
+    "word": 3,
+    "prev_word": 3,
+    "is_read": true,
+    "is_write": false
+  },
+  "a1": {
+    "word": 5,
+    "prev_word": 4,
+    "is_read": true,
+    "is_write": false,
+    "executor_injected": true
+  },
+  "s0": {
+    "word": 8,
+    "prev_word": 0,
+    "is_read": false,
+    "is_write": true,
+    "propagated_sum": true
+  }
+}

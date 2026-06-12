@@ -1,0 +1,90 @@
+[
+  {
+    "pair": "alpha",
+    "seed": 999,
+    "suffix_a": "octoaA",
+    "suffix_b": "octoaB",
+    "racy_mutations": [
+      {
+        "mutation_id": 27,
+        "kind": "MEM_VAL_MOD",
+        "step": 3259,
+        "delta_T_a": 0,
+        "delta_T_b": 1,
+        "reward_a": 0.1866197800483904,
+        "reward_b": 0.19016606300553773
+      }
+    ],
+    "racy_count": 1
+  },
+  {
+    "pair": "beta",
+    "seed": 999,
+    "suffix_a": "octobA",
+    "suffix_b": "octobB",
+    "racy_mutations": [],
+    "racy_count": 0
+  },
+  {
+    "pair": "opulous",
+    "seed": 1000,
+    "suffix_a": "opugA",
+    "suffix_b": "opugB",
+    "racy_mutations": [],
+    "racy_count": 0
+  },
+  {
+    "pair": "meld",
+    "seed": 1001,
+    "suffix_a": "melddA",
+    "suffix_b": "melddB",
+    "racy_mutations": [
+      {
+        "mutation_id": 36,
+        "kind": "LOAD_VAL_MOD",
+        "step": 2066,
+        "delta_T_a": 0,
+        "delta_T_b": 1,
+        "reward_a": 0.11649892262671098,
+        "reward_b": 0.12006646825837913
+      },
+      {
+        "mutation_id": 48,
+        "kind": "MEM_VAL_MOD",
+        "step": 3810,
+        "delta_T_a": 0,
+        "delta_T_b": 0,
+        "reward_a": 0.13120848396476736,
+        "reward_b": 0.13167257977531607
+      }
+    ],
+    "racy_count": 2
+  },
+  {
+    "pair": "flareCtrl",
+    "seed": 999,
+    "suffix_a": "flareCtrlA",
+    "suffix_b": "flareCtrlB",
+    "racy_mutations": [
+      {
+        "mutation_id": 21,
+        "kind": "STORE_OUT_MOD",
+        "step": 3347,
+        "delta_T_a": 0,
+        "delta_T_b": 1,
+        "reward_a": 0.12646285812247648,
+        "reward_b": 0.1299878912884718
+      },
+      {
+        "mutation_id": 39,
+        "kind": "INSTR_TYPE_MOD",
+        "step": 3813,
+        "delta_T_a": 0,
+        "delta_T_b": 0,
+        "reward_a": 0.12143746736015397,
+        "reward_b": 0.12171105749447698
+      }
+    ],
+    "racy_count": 2
+  }
+]

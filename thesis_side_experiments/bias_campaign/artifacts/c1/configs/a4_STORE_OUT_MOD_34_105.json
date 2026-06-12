@@ -1,0 +1,13 @@
+{
+  "mutation_type": "STORE_OUT_MOD",
+  "step": 105,
+  "txn_idx": 15858,
+  "word": 2710938419,
+  "_info": {
+    "memory_addr": "0x002213dc",
+    "original_value": 0,
+    "pc": "0x002032dc",
+    "major": 6,
+    "minor": 2
+  }
+}

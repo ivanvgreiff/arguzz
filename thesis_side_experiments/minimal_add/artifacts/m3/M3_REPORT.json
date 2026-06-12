@@ -1,0 +1,183 @@
+{
+  "milestone": "M3",
+  "generated_at": "2026-06-11T21:33:14.390627+00:00",
+  "status": "BLOCKED",
+  "site": {
+    "arguzz_step": 187,
+    "a4_step": 185,
+    "cycle_idx": 15424
+  },
+  "seed_sweep": {
+    "max_seed": 2000,
+    "a1_hits": 64,
+    "chosen": {
+      "seed": 385,
+      "register": "a1",
+      "V": 5
+    }
+  },
+  "witgen_probe_sample": [
+    {
+      "seed": 32,
+      "V": 54725832,
+      "witgen_panic": true,
+      "constraint_fail_count": 0,
+      "has_txn_dump": false
+    },
+    {
+      "seed": 79,
+      "V": 3378539299,
+      "witgen_panic": true,
+      "constraint_fail_count": 0,
+      "has_txn_dump": false
+    },
+    {
+      "seed": 80,
+      "V": 3101848886,
+      "witgen_panic": true,
+      "constraint_fail_count": 0,
+      "has_txn_dump": false
+    },
+    {
+      "seed": 129,
+      "V": 1910654403,
+      "witgen_panic": true,
+      "constraint_fail_count": 0,
+      "has_txn_dump": false
+    },
+    {
+      "seed": 385,
+      "V": 5,
+      "witgen_panic": true,
+      "constraint_fail_count": 0,
+      "has_txn_dump": false
+    }
+  ],
+  "all_a1_hits_witgen_panic": true,
+  "inject": {
+    "seed": 385,
+    "register": "a1",
+    "V": 5,
+    "fault": {
+      "step": 187,
+      "pc": 2099232,
+      "kind": "PRE_EXEC_REG_MOD",
+      "info": "a1 = 5"
+    }
+  },
+  "inspect_inject_compat": {
+    "works_for_chosen_seed": false,
+    "witgen_panic_before_dump": true,
+    "note": "A4_INSPECT+A4_DUMP_STEP produces txn dump when witgen completes; all probed a1-targeted seeds panic in preflight wrap_memory_txns before dump."
+  },
+  "mutation_env": {
+    "CONSTRAINT_CONTINUE": "1",
+    "A4_COVERAGE_TOUCH": "1",
+    "A4_COVERAGE_TOUCH_VERBOSE": "1",
+    "A4_FAMILY_RESIDUE": "1",
+    "A4_GLOBAL_RESIDUE": "1",
+    "A4_INSPECT": "1",
+    "A4_DUMP_STEP": "185"
+  },
+  "exit_code": 101,
+  "witgen_panic": true,
+  "post_inject_register_txns": {
+    "observed_from_dump": null,
+    "expected_executor_semantics": {
+      "a0": {
+        "word": 3,
+        "prev_word": 3,
+        "is_read": true,
+        "is_write": false
+      },
+      "a1": {
+        "word": 5,
+        "prev_word": 4,
+        "is_read": true,
+        "is_write": false,
+        "executor_injected": true
+      },
+      "s0": {
+        "word": 8,
+        "prev_word": 0,
+        "is_read": false,
+        "is_write": true,
+        "propagated_sum": true
+      }
+    },
+    "used_for_analysis": {
+      "a0": {
+        "word": 3,
+        "prev_word": 3,
+        "is_read": true,
+        "is_write": false
+      },
+      "a1": {
+        "word": 5,
+        "prev_word": 4,
+        "is_read": true,
+        "is_write": false,
+        "executor_injected": true
+      },
+      "s0": {
+        "word": 8,
+        "prev_word": 0,
+        "is_read": false,
+        "is_write": true,
+        "propagated_sum": true
+      }
+    }
+  },
+  "propagation": {
+    "expected_a1_read": 5,
+    "expected_s0_write": 8,
+    "algebraic_confirmed": true,
+    "observed_in_dump": false,
+    "contrast_with_a4": "A4 witness keeps s0 WRITE=7; Arguzz executor records s0=3+V"
+  },
+  "failures": {
+    "local_deduped": [],
+    "accum_deduped": [],
+    "raw_count": 0,
+    "memorywrite_at_99_fired": false,
+    "isread_at_79_fired": false
+  },
+  "predicted_if_witgen_completed": {
+    "local": [
+      "IsRead@mem.zir:79"
+    ],
+    "not_expected": [
+      "MemoryWrite@mem.zir:99"
+    ],
+    "isread_residue": 2013265920,
+    "memorywrite_residue": 0
+  },
+  "hook3_family_residues": null,
+  "global_residue": null,
+  "field_element_validation": {
+    "isread_value": null,
+    "expected_mod_p_4_minus_V": 2013265920,
+    "matches": false
+  },
+  "failures_subset_of_add_universe": null,
+  "provenance": [],
+  "headline": {
+    "witgen_completed": false,
+    "memorywrite_expected_absent": true,
+    "memorywrite_observed_absent": true,
+    "isread_expected_present": true,
+    "isread_observed_present": false,
+    "hook3_memory_nonzero": null,
+    "bias_crystallized": false,
+    "blocker": "All a1-targeted PRE_EXEC_REG_MOD seeds panic in witgen preflight (wrap_memory_txns index OOB) before CONSTRAINT_CONTINUE can collect failures."
+  },
+  "acceptance": {
+    "a1_targeted": true,
+    "field_element_validated": null,
+    "propagation_confirmed": true,
+    "inspect_inject_noted": true,
+    "hook3_recorded": false,
+    "full_failure_sets_collected": false,
+    "provenance_for_failures": null
+  }
+}

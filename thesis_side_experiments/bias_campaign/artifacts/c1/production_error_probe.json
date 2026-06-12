@@ -1,0 +1,16 @@
+{
+  "arguzz_sample": {
+    "step": 200,
+    "outcome": "CONSTRAINT_REJECT",
+    "panic_loc": "host/src/main.rs:150",
+    "host_panic": true,
+    "prover_crash": false,
+    "fail_count": 6
+  },
+  "a4_sample": {
+    "outcome": "CONSTRAINT_REJECT",
+    "panic_loc": "host/src/main.rs:150",
+    "host_panic": true,
+    "fail_count": 3
+  }
+}

@@ -113,7 +113,16 @@ mkdir -p "$ROOT/bin" "$ROOT/scripts" "$ROOT/repo"
 echo "[prepare_bundle] archiving git tree @ $GIT_SHORT"
 git archive --format=tar HEAD | tar -x -C "$ROOT/repo"
 
-# Add untracked test results / bundles / etc? — no, keep deterministic from git.
+# When --allow-dirty, overlay working-tree changes so POS gets uncommitted fixes
+# (e.g. executor passthrough patches) without requiring a commit first.
+if [[ $DIRTY -eq 1 && $ALLOW_DIRTY -eq 1 ]]; then
+    echo "[prepare_bundle] overlaying dirty working-tree files into repo/"
+    while IFS= read -r f; do
+        [[ -f "$f" ]] || continue
+        mkdir -p "$ROOT/repo/$(dirname "$f")"
+        cp "$f" "$ROOT/repo/$f"
+    done < <(git diff --name-only HEAD; git ls-files --others --exclude-standard)
+fi
 
 # Copy the binary
 cp "$HOST_BINARY" "$ROOT/bin/risc0-host"

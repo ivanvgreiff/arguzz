@@ -1,0 +1,39 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    },
+    "audit": "B7_seed_reproducibility",
+    "timestamp": "2026-06-11T22:17:07.626918+00:00",
+    "seed": 999,
+    "n_per_variant": 50
+  },
+  "filter_metadata": {
+    "excluded_columns": [
+      "mutations.executed_at"
+    ],
+    "excluded_addresses_count": 188,
+    "excluded_addresses_source": "a4/audits/audit_output/A1_nondet_addrs.json"
+  },
+  "per_variant": {
+    "V1": {
+      "mutations_diff": 0,
+      "bandit_decisions_diff": 0,
+      "mutation_rewards_diff": 1,
+      "local_coverage_v2_diff": 70,
+      "compressed_global_coverage_diff": 19,
+      "compressed_global_note": "sorted",
+      "pass": false,
+      "db_a": "/root/arguzz/a4/audits/audit_output/inc3c/pos_inc3c_phase_delta_zoned_seed999_n50_octoaA.db",
+      "db_b": "/root/arguzz/a4/audits/audit_output/inc3c/pos_inc3c_phase_delta_zoned_seed999_n50_octoaB.db"
+    }
+  },
+  "verdict": "FAIL"
+}

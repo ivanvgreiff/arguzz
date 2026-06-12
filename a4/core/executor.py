@@ -5,6 +5,7 @@ Functions for running A4 inspection and mutation via the risc0-host binary.
 These are the core execution primitives shared by all A4 strategies.
 """
 
+import hashlib
 import os
 import re
 import subprocess
@@ -12,9 +13,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-_A4_VERBOSE_RE = re.compile(
-    r"<a4_touch_verbose>\[.*?\]</a4_touch_verbose>|"
-    r"<a4_accum_touch_verbose>\[.*?\]</a4_accum_touch_verbose>",
+_A4_DIAG_LINE_RE = re.compile(
+    r"<a4_touch_verbose[^>]*>\[.*?\]</a4_touch_verbose>|"
+    r"<a4_accum_touch_verbose[^>]*>\[.*?\]</a4_accum_touch_verbose>|"
+    r"<a4_ftw291_95_count[^>]*/>|"
+    r"<a4_ftw cycle=\"[^\"]*\"[^>]*/>",
     re.DOTALL,
 )
 
@@ -196,35 +199,40 @@ def run_a4_mutation(
     """
     cmd = [host_binary] + host_args
     
+    config_bytes = config_path.read_bytes()
     env = {
         "A4_MUTATION_CONFIG": str(config_path),
+        "A4_MUTATION_SHA256": hashlib.sha256(config_bytes).hexdigest(),
         "CONSTRAINT_CONTINUE": "1",
         "A4_COVERAGE_TOUCH": "1",
         "A4_FAMILY_RESIDUE": "1",
     }
-    
+
     result = subprocess.run(
         cmd,
         capture_output=True,
         text=True,
         env={**dict(os.environ), **env}
     )
-    
+
     combined = result.stdout + result.stderr
     failures = parse_all_constraint_failures(combined)
     touch_bitmap = parse_touch_bitmap(combined)
     family_residues = parse_family_residues(combined)
     family_details = parse_family_detail(combined)
 
-    # Phase 7d Inc 3c (Phase delta): when A4_COVERAGE_TOUCH_VERBOSE=1, host emits
-    # <a4_touch_verbose>[...]</a4_touch_verbose> (and the accum variant) to its
-    # stdout. capture_output=True buffers those into `combined` and the rest of
-    # the fuzzer never re-emits them, so they vanish before reaching the
-    # campaign log. Pass them through here so run_campaign_pos.sh's `tee` lands
-    # them in campaign.log for B7_verbose_touch.py to parse.
-    if os.environ.get("A4_COVERAGE_TOUCH_VERBOSE") == "1":
-        for tag in _A4_VERBOSE_RE.findall(combined):
-            print(tag, flush=True)
+    # Inc 3c/3d: capture_output buffers host diagnostic tags. Re-emit so
+    # run_campaign_pos.sh's tee lands them in campaign.log.
+    passthrough_verbose = os.environ.get("A4_COVERAGE_TOUCH_VERBOSE") == "1"
+    passthrough_ftw = os.environ.get("A4_FTW291_TRACE") == "1"
+    for line in combined.splitlines():
+        if not _A4_DIAG_LINE_RE.search(line):
+            continue
+        if "<a4_ftw " in line and not passthrough_ftw:
+            continue
+        if ("<a4_touch_verbose" in line or "<a4_accum_touch_verbose" in line) and not passthrough_verbose:
+            continue
+        print(line, flush=True)
     
     return MutationExecutionResult(
         stdout=result.stdout,
