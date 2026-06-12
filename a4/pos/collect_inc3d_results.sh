@@ -7,9 +7,14 @@ OUT="$REPO/a4/audits/audit_output/inc3d/p${PASS}"
 REMOTE="${INC3D_REMOTE:-ivgreiff@coinbase.net.in.tum.de}"
 PORT="${INC3D_PORT:-10022}"
 # PASS=b2 maps to the B4 mem-fingerprint campaign (Phase B2)
+# PASS=c_<mode> or c_<mode>_<tag> maps to the Phase C campaigns (Inc 3d Phase C)
 if [[ "$PASS" = "b2" ]]; then
     OUT="$REPO/a4/audits/audit_output/inc3d/b2"
     BASE="/srv/testbed/results/ivgreiff/a4/pos_inc3d_phase_b2"
+elif [[ "$PASS" =~ ^c_(.+)$ ]]; then
+    MODE="${BASH_REMATCH[1]}"
+    OUT="$REPO/a4/audits/audit_output/inc3d/c_${MODE}"
+    BASE="/srv/testbed/results/ivgreiff/a4/pos_inc3d_phase_c_${MODE}"
 else
     BASE="/srv/testbed/results/ivgreiff/a4/pos_inc3d_phase_b_p${PASS}"
 fi
@@ -25,6 +30,9 @@ SUFFIXES=(
 echo "Pass $PASS — searching $BASE"
 DB_PREFIX="pos_inc3d_phase_b_p${PASS}"
 [[ "$PASS" = "b2" ]] && DB_PREFIX="pos_inc3d_phase_b2"
+if [[ "$PASS" =~ ^c_(.+)$ ]]; then
+    DB_PREFIX="pos_inc3d_phase_c_${BASH_REMATCH[1]}"
+fi
 for suffix in "${SUFFIXES[@]}"; do
     for seed in 999 1000 1001; do
         remote_db=$(ssh -p "$PORT" "$REMOTE" \

@@ -19,7 +19,11 @@ _A4_DIAG_LINE_RE = re.compile(
     r"<a4_ftw291_95_count[^>]*/>|"
     r"<a4_ftw cycle=\"[^\"]*\"[^>]*/>|"
     r"<a4_mem_total_hash[^>]*/>|"
-    r"<a4_mem_cycle_hash[^>]*/>",
+    r"<a4_mem_cycle_hash[^>]*/>|"
+    r"<a4_preflight_fp[^>]*/>|"
+    r"<a4_preflight_txns[^>]*/>|"
+    r"<a4_preflight_bigint[^>]*/>|"
+    r"<a4_preflight_cell[^>]*/>",
     re.DOTALL,
 )
 
@@ -228,6 +232,7 @@ def run_a4_mutation(
     passthrough_verbose = os.environ.get("A4_COVERAGE_TOUCH_VERBOSE") == "1"
     passthrough_ftw = os.environ.get("A4_FTW291_TRACE") == "1"
     passthrough_mem = os.environ.get("A4_MEM_FINGERPRINT") == "1"
+    passthrough_preflight = os.environ.get("A4_PREFLIGHT_FINGERPRINT") == "1"
     for line in combined.splitlines():
         if not _A4_DIAG_LINE_RE.search(line):
             continue
@@ -236,6 +241,8 @@ def run_a4_mutation(
         if ("<a4_touch_verbose" in line or "<a4_accum_touch_verbose" in line) and not passthrough_verbose:
             continue
         if ("<a4_mem_total_hash" in line or "<a4_mem_cycle_hash" in line) and not passthrough_mem:
+            continue
+        if "<a4_preflight_" in line and not passthrough_preflight:
             continue
         print(line, flush=True)
     

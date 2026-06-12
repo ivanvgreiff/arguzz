@@ -93,6 +93,12 @@ A4_DEBUG_BANDIT_TRACE=$(pos_get_variable A4_DEBUG_BANDIT_TRACE 2>/dev/null || ec
 A4_COVERAGE_TOUCH_VERBOSE=$(pos_get_variable A4_COVERAGE_TOUCH_VERBOSE 2>/dev/null || echo "0")
 A4_FTW291_TRACE=$(pos_get_variable A4_FTW291_TRACE 2>/dev/null || echo "0")
 A4_MEM_FINGERPRINT=$(pos_get_variable A4_MEM_FINGERPRINT 2>/dev/null || echo "0")
+# Phase C (Inc 3d) — preflight fingerprinting + parallelism knobs
+A4_PREFLIGHT_FINGERPRINT=$(pos_get_variable A4_PREFLIGHT_FINGERPRINT 2>/dev/null || echo "0")
+A4_PREFLIGHT_FINGERPRINT_WIDE=$(pos_get_variable A4_PREFLIGHT_FINGERPRINT_WIDE 2>/dev/null || echo "0")
+A4_RAYON_THREADS=$(pos_get_variable A4_RAYON_THREADS 2>/dev/null || echo "")
+A4_RISC0_THREADS=$(pos_get_variable A4_RISC0_THREADS 2>/dev/null || echo "")
+A4_OMP_THREADS=$(pos_get_variable A4_OMP_THREADS 2>/dev/null || echo "")
 A4_NODE=$(pos_get_variable hostname 2>/dev/null || hostname)
 
 # ----- 2. workdir + result paths (all ABSOLUTE) -------------------------
@@ -254,6 +260,26 @@ fi
 if [[ "$A4_MEM_FINGERPRINT" = "1" ]]; then
     export A4_MEM_FINGERPRINT=1
     echo "[run_campaign_pos] A4_MEM_FINGERPRINT=1" | tee -a "$LOG"
+fi
+if [[ "$A4_PREFLIGHT_FINGERPRINT" = "1" ]]; then
+    export A4_PREFLIGHT_FINGERPRINT=1
+    echo "[run_campaign_pos] A4_PREFLIGHT_FINGERPRINT=1" | tee -a "$LOG"
+fi
+if [[ "$A4_PREFLIGHT_FINGERPRINT_WIDE" = "1" ]]; then
+    export A4_PREFLIGHT_FINGERPRINT_WIDE=1
+    echo "[run_campaign_pos] A4_PREFLIGHT_FINGERPRINT_WIDE=1 (large logs ~30 MB/run)" | tee -a "$LOG"
+fi
+if [[ -n "$A4_RAYON_THREADS" ]]; then
+    export RAYON_NUM_THREADS="$A4_RAYON_THREADS"
+    echo "[run_campaign_pos] RAYON_NUM_THREADS=$A4_RAYON_THREADS (forced)" | tee -a "$LOG"
+fi
+if [[ -n "$A4_RISC0_THREADS" ]]; then
+    export RISC0_THREADS="$A4_RISC0_THREADS"
+    echo "[run_campaign_pos] RISC0_THREADS=$A4_RISC0_THREADS (forced)" | tee -a "$LOG"
+fi
+if [[ -n "$A4_OMP_THREADS" ]]; then
+    export OMP_NUM_THREADS="$A4_OMP_THREADS"
+    echo "[run_campaign_pos] OMP_NUM_THREADS=$A4_OMP_THREADS (forced)" | tee -a "$LOG"
 fi
 export A4_COVERAGE_TOUCH=1
 export A4_FAMILY_RESIDUE=1

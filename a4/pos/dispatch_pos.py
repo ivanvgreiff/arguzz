@@ -115,6 +115,11 @@ class JobSpec:
     coverage_touch_verbose: bool = False
     ftw291_trace: bool = False
     mem_fingerprint: bool = False
+    preflight_fingerprint: bool = False
+    preflight_fingerprint_wide: bool = False
+    rayon_threads: int | None = None
+    risc0_threads: int | None = None
+    omp_threads: int | None = None
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "JobSpec":
@@ -129,6 +134,11 @@ class JobSpec:
             coverage_touch_verbose=bool(d.get("coverage_touch_verbose", False)),
             ftw291_trace=bool(d.get("ftw291_trace", False)),
             mem_fingerprint=bool(d.get("mem_fingerprint", False)),
+            preflight_fingerprint=bool(d.get("preflight_fingerprint", False)),
+            preflight_fingerprint_wide=bool(d.get("preflight_fingerprint_wide", False)),
+            rayon_threads=d.get("rayon_threads"),
+            risc0_threads=d.get("risc0_threads"),
+            omp_threads=d.get("omp_threads"),
         )
 
 
@@ -206,6 +216,16 @@ def _vars_yaml_for_job(job: JobSpec, manifest_name: str,
         out["A4_FTW291_TRACE"] = "1"
     if job.mem_fingerprint:
         out["A4_MEM_FINGERPRINT"] = "1"
+    if job.preflight_fingerprint:
+        out["A4_PREFLIGHT_FINGERPRINT"] = "1"
+    if job.preflight_fingerprint_wide:
+        out["A4_PREFLIGHT_FINGERPRINT_WIDE"] = "1"
+    if job.rayon_threads is not None:
+        out["A4_RAYON_THREADS"] = str(job.rayon_threads)
+    if job.risc0_threads is not None:
+        out["A4_RISC0_THREADS"] = str(job.risc0_threads)
+    if job.omp_threads is not None:
+        out["A4_OMP_THREADS"] = str(job.omp_threads)
     return out
 
 
