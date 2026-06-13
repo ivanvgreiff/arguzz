@@ -18,6 +18,8 @@ from a4.audits.audit_common import (
     INC2_SMOKE_SEED,
     INC2_VARIANTS,
     OUTPUT_DIR,
+    resolve_variant_dbs,
+    resolve_variant_traces,
     run_fuzz_smoke,
 )
 from a4.standalone.semantic_zones import SEMANTIC_ZONES
@@ -157,6 +159,8 @@ def audit_variant(
     vk: str,
     db_path: Path,
     trace_path: Path,
+    *,
+    expected_n: int = B4_N,
 ) -> Dict[str, Any]:
     trace_by_mid = _load_trace(trace_path)
     db_by_mid = _load_db_rows(db_path)
@@ -183,40 +187,19 @@ def audit_variant(
         "disagreements": disagreed[:10],
         "db": str(db_path),
         "trace": str(trace_path),
-        "verdict": "PASS" if agreed == n and n == B4_N else "FAIL",
+        "verdict": "PASS" if agreed == n and n == expected_n else "FAIL",
     }
 
 
-def _resolve_pos_artifacts(smoke_dir: Path) -> Dict[str, Tuple[Path, Path]]:
+def _resolve_pos_artifacts(smoke_dir: Path, *, expected_n: int = B4_N) -> Dict[str, Tuple[Path, Path]]:
     """Map V1..V5 to (db, trace) from POS or local smoke naming."""
-    selector_by_vk = {vk: spec["selector"] for vk, spec in INC2_VARIANTS.items()}
+    db_map = resolve_variant_dbs(smoke_dir, n_hint=expected_n)
+    trace_map = resolve_variant_traces(smoke_dir, db_map)
     mapping: Dict[str, Tuple[Path, Path]] = {}
-    for vk, selector in selector_by_vk.items():
-        patterns = [
-            f"pos_audit_b4_{selector}_seed{INC2_SMOKE_SEED}_n{B4_N}.db",
-            f"b4_{vk}_seed{INC2_SMOKE_SEED}_n{B4_N}.db",
-            f"*_{selector}_seed{INC2_SMOKE_SEED}_n{B4_N}.db",
-        ]
-        db_path = None
-        for pat in patterns:
-            hits = sorted(smoke_dir.glob(pat))
-            if hits:
-                db_path = hits[0]
-                break
-        if db_path is None:
-            continue
-        trace_patterns = [
-            db_path.with_suffix(".bandit_trace.jsonl"),
-            smoke_dir / f"b4_{vk}_trace.jsonl",
-            db_path.parent / (db_path.stem + ".bandit_trace.jsonl"),
-        ]
-        trace_path = None
-        for tp in trace_patterns:
-            if tp.exists():
-                trace_path = tp
-                break
-        if trace_path is not None:
-            mapping[vk] = (db_path, trace_path)
+    for vk, db_path in db_map.items():
+        trace = trace_map.get(vk)
+        if trace is not None:
+            mapping[vk] = (db_path, trace)
     return mapping
 
 
@@ -248,15 +231,21 @@ def run_campaigns(smoke_dir: Path, host: str, host_args: List[str]) -> Dict[str,
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="B4 bandit DB traceability")
-    parser.add_argument("--smoke-dir", default=str(OUTPUT_DIR / "inc3_smokes"))
+    parser.add_argument("--smoke-dir", default=str(OUTPUT_DIR / "inc3_smokes"),
+                        help="Directory with variant DBs + bandit traces")
+    parser.add_argument("--db-dir", default=None,
+                        help="Alias for --smoke-dir (Inc 4 convention)")
+    parser.add_argument("--expected-n", type=int, default=B4_N,
+                        help="Expected mutations per variant")
     parser.add_argument("--host", default=DEFAULT_HOST)
     parser.add_argument("--run", action="store_true", help="Run local N=50 campaigns")
     parser.add_argument("--output", default=str(OUTPUT_DIR / "B4_bandit_db_traceability.json"))
     parser.add_argument("host_args", nargs="*", default=INC2_HOST_ARGS)
     args = parser.parse_args()
 
-    smoke_dir = Path(args.smoke_dir)
+    smoke_dir = Path(args.db_dir or args.smoke_dir)
     smoke_dir.mkdir(parents=True, exist_ok=True)
+    expected_n = args.expected_n
 
     if args.run:
         run_campaigns(smoke_dir, args.host, args.host_args)
@@ -267,13 +256,13 @@ def main() -> int:
             "audit": "B4_bandit_db_traceability",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "seed": INC2_SMOKE_SEED,
-            "n_per_variant": B4_N,
+            "n_per_variant": expected_n,
         },
         "per_variant": {},
         "verdict": "PENDING",
     }
 
-    pos_map = _resolve_pos_artifacts(smoke_dir)
+    pos_map = _resolve_pos_artifacts(smoke_dir, expected_n=expected_n)
     if len(pos_map) < 5:
         missing = set(INC2_VARIANTS) - set(pos_map)
         print(f"ERROR: missing B4 artifacts for {missing} in {smoke_dir}", file=sys.stderr)
@@ -284,7 +273,7 @@ def main() -> int:
     total_n = 0
     for vk in sorted(INC2_VARIANTS):
         db, trace = pos_map[vk]
-        pv = audit_variant(vk, db, trace)
+        pv = audit_variant(vk, db, trace, expected_n=expected_n)
         report["per_variant"][vk] = pv
         total_agreed += pv["n_agreed"]
         total_n += pv["n_mutations"]

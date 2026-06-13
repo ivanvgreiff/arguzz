@@ -1,0 +1,142 @@
+{
+  "run_id": "a4_memval_load_x_s0",
+  "run_type": "a4",
+  "part": "C",
+  "variant": "MEM_VAL",
+  "kind": "MEM_VAL_MOD",
+  "role": "load_x",
+  "seed": 0,
+  "inject_step": 193,
+  "mutated_value": 2654435764,
+  "mutated_word": null,
+  "mutated_word_hex": null,
+  "decoded_instruction": null,
+  "outcome_class": "CONSTRAINT_REJECT",
+  "preflight_crash": false,
+  "verifier_success": false,
+  "soundness_escape": false,
+  "failure_count": 4,
+  "layers": {
+    "intrastep-local": 2,
+    "interstep-local": 2,
+    "global": 1
+  },
+  "buckets": {
+    "intrastep-local": [
+      {
+        "constraint_type": "L2",
+        "constraint_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+        "cycle": 14464,
+        "step": 191,
+        "pc": 2099260,
+        "major": 5,
+        "minor": 2,
+        "value": 2013234768,
+        "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+        "phase": "local",
+        "category": "L2"
+      },
+      {
+        "constraint_type": "L2",
+        "constraint_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+        "cycle": 14464,
+        "step": 191,
+        "pc": 2099260,
+        "major": 5,
+        "minor": 2,
+        "value": 2013225418,
+        "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+        "phase": "local",
+        "category": "L2"
+      }
+    ],
+    "interstep-local": [
+      {
+        "constraint_type": "L2",
+        "constraint_loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+        "cycle": 14464,
+        "step": 191,
+        "pc": 2099260,
+        "major": 5,
+        "minor": 2,
+        "value": 2013234768,
+        "full_loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+        "phase": "local",
+        "category": "L2"
+      },
+      {
+        "constraint_type": "L2",
+        "constraint_loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+        "cycle": 14464,
+        "step": 191,
+        "pc": 2099260,
+        "major": 5,
+        "minor": 2,
+        "value": 2013225418,
+        "full_loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+        "phase": "local",
+        "category": "L2"
+      }
+    ],
+    "global": []
+  },
+  "global_families": [
+    {
+      "family": "memory",
+      "address": null
+    }
+  ],
+  "provenance": [
+    {
+      "layer": "intrastep-local",
+      "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "value": 2013234768,
+      "verified": false,
+      "predicted_primary": 1372096081,
+      "predicted_alt": 641169840,
+      "observed": 2013234768,
+      "original": 3,
+      "mutated": 2654435764
+    },
+    {
+      "layer": "intrastep-local",
+      "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+      "value": 2013225418,
+      "verified": false,
+      "predicted_primary": 1372096081,
+      "predicted_alt": 641169840,
+      "observed": 2013225418,
+      "original": 3,
+      "mutated": 2654435764
+    },
+    {
+      "layer": "interstep-local",
+      "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zi",
+      "value": 2013234768,
+      "verified": false,
+      "predicted_primary": 1372096081,
+      "predicted_alt": 641169840,
+      "observed": 2013234768,
+      "original": 3,
+      "mutated": 2654435764
+    },
+    {
+      "layer": "interstep-local",
+      "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zi",
+      "value": 2013225418,
+      "verified": false,
+      "predicted_primary": 1372096081,
+      "predicted_alt": 641169840,
+      "observed": 2013225418,
+      "original": 3,
+      "mutated": 2654435764
+    }
+  ],
+  "example_loc_residue": "global family memory nonzero",
+  "log_path": "thesis_side_experiments/minimal_add/artifacts/e2/pos_full/logs/a4_memval_load_x_s0.log",
+  "fields_changed": null,
+  "field_class": null,
+  "config_file": "configs/a4_memval_load_x_s0.json",
+  "txn_type": "load_mem_read",
+  "arguzz_mirror": "n/a \u2014 no in-place memory-read mutation"
+}

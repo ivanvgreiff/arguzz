@@ -1,0 +1,48 @@
+{
+  "run_id": "a4_sur_rs1",
+  "run_type": "a4",
+  "part": "B",
+  "variant": "SUR",
+  "kind": "INSTR_WORD_MOD_SUR",
+  "role": "add",
+  "seed": 0,
+  "inject_step": 195,
+  "mutated_value": null,
+  "mutated_word": 12912051,
+  "mutated_word_hex": "0x00c505b3",
+  "decoded_instruction": {
+    "word_hex": "0x00c505b3",
+    "disassembly": "ADD x11, x10, x12",
+    "format_name": "OP"
+  },
+  "outcome_class": "GLOBAL_REJECT",
+  "preflight_crash": false,
+  "verifier_success": false,
+  "soundness_escape": false,
+  "failure_count": 0,
+  "layers": {
+    "intrastep-local": 0,
+    "interstep-local": 0,
+    "global": 1
+  },
+  "buckets": {
+    "intrastep-local": [],
+    "interstep-local": [],
+    "global": []
+  },
+  "global_families": [
+    {
+      "family": "memory",
+      "address": null
+    }
+  ],
+  "provenance": [],
+  "example_loc_residue": "global family memory nonzero",
+  "log_path": "thesis_side_experiments/minimal_add/artifacts/e2/pos_full/logs/a4_sur_rs1.log",
+  "fields_changed": [
+    "rs1"
+  ],
+  "field_class": "rs1",
+  "config_file": "configs/a4_sur_rs1.json",
+  "surgical_field": "rs1"
+}

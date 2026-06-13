@@ -25,6 +25,7 @@ _required() {
 A4_VARIANT=$(_required A4_VARIANT)
 A4_CAMPAIGN_NAME=$(_required A4_CAMPAIGN_NAME)
 A4_HOST_ARGS=$(pos_get_variable A4_HOST_ARGS 2>/dev/null || echo "--in1 5 --in4 10")
+A4_EXPECTED_N=$(pos_get_variable A4_EXPECTED_N 2>/dev/null || echo "")
 A4_RUN_ID=$(pos_get_variable A4_RUN_ID 2>/dev/null || echo "b1_verify_${A4_VARIANT}_$(date +%s)")
 A4_NODE=$(pos_get_variable hostname 2>/dev/null || hostname)
 
@@ -54,12 +55,12 @@ fi
 mkdir -p "$VERIFY_DIR/out" "$RESULTS"
 # Dispatcher copies DB to /root/*.db — stage into VERIFY_DIR for glob resolver
 shopt -s nullglob
-for db in /root/pos_audit_b1_*.db; do
+for db in /root/pos_audit_*.db; do
     cp -a "$db" "$VERIFY_DIR/"
 done
 shopt -u nullglob
 if ! compgen -G "$VERIFY_DIR/*.db" >/dev/null; then
-    echo "[run_verify_b1] FATAL: no pos_audit_b1_*.db staged in $VERIFY_DIR" >&2
+    echo "[run_verify_b1] FATAL: no pos_audit_*.db staged in $VERIFY_DIR" >&2
     ls -la /root "$VERIFY_DIR" >&2 || true
     exit 2
 fi
@@ -78,11 +79,15 @@ mkdir -p "$(dirname "$LOG")"
 cd "$REPO_DIR"
 export PYTHONUNBUFFERED=1
 
+# shellcheck disable=SC2206
+HOST_ARR=($A4_HOST_ARGS)
 python3 a4/audits/B1_hook_fidelity.py \
     --db-dir "$VERIFY_DIR" \
     --variants "$A4_VARIANT" \
     --host "$HOST_BIN" \
+    ${A4_EXPECTED_N:+--expected-n "$A4_EXPECTED_N"} \
     --output "$VERIFY_DIR/out/B1_${A4_VARIANT}.json" \
+    -- "${HOST_ARR[@]}" \
     2>&1 | tee -a "$LOG"
 
 echo "[run_verify_b1] DONE variant=$A4_VARIANT" | tee -a "$LOG"

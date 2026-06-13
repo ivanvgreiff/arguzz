@@ -419,34 +419,60 @@ def _set_variables_cli(node: str, yml_path: str) -> None:
         print(f"  [set_variables] {proc.stdout.strip()}")
 
 
-def _await_id_silently(cid: str, timeout_s: int) -> tuple[int, str]:
+def _await_id_silently(cid: str, timeout_s: int, max_retries: int = 3) -> tuple[int, str]:
     """Wait for one POS command id; return (exit_code, error_message).
 
     NOTE per official docs: `poslib.api.commands.await_id(command_id)` takes
     EXACTLY one argument (no timeout kwarg). Timeout enforcement is up to us.
     We do a coarse external deadline via signal.alarm to avoid hanging forever.
     Return shapes from poslib vary (see _normalise_exit_code).
+
+    Resilience (added 2026-06-13 after Inc 4 B1 verify incident):
+    poslib's `await_id` performs an HTTP GET against the POS coordinator
+    (`http://172.16.128.1:5000/commands/await/<cid>`). Under coordinator load
+    or transient network blips this GET can fail with a `requests.ConnectionError`
+    or `requests.Timeout`, even though the underlying command is still
+    running on the node and will finish normally. We RETRY transient HTTP
+    failures up to `max_retries` times with exponential backoff before
+    giving up. Hard non-network errors (ValueError, etc.) bubble out
+    immediately.
     """
-    try:
-        import signal
-
-        def _alarm_handler(signum, frame):  # noqa: ARG001
-            raise TimeoutError(f"await_id exceeded {timeout_s}s")
-
-        # SIGALRM only works on the main thread on POSIX. For this dispatcher
-        # context (single-threaded mgmt node) that is fine.
-        old = signal.signal(signal.SIGALRM, _alarm_handler)
-        signal.alarm(int(timeout_s))
+    import signal
+    last_err = ""
+    for attempt in range(max_retries):
         try:
-            rc = pos.commands.await_id(cid)
-        finally:
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, old)
-        return _normalise_exit_code(rc), ""
-    except TimeoutError as e:
-        return 254, str(e)
-    except Exception as e:
-        return 255, f"poslib exception: {e}"
+            def _alarm_handler(signum, frame):  # noqa: ARG001
+                raise TimeoutError(f"await_id exceeded {timeout_s}s")
+
+            # SIGALRM only works on the main thread on POSIX. For this dispatcher
+            # context (single-threaded mgmt node) that is fine.
+            old = signal.signal(signal.SIGALRM, _alarm_handler)
+            signal.alarm(int(timeout_s))
+            try:
+                rc = pos.commands.await_id(cid)
+            finally:
+                signal.alarm(0)
+                signal.signal(signal.SIGALRM, old)
+            return _normalise_exit_code(rc), ""
+        except TimeoutError as e:
+            return 254, str(e)
+        except Exception as e:
+            last_err = f"poslib exception: {e}"
+            msg = str(e).lower()
+            transient = (
+                "unable to get url" in msg
+                or "connection" in msg
+                or "timeout" in msg
+                or "remote disconnect" in msg
+                or "broken pipe" in msg
+            )
+            if not transient or attempt == max_retries - 1:
+                return 255, last_err
+            backoff_s = 5 * (2 ** attempt)  # 5s, 10s, 20s
+            print(f"[await {cid[:30]}] transient HTTP error (attempt {attempt+1}/{max_retries}); "
+                  f"retrying in {backoff_s}s: {e}", file=sys.stderr)
+            time.sleep(backoff_s)
+    return 255, last_err
 
 
 # --------------------------------------------------------------------- #

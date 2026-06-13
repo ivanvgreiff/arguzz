@@ -1,0 +1,15 @@
+{
+  "_doc": "Phase 7d Inc 4 B11 SCALE STRESS — 5 variants × N=500 each. Recommend parallel on 5 nodes for ~70 min wall total; otherwise ~6 hr sequential.",
+  "name": "pos_audit_b11",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "parallel": true,
+  "jobs": [
+    {"strategy": "zoned",                "seed": 999, "n": 500, "telemetry_level": "full", "debug_bandit_trace": true},
+    {"strategy": "kindUCB_zoned_v1",     "seed": 999, "n": 500, "telemetry_level": "full", "debug_bandit_trace": true},
+    {"strategy": "kindUCB_zoned_v2_noQ", "seed": 999, "n": 500, "telemetry_level": "full", "debug_bandit_trace": true},
+    {"strategy": "kindTS_zoned_v2",      "seed": 999, "n": 500, "telemetry_level": "full", "debug_bandit_trace": true},
+    {"strategy": "cTS_semantic_v2",      "seed": 999, "n": 500, "telemetry_level": "full", "debug_bandit_trace": true}
+  ]
+}

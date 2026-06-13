@@ -132,25 +132,51 @@ The universe builder correctly drops them.
 
 ## Guest: sha2-host @ `--in1 1 --in4 1` (SMALL INPUT)
 
-**Status:** TO BE FILLED. Composer: run `a4/audits/A3_arm_step_integrity.py
---in1 1 --in4 1` and update this section with the resulting arm table.
+**Status:** FILLED (Inc 4 B12 pre-flight, 2026-06-08). Source: `a4/audits/audit_output/A3_arms_in1_1_in4_1.json`.
 
-Expected differences from baseline:
-- Fewer cycles overall (less hashing work)
-- Same kind × zone arm presence (the GUEST code is identical, only the
-  input values differ — so the cycle MIX should be similar in proportion)
-- Step counts scaled roughly proportionally
+**Trace shape (A3):**
+- total steps: 3930 (identical to baseline — sha2-host trace is input-invariant for in1/in4 in range 1–100)
+- expected arms: **48**
+- expected dropped arms: **13** (phantom pruning; more coarse intersections than baseline's 5 because fewer steps qualify per dropped arm at this input, but same kept set)
+
+**Adjudication (E3 mini-session):**
+- **New arms vs baseline:** none (0/48 difference in arm presence)
+- **Dropped arms vs baseline:** none
+- **Step counts vs baseline:** identical on all 48 kept arms (surprising but confirmed — guest cycle mix does not change with `--in1 1 --in4 1` for sha2-host)
+- **Verdict:** 🟢 all 48 arms inherit baseline status; no new categorization decisions required
+
+### Kept arms (48)
+
+**Identical to baseline** (`--in1 5 --in4 10` section above). A3 confirms exact same 48 `(kind, zone)` pairs with identical step counts. A5 tolerance gates use the baseline table.
+
+### Expected-DROPPED arms
+
+Same 5 phantom arms as baseline (see baseline section). A3 additionally reports 13 coarse intersections dropped by phantom pruning at this input.
 
 ---
 
 ## Guest: sha2-host @ `--in1 100 --in4 100` (LARGE INPUT)
 
-**Status:** TO BE FILLED. Composer: run `a4/audits/A3_arm_step_integrity.py
---in1 100 --in4 100` and update this section.
+**Status:** FILLED (Inc 4 B12 pre-flight, 2026-06-08). Source: `a4/audits/audit_output/A3_arms_in1_100_in4_100.json`.
 
-Expected differences from baseline:
-- Roughly 10× more arithmetic / load / store / mul steps
-- Same arm PRESENCE; step counts scaled up
+**Trace shape (A3):**
+- total steps: 3930 (identical to baseline)
+- expected arms: **48**
+- expected dropped arms: **13**
+
+**Adjudication (E3 mini-session):**
+- **New arms vs baseline:** none — `core_sha`, `core_other`, `core_poseidon` remain empty (no BigInt/SHA accelerator cycles unlocked)
+- **Dropped arms vs baseline:** none
+- **Step counts vs baseline:** identical on all 48 kept arms
+- **Verdict:** 🟢 inherit baseline; the "10× more arithmetic" hypothesis does NOT hold for this guest — input size does not alter the static trace shape
+
+### Kept arms (48)
+
+**Identical to baseline** (`--in1 5 --in4 10` section above).
+
+### Expected-DROPPED arms
+
+Same as small-input section.
 
 ---
 

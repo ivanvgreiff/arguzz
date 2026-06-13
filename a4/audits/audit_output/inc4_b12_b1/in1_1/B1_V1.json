@@ -1,0 +1,79 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    },
+    "audit": "B1_hook_fidelity",
+    "timestamp": "2026-06-13T16:14:18.271114+00:00",
+    "seed": 999,
+    "n_per_variant": 50,
+    "verifier": "a4/tools/verify_mutation_semantics.py (strict P1)"
+  },
+  "per_variant": {
+    "V1": {
+      "total": 50,
+      "pass": 50,
+      "fail": 0,
+      "stratification": {
+        "LOAD_VAL_MOD|bucket3": 1,
+        "INSTR_WORD_MOD_SUR|bucket9": 1,
+        "MEM_VAL_MOD|bucket5": 1,
+        "PRE_EXEC_REG_MOD|bucket10": 1,
+        "INSTR_TYPE_MOD|bucket1": 3,
+        "INSTR_TYPE_MOD|bucket14": 1,
+        "LOAD_VAL_MOD|bucket7": 2,
+        "INSTR_TYPE_MOD|bucket15": 2,
+        "PRE_EXEC_REG_MOD|bucket4": 1,
+        "MEM_VAL_MOD|bucket15": 2,
+        "LOAD_VAL_MOD|bucket9": 1,
+        "INSTR_WORD_MOD_SUR|bucket0": 1,
+        "STORE_OUT_MOD|bucket15": 3,
+        "INSTR_WORD_MOD_SUR|bucket11": 1,
+        "COMP_OUT_MOD|bucket8": 1,
+        "PRE_EXEC_REG_MOD|bucket11": 1,
+        "PRE_EXEC_REG_MOD|bucket0": 1,
+        "INSTR_TYPE_MOD|bucket4": 1,
+        "INSTR_WORD_MOD_SUR|bucket14": 1,
+        "STORE_OUT_MOD|bucket13": 1,
+        "PRE_EXEC_REG_MOD|bucket15": 2,
+        "LOAD_VAL_MOD|bucket10": 1,
+        "COMP_OUT_MOD|bucket10": 1,
+        "PRE_EXEC_REG_MOD|bucket9": 1,
+        "INSTR_TYPE_MOD|bucket3": 1,
+        "MEM_VAL_MOD|bucket13": 1,
+        "LOAD_VAL_MOD|bucket1": 1,
+        "COMP_OUT_MOD|bucket11": 1,
+        "INSTR_WORD_MOD_FULL|bucket14": 1,
+        "COMP_OUT_MOD|bucket2": 1,
+        "INSTR_WORD_MOD_FULL|bucket15": 1,
+        "LOAD_VAL_MOD|bucket12": 1,
+        "INSTR_TYPE_MOD|bucket12": 1,
+        "PRE_EXEC_REG_MOD|bucket14": 1,
+        "INSTR_TYPE_MOD|bucket0": 2,
+        "INSTR_WORD_MOD_FULL|bucket13": 1,
+        "INSTR_WORD_MOD_FULL|bucket1": 1,
+        "INSTR_WORD_MOD_SUR|bucket5": 2,
+        "INSTR_WORD_MOD_SUR|bucket13": 1,
+        "LOAD_VAL_MOD|bucket5": 1
+      },
+      "multicycle_flags": 0,
+      "failures": [],
+      "selector": "zoned",
+      "db": "/root/b1_verify/pos_audit_b12_in1_1_in4_1_zoned_seed999_n50.db",
+      "verdict": "PASS"
+    }
+  },
+  "prevalidate": null,
+  "verdict": "PASS",
+  "totals": {
+    "pass": 50,
+    "mutations": 50
+  }
+}

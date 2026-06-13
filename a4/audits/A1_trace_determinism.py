@@ -74,6 +74,7 @@ def main():
     p.add_argument("--in1", default="5")
     p.add_argument("--in4", default="10")
     p.add_argument("--runs", type=int, default=3)
+    p.add_argument("--output", default=None, help="Output JSON path (default: audit_output/A1_nondet_addrs.json)")
     args = p.parse_args()
 
     OUTPUT_DIR.mkdir(exist_ok=True)
@@ -152,7 +153,7 @@ def main():
         region_counts[categorize(addr)] += 1
     print(f"  Region categorization: {dict(region_counts)}")
 
-    out_file = OUTPUT_DIR / "A1_nondet_addrs.json"
+    out_file = Path(args.output) if args.output else OUTPUT_DIR / "A1_nondet_addrs.json"
     out_file.write_text(json.dumps({
         "host_args": [f"--in1={args.in1}", f"--in4={args.in4}"],
         "runs": args.runs,

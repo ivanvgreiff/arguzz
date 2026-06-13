@@ -20,6 +20,7 @@ from a4.audits.audit_common import (
     INC2_VARIANTS,
     OUTPUT_DIR,
     arm_key,
+    resolve_variant_dbs,
     run_fuzz_smoke,
 )
 from a4.standalone.arm_universe import ArmUniverse
@@ -194,21 +195,7 @@ def verify_db(
 
 
 def _resolve_db_paths(db_dir: Path) -> Dict[str, Path]:
-    mapping: Dict[str, Path] = {}
-    patterns = {
-        "V1": ["*pos_audit_b1_zoned_seed999_n200.db", "*_b1_zoned_*.db"],
-        "V2": ["*pos_audit_b1_kindUCB_zoned_v1_seed999_n200.db"],
-        "V3": ["*pos_audit_b1_kindUCB_zoned_v2_noQ_seed999_n200.db"],
-        "V4": ["*pos_audit_b1_kindTS_zoned_v2_seed999_n200.db"],
-        "V5": ["*pos_audit_b1_cTS_semantic_v2_seed999_n200.db"],
-    }
-    for vk, globs in patterns.items():
-        for pat in globs:
-            hits = sorted(db_dir.glob(pat))
-            if hits:
-                mapping[vk] = hits[0]
-                break
-    return mapping
+    return resolve_variant_dbs(db_dir)
 
 
 def run_prevalidate(host: str, host_args: List[str], out_dir: Path) -> Dict[str, Any]:
@@ -250,6 +237,10 @@ def main() -> int:
         default=None,
         help="Comma-separated subset to verify (e.g. V1,V2). For POS parallel shards.",
     )
+    parser.add_argument("--expected-n", type=int, default=None,
+                        help="Expected mutation count per variant (default: 200)")
+    parser.add_argument("--nondet-path", default=None,
+                        help="A1 nondet allowlist JSON (default: audit_output/A1_nondet_addrs.json)")
     parser.add_argument("host_args", nargs="*", default=INC2_HOST_ARGS)
     args = parser.parse_args()
     variant_filter: Optional[List[str]] = None
@@ -260,13 +251,14 @@ def main() -> int:
             print(f"ERROR: unknown variants {bad}", file=sys.stderr)
             return 2
 
+    expected_n = args.expected_n if args.expected_n is not None else B1_N_PER_VARIANT
     report: Dict[str, Any] = {
         "_meta": {
             **GLOSSARY_META,
             "audit": "B1_hook_fidelity",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "seed": INC2_SMOKE_SEED,
-            "n_per_variant": B1_N_PER_VARIANT,
+            "n_per_variant": expected_n,
             "verifier": "a4/tools/verify_mutation_semantics.py (strict P1)",
         },
         "per_variant": {},
@@ -315,7 +307,7 @@ def main() -> int:
         db_path = db_map[vk]
         print(f"[B1] verifying {vk} from {db_path}", flush=True)
         pv = verify_db(db_path, args.host, args.host_args, vk, limit=args.limit)
-        expected = B1_N_PER_VARIANT if args.limit is None else args.limit
+        expected = expected_n if args.limit is None else args.limit
         ok = pv["pass"] == expected and pv["fail"] == 0
         report["per_variant"][vk] = {
             **pv,

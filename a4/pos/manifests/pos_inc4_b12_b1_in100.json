@@ -1,0 +1,15 @@
+{
+  "_doc": "Inc 4 B12 B1 strict verifier @ --in1 100 --in4 100. 5×N=50 mutations.",
+  "name": "pos_inc4_b12_b1_in100",
+  "image": "debian-trixie",
+  "guest_args": ["--in1", "100", "--in4", "100"],
+  "expected_n": 50,
+  "results_dir": "/srv/testbed/results/ivgreiff/a4/pos_audit_b12_in1_100_in4_100/2026-06-13_09-15-11_844735",
+  "jobs": [
+    {"variant": "V1", "db": "octorand/pos_audit_b12_in1_100_in4_100_zoned_seed999_n50.db"},
+    {"variant": "V2", "db": "opulous/pos_audit_b12_in1_100_in4_100_kindUCB_zoned_v1_seed999_n50.db"},
+    {"variant": "V3", "db": "polynize/pos_audit_b12_in1_100_in4_100_kindUCB_zoned_v2_noQ_seed999_n50.db"},
+    {"variant": "V4", "db": "algofi/pos_audit_b12_in1_100_in4_100_kindTS_zoned_v2_seed999_n50.db"},
+    {"variant": "V5", "db": "meld/pos_audit_b12_in1_100_in4_100_cTS_semantic_v2_seed999_n50.db"}
+  ]
+}

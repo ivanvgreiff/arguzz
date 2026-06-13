@@ -1,0 +1,15 @@
+{
+  "_doc": "Phase 7d Inc 4 B8 PARALLEL — 5 variants run simultaneously on 5 different nodes. Combined with pos_audit_b8_seq.json for concurrent-isolation diff. Verify per-job start timestamps are within 60 sec of each other (true parallel).",
+  "name": "pos_audit_b8_par",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "parallel": true,
+  "jobs": [
+    {"strategy": "zoned",                "seed": 999, "n": 50, "telemetry_level": "full"},
+    {"strategy": "kindUCB_zoned_v1",     "seed": 999, "n": 50, "telemetry_level": "full"},
+    {"strategy": "kindUCB_zoned_v2_noQ", "seed": 999, "n": 50, "telemetry_level": "full"},
+    {"strategy": "kindTS_zoned_v2",      "seed": 999, "n": 50, "telemetry_level": "full"},
+    {"strategy": "cTS_semantic_v2",      "seed": 999, "n": 50, "telemetry_level": "full"}
+  ]
+}

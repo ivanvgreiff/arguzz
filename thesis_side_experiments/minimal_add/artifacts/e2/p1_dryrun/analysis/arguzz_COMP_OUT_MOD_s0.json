@@ -1,0 +1,59 @@
+{
+  "run_id": "arguzz_COMP_OUT_MOD_s0",
+  "run_type": "arguzz",
+  "kind": "COMP_OUT_MOD",
+  "role": "add",
+  "seed": 0,
+  "inject_step": 195,
+  "mutated_value": 6,
+  "mutated_word": null,
+  "mutated_word_hex": null,
+  "decoded_instruction": null,
+  "outcome_class": "CONSTRAINT_REJECT",
+  "preflight_crash": false,
+  "verifier_success": false,
+  "soundness_escape": false,
+  "failure_count": 1,
+  "layers": {
+    "intrastep-local": 1,
+    "interstep-local": 0,
+    "global": 0
+  },
+  "buckets": {
+    "intrastep-local": [
+      {
+        "constraint_type": "L2",
+        "constraint_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+        "cycle": 14466,
+        "step": 193,
+        "pc": 2099268,
+        "major": 0,
+        "minor": 0,
+        "value": 2013265920,
+        "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+        "phase": "local",
+        "category": "L2"
+      }
+    ],
+    "interstep-local": [],
+    "global": []
+  },
+  "global_families": [],
+  "provenance": [
+    {
+      "layer": "intrastep-local",
+      "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "value": 2013265920,
+      "verified": false,
+      "predicted_primary": 0,
+      "predicted_alt": 0,
+      "observed": 2013265920,
+      "original": 6,
+      "mutated": 6
+    }
+  ],
+  "example_loc_residue": "intrastep-local: MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:9\u2026 value=2013265920",
+  "log_path": "/root/arguzz/thesis_side_experiments/minimal_add/artifacts/e2/p1_dryrun/logs/arguzz_COMP_OUT_MOD_s0.log",
+  "fields_changed": null,
+  "field_class": null
+}

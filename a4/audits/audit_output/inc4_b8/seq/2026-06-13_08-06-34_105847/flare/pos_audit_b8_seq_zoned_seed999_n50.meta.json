@@ -1,0 +1,16 @@
+{
+  "campaign_name":  "pos_audit_b8_seq",
+  "run_id":         "pos_audit_b8_seq_zoned_seed999_n50",
+  "node":           "flare",
+  "strategy":       "zoned",
+  "seed":           999,
+  "num_requested":  50,
+  "num_recorded": 50,
+  "b_count":        16,
+  "host_args":      "--in1 5 --in4 10",
+  "host_sha256":    "6873e5887dd98a84885ebe0dfb88ae2b05b113810b76ca586d9a7a19805cc444",
+  "git_commit":     "1afc0bd74d8b683dec7a2b7e301f7dd115293866",
+  "started_at":     "2026-06-13T06:11:12Z",
+  "ended_at": "2026-06-13T06:13:47Z",
+  "exit_code": 0
+}

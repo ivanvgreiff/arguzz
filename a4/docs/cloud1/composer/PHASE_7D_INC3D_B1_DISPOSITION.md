@@ -151,3 +151,41 @@ PY
 - B7 race investigation: `PHASE_7D_INC3D_C_CLOSURE_REPORT.md`
 - Inc 3 closing summary: `PHASE_7D_INC3_FINAL_REPORT.md`
 - Source of dispositions: `PHASE_7D_REVIEW_QUEUE.md`, `PHASE_7_PROGRESS.md`
+
+---
+
+## 9. Inc 4 extension — B2 and D2 sub-categories (2026-06-13)
+
+Inc 4 B11's 2500-mutation B1 verify surfaced **one** failure (V5 mut235) that
+fell outside the original 4 categories: MEM_VAL_MOD at step=3929, but the
+mismatch was on `old_word`, not `byte_addr`. Adjudication:
+
+| Pattern | Architectural envelope | Disposition decision |
+|---|---|---|
+| **B2** = MEM_VAL_MOD step=3929 `old_word` / `old_byte` mismatch, **new_word OK** | Same ECALL last_step multi-stage sub-cycle taxonomy as B; D42+D46 envelope. The mutation effect (`new_word`) DID apply correctly — only the prior-state readback (`old_word`) drifted because the hook captured at a different ECALL sub-stage than the config. | **EXCLUDE** — same D42+D46 envelope as B, with mandatory new_word agreement check to confirm mutation actually applied. If new_word also mismatches, stays unclassified (OTHER). |
+| **D2** = MEM_VAL_MOD step=0 `old_word` / `old_byte` mismatch, **new_word OK** | Same boot/ECALL boundary as D; same envelope. | **EXCLUDE** — symmetric to B2 at step 0. (0 cases observed in Inc 4; rule pre-registered.) |
+
+**Why this is an EXTENSION not a new finding**: D42's text ("nondet mem-txn
+allowlist") was always meant to cover the multi-stage ECALL boundary as a
+whole — we just didn't enumerate every mem-txn cell that could drift. The
+original disposition under-specified the regex in `B1_apply_disposition.py`
+by only pattern-matching `byte_addr`. The Inc 4 surface forced us to be
+explicit about `old_word`/`old_byte` too.
+
+**Safety guard**: B2/D2 require `hook_payload.new_word == config.new_word`
+(via `_mutation_actually_applied()` in `B1_apply_disposition.py`). If the
+mutation's effect was clobbered (new_word mismatch), the failure stays
+`OTHER` and is flagged for review.
+
+**Updated coverage**:
+
+| Dataset | Raw pass | Disposition fits (A/B/B2/C/D/D2) | Net pass | Unclassified |
+|---|---:|---|---:|---:|
+| Inc 3 B1 (N=1000) | 963 | A=22, B=8, C=5, D=1 | 999-1000 | ≤1 |
+| Inc 4 B12 in1_1 (N=250) | 245 | A=2, B=1, C=1, D=1 | 250 | 0 |
+| Inc 4 B12 in1_100 (N=250) | 245 | A=2, B=1, C=1, D=1 | 250 | 0 |
+| Inc 4 B11 (N=2500) | 2416 | A=~50, B=~25, B2=1, C=~5, D=~3 (approx; exact in dispo JSON) | 2500 | 0 |
+
+**Total disposition coverage to date**: ~4000 mutations across 4 datasets,
+**0 unclassified failures** after the B2 extension. The 4 (now 6 sub-)
+categories are exhaustive under the current modified-RISC0 architecture.

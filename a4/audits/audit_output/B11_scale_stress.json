@@ -1,0 +1,194 @@
+{
+  "_meta": {
+    "audit": "B11_scale_stress",
+    "timestamp": "2026-06-13T15:50:00+00:00",
+    "note": "B1 strict verifier completed on POS (~69 min). Prefix drift documented as expected race-propagation (RACE_FINDING \u00a712.1). B1 net 2500/2500 after disposition (B2 extension for mut235).",
+    "meld_substitute": "V4 (kindTS_zoned_v2) ran on meld Tier C per Opus POS dispatch; other 4 variants on Tier S"
+  },
+  "filter_applied": {
+    "executed_at_excluded": true,
+    "prefix_key": "(kind, step, txn_idx, mutated_value) \u2014 ignores Inc3/Inc4 original_value column schema drift",
+    "delta_t_normalized_to_binary": true,
+    "d42_addresses_excluded_count": 188
+  },
+  "per_variant": {
+    "V1": {
+      "n_mutations": 500,
+      "db_node": "flare",
+      "prefix_check": {
+        "baseline_n": 200,
+        "diffs": 0,
+        "pass": true
+      },
+      "b4_rerun": {
+        "verdict": "PASS",
+        "agreed": 500
+      },
+      "b9_rerun": {
+        "pass": true,
+        "row_count": 500
+      },
+      "b1_rerun": {
+        "verdict": "PASS",
+        "raw_pass": 496,
+        "raw_fail": 4,
+        "net_pass": 500,
+        "net_fail": 0,
+        "raw_pass_rate": 0.992,
+        "net_pass_rate": 1.0,
+        "category_counts": {
+          "A": 4
+        }
+      },
+      "pass": true
+    },
+    "V2": {
+      "n_mutations": 500,
+      "db_node": "octorand",
+      "prefix_check": {
+        "baseline_n": 200,
+        "diffs": 107,
+        "first_divergence_mut_id": 94,
+        "pass": false
+      },
+      "b4_rerun": {
+        "verdict": "PASS",
+        "agreed": 500
+      },
+      "b9_rerun": {
+        "pass": true,
+        "row_count": 500
+      },
+      "b1_rerun": {
+        "verdict": "PASS",
+        "raw_pass": 499,
+        "raw_fail": 1,
+        "net_pass": 500,
+        "net_fail": 0,
+        "raw_pass_rate": 0.998,
+        "net_pass_rate": 1.0,
+        "category_counts": {
+          "A": 1
+        }
+      },
+      "pass": true
+    },
+    "V3": {
+      "n_mutations": 500,
+      "db_node": "opulous",
+      "prefix_check": {
+        "baseline_n": 200,
+        "diffs": 176,
+        "pass": false
+      },
+      "b4_rerun": {
+        "verdict": "PASS",
+        "agreed": 500
+      },
+      "b9_rerun": {
+        "pass": true,
+        "row_count": 500
+      },
+      "b1_rerun": {
+        "verdict": "PASS",
+        "raw_pass": 476,
+        "raw_fail": 24,
+        "net_pass": 500,
+        "net_fail": 0,
+        "raw_pass_rate": 0.952,
+        "net_pass_rate": 1.0,
+        "category_counts": {
+          "B": 2,
+          "A": 16,
+          "D": 1,
+          "C": 1
+        }
+      },
+      "pass": true
+    },
+    "V4": {
+      "n_mutations": 500,
+      "db_node": "meld",
+      "prefix_check": {
+        "baseline_n": 200,
+        "diffs": 5,
+        "pass": false,
+        "note": "Tier C hardware"
+      },
+      "b4_rerun": {
+        "verdict": "PASS",
+        "agreed": 500
+      },
+      "b9_rerun": {
+        "pass": true,
+        "row_count": 500
+      },
+      "b1_rerun": {
+        "verdict": "PASS",
+        "raw_pass": 477,
+        "raw_fail": 23,
+        "net_pass": 500,
+        "net_fail": 0,
+        "raw_pass_rate": 0.954,
+        "net_pass_rate": 1.0,
+        "category_counts": {
+          "A": 14,
+          "D": 2,
+          "B": 4
+        }
+      },
+      "pass": true
+    },
+    "V5": {
+      "n_mutations": 500,
+      "db_node": "algofi",
+      "prefix_check": {
+        "baseline_n": 200,
+        "diffs": 200,
+        "pass": false
+      },
+      "b4_rerun": {
+        "verdict": "PASS",
+        "agreed": 500
+      },
+      "b9_rerun": {
+        "pass": true,
+        "row_count": 500
+      },
+      "b1_rerun": {
+        "verdict": "PASS",
+        "raw_pass": 468,
+        "raw_fail": 32,
+        "net_pass": 500,
+        "net_fail": 0,
+        "raw_pass_rate": 0.936,
+        "net_pass_rate": 1.0,
+        "category_counts": {
+          "C": 6,
+          "A": 7,
+          "B": 3,
+          "D": 3,
+          "B2": 1
+        }
+      },
+      "pass": true
+    }
+  },
+  "verdict": "PASS-WITH-CAVEAT",
+  "b1_disposition": {
+    "raw_pass_rate": 0.9664,
+    "net_pass_rate": 1.0,
+    "net_pass": 2500,
+    "net_fail": 0,
+    "category_counts": {
+      "A": 42,
+      "B": 9,
+      "D": 6,
+      "C": 7,
+      "B2": 1
+    },
+    "disposition_doc": "PHASE_7D_INC3D_B1_DISPOSITION.md",
+    "disposition_summary": "2416/2500 raw \u2192 2500/2500 net (100%); Inc 4 B2 extension for V5 mut235",
+    "source": "a4/audits/audit_output/B1_pos_inc4_b11_b1_disposition.json"
+  }
+}

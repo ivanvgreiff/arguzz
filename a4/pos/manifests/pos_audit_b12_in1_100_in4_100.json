@@ -1,0 +1,15 @@
+{
+  "_doc": "Phase 7d Inc 4 B12 multi-input @ --in1 100 --in4 100 — 5 variants × N=50 each. Resulting DBs feed B1+B4+B9 analyzers on WSL.",
+  "name": "pos_audit_b12_in1_100_in4_100",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "100", "--in4", "100"],
+  "parallel": true,
+  "jobs": [
+    {"strategy": "zoned",                "seed": 999, "n": 50, "telemetry_level": "full", "debug_bandit_trace": true},
+    {"strategy": "kindUCB_zoned_v1",     "seed": 999, "n": 50, "telemetry_level": "full", "debug_bandit_trace": true},
+    {"strategy": "kindUCB_zoned_v2_noQ", "seed": 999, "n": 50, "telemetry_level": "full", "debug_bandit_trace": true},
+    {"strategy": "kindTS_zoned_v2",      "seed": 999, "n": 50, "telemetry_level": "full", "debug_bandit_trace": true},
+    {"strategy": "cTS_semantic_v2",      "seed": 999, "n": 50, "telemetry_level": "full", "debug_bandit_trace": true}
+  ]
+}

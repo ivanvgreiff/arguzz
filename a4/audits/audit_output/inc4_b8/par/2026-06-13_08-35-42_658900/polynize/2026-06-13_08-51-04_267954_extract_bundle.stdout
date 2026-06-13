@@ -1,0 +1,7 @@
+total 4
+drwxr-xr-x  5 root root 120 Jun 13 07:25 .
+drwx------  1 root root 100 Jun 13 08:51 ..
+drwxr-xr-x  2 root root  60 Jun 13 07:25 bin
+-rw-r--r--  1 root root 404 Jun 13 07:25 bundle.json
+drwxr-xr-x 10 root root 880 Jun 13 07:24 repo
+drwxr-xr-x  2 root root  80 Jun 13 07:25 scripts

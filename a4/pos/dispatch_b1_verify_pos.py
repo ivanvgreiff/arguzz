@@ -31,13 +31,48 @@ class VerifyJob:
     error: str | None = None
 
 
-def _vars_yaml(job: VerifyJob, manifest_name: str, guest_args: list[str]) -> dict[str, str]:
-    return {
+def _check_node_result_file(node: str, variant: str, campaign_name: str) -> bool:
+    """SSH to a POS node and verify the B1 verifier result JSON exists & is valid.
+
+    Used as a resilience fallback when `pos.commands.await_id` raises a transient
+    HTTP error (coordinator hiccup) but the underlying verifier job may still have
+    completed on the node. We `ssh root@<node>` and look for
+    `/root/b1_verify_results/<campaign>_<variant>/B1_<variant>.json` containing
+    `per_variant.<variant>.total > 0`. Returns True iff result file is present
+    and well-formed.
+
+    Requires SSH access from the dispatcher host (coinbase) to the POS nodes —
+    in practice this is set up via the standard testbed SSH config since the
+    dispatcher already uses `pos.nodes.copy` which uses the same channel.
+    """
+    import subprocess
+    remote_path = f"/root/b1_verify_results/{campaign_name}_{variant}/B1_{variant}.json"
+    try:
+        proc = subprocess.run(
+            ["ssh", "-o", "ConnectTimeout=10", "-o", "StrictHostKeyChecking=no",
+             "-o", "LogLevel=ERROR", f"root@{node}",
+             f"cat {remote_path} 2>/dev/null | python3 -c "
+             f"\"import sys,json; d=json.load(sys.stdin); "
+             f"pv=d['per_variant']['{variant}']; "
+             f"print('OK' if pv.get('total',0)>0 else 'EMPTY')\""],
+            capture_output=True, text=True, timeout=30,
+        )
+        return proc.returncode == 0 and "OK" in proc.stdout
+    except Exception as e:
+        print(f"  ~ {node} node-side check failed: {e}", file=sys.stderr)
+        return False
+
+
+def _vars_yaml(job: VerifyJob, manifest_name: str, guest_args: list[str], expected_n: str = "") -> dict[str, str]:
+    out = {
         "A4_VARIANT": job.variant,
         "A4_CAMPAIGN_NAME": manifest_name,
         "A4_HOST_ARGS": " ".join(guest_args),
         "A4_RUN_ID": f"{manifest_name}_{job.variant}",
     }
+    if expected_n:
+        out["A4_EXPECTED_N"] = expected_n
+    return out
 
 
 def main() -> int:
@@ -59,6 +94,7 @@ def main() -> int:
     name = manifest.get("name", manifest_path.stem)
     image = manifest.get("image", args.image)
     guest_args = manifest.get("guest_args", ["--in1", "5", "--in4", "10"])
+    expected_n = str(manifest.get("expected_n", ""))
     results_dir = Path(manifest["results_dir"])
     jobs_raw = manifest["jobs"]
 
@@ -106,7 +142,7 @@ def main() -> int:
         # set variables BEFORE reset
         per_job_yml: dict[str, str] = {}
         for job in assignments:
-            vars_dict = _vars_yaml(job, name, guest_args)
+            vars_dict = _vars_yaml(job, name, guest_args, expected_n)
             with tempfile.NamedTemporaryFile("w", suffix=".yml", delete=False) as f:
                 yaml.safe_dump(vars_dict, f)
                 yml_path = f.name
@@ -192,6 +228,18 @@ def main() -> int:
                 rc, err = dp._await_id_silently(job.command_id, timeout_s=args.await_timeout)
                 print(f"  = {job.node:20s} {job.variant} rc={rc} {err}")
                 if rc != 0 and not job.error:
+                    # RESILIENCE (added 2026-06-13): if the await failed due to
+                    # a coordinator-side HTTP hiccup (rc=255 from _await_id_silently
+                    # after retries), the COMMAND ON THE NODE may still have completed
+                    # successfully. Verify by checking the node-side result file
+                    # before declaring the job failed.
+                    if rc == 255:
+                        node_ok = _check_node_result_file(job.node, job.variant, name)
+                        if node_ok:
+                            print(f"  ~ {job.node:20s} {job.variant} await failed BUT "
+                                  f"node-side result file present and valid -> treating as SUCCESS",
+                                  flush=True)
+                            continue
                     job.error = err or f"rc={rc}"
 
     except BaseException:

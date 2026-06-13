@@ -1,0 +1,146 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    },
+    "audit": "B1_hook_fidelity",
+    "timestamp": "2026-06-13T17:42:25.000651+00:00",
+    "seed": 999,
+    "n_per_variant": 50,
+    "verifier": "a4/tools/verify_mutation_semantics.py (strict P1)"
+  },
+  "per_variant": {
+    "V5": {
+      "total": 50,
+      "pass": 48,
+      "fail": 2,
+      "stratification": {
+        "COMP_OUT_MOD|core_arithmetic": 2,
+        "COMP_OUT_MOD|core_mul": 2,
+        "COMP_OUT_MOD|core_shr": 1,
+        "COMP_OUT_MOD|post_ecall": 1,
+        "INSTR_TYPE_MOD|core_arithmetic": 1,
+        "INSTR_TYPE_MOD|core_memory_load": 1,
+        "INSTR_TYPE_MOD|core_memory_store": 1,
+        "INSTR_TYPE_MOD|core_mul": 1,
+        "INSTR_TYPE_MOD|core_shr": 1,
+        "INSTR_TYPE_MOD|kernel_other": 1,
+        "INSTR_TYPE_MOD|post_ecall": 1,
+        "INSTR_TYPE_MOD|pre_ecall": 1,
+        "INSTR_TYPE_MOD|step0": 1,
+        "INSTR_WORD_MOD_FULL|core_arithmetic": 1,
+        "INSTR_WORD_MOD_FULL|core_memory_load": 1,
+        "INSTR_WORD_MOD_FULL|core_memory_store": 1,
+        "INSTR_WORD_MOD_FULL|core_mul": 1,
+        "INSTR_WORD_MOD_FULL|core_shr": 1,
+        "INSTR_WORD_MOD_FULL|kernel_other": 1,
+        "INSTR_WORD_MOD_FULL|post_ecall": 1,
+        "INSTR_WORD_MOD_SUR|core_arithmetic": 1,
+        "INSTR_WORD_MOD_SUR|core_memory_load": 1,
+        "INSTR_WORD_MOD_SUR|core_memory_store": 1,
+        "INSTR_WORD_MOD_SUR|core_mul": 1,
+        "INSTR_WORD_MOD_SUR|core_shr": 1,
+        "INSTR_WORD_MOD_SUR|kernel_other": 1,
+        "INSTR_WORD_MOD_SUR|post_ecall": 1,
+        "LOAD_VAL_MOD|core_memory_load": 1,
+        "LOAD_VAL_MOD|post_ecall": 1,
+        "MEM_VAL_MOD|core_arithmetic": 1,
+        "MEM_VAL_MOD|core_branch": 1,
+        "MEM_VAL_MOD|core_memory_load": 1,
+        "MEM_VAL_MOD|core_memory_store": 1,
+        "MEM_VAL_MOD|kernel_other": 1,
+        "MEM_VAL_MOD|last_step": 1,
+        "MEM_VAL_MOD|post_ecall": 1,
+        "MEM_VAL_MOD|pre_ecall": 1,
+        "MEM_VAL_MOD|step0": 1,
+        "PRE_EXEC_REG_MOD|core_arithmetic": 1,
+        "PRE_EXEC_REG_MOD|core_memory_load": 1,
+        "PRE_EXEC_REG_MOD|core_memory_store": 1,
+        "PRE_EXEC_REG_MOD|core_mul": 1,
+        "PRE_EXEC_REG_MOD|core_shr": 1,
+        "PRE_EXEC_REG_MOD|kernel_other": 1,
+        "PRE_EXEC_REG_MOD|post_ecall": 1,
+        "PRE_EXEC_REG_MOD|step0": 1,
+        "STORE_OUT_MOD|core_memory_store": 1,
+        "STORE_OUT_MOD|kernel_other": 1
+      },
+      "multicycle_flags": 2,
+      "failures": [
+        {
+          "mutation_id": 12,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 837,
+          "detail": "cycle_shift_at_step: hook old=8/0 != config exp_old=0/7",
+          "hook_payload": {
+            "step": 837,
+            "cycle_idx": 17458,
+            "pc": 3221225804,
+            "old_major": 8,
+            "old_minor": 0,
+            "new_major": 2,
+            "new_minor": 5
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 837,
+            "major": 2,
+            "minor": 5,
+            "_info": {
+              "original_major": 0,
+              "original_minor": 7,
+              "original_kind": "AddI",
+              "mutated_kind": "Lui",
+              "pc": "0xc0000154",
+              "is_valid_combination": true
+            }
+          }
+        },
+        {
+          "mutation_id": 13,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 1,
+            "new_minor": 5
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 1,
+            "minor": 5,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "Beq",
+              "pc": "0xc0000004",
+              "is_valid_combination": true
+            }
+          }
+        }
+      ],
+      "selector": "cTS_semantic_v2",
+      "db": "/root/b1_verify/pos_audit_b12_in1_100_in4_100_cTS_semantic_v2_seed999_n50.db",
+      "verdict": "FAIL"
+    }
+  },
+  "prevalidate": null,
+  "verdict": "FAIL",
+  "totals": {
+    "pass": 48,
+    "mutations": 50
+  }
+}

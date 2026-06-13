@@ -1,0 +1,1433 @@
+{
+  "milestone": "E2-FULL",
+  "generated_at": "2026-06-13T01:29:35.776782+00:00",
+  "node": "polynize",
+  "image": "debian-trixie",
+  "host_sha256": "5337f9448d7946c5785f1506b0fbfbfa07d32d6542e60c9cc158a22ce0611d23",
+  "dispatch": {
+    "node": "polynize",
+    "allocation": "ivgreiff_260613_031613_425975",
+    "bundle": "/root/arguzz/bundles/thesis_minimal_add_thesis_d5eddb8309cf.tar.gz",
+    "image": "debian-trixie",
+    "command_id": "2026-06-13_03-19-06_805430_thesis_e2_smoke",
+    "started_at": "2026-06-13T01:16:13Z",
+    "ended_at": "2026-06-13T01:25:49Z",
+    "wall_minutes": 9.6,
+    "path": "thesis_e2_smoke/2026-06-13_03-16-13_425975/polynize",
+    "thin_path": "thesis_run_pos.sh direct-host (P2-certified)",
+    "invocations": "53 configs \u00d7 2 determinism = 106"
+  },
+  "manifest": "/root/arguzz/thesis_side_experiments/minimal_add/artifacts/e2/configs/manifest_e2.json",
+  "log_dir": "thesis_side_experiments/minimal_add/artifacts/e2/pos_full/logs",
+  "analysis_dir": "thesis_side_experiments/minimal_add/artifacts/e2/pos_full/analysis",
+  "run_count": 53,
+  "determinism_failures": [],
+  "gate": {
+    "part_a": {
+      "value_kind_arguzz_1_0_0": true,
+      "value_kind_a4_full_1_0_1": true,
+      "a4_full_row_count": 39,
+      "expected_a4_full_rows": 39,
+      "determinism": true,
+      "determinism_failures": [],
+      "issues": [],
+      "gate_pass": true
+    },
+    "part_b": {
+      "per_field_footprints": [
+        {
+          "field": "funct3",
+          "sur_variant": "funct3_xor",
+          "a4_sur_layers": "1/0/1",
+          "outcome": "CONSTRAINT_REJECT",
+          "fields_changed": [
+            "funct3"
+          ],
+          "provenance": [
+            {
+              "layer": "intrastep-local",
+              "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpADD ( zirgen/circuit/rv32",
+              "value": 4,
+              "verified": false,
+              "reason": "non-scalar mutation"
+            }
+          ],
+          "constraint_examples": [
+            "intrastep-local: loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18)  value=4"
+          ],
+          "run_id": "a4_sur_funct3_xor"
+        },
+        {
+          "field": "funct3",
+          "sur_variant": "funct3_slt",
+          "a4_sur_layers": "1/0/1",
+          "outcome": "CONSTRAINT_REJECT",
+          "fields_changed": [
+            "funct3"
+          ],
+          "provenance": [
+            {
+              "layer": "intrastep-local",
+              "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpADD ( zirgen/circuit/rv32",
+              "value": 2,
+              "verified": false,
+              "reason": "non-scalar mutation"
+            }
+          ],
+          "constraint_examples": [
+            "intrastep-local: loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18)  value=2"
+          ],
+          "run_id": "a4_sur_funct3_slt"
+        },
+        {
+          "field": "funct7",
+          "sur_variant": "funct7_sub",
+          "a4_sur_layers": "1/0/1",
+          "outcome": "CONSTRAINT_REJECT",
+          "fields_changed": [
+            "funct7"
+          ],
+          "provenance": [
+            {
+              "layer": "intrastep-local",
+              "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :104:18) at callsite( OpADD ( zirgen/circuit/rv32",
+              "value": 32,
+              "verified": false,
+              "reason": "non-scalar mutation"
+            }
+          ],
+          "constraint_examples": [
+            "intrastep-local: loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :104:18)  value=32"
+          ],
+          "run_id": "a4_sur_funct7_sub"
+        },
+        {
+          "field": "rd",
+          "sur_variant": "rd",
+          "a4_sur_layers": "0/0/1",
+          "outcome": "GLOBAL_REJECT",
+          "fields_changed": [
+            "rd"
+          ],
+          "provenance": [],
+          "constraint_examples": [],
+          "run_id": "a4_sur_rd"
+        },
+        {
+          "field": "rs1",
+          "sur_variant": "rs1",
+          "a4_sur_layers": "0/0/1",
+          "outcome": "GLOBAL_REJECT",
+          "fields_changed": [
+            "rs1"
+          ],
+          "provenance": [],
+          "constraint_examples": [],
+          "run_id": "a4_sur_rs1"
+        },
+        {
+          "field": "rs2",
+          "sur_variant": "rs2",
+          "a4_sur_layers": "0/0/1",
+          "outcome": "GLOBAL_REJECT",
+          "fields_changed": [
+            "rs2"
+          ],
+          "provenance": [],
+          "constraint_examples": [],
+          "run_id": "a4_sur_rs2"
+        }
+      ],
+      "rd_vs_src_asymmetry_verdict": "denied",
+      "asymmetry_evidence": "rd=0/0/1, rs1=0/0/1, rs2=0/0/1: all register-field SUR variants are global-only (0/0/1), matching Arguzz dest/src_reg FULL mirrors. Operation SUR (funct3/funct7) adds intrastep decode (1/0/1).",
+      "determinism": true,
+      "determinism_failures": [],
+      "gate_pass": true
+    },
+    "part_c": {
+      "mem_val_row_count": 8,
+      "interstep_local_populated": true,
+      "isread_memoryread_breaks": true,
+      "arguzz_mirror": "n/a \u2014 Arguzz has no in-place memory-read mutation; LOAD_VAL_MOD edits register side only",
+      "determinism": true,
+      "determinism_failures": [],
+      "gate_pass": true
+    },
+    "overall_pass": true
+  },
+  "matrix": [
+    {
+      "key": "load_x/LOAD_VAL_MOD/s0",
+      "role": "load_x",
+      "kind": "LOAD_VAL_MOD",
+      "seed": 0,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_LOAD_VAL_MOD_s0"
+    },
+    {
+      "key": "load_x/LOAD_VAL_MOD/s1",
+      "role": "load_x",
+      "kind": "LOAD_VAL_MOD",
+      "seed": 1,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_LOAD_VAL_MOD_s1"
+    },
+    {
+      "key": "load_x/LOAD_VAL_MOD/s2",
+      "role": "load_x",
+      "kind": "LOAD_VAL_MOD",
+      "seed": 2,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_LOAD_VAL_MOD_s2"
+    },
+    {
+      "key": "load_x/LOAD_VAL_MOD/s3",
+      "role": "load_x",
+      "kind": "LOAD_VAL_MOD",
+      "seed": 3,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_LOAD_VAL_MOD_s3"
+    },
+    {
+      "key": "load_x/LOAD_VAL_MOD/s4",
+      "role": "load_x",
+      "kind": "LOAD_VAL_MOD",
+      "seed": 4,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_LOAD_VAL_MOD_s4"
+    },
+    {
+      "key": "add/COMP_OUT_MOD/s0",
+      "role": "add",
+      "kind": "COMP_OUT_MOD",
+      "seed": 0,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_COMP_OUT_MOD_s0"
+    },
+    {
+      "key": "add/COMP_OUT_MOD/s1",
+      "role": "add",
+      "kind": "COMP_OUT_MOD",
+      "seed": 1,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_COMP_OUT_MOD_s1"
+    },
+    {
+      "key": "add/COMP_OUT_MOD/s2",
+      "role": "add",
+      "kind": "COMP_OUT_MOD",
+      "seed": 2,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_COMP_OUT_MOD_s2"
+    },
+    {
+      "key": "add/COMP_OUT_MOD/s3",
+      "role": "add",
+      "kind": "COMP_OUT_MOD",
+      "seed": 3,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_COMP_OUT_MOD_s3"
+    },
+    {
+      "key": "add/COMP_OUT_MOD/s4",
+      "role": "add",
+      "kind": "COMP_OUT_MOD",
+      "seed": 4,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_COMP_OUT_MOD_s4"
+    },
+    {
+      "key": "store/STORE_OUT_MOD/s0",
+      "role": "store",
+      "kind": "STORE_OUT_MOD",
+      "seed": 0,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_STORE_OUT_MOD_s0"
+    },
+    {
+      "key": "store/STORE_OUT_MOD/s1",
+      "role": "store",
+      "kind": "STORE_OUT_MOD",
+      "seed": 1,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_STORE_OUT_MOD_s1"
+    },
+    {
+      "key": "store/STORE_OUT_MOD/s2",
+      "role": "store",
+      "kind": "STORE_OUT_MOD",
+      "seed": 2,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_STORE_OUT_MOD_s2"
+    },
+    {
+      "key": "store/STORE_OUT_MOD/s3",
+      "role": "store",
+      "kind": "STORE_OUT_MOD",
+      "seed": 3,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_STORE_OUT_MOD_s3"
+    },
+    {
+      "key": "store/STORE_OUT_MOD/s4",
+      "role": "store",
+      "kind": "STORE_OUT_MOD",
+      "seed": 4,
+      "field_class": null,
+      "fields_changed": null,
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_STORE_OUT_MOD_s4"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s0",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 0,
+      "field_class": "operation",
+      "fields_changed": [
+        "funct3"
+      ],
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s0"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s2",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 2,
+      "field_class": "dest_reg",
+      "fields_changed": [
+        "rd"
+      ],
+      "arguzz_layers": "0/0/1",
+      "a4_full_layers": "0/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "GLOBAL_REJECT",
+      "a4_full_outcome": "GLOBAL_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s2"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s3",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 3,
+      "field_class": "src_reg",
+      "fields_changed": [
+        "rs2"
+      ],
+      "arguzz_layers": "0/0/1",
+      "a4_full_layers": "0/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "GLOBAL_REJECT",
+      "a4_full_outcome": "GLOBAL_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s3"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s4",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 4,
+      "field_class": "src_reg",
+      "fields_changed": [
+        "rs2"
+      ],
+      "arguzz_layers": "0/0/1",
+      "a4_full_layers": "0/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "GLOBAL_REJECT",
+      "a4_full_outcome": "GLOBAL_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s4"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s5",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 5,
+      "field_class": "operation",
+      "fields_changed": [
+        "funct3"
+      ],
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s5"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s6",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 6,
+      "field_class": "operation",
+      "fields_changed": [
+        "funct3"
+      ],
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s6"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s8",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 8,
+      "field_class": "operation",
+      "fields_changed": [
+        "funct7"
+      ],
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s8"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s10",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 10,
+      "field_class": "format_change",
+      "fields_changed": [
+        "opcode"
+      ],
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s10"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s11",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 11,
+      "field_class": "dest_reg",
+      "fields_changed": [
+        "rd"
+      ],
+      "arguzz_layers": "0/0/1",
+      "a4_full_layers": "0/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "GLOBAL_REJECT",
+      "a4_full_outcome": "GLOBAL_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s11"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s12",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 12,
+      "field_class": "src_reg",
+      "fields_changed": [
+        "rs2"
+      ],
+      "arguzz_layers": "0/0/1",
+      "a4_full_layers": "0/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "GLOBAL_REJECT",
+      "a4_full_outcome": "GLOBAL_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s12"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s13",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 13,
+      "field_class": "src_reg",
+      "fields_changed": [
+        "rs1"
+      ],
+      "arguzz_layers": "0/0/1",
+      "a4_full_layers": "0/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "GLOBAL_REJECT",
+      "a4_full_outcome": "GLOBAL_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s13"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s14",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 14,
+      "field_class": "src_reg",
+      "fields_changed": [
+        "rs2"
+      ],
+      "arguzz_layers": "0/0/1",
+      "a4_full_layers": "0/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "GLOBAL_REJECT",
+      "a4_full_outcome": "GLOBAL_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s14"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s15",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 15,
+      "field_class": "format_change",
+      "fields_changed": [
+        "opcode",
+        "rd",
+        "rs1",
+        "rs2",
+        "funct7"
+      ],
+      "arguzz_layers": "2/0/1",
+      "a4_full_layers": "2/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s15"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s16",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 16,
+      "field_class": "format_change",
+      "fields_changed": [
+        "opcode",
+        "rd",
+        "funct3",
+        "funct7"
+      ],
+      "arguzz_layers": "3/0/1",
+      "a4_full_layers": "3/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s16"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s18",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 18,
+      "field_class": "operation",
+      "fields_changed": [
+        "funct3"
+      ],
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s18"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s19",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 19,
+      "field_class": "operation",
+      "fields_changed": [
+        "funct3"
+      ],
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s19"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s20",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 20,
+      "field_class": "operation",
+      "fields_changed": [
+        "funct3"
+      ],
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s20"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s21",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 21,
+      "field_class": "dest_reg",
+      "fields_changed": [
+        "rd"
+      ],
+      "arguzz_layers": "0/0/1",
+      "a4_full_layers": "0/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "GLOBAL_REJECT",
+      "a4_full_outcome": "GLOBAL_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s21"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s22",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 22,
+      "field_class": "format_change",
+      "fields_changed": [
+        "opcode"
+      ],
+      "arguzz_layers": "2/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s22"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s23",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 23,
+      "field_class": "dest_reg",
+      "fields_changed": [
+        "rd"
+      ],
+      "arguzz_layers": "0/0/1",
+      "a4_full_layers": "0/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "GLOBAL_REJECT",
+      "a4_full_outcome": "GLOBAL_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s23"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s24",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 24,
+      "field_class": "dest_reg_a0",
+      "fields_changed": [
+        "rd"
+      ],
+      "arguzz_layers": "6/0/1",
+      "a4_full_layers": "0/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "GLOBAL_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s24"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s26",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 26,
+      "field_class": "dest_reg",
+      "fields_changed": [
+        "rd"
+      ],
+      "arguzz_layers": "0/0/1",
+      "a4_full_layers": "0/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "GLOBAL_REJECT",
+      "a4_full_outcome": "GLOBAL_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s26"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s28",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 28,
+      "field_class": "operation",
+      "fields_changed": [
+        "funct7"
+      ],
+      "arguzz_layers": "1/0/0",
+      "a4_full_layers": "1/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "CONSTRAINT_REJECT",
+      "a4_full_outcome": "CONSTRAINT_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s28"
+    },
+    {
+      "key": "add/INSTR_WORD_MOD/s30",
+      "role": "add",
+      "kind": "INSTR_WORD_MOD",
+      "seed": 30,
+      "field_class": "dest_reg",
+      "fields_changed": [
+        "rd"
+      ],
+      "arguzz_layers": "0/0/1",
+      "a4_full_layers": "0/0/1",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "n/a",
+      "arguzz_outcome": "GLOBAL_REJECT",
+      "a4_full_outcome": "GLOBAL_REJECT",
+      "a4_run_id": "a4_full_INSTR_WORD_MOD_s30"
+    },
+    {
+      "key": "load_x/load_mem_read/s0",
+      "role": "load_x",
+      "kind": "MEM_VAL_MOD",
+      "seed": 0,
+      "field_class": "load_mem_read",
+      "arguzz_layers": "n/a \u2014 no in-place memory-read mutation",
+      "a4_full_layers": "n/a",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "2/2/1"
+    },
+    {
+      "key": "load_x/load_mem_read/s1",
+      "role": "load_x",
+      "kind": "MEM_VAL_MOD",
+      "seed": 1,
+      "field_class": "load_mem_read",
+      "arguzz_layers": "n/a \u2014 no in-place memory-read mutation",
+      "a4_full_layers": "n/a",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "2/2/1"
+    },
+    {
+      "key": "load_y/load_mem_read/s0",
+      "role": "load_y",
+      "kind": "MEM_VAL_MOD",
+      "seed": 0,
+      "field_class": "load_mem_read",
+      "arguzz_layers": "n/a \u2014 no in-place memory-read mutation",
+      "a4_full_layers": "n/a",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "2/2/1"
+    },
+    {
+      "key": "load_y/load_mem_read/s1",
+      "role": "load_y",
+      "kind": "MEM_VAL_MOD",
+      "seed": 1,
+      "field_class": "load_mem_read",
+      "arguzz_layers": "n/a \u2014 no in-place memory-read mutation",
+      "a4_full_layers": "n/a",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "2/2/1"
+    },
+    {
+      "key": "read_back/load_mem_read/s0",
+      "role": "read_back",
+      "kind": "MEM_VAL_MOD",
+      "seed": 0,
+      "field_class": "load_mem_read",
+      "arguzz_layers": "n/a \u2014 no in-place memory-read mutation",
+      "a4_full_layers": "n/a",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "2/2/1"
+    },
+    {
+      "key": "read_back/load_mem_read/s1",
+      "role": "read_back",
+      "kind": "MEM_VAL_MOD",
+      "seed": 1,
+      "field_class": "load_mem_read",
+      "arguzz_layers": "n/a \u2014 no in-place memory-read mutation",
+      "a4_full_layers": "n/a",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "2/2/1"
+    },
+    {
+      "key": "store/store_rmw_read/s0",
+      "role": "store",
+      "kind": "MEM_VAL_MOD",
+      "seed": 0,
+      "field_class": "store_rmw_read",
+      "arguzz_layers": "n/a \u2014 no in-place memory-read mutation",
+      "a4_full_layers": "n/a",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "0/2/1"
+    },
+    {
+      "key": "store/store_rmw_read/s1",
+      "role": "store",
+      "kind": "MEM_VAL_MOD",
+      "seed": 1,
+      "field_class": "store_rmw_read",
+      "arguzz_layers": "n/a \u2014 no in-place memory-read mutation",
+      "a4_full_layers": "n/a",
+      "a4_sur_layers": "n/a",
+      "a4_memval_layers": "0/2/1"
+    }
+  ],
+  "sur_footprints": [
+    {
+      "field": "funct3",
+      "sur_variant": "funct3_xor",
+      "a4_sur_layers": "1/0/1",
+      "outcome": "CONSTRAINT_REJECT",
+      "fields_changed": [
+        "funct3"
+      ],
+      "provenance": [
+        {
+          "layer": "intrastep-local",
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpADD ( zirgen/circuit/rv32",
+          "value": 4,
+          "verified": false,
+          "reason": "non-scalar mutation"
+        }
+      ],
+      "constraint_examples": [
+        "intrastep-local: loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18)  value=4"
+      ],
+      "run_id": "a4_sur_funct3_xor"
+    },
+    {
+      "field": "funct3",
+      "sur_variant": "funct3_slt",
+      "a4_sur_layers": "1/0/1",
+      "outcome": "CONSTRAINT_REJECT",
+      "fields_changed": [
+        "funct3"
+      ],
+      "provenance": [
+        {
+          "layer": "intrastep-local",
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpADD ( zirgen/circuit/rv32",
+          "value": 2,
+          "verified": false,
+          "reason": "non-scalar mutation"
+        }
+      ],
+      "constraint_examples": [
+        "intrastep-local: loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18)  value=2"
+      ],
+      "run_id": "a4_sur_funct3_slt"
+    },
+    {
+      "field": "funct7",
+      "sur_variant": "funct7_sub",
+      "a4_sur_layers": "1/0/1",
+      "outcome": "CONSTRAINT_REJECT",
+      "fields_changed": [
+        "funct7"
+      ],
+      "provenance": [
+        {
+          "layer": "intrastep-local",
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :104:18) at callsite( OpADD ( zirgen/circuit/rv32",
+          "value": 32,
+          "verified": false,
+          "reason": "non-scalar mutation"
+        }
+      ],
+      "constraint_examples": [
+        "intrastep-local: loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :104:18)  value=32"
+      ],
+      "run_id": "a4_sur_funct7_sub"
+    },
+    {
+      "field": "rd",
+      "sur_variant": "rd",
+      "a4_sur_layers": "0/0/1",
+      "outcome": "GLOBAL_REJECT",
+      "fields_changed": [
+        "rd"
+      ],
+      "provenance": [],
+      "constraint_examples": [],
+      "run_id": "a4_sur_rd"
+    },
+    {
+      "field": "rs1",
+      "sur_variant": "rs1",
+      "a4_sur_layers": "0/0/1",
+      "outcome": "GLOBAL_REJECT",
+      "fields_changed": [
+        "rs1"
+      ],
+      "provenance": [],
+      "constraint_examples": [],
+      "run_id": "a4_sur_rs1"
+    },
+    {
+      "field": "rs2",
+      "sur_variant": "rs2",
+      "a4_sur_layers": "0/0/1",
+      "outcome": "GLOBAL_REJECT",
+      "fields_changed": [
+        "rs2"
+      ],
+      "provenance": [],
+      "constraint_examples": [],
+      "run_id": "a4_sur_rs2"
+    }
+  ],
+  "mem_val_rows": [
+    {
+      "key": "load_x/load_mem_read/s0",
+      "role": "load_x",
+      "txn_type": "load_mem_read",
+      "seed": 0,
+      "a4_memval_layers": "2/2/1",
+      "arguzz_layers": "n/a",
+      "outcome": "CONSTRAINT_REJECT",
+      "interstep_local": 2,
+      "has_isread_memoryread": true,
+      "provenance": [
+        {
+          "layer": "intrastep-local",
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "value": 2013234768,
+          "verified": false,
+          "predicted_primary": 1372096081,
+          "predicted_alt": 641169840,
+          "observed": 2013234768,
+          "original": 3,
+          "mutated": 2654435764
+        },
+        {
+          "layer": "intrastep-local",
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "value": 2013225418,
+          "verified": false,
+          "predicted_primary": 1372096081,
+          "predicted_alt": 641169840,
+          "observed": 2013225418,
+          "original": 3,
+          "mutated": 2654435764
+        }
+      ],
+      "run_id": "a4_memval_load_x_s0"
+    },
+    {
+      "key": "load_x/load_mem_read/s1",
+      "role": "load_x",
+      "txn_type": "load_mem_read",
+      "seed": 1,
+      "a4_memval_layers": "2/2/1",
+      "arguzz_layers": "n/a",
+      "outcome": "CONSTRAINT_REJECT",
+      "interstep_local": 2,
+      "has_isread_memoryread": true,
+      "provenance": [
+        {
+          "layer": "intrastep-local",
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "value": 2013203615,
+          "verified": false,
+          "predicted_primary": 999361695,
+          "predicted_alt": 1013904226,
+          "observed": 2013203615,
+          "original": 3,
+          "mutated": 1013904229
+        },
+        {
+          "layer": "intrastep-local",
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "value": 2013250451,
+          "verified": false,
+          "predicted_primary": 999361695,
+          "predicted_alt": 1013904226,
+          "observed": 2013250451,
+          "original": 3,
+          "mutated": 1013904229
+        }
+      ],
+      "run_id": "a4_memval_load_x_s1"
+    },
+    {
+      "key": "load_y/load_mem_read/s0",
+      "role": "load_y",
+      "txn_type": "load_mem_read",
+      "seed": 0,
+      "a4_memval_layers": "2/2/1",
+      "arguzz_layers": "n/a",
+      "outcome": "CONSTRAINT_REJECT",
+      "interstep_local": 2,
+      "has_isread_memoryread": true,
+      "provenance": [
+        {
+          "layer": "intrastep-local",
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "value": 2013234768,
+          "verified": false,
+          "predicted_primary": 1372096081,
+          "predicted_alt": 641169840,
+          "observed": 2013234768,
+          "original": 4,
+          "mutated": 2654435765
+        },
+        {
+          "layer": "intrastep-local",
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "value": 2013225418,
+          "verified": false,
+          "predicted_primary": 1372096081,
+          "predicted_alt": 641169840,
+          "observed": 2013225418,
+          "original": 4,
+          "mutated": 2654435765
+        }
+      ],
+      "run_id": "a4_memval_load_y_s0"
+    },
+    {
+      "key": "load_y/load_mem_read/s1",
+      "role": "load_y",
+      "txn_type": "load_mem_read",
+      "seed": 1,
+      "a4_memval_layers": "2/2/1",
+      "arguzz_layers": "n/a",
+      "outcome": "CONSTRAINT_REJECT",
+      "interstep_local": 2,
+      "has_isread_memoryread": true,
+      "provenance": [
+        {
+          "layer": "intrastep-local",
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "value": 2013203615,
+          "verified": false,
+          "predicted_primary": 999361695,
+          "predicted_alt": 1013904226,
+          "observed": 2013203615,
+          "original": 4,
+          "mutated": 1013904230
+        },
+        {
+          "layer": "intrastep-local",
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "value": 2013250451,
+          "verified": false,
+          "predicted_primary": 999361695,
+          "predicted_alt": 1013904226,
+          "observed": 2013250451,
+          "original": 4,
+          "mutated": 1013904230
+        }
+      ],
+      "run_id": "a4_memval_load_y_s1"
+    },
+    {
+      "key": "read_back/load_mem_read/s0",
+      "role": "read_back",
+      "txn_type": "load_mem_read",
+      "seed": 0,
+      "a4_memval_layers": "2/2/1",
+      "arguzz_layers": "n/a",
+      "outcome": "CONSTRAINT_REJECT",
+      "interstep_local": 2,
+      "has_isread_memoryread": true,
+      "provenance": [
+        {
+          "layer": "intrastep-local",
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "value": 2013234768,
+          "verified": false,
+          "predicted_primary": 1372096081,
+          "predicted_alt": 641169840,
+          "observed": 2013234768,
+          "original": 7,
+          "mutated": 2654435768
+        },
+        {
+          "layer": "intrastep-local",
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "value": 2013225418,
+          "verified": false,
+          "predicted_primary": 1372096081,
+          "predicted_alt": 641169840,
+          "observed": 2013225418,
+          "original": 7,
+          "mutated": 2654435768
+        }
+      ],
+      "run_id": "a4_memval_read_back_s0"
+    },
+    {
+      "key": "read_back/load_mem_read/s1",
+      "role": "read_back",
+      "txn_type": "load_mem_read",
+      "seed": 1,
+      "a4_memval_layers": "2/2/1",
+      "arguzz_layers": "n/a",
+      "outcome": "CONSTRAINT_REJECT",
+      "interstep_local": 2,
+      "has_isread_memoryread": true,
+      "provenance": [
+        {
+          "layer": "intrastep-local",
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "value": 2013203615,
+          "verified": false,
+          "predicted_primary": 999361695,
+          "predicted_alt": 1013904226,
+          "observed": 2013203615,
+          "original": 7,
+          "mutated": 1013904233
+        },
+        {
+          "layer": "intrastep-local",
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "value": 2013250451,
+          "verified": false,
+          "predicted_primary": 999361695,
+          "predicted_alt": 1013904226,
+          "observed": 2013250451,
+          "original": 7,
+          "mutated": 1013904233
+        }
+      ],
+      "run_id": "a4_memval_read_back_s1"
+    },
+    {
+      "key": "store/store_rmw_read/s0",
+      "role": "store",
+      "txn_type": "store_rmw_read",
+      "seed": 0,
+      "a4_memval_layers": "0/2/1",
+      "arguzz_layers": "n/a",
+      "outcome": "CONSTRAINT_REJECT",
+      "interstep_local": 2,
+      "has_isread_memoryread": true,
+      "provenance": [
+        {
+          "layer": "interstep-local",
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zi",
+          "value": 2013234768,
+          "verified": false,
+          "predicted_primary": 1372096081,
+          "predicted_alt": 641169840,
+          "observed": 2013234768,
+          "original": 0,
+          "mutated": 2654435761
+        },
+        {
+          "layer": "interstep-local",
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zi",
+          "value": 2013225418,
+          "verified": false,
+          "predicted_primary": 1372096081,
+          "predicted_alt": 641169840,
+          "observed": 2013225418,
+          "original": 0,
+          "mutated": 2654435761
+        }
+      ],
+      "run_id": "a4_memval_store_s0"
+    },
+    {
+      "key": "store/store_rmw_read/s1",
+      "role": "store",
+      "txn_type": "store_rmw_read",
+      "seed": 1,
+      "a4_memval_layers": "0/2/1",
+      "arguzz_layers": "n/a",
+      "outcome": "CONSTRAINT_REJECT",
+      "interstep_local": 2,
+      "has_isread_memoryread": true,
+      "provenance": [
+        {
+          "layer": "interstep-local",
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zi",
+          "value": 2013203615,
+          "verified": false,
+          "predicted_primary": 999361695,
+          "predicted_alt": 1013904226,
+          "observed": 2013203615,
+          "original": 0,
+          "mutated": 1013904226
+        },
+        {
+          "layer": "interstep-local",
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zi",
+          "value": 2013250451,
+          "verified": false,
+          "predicted_primary": 999361695,
+          "predicted_alt": 1013904226,
+          "observed": 2013250451,
+          "original": 0,
+          "mutated": 1013904226
+        }
+      ],
+      "run_id": "a4_memval_store_s1"
+    }
+  ],
+  "field_class_aggregate": {
+    "operation": {
+      "n": 8,
+      "arguzz": [
+        "1/0/0",
+        "1/0/0",
+        "1/0/0",
+        "1/0/0",
+        "1/0/0",
+        "1/0/0",
+        "1/0/0",
+        "1/0/0"
+      ],
+      "a4_full": [
+        "1/0/1",
+        "1/0/1",
+        "1/0/1",
+        "1/0/1",
+        "1/0/1",
+        "1/0/1",
+        "1/0/1",
+        "1/0/1"
+      ],
+      "a4_sur": [],
+      "a4_memval": []
+    },
+    "dest_reg": {
+      "n": 6,
+      "arguzz": [
+        "0/0/1",
+        "0/0/1",
+        "0/0/1",
+        "0/0/1",
+        "0/0/1",
+        "0/0/1"
+      ],
+      "a4_full": [
+        "0/0/1",
+        "0/0/1",
+        "0/0/1",
+        "0/0/1",
+        "0/0/1",
+        "0/0/1"
+      ],
+      "a4_sur": [],
+      "a4_memval": []
+    },
+    "src_reg": {
+      "n": 5,
+      "arguzz": [
+        "0/0/1",
+        "0/0/1",
+        "0/0/1",
+        "0/0/1",
+        "0/0/1"
+      ],
+      "a4_full": [
+        "0/0/1",
+        "0/0/1",
+        "0/0/1",
+        "0/0/1",
+        "0/0/1"
+      ],
+      "a4_sur": [],
+      "a4_memval": []
+    },
+    "format_change": {
+      "n": 4,
+      "arguzz": [
+        "1/0/0",
+        "2/0/1",
+        "3/0/1",
+        "2/0/0"
+      ],
+      "a4_full": [
+        "1/0/1",
+        "2/0/1",
+        "3/0/1",
+        "1/0/1"
+      ],
+      "a4_sur": [],
+      "a4_memval": []
+    },
+    "dest_reg_a0": {
+      "n": 1,
+      "arguzz": [
+        "6/0/1"
+      ],
+      "a4_full": [
+        "0/0/1"
+      ],
+      "a4_sur": [],
+      "a4_memval": []
+    },
+    "funct3_xor": {
+      "n": 1,
+      "arguzz": [],
+      "a4_full": [],
+      "a4_sur": [
+        "1/0/1"
+      ],
+      "a4_memval": []
+    },
+    "funct3_slt": {
+      "n": 1,
+      "arguzz": [],
+      "a4_full": [],
+      "a4_sur": [
+        "1/0/1"
+      ],
+      "a4_memval": []
+    },
+    "funct7_sub": {
+      "n": 1,
+      "arguzz": [],
+      "a4_full": [],
+      "a4_sur": [
+        "1/0/1"
+      ],
+      "a4_memval": []
+    },
+    "rd": {
+      "n": 1,
+      "arguzz": [],
+      "a4_full": [],
+      "a4_sur": [
+        "0/0/1"
+      ],
+      "a4_memval": []
+    },
+    "rs1": {
+      "n": 1,
+      "arguzz": [],
+      "a4_full": [],
+      "a4_sur": [
+        "0/0/1"
+      ],
+      "a4_memval": []
+    },
+    "rs2": {
+      "n": 1,
+      "arguzz": [],
+      "a4_full": [],
+      "a4_sur": [
+        "0/0/1"
+      ],
+      "a4_memval": []
+    }
+  },
+  "interstep_bucket_note": "Interstep-local stays empty for Arguzz and A4-FULL/SUR register mirrors on this circuit; MEM_VAL_MOD populates it via MemoryRead/IsRead@mem.zir.",
+  "arguzz_no_mem_read_mirror": "Arguzz has no in-place memory-read mutation. LOAD_VAL_MOD edits the register-write side; propagating kinds keep reads self-consistent. PRE_EXEC_MEM_MOD is Family-1 inject expected to OOB-crash."
+}

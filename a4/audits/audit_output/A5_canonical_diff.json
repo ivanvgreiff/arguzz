@@ -20,12 +20,215 @@
   "expected_count_doc": 48,
   "expected_count_adjusted_d40": 44,
   "actual_count": 48,
-  "added": [],
-  "removed": [],
-  "removed_explained_d40": [],
-  "removed_unexplained": [],
+  "added": [
+    "COMP_OUT_MOD|core_shr",
+    "INSTR_TYPE_MOD|core_shr",
+    "INSTR_TYPE_MOD|kernel_other",
+    "INSTR_WORD_MOD_FULL|core_shr",
+    "INSTR_WORD_MOD_FULL|kernel_other",
+    "INSTR_WORD_MOD_SUR|core_shr",
+    "INSTR_WORD_MOD_SUR|kernel_other",
+    "MEM_VAL_MOD|kernel_other",
+    "PRE_EXEC_REG_MOD|core_shr",
+    "PRE_EXEC_REG_MOD|kernel_other",
+    "STORE_OUT_MOD|kernel_other"
+  ],
+  "removed": [
+    "COMP_OUT_MOD|core_div",
+    "INSTR_TYPE_MOD|core_div",
+    "INSTR_WORD_MOD_FULL|core_div",
+    "INSTR_WORD_MOD_FULL|last_step",
+    "INSTR_WORD_MOD_FULL|pre_ecall",
+    "INSTR_WORD_MOD_SUR|core_div",
+    "INSTR_WORD_MOD_SUR|last_step",
+    "INSTR_WORD_MOD_SUR|pre_ecall",
+    "MEM_VAL_MOD|core_div",
+    "MEM_VAL_MOD|core_mul",
+    "PRE_EXEC_REG_MOD|core_div"
+  ],
+  "removed_explained_d40": [
+    "INSTR_WORD_MOD_FULL|last_step",
+    "INSTR_WORD_MOD_FULL|pre_ecall",
+    "INSTR_WORD_MOD_SUR|last_step",
+    "INSTR_WORD_MOD_SUR|pre_ecall"
+  ],
+  "removed_unexplained": [
+    "COMP_OUT_MOD|core_div",
+    "INSTR_TYPE_MOD|core_div",
+    "INSTR_WORD_MOD_FULL|core_div",
+    "INSTR_WORD_MOD_SUR|core_div",
+    "MEM_VAL_MOD|core_div",
+    "MEM_VAL_MOD|core_mul",
+    "PRE_EXEC_REG_MOD|core_div"
+  ],
   "renamed": [],
-  "step_count_violations": [],
+  "step_count_violations": [
+    {
+      "arm_id": "COMP_OUT_MOD|post_ecall",
+      "expected_steps": 11,
+      "actual_steps": 16,
+      "tolerance": "\u00b12",
+      "allowed_range": [
+        8,
+        14
+      ],
+      "status": "\ud83d\udfe1"
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|core_arithmetic",
+      "expected_steps": 2443,
+      "actual_steps": 2226,
+      "tolerance": "\u00b15%",
+      "allowed_range": [
+        2321,
+        2565
+      ],
+      "status": "\ud83d\udfe2"
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|core_memory_load",
+      "expected_steps": 678,
+      "actual_steps": 584,
+      "tolerance": "\u00b15%",
+      "allowed_range": [
+        645,
+        711
+      ],
+      "status": "\ud83d\udfe2"
+    },
+    {
+      "arm_id": "INSTR_TYPE_MOD|core_mul",
+      "expected_steps": 100,
+      "actual_steps": 66,
+      "tolerance": "\u00b15%",
+      "allowed_range": [
+        95,
+        105
+      ],
+      "status": "\ud83d\udfe2"
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|core_arithmetic",
+      "expected_steps": 2443,
+      "actual_steps": 2226,
+      "tolerance": "\u00b15%",
+      "allowed_range": [
+        2321,
+        2565
+      ],
+      "status": "\ud83d\udfe2"
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|core_memory_load",
+      "expected_steps": 678,
+      "actual_steps": 584,
+      "tolerance": "\u00b15%",
+      "allowed_range": [
+        645,
+        711
+      ],
+      "status": "\ud83d\udfe2"
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_FULL|core_mul",
+      "expected_steps": 100,
+      "actual_steps": 66,
+      "tolerance": "\u00b15%",
+      "allowed_range": [
+        95,
+        105
+      ],
+      "status": "\ud83d\udfe2"
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|core_arithmetic",
+      "expected_steps": 2443,
+      "actual_steps": 2226,
+      "tolerance": "\u00b15%",
+      "allowed_range": [
+        2321,
+        2565
+      ],
+      "status": "\ud83d\udfe2"
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|core_memory_load",
+      "expected_steps": 678,
+      "actual_steps": 584,
+      "tolerance": "\u00b15%",
+      "allowed_range": [
+        645,
+        711
+      ],
+      "status": "\ud83d\udfe2"
+    },
+    {
+      "arm_id": "INSTR_WORD_MOD_SUR|core_mul",
+      "expected_steps": 100,
+      "actual_steps": 66,
+      "tolerance": "\u00b15%",
+      "allowed_range": [
+        95,
+        105
+      ],
+      "status": "\ud83d\udfe2"
+    },
+    {
+      "arm_id": "LOAD_VAL_MOD|post_ecall",
+      "expected_steps": 2,
+      "actual_steps": 4,
+      "tolerance": "\u00b11",
+      "allowed_range": [
+        1,
+        3
+      ],
+      "status": "\ud83d\udfe1"
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|core_arithmetic",
+      "expected_steps": 848,
+      "actual_steps": 636,
+      "tolerance": "\u00b15%",
+      "allowed_range": [
+        678,
+        1018
+      ],
+      "status": "\ud83d\udfe1"
+    },
+    {
+      "arm_id": "MEM_VAL_MOD|core_memory_load",
+      "expected_steps": 678,
+      "actual_steps": 584,
+      "tolerance": "\u00b15%",
+      "allowed_range": [
+        645,
+        711
+      ],
+      "status": "\ud83d\udfe2"
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|core_memory_load",
+      "expected_steps": 669,
+      "actual_steps": 584,
+      "tolerance": "\u00b15%",
+      "allowed_range": [
+        636,
+        702
+      ],
+      "status": "\ud83d\udfe2"
+    },
+    {
+      "arm_id": "PRE_EXEC_REG_MOD|post_ecall",
+      "expected_steps": 14,
+      "actual_steps": 32,
+      "tolerance": "\u00b12",
+      "allowed_range": [
+        11,
+        17
+      ],
+      "status": "\ud83d\udfe1"
+    }
+  ],
   "per_arm_actual": [
     {
       "arm_id": "COMP_OUT_MOD|core_arithmetic",

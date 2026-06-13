@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    },
+    "audit": "B4_bandit_db_traceability",
+    "timestamp": "2026-06-13T15:48:01.235902+00:00",
+    "seed": 999,
+    "n_per_variant": 50
+  },
+  "per_variant": {
+    "V1": {
+      "n_mutations": 50,
+      "n_agreed": 50,
+      "n_disagreed": 0,
+      "isolation_check": {
+        "bandit_zone_always_none": true
+      },
+      "disagreements": [],
+      "db": "a4/audits/audit_output/inc4_b12/in1_1_in4_1/2026-06-13_08-55-32_413879/octorand/pos_audit_b12_in1_1_in4_1_zoned_seed999_n50.db",
+      "trace": "a4/audits/audit_output/inc4_b12/in1_1_in4_1/2026-06-13_08-55-32_413879/octorand/pos_audit_b12_in1_1_in4_1_zoned_seed999_n50.bandit_trace.jsonl",
+      "verdict": "PASS"
+    },
+    "V2": {
+      "n_mutations": 50,
+      "n_agreed": 50,
+      "n_disagreed": 0,
+      "isolation_check": {
+        "bandit_zone_always_none": true
+      },
+      "disagreements": [],
+      "db": "a4/audits/audit_output/inc4_b12/in1_1_in4_1/2026-06-13_08-55-32_413879/opulous/pos_audit_b12_in1_1_in4_1_kindUCB_zoned_v1_seed999_n50.db",
+      "trace": "a4/audits/audit_output/inc4_b12/in1_1_in4_1/2026-06-13_08-55-32_413879/opulous/pos_audit_b12_in1_1_in4_1_kindUCB_zoned_v1_seed999_n50.bandit_trace.jsonl",
+      "verdict": "PASS"
+    },
+    "V3": {
+      "n_mutations": 50,
+      "n_agreed": 50,
+      "n_disagreed": 0,
+      "isolation_check": {
+        "bandit_zone_always_none": true
+      },
+      "disagreements": [],
+      "db": "a4/audits/audit_output/inc4_b12/in1_1_in4_1/2026-06-13_08-55-32_413879/polynize/pos_audit_b12_in1_1_in4_1_kindUCB_zoned_v2_noQ_seed999_n50.db",
+      "trace": "a4/audits/audit_output/inc4_b12/in1_1_in4_1/2026-06-13_08-55-32_413879/polynize/pos_audit_b12_in1_1_in4_1_kindUCB_zoned_v2_noQ_seed999_n50.bandit_trace.jsonl",
+      "verdict": "PASS"
+    },
+    "V4": {
+      "n_mutations": 50,
+      "n_agreed": 50,
+      "n_disagreed": 0,
+      "isolation_check": {
+        "bandit_zone_always_none": true
+      },
+      "disagreements": [],
+      "db": "a4/audits/audit_output/inc4_b12/in1_1_in4_1/2026-06-13_08-55-32_413879/algofi/pos_audit_b12_in1_1_in4_1_kindTS_zoned_v2_seed999_n50.db",
+      "trace": "a4/audits/audit_output/inc4_b12/in1_1_in4_1/2026-06-13_08-55-32_413879/algofi/pos_audit_b12_in1_1_in4_1_kindTS_zoned_v2_seed999_n50.bandit_trace.jsonl",
+      "verdict": "PASS"
+    },
+    "V5": {
+      "n_mutations": 50,
+      "n_agreed": 50,
+      "n_disagreed": 0,
+      "isolation_check": {
+        "bandit_zone_in_semantic_zones": true,
+        "bandit_zone_never_none": true
+      },
+      "disagreements": [],
+      "db": "a4/audits/audit_output/inc4_b12/in1_1_in4_1/2026-06-13_08-55-32_413879/meld/pos_audit_b12_in1_1_in4_1_cTS_semantic_v2_seed999_n50.db",
+      "trace": "a4/audits/audit_output/inc4_b12/in1_1_in4_1/2026-06-13_08-55-32_413879/meld/pos_audit_b12_in1_1_in4_1_cTS_semantic_v2_seed999_n50.bandit_trace.jsonl",
+      "verdict": "PASS"
+    }
+  },
+  "verdict": "PASS",
+  "totals": {
+    "agreed": 250,
+    "mutations": 250
+  }
+}

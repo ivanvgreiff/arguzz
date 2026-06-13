@@ -1,0 +1,101 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    },
+    "audit": "B1_hook_fidelity",
+    "timestamp": "2026-06-13T05:36:33.399895+00:00",
+    "seed": 999,
+    "n_per_variant": 200,
+    "verifier": "a4/tools/verify_mutation_semantics.py (strict P1)"
+  },
+  "per_variant": {},
+  "prevalidate": {
+    "V1": {
+      "total": 5,
+      "pass": 5,
+      "fail": 0,
+      "stratification": {
+        "LOAD_VAL_MOD|bucket3": 1,
+        "INSTR_WORD_MOD_SUR|bucket9": 1,
+        "MEM_VAL_MOD|bucket5": 1,
+        "PRE_EXEC_REG_MOD|bucket10": 1,
+        "INSTR_TYPE_MOD|bucket1": 1
+      },
+      "multicycle_flags": 0,
+      "failures": [],
+      "db": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b1_prevalidate_V1_seed999_n5.db",
+      "verdict": "PASS"
+    },
+    "V2": {
+      "total": 5,
+      "pass": 5,
+      "fail": 0,
+      "stratification": {
+        "LOAD_VAL_MOD": 1,
+        "INSTR_WORD_MOD_SUR": 1,
+        "MEM_VAL_MOD": 1,
+        "INSTR_WORD_MOD_FULL": 1,
+        "INSTR_TYPE_MOD": 1
+      },
+      "multicycle_flags": 0,
+      "failures": [],
+      "db": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b1_prevalidate_V2_seed999_n5.db",
+      "verdict": "PASS"
+    },
+    "V3": {
+      "total": 5,
+      "pass": 5,
+      "fail": 0,
+      "stratification": {
+        "LOAD_VAL_MOD": 1,
+        "INSTR_WORD_MOD_SUR": 1,
+        "MEM_VAL_MOD": 1,
+        "INSTR_WORD_MOD_FULL": 1,
+        "INSTR_TYPE_MOD": 1
+      },
+      "multicycle_flags": 0,
+      "failures": [],
+      "db": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b1_prevalidate_V3_seed999_n5.db",
+      "verdict": "PASS"
+    },
+    "V4": {
+      "total": 5,
+      "pass": 5,
+      "fail": 0,
+      "stratification": {
+        "COMP_OUT_MOD": 2,
+        "MEM_VAL_MOD": 2,
+        "LOAD_VAL_MOD": 1
+      },
+      "multicycle_flags": 0,
+      "failures": [],
+      "db": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b1_prevalidate_V4_seed999_n5.db",
+      "verdict": "PASS"
+    },
+    "V5": {
+      "total": 5,
+      "pass": 5,
+      "fail": 0,
+      "stratification": {
+        "COMP_OUT_MOD|core_arithmetic": 1,
+        "COMP_OUT_MOD|core_mul": 1,
+        "COMP_OUT_MOD|core_shr": 1,
+        "COMP_OUT_MOD|post_ecall": 1,
+        "INSTR_TYPE_MOD|core_arithmetic": 1
+      },
+      "multicycle_flags": 0,
+      "failures": [],
+      "db": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b1_prevalidate_V5_seed999_n5.db",
+      "verdict": "PASS"
+    }
+  },
+  "verdict": "PREVALIDATE_PASS"
+}

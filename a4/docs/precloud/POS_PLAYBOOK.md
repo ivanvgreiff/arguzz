@@ -3,8 +3,48 @@
 > **Living document.** Every time we learn something new about POS, an answer turns out to be different from what we assumed, a command fails for a non-obvious reason, or a code change to `a4/pos/*` happens — UPDATE THIS FILE. Sections §10 (decision log) and §11 (verified-commands log) are append-only.
 >
 > **Purpose**: a single place to read before/while/after touching anything POS-related. Subsumes the earlier scattered POS_ACCESS_NOTES, POS_ACCESS_VERIFICATION, POS_ADVISOR_MESSAGE, and PIVOT_TO_POS_REVIEW documents (now deleted; only `PIVOT_TO_POS.md` remains as the historical pivot source).
+
+---
+
+## ★ CANONICAL DISPATCH TEMPLATES — start here for every POS run ★
+
+**For any new POS work, use these — do NOT build ad-hoc dispatch logic each time.** Both scripts are heavily commented; read them once and re-use them indefinitely. Verified end-to-end on Jun 13 2026 (25 DBs across 5 audits, 2h47m wall).
+
+| Script | Purpose | When to use |
+|---|---|---|
+| **`a4/pos/dispatch_audit.sh`** | **Universal dispatch wrapper.** Auto-detects single-dispatch (jobs ≤ nodes) vs multi-dispatch (jobs > nodes, slices manifest per-variant). Handles §12.36 transparently. | Any time you want to run ONE manifest. Replaces all hand-written `python -m a4.pos.dispatch_pos ...` invocations. |
+| **`a4/pos/run_inc4_all.sh`** | **Sequential orchestrator example.** Drives `dispatch_audit.sh` across multiple manifests; designed for nohup/tmux fire-and-forget. | Template to copy when you need to run several manifests in a fixed order (e.g. an entire Inc 4-style audit suite). |
+
+**One-liner per manifest** (auto-handles both modes; see §12.44 for details):
+
+```bash
+# From coinbase, with POS venv active + bundle on ~/:
+source /srv/testbed/pos/cli/venv3/bin/activate
+cd ~/arguzz
+bash a4/pos/dispatch_audit.sh <manifest.json> <node1> [node2] [node3] ...
+```
+
+**Whole-suite fire-and-forget** (logs to `/tmp/inc4_logs/`):
+
+```bash
+cd ~/arguzz
+source /srv/testbed/pos/cli/venv3/bin/activate
+nohup bash a4/pos/run_inc4_all.sh > /tmp/inc4_logs/orchestrator.log 2>&1 &
+disown
+# detach safely; monitor with: tail -f /tmp/inc4_logs/run_inc4_all.log
+```
+
+**Critical rules** when using the templates:
+- `ALLOC_DURATION=0` (default) → claims pre-existing calendar entry (no quota hit; §12.37). Pre-reserve via web UI or `pos calendar create`.
+- If you need an ad-hoc allocation, override with `ALLOC_DURATION=120` (uses one of your 2 calendar-entry slots).
+- **Never run `pos allocations free <node>` without `-k`** if you own a calendar entry covering that node — it trims your reservation to `now()` (§12.43).
+- If a node hangs in `ERR booting`, **substitute** another node from your reservation; don't retry indefinitely (§12.45).
+
+---
+
+> **Last meaningful update**: Jun 13, 2026 — **Templates `dispatch_audit.sh` + `run_inc4_all.sh` proven end-to-end** for Inc 4 (25 DBs, 5 audits, 2h47m wall). Four new anti-patterns: §12.42 (calendar-owner free-rights), §12.43 (free trims your calendar by default — use `-k`), §12.44 (template wrapper covers §12.36 dispatcher bug), §12.45 (substitute flaky nodes, don't retry).
 >
-> **Last meaningful update**: Jun 6, 2026 (~21:00 UTC) — **MAJOR DISCOVERY: 3-parallel is feasible via pre-reservation.** The "2-future-entries cap" (§12.28) is on CALENDAR ENTRIES, not nodes; ONE entry can cover multiple nodes (verified via web calendar UI). User pre-reserves flare+octorand+opulous as a single multi-node entry per 6-hr block, then dispatcher uses `--allocation-duration 0` to claim the existing reservation (no new entry created → no quota issue). **IV.POS.5 REPLANNED**: N=6000 (47 pulls/arm), 5 dispatches × 3 jobs each (by-seed), 3-parallel on Tier S EPYC 9354 (flare+octorand+opulous), ~30 hr clock time with rolling 6-hr reservations. New runner `a4/pos/auto_run_ab_v1.sh` v2 with `ALLOC_DURATION=0` default. **NEW anti-pattern §12.37: pre-existing reservation may not be claimable before its start_date even if you own it.**
+> **Prior major discovery (Jun 6)**: 3-parallel is feasible via pre-reservation. The "2-future-entries cap" (§12.28) is on CALENDAR ENTRIES, not nodes; ONE entry can cover multiple nodes (verified via web calendar UI). User pre-reserves flare+octorand+opulous as a single multi-node entry per 6-hr block, then dispatcher uses `--allocation-duration 0` to claim the existing reservation. **IV.POS.5 REPLANNED**: N=6000, 5 dispatches × 3 jobs each (by-seed), 3-parallel on Tier S EPYC 9354.
 
 ---
 
@@ -770,6 +810,28 @@ These are NOT blockers; we discover them as we proceed.
     awk -v noderx="$node_regex" '...'
     ```
     Discovered Jun 7 03:17 CEST when the smart runner's `has_previous_dispatch_running()` check failed silently, letting it kill the in-flight d2 fuzzers (loss of d2/seed=1235 entire 5-hour run). Fixed in commit 344c626.
+
+42. **Calendar-entry OWNERSHIP grants the right to free another user's allocation on any node your calendar entry covers, at the current moment.** Per `pos allocations free --help`: *"You can only free allocations/nodes if you either own a calendar entry for the current entry, or no one owns a calendar entry for the current moment."* Verified Jun 13 07:52 CEST: `ivgreiff` owned calendar entry 1746 covering `algofi`; user `christer` held an ad-hoc allocation `christer_260613_033623_045839` containing `[zone, goracle, algofi, gard]` with **NO calendar entry of his own**. `pos allocations free algofi` (run by ivgreiff) silently succeeded and removed christer's **entire 4-node allocation**, not just algofi. Implication: **`pos.allocations.free(<node>)` resolves to the ENTIRE allocation containing that node** — calling free on one node evicts the holding user from ALL nodes in their allocation. Only safe to use against squatters with no active commands. Verify first with `pos commands list <node>` for each node in the target's allocation.
+
+43. **CRITICAL DANGER: `pos allocations free <node>` (without `-k`) TRIMS the CALENDAR ENTRY covering that node to `now()`, even when freeing ANOTHER user's allocation.** The trim semantic is keyed on the **calendar entry containing the freed node**, not on the allocation being freed. So when you exercise calendar-ownership free-rights (§12.42) on a squatter, your own multi-hour reservation gets clipped to "now". **MITIGATION**: ALWAYS pass `-k/--keep-calendar-event` when freeing as a calendar-owner: `pos allocations free -k <node>`. Verified Jun 13 07:52 CEST: ivgreiff's calendar entry 1746 (07:00→13:00 UTC, 6 hours) was trimmed to (07:00→07:53 UTC, 53 min) after `pos allocations free algofi` (which evicted christer). All other allocations (octorand, flare, opulous, meld) survived as orphans but `polynize` became unreservable. Recovery: `pos calendar create --asap-after now -d 360 <nodes...>` created replacement entry 1747. Counter-intuitive failure mode — operator's instinct says "I'm freeing someone ELSE's allocation, why would MY calendar be affected?" — but the server-side trim is unconditional. **Add `-k` to any operator script that frees by calendar-ownership right.**
+
+44. **CANONICAL DISPATCH WRAPPER: `a4/pos/dispatch_audit.sh` is the ONE template that should be used for every Inc 4+ audit.** It auto-handles both single-dispatch (jobs ≤ nodes) and multi-dispatch (jobs > nodes, slices manifest per-variant) cases, working around §12.36 transparently. Verified Jun 13 08:06-10:53 UTC in production for all 5 Inc 4 audits (25 DBs total, all correct mut counts):
+    - **MULTI mode** — `b8_seq` (5 jobs × 1 node) → 5 sub-dispatches on flare; each variant gets correct vars + own DB. Wall ≈ 6 min/variant × 5 = 29 min. All 5 DBs `muts=50`. Replaced an earlier broken single-dispatch attempt that wrote only `cTS_semantic_v2.db` (last-job vars surviving §12.36 overwrite bug).
+    - **SINGLE mode** — `b8_par` (5 jobs × 5 nodes) → 1 dispatch with round-robin assignment. Wall ≈ 20 min (15 min sequential per-node resets + ~3 min parallel fuzz + overhead). All 5 DBs `muts=50` at near-simultaneous timestamps (true parallel; satisfies B8 parallel-verification gate).
+    - **b11 N=500 SINGLE mode** — Wall ≈ 50 min on 4 Tier S + meld (Tier C bottleneck). meld variant landed `muts=500` along with the 4 Tier S variants.
+    Invocation:
+    ```bash
+    # Auto-detects mode based on jobs-vs-nodes ratio.
+    bash a4/pos/dispatch_audit.sh <manifest.json> <node1> [node2] ...
+    ```
+    Companion orchestrator `a4/pos/run_inc4_all.sh` runs all 5 Inc 4 audits sequentially as fire-and-forget under tmux/nohup. **Do NOT call `dispatch_pos.py` directly for multi-job manifests** — always go through `dispatch_audit.sh` so the §12.36 workaround is applied.
+
+45. **POS node hardware flakiness — substitute, do not retry indefinitely.** Verified Jun 13 09:42 UTC: `polynize` (Tier S EPYC 9354) hit `NodeDidNotBoot: SSHTimeout: wait until booted` during a routine `pos.nodes.reset` mid-dispatch. The reset command went into `error` status; `pos nodes list` reported `polynize | ERR booting`; `ssh polynize` from coinbase returned `No route to host`. After freeing our allocation (which auto-freed polynize), a second `pos nodes reset polynize` attempt failed with `Resource polynize is not owned by you!` (race with another user grabbing it). The orchestrator died on the dispatch_pos `set -e`, leaving an orphaned 5-node allocation. **Recovery procedure:**
+    1. `pos allocations free -k <orphan-alloc-id>` (preserves calendar entry per §12.43).
+    2. Substitute the flaky node with the next-fastest in the calendar reservation (in our case `meld` Tier C replaced `polynize` Tier S; added ~30 min wall on b11 due to the slower per-mut rate).
+    3. Re-dispatch with the same template (`dispatch_audit.sh`).
+    4. Optionally create a contiguous second calendar entry (Pattern B per §12.34) so the in-flight allocation survives end_date (§12.40).
+    **DO NOT** repeatedly retry the flaky node — POS's queued boot retries can starve the dispatcher's await timeout and waste reservation window. Substitute promptly; report the node to admin if it's persistent.
 
 ---
 

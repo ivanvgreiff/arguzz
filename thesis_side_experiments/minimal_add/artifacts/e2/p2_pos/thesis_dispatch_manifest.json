@@ -1,0 +1,9 @@
+{
+  "node": "polynize",
+  "allocation": "ivgreiff_260613_012322_505302",
+  "bundle": "/home/ivgreiff/thesis_minimal_add_thesis_d5eddb8309cf.tar.gz",
+  "image": "debian-trixie",
+  "command_id": "2026-06-13_01-25-51_792033_thesis_e2_smoke",
+  "started_at": "2026-06-12T23:23:22Z",
+  "ended_at": "2026-06-12T23:27:23Z"
+}

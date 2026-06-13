@@ -12,7 +12,8 @@ from typing import Any, Dict, List
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from a4.audits.audit_common import (
-    GLOSSARY_META, INC2_SMOKE_SEED, INC2_VARIANTS, OUTPUT_DIR, DEFAULT_HOST, run_fuzz_smoke,
+    GLOSSARY_META, INC2_SMOKE_SEED, INC2_VARIANTS, OUTPUT_DIR, DEFAULT_HOST,
+    resolve_variant_dbs, run_fuzz_smoke,
 )
 from a4.standalone.coverage_db import CoverageDB
 
@@ -105,30 +106,45 @@ def _audit_db(db_path: str, canonical: Dict[str, List], expected_n: int = 10) ->
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--host", default=DEFAULT_HOST)
+    p.add_argument("--db-dir", default=None, help="Audit existing POS DBs (no fuzz run)")
+    p.add_argument("--expected-n", type=int, default=10, help="Expected mutation count per variant")
+    p.add_argument("--output", default=str(OUTPUT_DIR / "B9_db_schema.json"))
     args = p.parse_args()
     OUTPUT_DIR.mkdir(exist_ok=True)
     canonical = _canonical_schema()
 
     per_variant: Dict[str, Any] = {}
     all_pass = True
-    with tempfile.TemporaryDirectory(prefix="b9_") as tmp:
-        for vid, spec in INC2_VARIANTS.items():
-            db = str(Path(tmp) / f"{vid}.db")
-            rc = run_fuzz_smoke(selector=spec["selector"], db_path=db, num=10, host=args.host)
-            if rc not in (0, 2):
-                per_variant[vid] = {"pass": False, "error": f"exit={rc}"}
-                all_pass = False
-                continue
-            per_variant[vid] = _audit_db(db, canonical)
+
+    if args.db_dir:
+        db_map = resolve_variant_dbs(Path(args.db_dir), n_hint=args.expected_n)
+        missing = set(INC2_VARIANTS) - set(db_map)
+        if missing:
+            print(f"ERROR: missing B9 DBs for {missing} in {args.db_dir}", file=sys.stderr)
+            return 2
+        for vid in sorted(INC2_VARIANTS):
+            per_variant[vid] = _audit_db(str(db_map[vid]), canonical, expected_n=args.expected_n)
             all_pass = all_pass and per_variant[vid]["pass"]
+    else:
+        with tempfile.TemporaryDirectory(prefix="b9_") as tmp:
+            for vid, spec in INC2_VARIANTS.items():
+                db = str(Path(tmp) / f"{vid}.db")
+                rc = run_fuzz_smoke(selector=spec["selector"], db_path=db, num=args.expected_n, host=args.host)
+                if rc not in (0, 2):
+                    per_variant[vid] = {"pass": False, "error": f"exit={rc}"}
+                    all_pass = False
+                    continue
+                per_variant[vid] = _audit_db(db, canonical, expected_n=args.expected_n)
+                all_pass = all_pass and per_variant[vid]["pass"]
 
     out = {
         "_meta": GLOSSARY_META,
         "seed": INC2_SMOKE_SEED,
+        "expected_n": args.expected_n,
         "per_variant": per_variant,
         "verdict": "PASS" if all_pass else "FAIL",
     }
-    out_path = OUTPUT_DIR / "B9_db_schema.json"
+    out_path = Path(args.output)
     out_path.write_text(json.dumps(out, indent=2))
     print(f"=== B9 RESULT: {out['verdict']} ===")
     print(f"  Wrote {out_path}")

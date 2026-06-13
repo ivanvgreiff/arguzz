@@ -1,0 +1,70 @@
+{
+  "_meta": {
+    "audit": "B12_multi_input",
+    "timestamp": "2026-06-13T15:50:00+00:00"
+  },
+  "per_input": {
+    "in1_1_in4_1": {
+      "arms_in_universe": 48,
+      "new_arms_vs_baseline": [],
+      "dropped_arms_vs_baseline": [],
+      "A_suite": {
+        "A3": "PASS",
+        "A5": "FAIL",
+        "A5_reason": "EXPECTED_ARMS.md baseline table drift (core_div vs live core_shr; step counts). Fails on baseline --in1 5 too \u2014 doc issue not input regression.",
+        "note": "A1/A2/A4 skipped \u2014 identical to Inc4 pre-flight"
+      },
+      "B4": "PASS",
+      "B9": "PASS",
+      "B1": "PASS",
+      "expected_arms_md_updated": true,
+      "verdict": "PASS",
+      "B1_detail": {
+        "raw_pass_rate": 0.98,
+        "net_pass_rate": 1.0,
+        "net_pass": 250,
+        "net_fail": 0,
+        "category_counts": {
+          "B": 1,
+          "A": 2,
+          "D": 1,
+          "C": 1
+        },
+        "disposition_doc": "PHASE_7D_INC3D_B1_DISPOSITION.md",
+        "disposition_summary": "245/250 raw \u2192 250/250 net (100%); 5 fails all match Inc 3 documented exclusions A/B/C/D",
+        "source": "a4/audits/audit_output/B1_inc4_b12_in1_1_disposition.json"
+      }
+    },
+    "in1_100_in4_100": {
+      "arms_in_universe": 48,
+      "new_arms_vs_baseline": [],
+      "dropped_arms_vs_baseline": [],
+      "A_suite": {
+        "A3": "PASS",
+        "A5": "FAIL",
+        "A5_reason": "same EXPECTED_ARMS.md drift as small input"
+      },
+      "B4": "PASS",
+      "B9": "PASS",
+      "B1": "PASS",
+      "expected_arms_md_updated": true,
+      "verdict": "PASS",
+      "B1_detail": {
+        "raw_pass_rate": 0.98,
+        "net_pass_rate": 1.0,
+        "net_pass": 250,
+        "net_fail": 0,
+        "category_counts": {
+          "B": 1,
+          "A": 2,
+          "D": 1,
+          "C": 1
+        },
+        "disposition_doc": "PHASE_7D_INC3D_B1_DISPOSITION.md",
+        "disposition_summary": "245/250 raw \u2192 250/250 net (100%); 5 fails all match Inc 3 documented exclusions A/B/C/D",
+        "source": "a4/audits/audit_output/B1_inc4_b12_in1_100_disposition.json"
+      }
+    }
+  },
+  "verdict": "PASS"
+}

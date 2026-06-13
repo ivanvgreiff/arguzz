@@ -1,0 +1,24 @@
+{
+  "mutation_type": "INSTR_WORD_MOD",
+  "step": 193,
+  "word": 12912051,
+  "_surgical": {
+    "field": "rs1",
+    "original_field_value": 11,
+    "mutated_field_value": 10,
+    "instruction_format": "R",
+    "format_name": "OP"
+  },
+  "_info": {
+    "description": "INSTR_WORD_MOD_SUR: Mutate rs1 field",
+    "fetch_word_addr": 524816,
+    "fetch_byte_addr": "0x00200840",
+    "original_value": 12944819,
+    "original_word": "0x00c585b3",
+    "mutated_word": "0x00c505b3",
+    "disasm_original": "ADD x11, x11, x12",
+    "next_pc": "0x00200844",
+    "major": 0,
+    "minor": 0
+  }
+}

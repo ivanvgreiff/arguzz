@@ -11,7 +11,7 @@
       "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
     },
     "audit": "B1_hook_fidelity",
-    "timestamp": "2026-06-10T21:10:59.532068+00:00",
+    "timestamp": "2026-06-13T04:30:13.092852+00:00",
     "seed": 999,
     "n_per_variant": 200,
     "verifier": "a4/tools/verify_mutation_semantics.py (strict P1)"
@@ -81,21 +81,9 @@
       "verdict": "PASS"
     },
     "V5": {
-      "total": 5,
-      "pass": 5,
-      "fail": 0,
-      "stratification": {
-        "COMP_OUT_MOD|core_arithmetic": 1,
-        "COMP_OUT_MOD|core_mul": 1,
-        "COMP_OUT_MOD|core_shr": 1,
-        "COMP_OUT_MOD|post_ecall": 1,
-        "INSTR_TYPE_MOD|core_arithmetic": 1
-      },
-      "multicycle_flags": 0,
-      "failures": [],
-      "db": "/root/arguzz/a4/audits/audit_output/inc3_smokes/b1_prevalidate_V5_seed999_n5.db",
-      "verdict": "PASS"
+      "verdict": "FAIL",
+      "error": "fuzz exit 1"
     }
   },
-  "verdict": "PREVALIDATE_PASS"
+  "verdict": "FAIL"
 }

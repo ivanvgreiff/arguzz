@@ -1,0 +1,77 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    },
+    "audit": "B1_hook_fidelity",
+    "timestamp": "2026-06-13T18:10:21.826079+00:00",
+    "seed": 999,
+    "n_per_variant": 500,
+    "verifier": "a4/tools/verify_mutation_semantics.py (strict P1)"
+  },
+  "per_variant": {
+    "V2": {
+      "total": 500,
+      "pass": 499,
+      "fail": 1,
+      "stratification": {
+        "LOAD_VAL_MOD": 32,
+        "INSTR_WORD_MOD_SUR": 256,
+        "MEM_VAL_MOD": 26,
+        "INSTR_WORD_MOD_FULL": 75,
+        "INSTR_TYPE_MOD": 19,
+        "STORE_OUT_MOD": 32,
+        "COMP_OUT_MOD": 38,
+        "PRE_EXEC_REG_MOD": 22
+      },
+      "multicycle_flags": 1,
+      "failures": [
+        {
+          "mutation_id": 68,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 2,
+            "new_minor": 13
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 2,
+            "minor": 13,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "MulHU",
+              "pc": "0xc0000004",
+              "is_valid_combination": false
+            }
+          }
+        }
+      ],
+      "selector": "kindUCB_zoned_v1",
+      "db": "/root/b1_verify/pos_audit_b11_kindUCB_zoned_v1_seed999_n500.db",
+      "verdict": "FAIL"
+    }
+  },
+  "prevalidate": null,
+  "verdict": "FAIL",
+  "totals": {
+    "pass": 499,
+    "mutations": 500
+  }
+}

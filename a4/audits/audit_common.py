@@ -129,6 +129,68 @@ def run_fuzz_smoke(
     return subprocess.call(cmd, cwd=str(REPO_ROOT))
 
 
+def _db_matches_selector(path: Path, selector: str, seed: int) -> bool:
+    """Match POS stem …_<selector>_seed<seed>_… without substring false positives."""
+    pat = rf"_{re.escape(selector)}_seed{seed}"
+    return re.search(pat, path.name) is not None
+
+
+def resolve_variant_dbs(
+    db_dir: Path,
+    *,
+    campaign_hint: Optional[str] = None,
+    n_hint: Optional[int] = None,
+    seed: int = INC2_SMOKE_SEED,
+) -> Dict[str, Path]:
+    """Map V1..V5 to DB paths from POS or local smoke naming.
+
+    Walks `db_dir` recursively so POS layouts (`<run_dir>/<node>/*.db`) and
+    flat layouts (smoke runs) both work. Per Inc 4 fallout: b8_seq must be
+    dispatched as 5 separate single-job invocations because of dispatcher
+    multi-job-per-node bug (POS_PLAYBOOK §12.36) — that produces 5 separate
+    `<run_dir>/flare/*.db` paths, all of which we need to discover here.
+    """
+    mapping: Dict[str, Path] = {}
+    all_dbs = sorted(db_dir.rglob("*.db"))
+    for vk, spec in INC2_VARIANTS.items():
+        selector = spec["selector"]
+        candidates = [p for p in all_dbs if _db_matches_selector(p, selector, seed)]
+        if campaign_hint:
+            candidates = [p for p in candidates if campaign_hint in p.name]
+        if n_hint is not None:
+            needle = f"_n{n_hint}"
+            narrowed = [p for p in candidates if needle in p.name]
+            if narrowed:
+                candidates = narrowed
+        if seed is not None:
+            seed_hits = [p for p in candidates if f"seed{seed}" in p.name]
+            if seed_hits:
+                candidates = seed_hits
+        if candidates:
+            # Prefer newest run_dir when multiple POS dispatches exist (e.g. b8_seq MULTI mode).
+            mapping[vk] = sorted(candidates, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+    return mapping
+
+
+def resolve_variant_traces(
+    db_dir: Path,
+    db_map: Dict[str, Path],
+) -> Dict[str, Path]:
+    """Find bandit trace JSONL alongside each variant DB."""
+    traces: Dict[str, Path] = {}
+    for vk, db_path in db_map.items():
+        candidates = [
+            db_path.with_suffix(".bandit_trace.jsonl"),
+            db_dir / f"b4_{vk}_trace.jsonl",
+            db_path.parent / (db_path.stem + ".bandit_trace.jsonl"),
+        ]
+        for tp in candidates:
+            if tp.exists():
+                traces[vk] = tp
+                break
+    return traces
+
+
 def load_inspection(host: str, in1: str, in4: str):
     from a4.core.inspection_data import InspectionData
     from a4.standalone.fuzzer import A4Fuzzer

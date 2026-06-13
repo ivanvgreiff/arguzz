@@ -1,0 +1,640 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    },
+    "audit": "B1_hook_fidelity",
+    "timestamp": "2026-06-13T18:09:41.516668+00:00",
+    "seed": 999,
+    "n_per_variant": 500,
+    "verifier": "a4/tools/verify_mutation_semantics.py (strict P1)"
+  },
+  "per_variant": {
+    "V4": {
+      "total": 500,
+      "pass": 477,
+      "fail": 23,
+      "stratification": {
+        "COMP_OUT_MOD": 10,
+        "MEM_VAL_MOD": 49,
+        "LOAD_VAL_MOD": 13,
+        "INSTR_WORD_MOD_SUR": 33,
+        "INSTR_WORD_MOD_FULL": 23,
+        "INSTR_TYPE_MOD": 308,
+        "PRE_EXEC_REG_MOD": 54,
+        "STORE_OUT_MOD": 10
+      },
+      "multicycle_flags": 17,
+      "failures": [
+        {
+          "mutation_id": 48,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 0,
+            "new_minor": 8
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 0,
+            "minor": 8,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "XorI",
+              "pc": "0xc0000004",
+              "is_valid_combination": false
+            }
+          }
+        },
+        {
+          "mutation_id": 49,
+          "kind": "MEM_VAL_MOD",
+          "step": 0,
+          "detail": "byte_addr 134148904 != config 0x107fef328",
+          "hook_payload": {
+            "step": 0,
+            "txn_type": "READ",
+            "cycle_idx": 0,
+            "txn_idx": 3042,
+            "pc": 0,
+            "addr": 1107279050,
+            "byte_addr": 134148904,
+            "old_word": 2238695,
+            "new_word": 4292728601,
+            "major": 7,
+            "minor": 0
+          },
+          "config": {
+            "mutation_type": "MEM_VAL_MOD",
+            "step": 0,
+            "txn_idx": 3042,
+            "word": 4292728601,
+            "_info": {
+              "txn_type": "other_mem_read",
+              "byte_addr": "0x107fef328",
+              "is_write": false,
+              "original_value": 2238695
+            }
+          }
+        },
+        {
+          "mutation_id": 61,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 5,
+            "new_minor": 2
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 5,
+            "minor": 2,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "Lw",
+              "pc": "0xc0000004",
+              "is_valid_combination": true
+            }
+          }
+        },
+        {
+          "mutation_id": 68,
+          "kind": "MEM_VAL_MOD",
+          "step": 3929,
+          "detail": "byte_addr 268304440 != config 0x10ffe0038",
+          "hook_payload": {
+            "step": 3929,
+            "txn_type": "WRITE",
+            "cycle_idx": 20879,
+            "txn_idx": 34186,
+            "pc": 3221225720,
+            "addr": 1140817934,
+            "byte_addr": 268304440,
+            "old_word": 1833169765,
+            "new_word": 3276321119,
+            "major": 8,
+            "minor": 0
+          },
+          "config": {
+            "mutation_type": "MEM_VAL_MOD",
+            "step": 3929,
+            "txn_idx": 34186,
+            "word": 3276321119,
+            "_info": {
+              "txn_type": "other_mem_write",
+              "byte_addr": "0x10ffe0038",
+              "is_write": true,
+              "original_value": 1833169765
+            }
+          }
+        },
+        {
+          "mutation_id": 96,
+          "kind": "MEM_VAL_MOD",
+          "step": 3929,
+          "detail": "byte_addr 264241240 != config 0x10fc00058",
+          "hook_payload": {
+            "step": 3929,
+            "txn_type": "READ",
+            "cycle_idx": 20879,
+            "txn_idx": 33962,
+            "pc": 3221225720,
+            "addr": 1139802134,
+            "byte_addr": 264241240,
+            "old_word": 116320829,
+            "new_word": 992524918,
+            "major": 8,
+            "minor": 0
+          },
+          "config": {
+            "mutation_type": "MEM_VAL_MOD",
+            "step": 3929,
+            "txn_idx": 33962,
+            "word": 992524918,
+            "_info": {
+              "txn_type": "other_mem_read",
+              "byte_addr": "0x10fc00058",
+              "is_write": false,
+              "original_value": 116320829
+            }
+          }
+        },
+        {
+          "mutation_id": 100,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 2,
+            "new_minor": 3
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 2,
+            "minor": 3,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "Jal",
+              "pc": "0xc0000004",
+              "is_valid_combination": true
+            }
+          }
+        },
+        {
+          "mutation_id": 116,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 5,
+            "new_minor": 3
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 5,
+            "minor": 3,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "LbU",
+              "pc": "0xc0000004",
+              "is_valid_combination": true
+            }
+          }
+        },
+        {
+          "mutation_id": 130,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 2,
+            "new_minor": 3
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 2,
+            "minor": 3,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "Jal",
+              "pc": "0xc0000004",
+              "is_valid_combination": true
+            }
+          }
+        },
+        {
+          "mutation_id": 137,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 2,
+            "new_minor": 5
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 2,
+            "minor": 5,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "Lui",
+              "pc": "0xc0000004",
+              "is_valid_combination": true
+            }
+          }
+        },
+        {
+          "mutation_id": 147,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 1,
+            "new_minor": 10
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 1,
+            "minor": 10,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "BgeU",
+              "pc": "0xc0000004",
+              "is_valid_combination": false
+            }
+          }
+        },
+        {
+          "mutation_id": 154,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 0,
+            "new_minor": 1
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 0,
+            "minor": 1,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "Sub",
+              "pc": "0xc0000004",
+              "is_valid_combination": true
+            }
+          }
+        },
+        {
+          "mutation_id": 166,
+          "kind": "MEM_VAL_MOD",
+          "step": 3929,
+          "detail": "byte_addr 234863624 != config 0x10dffbc08",
+          "hook_payload": {
+            "step": 3929,
+            "txn_type": "READ",
+            "cycle_idx": 20879,
+            "txn_idx": 33694,
+            "pc": 3221225720,
+            "addr": 1132457730,
+            "byte_addr": 234863624,
+            "old_word": 391706607,
+            "new_word": 391706863,
+            "major": 8,
+            "minor": 0
+          },
+          "config": {
+            "mutation_type": "MEM_VAL_MOD",
+            "step": 3929,
+            "txn_idx": 33694,
+            "word": 391706863,
+            "_info": {
+              "txn_type": "other_mem_read",
+              "byte_addr": "0x10dffbc08",
+              "is_write": false,
+              "original_value": 391706607
+            }
+          }
+        },
+        {
+          "mutation_id": 263,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 3,
+            "new_minor": 9
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 3,
+            "minor": 9,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "Sra",
+              "pc": "0xc0000004",
+              "is_valid_combination": false
+            }
+          }
+        },
+        {
+          "mutation_id": 275,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 0,
+            "new_minor": 4
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 0,
+            "minor": 4,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "And",
+              "pc": "0xc0000004",
+              "is_valid_combination": true
+            }
+          }
+        },
+        {
+          "mutation_id": 296,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 1,
+            "new_minor": 4
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 1,
+            "minor": 4,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "SltIU",
+              "pc": "0xc0000004",
+              "is_valid_combination": true
+            }
+          }
+        },
+        {
+          "mutation_id": 312,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 1,
+            "new_minor": 6
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 1,
+            "minor": 6,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "Bne",
+              "pc": "0xc0000004",
+              "is_valid_combination": true
+            }
+          }
+        },
+        {
+          "mutation_id": 331,
+          "kind": "MEM_VAL_MOD",
+          "step": 3929,
+          "detail": "byte_addr 268419092 != config 0x10fffc014",
+          "hook_payload": {
+            "step": 3929,
+            "txn_type": "READ",
+            "cycle_idx": 20879,
+            "txn_idx": 34345,
+            "pc": 3221225720,
+            "addr": 1140846597,
+            "byte_addr": 268419092,
+            "old_word": 1637579158,
+            "new_word": 586590632,
+            "major": 8,
+            "minor": 0
+          },
+          "config": {
+            "mutation_type": "MEM_VAL_MOD",
+            "step": 3929,
+            "txn_idx": 34345,
+            "word": 586590632,
+            "_info": {
+              "txn_type": "other_mem_read",
+              "byte_addr": "0x10fffc014",
+              "is_write": false,
+              "original_value": 1637579158
+            }
+          }
+        },
+        {
+          "mutation_id": 337,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 6,
+            "new_minor": 6
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 6,
+            "minor": 6,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "Unknown(6,6)",
+              "pc": "0xc0000004",
+              "is_valid_combination": false
+            }
+          }
+        },
+        {
+          "mutation_id": 373,
+          "kind": "INSTR_TYPE_MOD",
+          "step": 0,
+          "detail": "cycle_shift_at_step: hook old=7/0 != config exp_old=2/6",
+          "hook_payload": {
+            "step": 0,
+            "cycle_idx": 0,
+            "pc": 0,
+            "old_major": 7,
+            "old_minor": 0,
+            "new_major": 5,
+            "new_minor": 9
+          },
+          "config": {
+            "mutation_type": "INSTR_TYPE_MOD",
+            "step": 0,
+            "major": 5,
+            "minor": 9,
+            "_info": {
+              "original_major": 2,
+              "original_minor": 6,
+              "original_kind": "Auipc",
+              "mutated_kind": "Sh",
+              "pc": "0xc0000004",
+              "is_valid_combination": false
+            }
+          }
+        },
+        {
+          "mutation_id": 464,
+          "kind": "MEM_VAL_MOD",
+          "step": 0,
+          "detail": "byte_addr 268304428 != config 0x10ffe002c",
+          "hook_payload": {
+            "step": 0,
+            "txn_type": "READ",
+            "cycle_idx": 0,
+            "txn_idx": 803,
+            "pc": 0,
+            "addr": 1140817931,
+            "byte_addr": 268304428,
+            "old_word": 1675508073,
+            "new_word": 1048576,
+            "major": 7,
+            "minor": 0
+          },
+          "config": {
+            "mutation_type": "MEM_VAL_MOD",
+            "step": 0,
+            "txn_idx": 803,
+            "word": 1048576,
+            "_info": {
+              "txn_type": "other_mem_read",
+              "byte_addr": "0x10ffe002c",
+              "is_write": false,
+              "original_value": 1675508073
+            }
+          }
+        }
+      ],
+      "selector": "kindTS_zoned_v2",
+      "db": "/root/b1_verify/pos_audit_b11_kindTS_zoned_v2_seed999_n500.db",
+      "verdict": "FAIL"
+    }
+  },
+  "prevalidate": null,
+  "verdict": "FAIL",
+  "totals": {
+    "pass": 477,
+    "mutations": 500
+  }
+}

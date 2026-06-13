@@ -6,6 +6,30 @@ Read PLAYBOOK §0 (status), §3 (reservations), §4 (image/bundle), §6 (workflo
 
 **IGNORE (stale / different effort, will mislead):** any `PHASE_7D_*` / `PHASE_7D_INC3D*` doc, and anything referencing `INC3D_B_BUNDLE` / `INC3D_B2_BUNDLE` (those are the active *main-fuzzer* bundles, not ours).
 
+## HARD RULE: thesis node reservation (calendar + node selection)
+**The agent NEVER touches the calendar — reservations are a manual web-UI step by the user.**
+Rules, in order:
+1. **A calendar entry must exist for our node before any dispatch.** Reserve via the
+   POS web calendar UI (the only way to reserve), then dispatch with
+   **`--allocation-duration 0`** so the dispatcher CLAIMS the existing reservation
+   instead of creating a new calendar entry (creating one would trip the 2-entry cap).
+2. **2-entry cap handling:** POS allows only **2 future calendar entries per user**
+   (§12.28). If we already hold 2 entries (e.g. the parallel A/B campaign's rolling
+   reservations), **do NOT create a 3rd** — instead **EDIT an existing entry via the web
+   UI to add our node** (one entry can cover multiple nodes, §12.37). If there is room
+   (<2 entries), a dedicated new entry for our node is fine.
+3. **Dedicated, exclusive node:** always reserve a node **only we use** for the thesis
+   run. **NEVER reuse a node another agent/campaign is using** (the A/B campaign holds
+   `flare`, `octorand`, `opulous` — Tier S; avoid those and any node showing a non-`None`
+   holder in `pos nodes list`).
+4. **Pick a FAST node:** prefer **Tier S** (AMD EPYC 9354 — e.g. `polynize` if free) then
+   **Tier A** (`algofi`, EPYC 7543, ~5.9× D-1518 measured). Verify free at reservation
+   time via `pos nodes list | awk '$2=="host" && $3=="booted" && $4=="None"'` and
+   `pos allocations list` / `pos calendar list`. Per-mut wall ≈ 3 s on Tier S/A vs ≈ 19 s
+   on Tier E — always go fast.
+5. **Wait for `start_date`** before `allocate`/dispatch (§12.37–§12.39): a reservation is
+   not claimable before its start even if you own it; POS auto-evicts squatters at start.
+
 ## HARD RULE: POS vs WSL threshold
 **EVERYTHING runs on POS unless the batch is 10 prover runs or fewer.** WSL is for
 ≤10 proves only (baselines, single-config debugging, smoke checks). Any sweep/batch

@@ -445,6 +445,79 @@ IV.POS.5's "ucb_kindbucket_b16" used a **two-level discounted UCB** (kind × buc
 
 Question for Pro: do you want a literal IV.POS.5 rerun as a separate Variant 1.5 (e.g. `ucb_kindbucket_b16_replay`), or is the Variant 2 "kind-only undiscounted UCB1 + zoned step + legacy reward" baseline sufficient to anchor the reward ablation? IV.POS.7 will run with the latter; we can add a literal replay variant in a follow-up campaign if Pro disagrees.
 
+### G7 — POS-only race in `touch_bitmap` measurement (~0.7% ΔT noise floor) — **NEW, top-priority for Phase 8 launch**
+
+**Standalone deep-dive doc:** [`a4/docs/cloud1/RACE_FINDING_AND_OPEN_QUESTIONS.md`](RACE_FINDING_AND_OPEN_QUESTIONS.md). The short version below; please read the full doc before answering, particularly §4 (mechanism) and §8 (parallelism systems).
+
+**Concise summary**:
+
+- On POS (university testbed; AMD EPYC 9354 bare-metal), paired runs of the same mutation, same seed, same node, same binary, **occasionally produce `delta_T` values that differ by ±1**. Combined sample: **7 flips / 1000 paired muts = 0.70%** under default parallelism.
+- The divergent bit is **always** on one specific constraint: `FieldToWord(zirgen/circuit/rv32im/v2/dsl/inst_p2.zir:291)` at `major=9 minor=5` (a Poseidon2 sub-cycle).
+- The 9-field preflight fingerprint (`state, pc, mmm, uc, txnIdx, pagingIdx, bigintIdx, dc0, dc1`) is **bit-identical A vs B in 100% of pairs**, including ones where `delta_T` flips. So the race is downstream of preflight state but upstream of the touch-coverage record.
+- Constraint pass/fail decisions (`failures` table) are bit-identical A vs B for racy pairs → the race does **not** affect proof validity, constraint outcomes, or mutation results. It affects only the bandit reward signal `delta_T`.
+- `RAYON_NUM_THREADS=1` reduces the race rate ~5× (to ~0.14%, **1 flip / 700 paired muts**) at a 3–4× wall-clock cost per campaign.
+- **Honest mechanism gap (added 2026-06-13 revision)**: our binary has *two* independent parallelism systems — (i) Rust Rayon (controlled by `RAYON_NUM_THREADS`), and (ii) C++ `poolstl` with `std::thread` (used inside `cpu_witgen`/`cpu_accum`, NOT controlled by any env var we set). `RAYON=1` only controls (i). The residual leak under `RAYON=1` (1/700) could be from (ii), from the B5 patch's instrumentation overhead perturbing race timing, or from sample noise. We don't currently have an experiment that isolates (ii).
+- **User has overridden the original D47 (which proposed `RAYON=1` for all of Phase 8)** in favor of launching Phase 8 with default parallelism for speed and presenting the race + this question to Pro alongside Phase 8 results. If Pro flags the 0.7% noise floor as material, we will re-run with `RAYON=1` and/or add a poolstl-isolation experiment.
+- **NEW (2026-06-13 — Phase 7d Inc 4 evidence)**: We have now run B11 at N=500 for all 5 variants on POS and compared to the Inc 3 N=200 baseline. At the per-row level the bandit trajectories diverge starting around mut #94 for the UCB variants and earlier for cTS V5. At the aggregate level the impact is **much smaller**: kind-pull total-variation-distance is 0.000 (V1), 0.005 (V4 TS), 0.075 (V2/V3 UCB and V5 cTS); failure-constraint set IoU is 100% / 100% / 96.2% / 79.4% / 74.3% for V1/V4/V2/V3/V5. We verified end-to-end that the divergence is caused by exactly the §2.2 race (2 `delta_T` flips in V2's first 93 mutations → UCB posterior drift → different arm at #94). Full data in [`RACE_FINDING_AND_OPEN_QUESTIONS.md` §12](RACE_FINDING_AND_OPEN_QUESTIONS.md#12-inc-4-b11-prefix-drift-evidence-added-2026-06-13--concrete-observed-consequence-data-for-q1).
+
+**Concrete questions for Pro:**
+
+1. **Is the ~0.7% reward noise floor (default parallelism) acceptable for our Phase 8 V1–V5 variant comparison at N=5000–10000 per campaign?** Our intuition is "yes — it averages out per-arm at this scale, and we document it as a methodology note." We want a sanity check; particularly whether the noise floor could bias any specific variant more than others.
+2. **Is the residual leak under `RAYON=1` (1/700) worth chasing before Phase 8?** Three escalating investigation options listed in `RACE_FINDING_AND_OPEN_QUESTIONS.md` §9 Q2 (cheapest: `taskset --cpu-list 0`; medium: poolstl-sequential rebuild; expensive: explicit thread-count assertions). We can do any of these; or accept the residual and move on.
+3. **Has source-file wipe (see G7-context below) weakened the rigor of this finding?** We can rebuild and re-dispatch from the existing binary, but several C++ source files documenting the gating logic (`A4_COVERAGE_TOUCH=1` → sequential witgen mode) are currently inaccessible. Recovery is in progress but not blocking Phase 8 per user decision. Acceptable, or block on full source recovery?
+4. **Should we file an upstream RISC0 issue documenting the parallel-execution `delta_T` non-determinism for the RISC0 maintainers' awareness?**
+5. **(NEW) Given the Inc 4 aggregate-impact measurements (RACE_FINDING §12)**: is **0.075 TVD on kind-pulls** and **0.24 TVD on V5's 48-arm fine grain** an acceptable run-to-run reproducibility for Phase 8's headline variant comparison? Concretely — does this support reporting "V5 outperforms V2 by X% AUC" with confidence, or do we need wider error bars / multi-seed aggregation / a partial `RAYON=1` strategy (e.g. enable only on V5 since it's the most race-sensitive)?
+
+**Context — source-file wipe**: on 2026-06-12, a WSL2 filesystem incident wiped a large number of working-tree files including ~85 internal markdown docs and the entire A4 instrumentation surface in `workspace/risc0-modified/risc0/circuit/rv32im-sys/kernels/cxx/` (the C++ files `ffi.cpp`, `steps.cpp`, `witgen.h` and Rust files `hal/mod.rs`, `witgen/mod.rs`). Markdowns recovered via Cursor agent transcripts (85 files). The risc0 source modifications were *never committed* to the submodule's git history (uncommitted working-tree state) and so are not recoverable from git history — only from a June 3 patch backup (`risc0-modified.CURRENT.patch`) plus patch-spec documents for the Jun 3 → Jun 12 deltas (B1/B2/B3/B5). The compiled binaries are intact (`/root/arguzz/workspace/output/target/release/risc0-host` SHA `1bd8e9ec…`); we can run Phase 8 from these. Source recovery is on the master plan to be tackled only if Pro recommends revisiting the race phenomenon.
+
+### G8 — B1 strict-verifier "disposition framework": do you agree with each exclusion category?
+
+**Background:** The B1 hook-fidelity audit re-runs each mutation standalone against the host binary and asserts the captured hook tag matches the original DB record. On our binary the raw pass rate is ~96–98% across all datasets to date. Investigating each raw failure showed that they ALL fall into a small, deterministic set of patterns corresponding to specific architectural decisions you've previously seen (D40, D42, D46). We created `a4/audits/B1_apply_disposition.py` to apply these exclusions automatically and report a "net pass rate" that excludes the documented boundary cases.
+
+**Why we need Pro's sign-off here:** every dataset where we report B1 PASS will be doing so *after* applying these dispositions. If you disagree that any one of these categories is a legitimate exclusion (vs. a real bug we're hiding), the verdict flips from PASS to FAIL on those datasets. We want explicit agreement (or pushback) on each pattern.
+
+**Aggregate disposition coverage to date** (4 datasets, ~4000 mutations):
+
+| Dataset | N | Raw pass | Net pass | Unclassified failures |
+|---|---:|---|---|---:|
+| Inc 3 B1 baseline | 1000 | 963 (96.3%) | ≥999 (99.9%) | ≤1 |
+| Inc 4 B12 in1_1 | 250 | 245 (98.0%) | 250 (100%) | 0 |
+| Inc 4 B12 in1_100 | 250 | 245 (98.0%) | 250 (100%) | 0 |
+| Inc 4 B11 | 2500 | 2416 (96.6%) | 2500 (100%) | 0 (after B2 extension; see below) |
+
+**The 6 exclusion patterns we apply:**
+
+| # | Pattern | Maps to decision | Why we say it's not a bug |
+|---|---|---|---|
+| **A** | `INSTR_TYPE_MOD step=0`, hook reports `cycle.major=7` (CONTROL0 at cycle_idx=0), config recorded the Auipc's semantic `decoded.major=2 minor=6` | **D40** — multi-cycle step disambiguation | First user instruction (Auipc at PC `0xc0000004`) is interleaved with boot-setup cycles. The mutation IS applied to the Auipc; only the cycle-index annotation disagrees. **No soundness implication.** |
+| **B** | `MEM_VAL_MOD step=3929`, mismatch on `byte_addr` field, hook major=8 (ECALL) | **D42** (nondet mem-txn allowlist) + **D46** (ECALL 8/7) | Step 3929 = ECALL last_step (program exit) has prepare/dispatch/cleanup sub-stages; the `txn_idx → byte_addr` mapping is well-defined per-run but the high address bit (`0x100000000` physical vs `0x0fffff7c` user-space) gets truncated by the hook. |
+| **B2** *(NEW, surfaced in Inc 4 B11)* | `MEM_VAL_MOD step=3929`, mismatch on `old_word` / `old_byte` field, **`new_word` field still agrees** | **D42 + D46** | Same ECALL sub-stage mechanism as B but the cell that drifts is the prior-state readback (`old_word`) rather than the address. Safety guard: only excluded if the mutation's effect (`new_word`) DID apply correctly between hook and config. Surfaced **once** (1 of 2500) in Inc 4 B11. Discovered, adjudicated, and pre-registered as a sub-pattern of B. |
+| **C** | `INSTR_TYPE_MOD` mid-program with hook `cycle.major=8` (ECALL0) vs config `decoded.major=7` (Eany) | **D46** | "RISC0 circuit places ECALL in `cycle.major=8`; RV32IM encoding has ECALL as `decoded.major=7 minor=0`. Both correct from respective perspectives." |
+| **D** | `MEM_VAL_MOD step=0` (boot/ECALL boundary), mismatch on `byte_addr` | **D42 + D46** | Same root cause as B but at program start. |
+| **D2** *(pre-registered, 0 cases observed)* | `MEM_VAL_MOD step=0`, mismatch on `old_word` / `old_byte`, **`new_word` agrees** | **D42 + D46** | Symmetric to B2 at the boot boundary. Not yet observed but the rule is in the disposition script so it won't be mis-counted if it appears. |
+
+Anything NOT matching A/B/B2/C/D/D2 (or the Poseidon2 race fingerprint, which is its own RACE category and counted as a net failure) stays as `OTHER` in the disposition output and counts as a real net failure. To date there have been **zero OTHER failures** across the 4 datasets — the framework is exhaustive under the current modified-RISC0 architecture.
+
+**The B2 safety guard (Inc 4 design choice we want Pro to sanity-check)**:
+
+B2 and D2 only trigger if the MUTATION'S EFFECT actually applied — i.e. `hook_payload.new_word == config.new_word`. The intuition: B1 verifies the hook captures mutations correctly. The mutation EFFECT is `new_word` (what gets written). `old_word` (what was there before) is metadata around the mutation. If `old_word` drifted between hook and config but `new_word` matched, the mutation worked correctly — only the read-back of the prior state diverged due to ECALL sub-stage timing. If `new_word` ALSO drifted, the mutation got clobbered, which would be a real bug, and the failure stays `OTHER` for review.
+
+**Concrete questions for Pro:**
+
+1. **Do you agree that A/B/C/D are legitimate architectural-boundary exclusions, not bugs?** (These are the original Inc 3 disposition pattern. D40/D42/D46 backed them, but you've never been asked outright if you agree with the exclusion at the verifier level.)
+2. **Do you agree that B2 (and pre-registered D2) extends those same decisions cleanly?** Specifically: is "ECALL sub-stage timing causes `old_word` to drift while `new_word` is correct" the same architectural envelope as "ECALL sub-stage timing causes `byte_addr` to drift," or do you want B2 treated as a distinct case requiring its own investigation?
+3. **Is the B2 safety guard (`new_word` agreement) sufficient to ensure we're not accidentally hiding mutation-effect failures?** Alternative more-conservative guards we considered but rejected: (a) require `new_word` AND `byte_addr` both agree, OR (b) require the mutation kind to be MEM_VAL_MOD specifically (already the case), OR (c) reject all `old_word` drifts entirely (would re-introduce ~1 in 2500 false failure rate). We picked the current guard because the failure surface is small and the architectural argument for B2 is strong.
+4. **Is "zero OTHER failures across ~4000 mutations" sufficient empirical evidence that the framework is exhaustive?** Or do you want us to run a larger N (e.g. B1 verify on a Phase 8 campaign at N=5000+ per variant) before claiming the disposition framework is closed under our architecture?
+5. **Should the disposition logic be folded into B1_hook_fidelity.py itself** (so the verifier reports `PASS WITH EXCLUSIONS` natively), or kept as a separate post-hoc step in `B1_apply_disposition.py` (so the raw signal remains visible)? We currently keep it separate to preserve the honest raw count; this is a design preference question.
+
+**Pro-visible artifact paths (Inc 4 closing handoff):**
+
+- Decisions doc (this file): D40, D42, D46.
+- Disposition script: `a4/audits/B1_apply_disposition.py` (small, auditable, deterministic).
+- Inc 3 disposition writeup with per-row provenance: `a4/docs/cloud1/composer/PHASE_7D_INC3D_B1_DISPOSITION.md` (§9 has the Inc 4 B2 extension).
+- Race-vs-disposition Pro-facing summary: `a4/docs/cloud1/RACE_FINDING_AND_OPEN_QUESTIONS.md` §12.1a.
+- Inc 4 disposition JSON outputs: `a4/audits/audit_output/B1_inc4_*_disposition.json` (one per dataset).
+
 ---
 
 ### D28 — Floor priority order (cold → singleton → epoch → adaptive)

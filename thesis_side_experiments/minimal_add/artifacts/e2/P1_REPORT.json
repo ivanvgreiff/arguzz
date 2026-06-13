@@ -1,0 +1,12 @@
+{
+  "forced_value_path": true,
+  "configs_baked": true,
+  "analyze_logs_ok": true,
+  "arguzz_matches_e1": true,
+  "determinism_all": true,
+  "smoke_run_count": 12,
+  "proof_invocations": 24,
+  "deviations": [],
+  "determinism_failures": [],
+  "gate_pass": true
+}

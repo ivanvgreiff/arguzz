@@ -1,0 +1,61 @@
+{
+  "run_id": "arguzz_INSTR_WORD_MOD_s0",
+  "run_type": "arguzz",
+  "kind": "INSTR_WORD_MOD",
+  "role": "add",
+  "seed": 0,
+  "inject_step": 195,
+  "mutated_value": null,
+  "mutated_word": 12961203,
+  "mutated_word_hex": "0x00c5c5b3",
+  "decoded_instruction": {
+    "word_hex": "0x00c5c5b3",
+    "disassembly": "XOR x11, x11, x12",
+    "format_name": "OP"
+  },
+  "outcome_class": "CONSTRAINT_REJECT",
+  "preflight_crash": false,
+  "verifier_success": false,
+  "soundness_escape": false,
+  "failure_count": 1,
+  "layers": {
+    "intrastep-local": 1,
+    "interstep-local": 0,
+    "global": 0
+  },
+  "buckets": {
+    "intrastep-local": [
+      {
+        "constraint_type": "L1",
+        "constraint_loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpXOR ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :100:20)))",
+        "cycle": 14466,
+        "step": 193,
+        "pc": 2099268,
+        "major": 0,
+        "minor": 2,
+        "value": 2013265917,
+        "full_loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpXOR ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :100:20)))",
+        "phase": "local",
+        "category": "L1"
+      }
+    ],
+    "interstep-local": [],
+    "global": []
+  },
+  "global_families": [],
+  "provenance": [
+    {
+      "layer": "intrastep-local",
+      "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpXOR ( zirgen/circuit/rv32im/v2/dsl",
+      "value": 2013265917,
+      "verified": false,
+      "reason": "non-scalar mutation"
+    }
+  ],
+  "example_loc_residue": "intrastep-local: loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv\u2026 value=2013265917",
+  "log_path": "/root/arguzz/thesis_side_experiments/minimal_add/artifacts/e2/p1_dryrun/logs/arguzz_INSTR_WORD_MOD_s0.log",
+  "fields_changed": [
+    "funct3"
+  ],
+  "field_class": "operation"
+}

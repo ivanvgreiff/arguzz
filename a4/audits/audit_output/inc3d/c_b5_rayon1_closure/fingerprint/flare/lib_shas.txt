@@ -1,0 +1,4 @@
+972bb2a18b71140dab0240f8a1f68ab3fb1d56bcd4c4f824a91b70888faf5a00  /lib/x86_64-linux-gnu/libstdc++.so.6
+56e42210fbaee005355b622121fec8b0c16ca80837eddce3e3557075103dda78  /lib/x86_64-linux-gnu/libc.so.6
+759506ba4ed410f7b926704547db1bd31896ffb4f1a79d6b75884af239bcf21b  /lib/x86_64-linux-gnu/libm.so.6
+1bd8e9ec3a95547126490ef3087f33bf90234a0d6800ad962a2fa9a124890788  /root/a4_campaign/bin/risc0-host

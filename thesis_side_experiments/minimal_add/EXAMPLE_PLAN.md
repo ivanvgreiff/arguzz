@@ -409,3 +409,164 @@ load-add-store-readback guest showing, per semantic mutation, **which layer
 (intrastep-local / interstep-local / global) each fuzzer breaks** and why
 (executor propagation vs witness surgical edit), including the `INSTR_WORD_MOD_SUR`
 single-constraint demonstration.
+
+---
+
+# BATCH 2 — the remaining mutation kinds (E5/E6)
+
+Batch 1 (E0–E4) covered the cleanly-pairable in-place kinds. Batch 2 covers **every
+remaining mutation kind in both fuzzers**, characterizing each into the same
+intrastep-local / interstep-local / global layers, and producing the same family of
+markdowns. We **reuse the Batch-1 engine almost entirely** (see G.3).
+
+## G.0 Complete mutation inventory (verified from source)
+
+**Arguzz — 10 kinds total** (`risc0-modified/.../execute/rv32im.rs`):
+
+| kind | when | what it does | Batch 1? |
+|---|---|---|---|
+| `COMP_OUT_MOD` | in-place | overwrite compute write value | ✅ done |
+| `LOAD_VAL_MOD` | in-place | overwrite load write value | ✅ done |
+| `STORE_OUT_MOD` | in-place | overwrite store mem value | ✅ done |
+| `INSTR_WORD_MOD` | in-place | overwrite fetched word (executed) | ✅ done |
+| `PRE_EXEC_PC_MOD` | pre-exec | `set_pc(random)` **before** fetch → executes a different instruction | ⬜ **E5** |
+| `PRE_EXEC_MEM_MOD` | pre-exec | `store_memory(rand_addr, rand)` **before** exec → extra mem WRITE | ⬜ **E5** |
+| `PRE_EXEC_REG_MOD` | pre-exec | `store_register(rand_reg, rand)` **before** exec → extra reg WRITE | ⬜ **E5** |
+| `POST_EXEC_PC_MOD` | post-exec | `set_pc(random)` **after** exec → corrupts next-pc | ⬜ **E5** |
+| `POST_EXEC_MEM_MOD` | post-exec | `store_memory(rand_addr, rand)` **after** exec → extra mem WRITE | ⬜ **E5** |
+| `POST_EXEC_REG_MOD` | post-exec | `store_register(rand_reg, rand)` **after** exec → extra reg WRITE | ⬜ **E5** |
+
+The 6 remaining Arguzz kinds are the **Family-1** ("inject/overwrite a whole
+transaction via the executor") set. They use `ctx.set_pc / store_memory /
+store_register`, which add **real extra transactions** that the executor then has to
+account for. **Expectation (itself a key finding):** several of these will **crash in
+the executor/preflight before any constraint is checked** — e.g. `PRE_EXEC_REG_MOD`
+is the known same-cycle R/W OOB panic in `wrap_memory_txns`. That "crash-before-
+constraints" behavior is the Family-1 bias signature and must be **recorded as an
+outcome** (`PROVE_ERROR` / `preflight_crash`), not treated as a harness failure.
+
+**A4 — 7 kinds total** (`a4/standalone/mutations/__init__.py`):
+
+| kind | what it edits in the witness | Batch 1? |
+|---|---|---|
+| `COMP_OUT_MOD` / `LOAD_VAL_MOD` / `STORE_OUT_MOD` | a write value | ✅ done |
+| `INSTR_WORD_MOD` (FULL + SUR) | fetched word / one field | ✅ done |
+| `MEM_VAL_MOD` | a memory READ value | ✅ done |
+| `PRE_EXEC_REG_MOD` | a register READ/WRITE txn word (strategies `next_read`→IsRead+MemoryWrite, `prev_write`→MemoryWrite) | ⬜ **E5** |
+| `INSTR_TYPE_MOD` | `cycles[].major/minor` (the decoded op-type columns, **without** touching the word) | ⬜ **E5** |
+
+## G.1 Honest pairing note (read before designing)
+
+Batch 2 does **not** pair as cleanly as Batch 1 — say so in the write-up. The genuine
+cross-fuzzer pairs and the orphans:
+
+- **Register corruption pair:** Arguzz `POST_EXEC_REG_MOD` (executor extra reg write)
+  ↔ A4 `PRE_EXEC_REG_MOD` (witness reg-txn edit). Same intent (a register holds the
+  wrong value), opposite stage → expected to reproduce the Batch-1 bias shape
+  (Arguzz crashes/propagates; A4 reaches `MemoryWrite`/`IsRead`).
+- **Operation-type triple:** A4 `INSTR_TYPE_MOD` (major/minor) vs A4
+  `INSTR_WORD_MOD_FULL` (word, Batch 1) vs Arguzz `INSTR_WORD_MOD` (Batch 1). Three
+  routes to "execute the wrong op type" — `INSTR_TYPE_MOD` flips only the selector
+  columns, so it should isolate the **decode** break without the fetched-word memory
+  residue that `INSTR_WORD_MOD_FULL` adds. This is the A4-only analogue of SUR for the
+  op-type axis.
+- **Memory-write orphans:** Arguzz `PRE/POST_EXEC_MEM_MOD` write to a **random**
+  address; A4's only memory kind (`MEM_VAL_MOD`, Batch 1) edits a **read**. Related
+  but not identical — compare layer footprints, don't claim a strict mirror.
+- **PC orphans (Arguzz-only):** `PRE/POST_EXEC_PC_MOD` have **no A4 counterpart** (A4
+  exposes no PC mutation). On a straight-line guest these mostly redirect into
+  arbitrary/illegal instructions → executor/preflight crash; record as the Arguzz-only
+  control-flow signature.
+
+So Batch 2's value is **(a)** complete per-kind layer coverage and **(b)** the two real
+pairs above; frame it that way rather than forcing 1:1 comparisons.
+
+## G.2 Guest program — reuse the frozen one (recommendation + tradeoff)
+
+**Recommendation: keep the exact frozen guest + `thesis-minimal-host` (sha
+`5337f944…`) for E5. Do NOT recompile.** Reasons:
+
+- REG, MEM, and `INSTR_TYPE_MOD` mutations need no new instructions — the existing
+  `load → add → store → read-back` steps + stack/heap are sufficient targets, and the
+  E0 `site_card.json` already names the steps.
+- Recompiling changes the host SHA and **breaks comparability with E0–E4** and the
+  frozen-binary contract (§A2b). Batch 2 must stay on the same binary so the matrices
+  compose.
+- The PC-mod crashes on straight-line code are a **legitimate finding**, not a gap.
+
+**Optional E6 (only if you want it):** to characterize *meaningful, non-crashing*
+control-flow redirection (PC mods that land on a valid in-program branch/loop target),
+we'd need a richer guest with an explicit branch/loop. That is a **separate** program
+built into a **separate binary + its own E0-style site card + its own frozen SHA**, run
+as an isolated mini-campaign so it never contaminates the Batch-1/E5 binary. Decision
+deferred to you — E5 does **not** require it.
+
+## G.3 What we reuse vs. what is new
+
+**Reuse as-is (no changes):** frozen host + guest + `artifacts/e0/site_card.json`;
+`bias_campaign/run_arguzz.py`; `thesis_side_experiments/pos/thesis_run_pos.sh`
+(P2-certified thin path, incl. the `"time":"…"` determinism strip);
+`analyze_logs.py` + `categorize.py` + `touch_parse.py` (layer bucketing is
+kind-agnostic and already classifies `PROVE_ERROR` + `preflight_crash` from the E1
+amendment); `host_guard.py`; the `run_e4_matrix.py` matrix pattern; the POS
+reservation/dispatch flow on **polynize** (>10 proofs ⇒ POS, per A3/POS_NOTES).
+
+**New / extend (small):**
+1. `a4_config.py`: add an **`INSTR_TYPE_MOD`** builder (emit `{"mutation_type":
+   "INSTR_TYPE_MOD","step":a4_step,"major":M,"minor":m}`; pick a target op-type, e.g.
+   ADD→SUB or ADD→XOR via the same major/minor the executor would use). `PRE_EXEC_REG_MOD`
+   builder already exists — reuse with both strategies.
+2. `bake_e5.py`: enumerate Batch-2 configs (Arguzz: 6 kinds × the frozen steps × a small
+   seed sweep; A4: `PRE_EXEC_REG_MOD` both strategies + `INSTR_TYPE_MOD`).
+3. `run_e5.py`: clone `run_e2.py` (tmux-on-coinbase dispatch, one reset, loop configs,
+   pull+analyze locally). Same determinism / provenance / isolation / sha-guard gates.
+
+## G.4 Workspace cleanup (E5 step 0 — do FIRST, verify nothing breaks)
+
+The folder has accumulated pre-E0 cruft. Reorganize **conservatively**:
+
+- `docs/` ← move the four explanatory docs: `CONSTRAINTS_EXPLAINED.md`,
+  `A4_CONSTRAINTS_EXPLAINED.md`, `E4_COMPARISON.md`, and a copy/move of
+  `artifacts/e4/MATRIX_GRANULAR.md` (standalone — safe to move).
+- `specs/` ← `EXAMPLE_PLAN.md`, `E1_SPEC.md`, `E1_AMENDMENT.md`, `E2_POS_PREP_SPEC.md`,
+  `E2_FULL_SPEC.md`, `E4_MATRIX_SPEC.md` (and the forthcoming `E5_SPEC.md`).
+- `_archive/` ← clearly-dead pre-E0 files: `run_m0.py`–`run_m3.py`, `run_phases.py`,
+  `verify_crash_condition.py`, `EXPERIMENT_PLAN_V2.md`, old `PLAN.md`, old `README.md`,
+  and stale `artifacts/{m0,m1,m2,m3,verify_crash}`, plus loose
+  `artifacts/*.txt`, `instruction_card.json`, `comparison_matrix.json`,
+  `a4_mut*`, `arguzz_mut*`, `baseline_trace.txt`, `step_185_dump.txt`,
+  `inspection_summary.txt`, `run_phases.log`.
+- **Keep the active engine scripts at top level** (`run_e0/e1/e2/e4_matrix.py`,
+  `analyze_logs.py`, `bake_e2_*.py`, `apply_e1_amendment.py`, `host_guard.py`,
+  `build.sh`, `host/`, `methods/`, `frozen_host/`, `target/`) — moving them risks
+  breaking relative paths/imports.
+- Add a fresh top-level `README.md` indexing: program, engine scripts, specs/, docs/,
+  artifacts/e0..e5, archive.
+- **Gate:** before moving any file, `grep`/git-verify nothing active imports it; after
+  the move, re-run `python3 run_e4_matrix.py` and confirm it still emits the identical
+  `artifacts/e4/` outputs (no proving). Only then proceed to E5 proper.
+
+## G.5 E5 — execution & deliverables
+
+1. **Cleanup** (G.4) and gate.
+2. **Arguzz (E5-A):** run all 6 Family-1 kinds at the frozen steps (a few seeds each)
+   via `run_arguzz`. For each, capture outcome (incl. crash class) + categorized
+   layers + the `<fault>` info. Document which kinds crash (executor/preflight) vs.
+   which reach constraints, and at which layer.
+3. **A4 (E5-B):** `PRE_EXEC_REG_MOD` (both `next_read` and `prev_write` strategies) and
+   `INSTR_TYPE_MOD` at the relevant steps; capture footprints identically; note the
+   `INSTR_TYPE_MOD` vs `INSTR_WORD_MOD_FULL` (Batch-1) op-type contrast.
+4. **Scale rule:** Batch 2 is >10 proofs ⇒ **POS on polynize** via the thin path.
+5. **Deliverables (mirror Batch 1):**
+   - `artifacts/e5/` raw logs + per-run JSON + `e5_summary.md`.
+   - Extend the granular matrix: `run_e4_matrix.py` (or `run_e5_matrix.py`) ingests
+     `e5` too → `MATRIX_GRANULAR.md` now covers **all kinds**.
+   - Extend `CONSTRAINTS_EXPLAINED.md` (Arguzz Family-1) and
+     `A4_CONSTRAINTS_EXPLAINED.md` (`PRE_EXEC_REG_MOD`, `INSTR_TYPE_MOD`) with the same
+     mutation→constraint→meaning→layer treatment.
+   - An `E5_COMPARISON.md` (or a new section in `E4_COMPARISON.md`) for the two real
+     pairs + the orphan coverage + the Family-1 "crash-before-constraints" finding.
+
+**E5 gate:** every kind classified into a layer **or** a recorded crash class;
+determinism 2×; provenance for every cited residue; host sha-guard asserted;
+POS≡(local spot-check) where feasible; all markdowns regenerated.

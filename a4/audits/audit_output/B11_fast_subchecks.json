@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "audit": "B11_fast_subchecks",
+    "note": "B1 verify pending \u2014 slow path"
+  },
+  "filter_applied": {
+    "executed_at_excluded": true,
+    "snapshot_at_excluded": true,
+    "d42_addresses_excluded_count": 188,
+    "d42_addresses_source": "a4/audits/audit_output/A1_nondet_addrs.json",
+    "delta_t_normalized_to_binary": true,
+    "float_tolerance": 1e-09,
+    "reason_for_delta_t_normalization": "Inc 3 B7 closure: ~0.7% Poseidon2 race-noise floor on delta_T; aggregate sign is what isolation actually requires"
+  },
+  "per_variant": {
+    "V1": {
+      "prefix_diffs": 200,
+      "prefix_pass": false,
+      "b4": "PASS",
+      "b9": true,
+      "db_node": "flare"
+    },
+    "V2": {
+      "prefix_diffs": 200,
+      "prefix_pass": false,
+      "b4": "PASS",
+      "b9": true,
+      "db_node": "octorand"
+    },
+    "V3": {
+      "prefix_diffs": 200,
+      "prefix_pass": false,
+      "b4": "PASS",
+      "b9": true,
+      "db_node": "opulous"
+    },
+    "V4": {
+      "prefix_diffs": 200,
+      "prefix_pass": false,
+      "b4": "PASS",
+      "b9": true,
+      "db_node": "meld"
+    },
+    "V5": {
+      "prefix_diffs": 200,
+      "prefix_pass": false,
+      "b4": "PASS",
+      "b9": true,
+      "db_node": "algofi"
+    }
+  }
+}

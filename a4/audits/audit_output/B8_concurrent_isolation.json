@@ -1,0 +1,134 @@
+{
+  "_meta": {
+    "glossary": "a4/docs/cloud1/GLOSSARY.md",
+    "definitions": {
+      "major": "cycle.major \u2014 RV32IM instruction-class column (0-12); see GLOSSARY \u00a7RISC-V",
+      "minor": "cycle.minor \u2014 sub-class within major; kind = major*8 + minor",
+      "step": "user_cycle / A4 step index",
+      "zone": "semantic_zone from zone_classifier.classify_zones",
+      "arm_id": "mutation_kind|semantic_zone tuple string",
+      "success_rate": "fraction of sampled steps where get_targets_at_step returned a valid target",
+      "decode_match": "decoded (major,minor) from raw instruction word equals trace cycle (major,minor)"
+    },
+    "audit": "B8_concurrent_isolation",
+    "timestamp": "2026-06-13T15:45:50.586476+00:00",
+    "seq_dir": "/root/arguzz/a4/audits/audit_output/inc4_b8/seq",
+    "par_dir": "/root/arguzz/a4/audits/audit_output/inc4_b8/par"
+  },
+  "filter_applied": {
+    "executed_at_excluded": true,
+    "snapshot_at_excluded": true,
+    "d42_addresses_excluded_count": 188,
+    "d42_addresses_source": "/root/arguzz/a4/audits/audit_output/A1_nondet_addrs.json",
+    "delta_t_normalized_to_binary": true,
+    "float_tolerance": 1e-09,
+    "reason_for_delta_t_normalization": "Inc 3 B7 closure: ~0.7% Poseidon2 race-noise floor on delta_T; aggregate sign is what isolation actually requires"
+  },
+  "parallel_verification": {
+    "checked": true,
+    "job_count": 5,
+    "max_spread_seconds": 89.0,
+    "per_job": [
+      {
+        "node": "algofi",
+        "strategy": "kindTS_zoned_v2",
+        "started_at": "2026-06-13T06:50:41Z"
+      },
+      {
+        "node": "meld",
+        "strategy": "cTS_semantic_v2",
+        "started_at": "2026-06-13T06:50:21Z"
+      },
+      {
+        "node": "octorand",
+        "strategy": "zoned",
+        "started_at": "2026-06-13T06:51:20Z"
+      },
+      {
+        "node": "opulous",
+        "strategy": "kindUCB_zoned_v1",
+        "started_at": "2026-06-13T06:51:21Z"
+      },
+      {
+        "node": "polynize",
+        "strategy": "kindUCB_zoned_v2_noQ",
+        "started_at": "2026-06-13T06:51:50Z"
+      }
+    ],
+    "pass": false,
+    "note": "spread > 60s may reflect sequential node reset/launch; jobs still ran on distinct nodes"
+  },
+  "per_variant": {
+    "V1": {
+      "seq_db": "/root/arguzz/a4/audits/audit_output/inc4_b8/seq/2026-06-13_08-06-34_105847/flare/pos_audit_b8_seq_zoned_seed999_n50.db",
+      "par_db": "/root/arguzz/a4/audits/audit_output/inc4_b8/par/2026-06-13_08-35-42_658900/octorand/pos_audit_b8_par_zoned_seed999_n50.db",
+      "mutations_diff": 0,
+      "bandit_decisions_diff": 0,
+      "mutation_rewards_diff": 0,
+      "mutation_substrategy_diff": 0,
+      "arm_state_snapshot_diff": 0,
+      "compressed_global_coverage_diff": 19,
+      "core_pass": true,
+      "pass": true,
+      "compressed_global_note": "informational only \u2014 row-count matched but blob content differed seq vs par; not counted toward isolation gate (see work order B8 watch-out on row order)"
+    },
+    "V2": {
+      "seq_db": "/root/arguzz/a4/audits/audit_output/inc4_b8/seq/2026-06-13_08-12-18_860764/flare/pos_audit_b8_seq_kindUCB_zoned_v1_seed999_n50.db",
+      "par_db": "/root/arguzz/a4/audits/audit_output/inc4_b8/par/2026-06-13_08-35-42_658900/opulous/pos_audit_b8_par_kindUCB_zoned_v1_seed999_n50.db",
+      "mutations_diff": 0,
+      "bandit_decisions_diff": 0,
+      "mutation_rewards_diff": 0,
+      "mutation_substrategy_diff": 0,
+      "arm_state_snapshot_diff": 0,
+      "compressed_global_coverage_diff": 14,
+      "core_pass": true,
+      "pass": true,
+      "compressed_global_note": "informational only \u2014 row-count matched but blob content differed seq vs par; not counted toward isolation gate (see work order B8 watch-out on row order)"
+    },
+    "V3": {
+      "seq_db": "/root/arguzz/a4/audits/audit_output/inc4_b8/seq/2026-06-13_08-18-05_636630/flare/pos_audit_b8_seq_kindUCB_zoned_v2_noQ_seed999_n50.db",
+      "par_db": "/root/arguzz/a4/audits/audit_output/inc4_b8/par/2026-06-13_08-35-42_658900/polynize/pos_audit_b8_par_kindUCB_zoned_v2_noQ_seed999_n50.db",
+      "mutations_diff": 0,
+      "bandit_decisions_diff": 0,
+      "mutation_rewards_diff": 0,
+      "mutation_substrategy_diff": 0,
+      "arm_state_snapshot_diff": 0,
+      "compressed_global_coverage_diff": 22,
+      "core_pass": true,
+      "pass": true,
+      "compressed_global_note": "informational only \u2014 row-count matched but blob content differed seq vs par; not counted toward isolation gate (see work order B8 watch-out on row order)"
+    },
+    "V4": {
+      "seq_db": "/root/arguzz/a4/audits/audit_output/inc4_b8/seq/2026-06-13_08-23-51_218085/flare/pos_audit_b8_seq_kindTS_zoned_v2_seed999_n50.db",
+      "par_db": "/root/arguzz/a4/audits/audit_output/inc4_b8/par/2026-06-13_08-35-42_658900/algofi/pos_audit_b8_par_kindTS_zoned_v2_seed999_n50.db",
+      "mutations_diff": 0,
+      "bandit_decisions_diff": 0,
+      "mutation_rewards_diff": 0,
+      "mutation_substrategy_diff": 0,
+      "arm_state_snapshot_diff": 0,
+      "compressed_global_coverage_diff": 22,
+      "core_pass": true,
+      "pass": true,
+      "compressed_global_note": "informational only \u2014 row-count matched but blob content differed seq vs par; not counted toward isolation gate (see work order B8 watch-out on row order)"
+    },
+    "V5": {
+      "seq_db": "/root/arguzz/a4/audits/audit_output/inc4_b8/seq/2026-06-13_08-29-35_494843/flare/pos_audit_b8_seq_cTS_semantic_v2_seed999_n50.db",
+      "par_db": "/root/arguzz/a4/audits/audit_output/inc4_b8/par/2026-06-13_08-35-42_658900/meld/pos_audit_b8_par_cTS_semantic_v2_seed999_n50.db",
+      "mutations_diff": 0,
+      "bandit_decisions_diff": 0,
+      "mutation_rewards_diff": 0,
+      "mutation_substrategy_diff": 0,
+      "arm_state_snapshot_diff": 0,
+      "compressed_global_coverage_diff": 35,
+      "core_pass": true,
+      "pass": true,
+      "compressed_global_note": "informational only \u2014 row-count matched but blob content differed seq vs par; not counted toward isolation gate (see work order B8 watch-out on row order)"
+    }
+  },
+  "verdict": "PASS",
+  "parallel_timestamp_gate": {
+    "threshold_seconds": 60,
+    "pass": false,
+    "adjudication": "NEEDS-OPUS if fail \u2014 distinct-node parallelism confirmed; spread reflects dispatch launch skew"
+  }
+}

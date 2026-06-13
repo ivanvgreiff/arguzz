@@ -1,8 +1,15 @@
 # Phase 7d — Architecture Audit (Pre-Phase-8 Hard Gate)
 
-**Status:** ACTIVE
+**Status:** ACTIVE (Inc 3 CLOSED 2026-06-12; Inc 4 / 5 pending; **Phase 8 LAUNCH AUTHORIZED with default parallelism per user override 2026-06-13** — Pro consult to follow)
 **Replaces:** old Phase 7c (single verifier) as the gate to Phase 8.
-**Blocks:** Phase 8 IV.POS.7 — must remain blocked until **every** audit listed here exits 0 on the current code path.
+**Blocks:** Phase 8 IV.POS.7 — was previously fully blocking; **user override (2026-06-13) lifts the block** so that the 5 variants can be tested with parallel processing for speed, and results + race writeup are presented to Pro jointly.
+
+> **STANDING NOTE ADDED 2026-06-13 — race phenomenon & data preservation.** The B7 seed-reproducibility audit (Inc 3) discovered a ~0.7% per-mutation `delta_T` noise floor under default parallelism (~5× reduction under `RAYON_NUM_THREADS=1`). Full investigation in [`a4/docs/cloud1/RACE_FINDING_AND_OPEN_QUESTIONS.md`](../RACE_FINDING_AND_OPEN_QUESTIONS.md); G7 in [`CLOUD1_DECISIONS_FOR_PRO_R2.md`](../CLOUD1_DECISIONS_FOR_PRO_R2.md). **Master-plan items:**
+> 1. **All Phase 7d Inc 3 audit DBs and logs** (`a4/audits/audit_output/inc3d/`) **MUST be preserved** indefinitely so we don't have to re-run experiments if Pro recommends revisiting the race.
+> 2. **All Phase 7d Inc 3 markdowns** (`a4/docs/cloud1/composer/PHASE_7D_INC3*.md`, `PHASE_7D_INC3D_*.md`) **MUST be preserved** as the canonical record of the race investigation.
+> 3. **Granular B1/B2/B3/B5 patch recovery is DEFERRED** unless Pro recommends revisiting. Recovery costs ~2 hours from `risc0-modified.CURRENT.patch` + patch-spec docs. The current binary works for Phase 8.
+> 4. **The `workspace/risc0-modified` submodule SHOULD be git-tracked on a private branch** (procedure in `PHASE_7D_INC3_FINAL_REPORT.md` §8) so a future WSL wipe cannot lose work again.
+> 5. **Source recovery (late 2026-06-13)**: 5 core A4-hooked submodule files (`ffi.cpp`, `steps.cpp`, `witgen.h`, `hal/mod.rs`, `witgen/mod.rs`) were wiped along with the docs and have been **recovered byte-identically to June 3 state** from `/root/arguzz_backups/risc0-modified.CURRENT.patch`. Full verification: 58/58 patched files match June 3 state byte-for-byte after restoration (zero post-June-3 changes lost for the 53 surviving files). Pre-recovery safety backup: `/root/arguzz_backups/pre_recovery_20260612_232446/`. **Primary-source verification** of `A4_COVERAGE_TOUCH=1 → SeqForward` gating (hal/mod.rs:149) and sequential dispatch (ffi.cpp:401) is now possible; the previously-secondary-source claims in `RACE_FINDING_AND_OPEN_QUESTIONS.md` are confirmed and the doc has been updated to note that poolstl is *less plausible* as the residual-race source than previously suggested (since witgen/accum are bypassed in poolstl path under `A4_COVERAGE_TOUCH=1`).
 
 ---
 
