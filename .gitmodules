@@ -1,0 +1,4 @@
+[submodule "workspace/risc0-modified"]
+	path = workspace/risc0-modified
+	url = https://github.com/ivanvgreiff/risc0.git
+	branch = arguzz/b7-race-instrumentation
