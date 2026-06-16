@@ -1,0 +1,16 @@
+{
+  "v6_seeds": 10,
+  "v6_partial": false,
+  "v6_mean_local_context_final": 108.0,
+  "v6_mean_cgc": 395.4,
+  "v1_mean_local_context_final": 42.9,
+  "v5_mean_local_context_final": 46.4,
+  "v6_full_union_normalized": 125,
+  "v6_a4_reachable_normalized": 20,
+  "v6_reachable_fraction_normalized": 0.16,
+  "v6_cgc_reachable_fraction": 0.2085661080074488,
+  "territory_v1": 46,
+  "territory_v5": 50,
+  "territory_v6": 20,
+  "v5_novel_v6_hits": 0
+}

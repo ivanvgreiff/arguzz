@@ -1,0 +1,15 @@
+{
+  "v0_n_seeds": 10,
+  "v0_local_context_final_mean": 35.0,
+  "v0_local_context_final_std": 1.5634719199411433,
+  "v0_local_context_final_min": 33,
+  "v0_local_context_final_max": 38,
+  "v0_local_context_final_in_33_38": true,
+  "v0_zone_entropy_mean": 1.9416421298260702,
+  "v0_zone_entropy_std": 0.011635166458534922,
+  "v1_zone_entropy_mean": 2.201806234664475,
+  "v5_zone_entropy_mean": 3.2712353927071676,
+  "v0_cgc_mean": 140.7,
+  "v1_cgc_mean": 144.2,
+  "v1_cgc_delta_pct_vs_v0": 2.4875621890547266
+}

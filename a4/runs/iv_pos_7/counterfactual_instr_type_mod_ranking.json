@@ -1,0 +1,45 @@
+{
+  "_note": "SUPERSEDED: use discovery_rate_by_kind.csv for Pro \u00a712 per-kind diagnosis. Boolean mean-reward rank is misleading.",
+  "ranking": {
+    "V1": {
+      "current_reward_rank": 1,
+      "discovery_binary_rank": 1,
+      "no_qloc_reward_rank": 8,
+      "discovery_ranks_higher_than_current": false,
+      "current_reward": 0.14946135941607858,
+      "discovery_binary_reward": 0.23875664709082955
+    },
+    "V2": {
+      "current_reward_rank": 1,
+      "discovery_binary_rank": 1,
+      "no_qloc_reward_rank": 1,
+      "discovery_ranks_higher_than_current": false,
+      "current_reward": 0.5752951959471713,
+      "discovery_binary_reward": 0.7003684102782464
+    },
+    "V3": {
+      "current_reward_rank": 1,
+      "discovery_binary_rank": 2,
+      "no_qloc_reward_rank": 8,
+      "discovery_ranks_higher_than_current": false,
+      "current_reward": 0.029235863497524238,
+      "discovery_binary_reward": 0.08594514667131292
+    },
+    "V4": {
+      "current_reward_rank": 1,
+      "discovery_binary_rank": 1,
+      "no_qloc_reward_rank": 8,
+      "discovery_ranks_higher_than_current": false,
+      "current_reward": 0.027736332197334734,
+      "discovery_binary_reward": 0.08323382270994628
+    },
+    "V5": {
+      "current_reward_rank": 1,
+      "discovery_binary_rank": 1,
+      "no_qloc_reward_rank": 8,
+      "discovery_ranks_higher_than_current": false,
+      "current_reward": 0.11045631555874857,
+      "discovery_binary_reward": 0.1812974510585203
+    }
+  }
+}

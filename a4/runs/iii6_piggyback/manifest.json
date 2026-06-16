@@ -1,0 +1,43 @@
+{
+  "created_at": "2026-06-05T08:30:01Z",
+  "host_binary": "/root/arguzz/workspace/output/target/release/risc0-host",
+  "host_args": [
+    "--in1",
+    "5",
+    "--in4",
+    "10"
+  ],
+  "num_per_campaign": 1000,
+  "values": "mixed",
+  "kind": "all",
+  "seed_base": 1234,
+  "replicates": 1,
+  "strategies": [
+    "uniform",
+    "zoned"
+  ],
+  "campaigns": [
+    {
+      "strategy": "uniform",
+      "seed": 1234,
+      "db": "uniform/seed_1234.db",
+      "log": "uniform/seed_1234.log",
+      "started_at": "2026-06-04T19:43:43Z",
+      "finished_at": "2026-06-05T02:28:01Z",
+      "elapsed_seconds": 24258.59,
+      "exit_code": 0,
+      "num_mutations_recorded": 1000
+    },
+    {
+      "strategy": "zoned",
+      "seed": 1234,
+      "db": "zoned/seed_1234.db",
+      "log": "zoned/seed_1234.log",
+      "started_at": "2026-06-05T02:28:02Z",
+      "finished_at": "2026-06-05T08:30:01Z",
+      "elapsed_seconds": 21719.7,
+      "exit_code": 0,
+      "num_mutations_recorded": 1000
+    }
+  ]
+}

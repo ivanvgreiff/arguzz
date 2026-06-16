@@ -1,0 +1,21 @@
+variant,criterion_id,criterion,passed,evidence
+V2,criterion_1_auc_beats_v1,AUC > zoned_current with p<0.05,False,"ΔAUC=-50338, p=0.0000"
+V2,criterion_2_final_lower_variance,Final coverage ≥ zoned with σ_variant/σ_V1 < 0.7,False,"mean_final=31.80 vs V1=42.90, σ_ratio=1.353"
+V2,criterion_3_faster_to_43,time_to_43 / V1_time_to_43 < 0.7,False,mean_t43=6000 / V1=4366 = 1.374
+V2,criterion_4_local_and_global,local ≥ zoned AND compressed-global > zoned + 20%,False,"local=31.80≥42.90, CGC=88>173"
+V2,criterion_5_novel_locs,Discovered constraint loc(s) not in V1 union,False,novel_locs_union_vs_v1=0
+V3,criterion_1_auc_beats_v1,AUC > zoned_current with p<0.05,False,"ΔAUC=5508, p=0.1331"
+V3,criterion_2_final_lower_variance,Final coverage ≥ zoned with σ_variant/σ_V1 < 0.7,False,"mean_final=42.10 vs V1=42.90, σ_ratio=1.444"
+V3,criterion_3_faster_to_43,time_to_43 / V1_time_to_43 < 0.7,False,mean_t43=3987 / V1=4366 = 0.913
+V3,criterion_4_local_and_global,local ≥ zoned AND compressed-global > zoned + 20%,False,"local=42.10≥42.90, CGC=138>173"
+V3,criterion_5_novel_locs,Discovered constraint loc(s) not in V1 union,True,novel_locs_union_vs_v1=3
+V4,criterion_1_auc_beats_v1,AUC > zoned_current with p<0.05,False,"ΔAUC=7475, p=0.0887"
+V4,criterion_2_final_lower_variance,Final coverage ≥ zoned with σ_variant/σ_V1 < 0.7,False,"mean_final=41.90 vs V1=42.90, σ_ratio=1.781"
+V4,criterion_3_faster_to_43,time_to_43 / V1_time_to_43 < 0.7,False,mean_t43=3597 / V1=4366 = 0.824
+V4,criterion_4_local_and_global,local ≥ zoned AND compressed-global > zoned + 20%,False,"local=41.90≥42.90, CGC=142>173"
+V4,criterion_5_novel_locs,Discovered constraint loc(s) not in V1 union,False,novel_locs_union_vs_v1=0
+V5,criterion_1_auc_beats_v1,AUC > zoned_current with p<0.05,True,"ΔAUC=36412, p=0.0000"
+V5,criterion_2_final_lower_variance,Final coverage ≥ zoned with σ_variant/σ_V1 < 0.7,True,"mean_final=46.40 vs V1=42.90, σ_ratio=0.584"
+V5,criterion_3_faster_to_43,time_to_43 / V1_time_to_43 < 0.7,True,mean_t43=1017 / V1=4366 = 0.233
+V5,criterion_4_local_and_global,local ≥ zoned AND compressed-global > zoned + 20%,True,"local=46.40≥42.90, CGC=188>173"
+V5,criterion_5_novel_locs,Discovered constraint loc(s) not in V1 union,True,novel_locs_union_vs_v1=4

@@ -1,0 +1,5 @@
+constraint_loc_a4,constraint_loc_normalized,in_v5_union,in_v6_union,v5_novel_hit,v6_hit
+ControlLoadRootAndNonce@inst_control.zir:35,ControlLoadRootAndNonce:inst_control.zir:35,True,False,True,False
+ControlLoadRootAndNonce@inst_control.zir:44,ControlLoadRootAndNonce:inst_control.zir:44,True,False,True,False
+ControlLoadRootAndNonce@inst_control.zir:45,ControlLoadRootAndNonce:inst_control.zir:45,True,False,True,False
+ControlMRET@inst_control.zir:93,ControlMRET:inst_control.zir:93,True,False,True,False

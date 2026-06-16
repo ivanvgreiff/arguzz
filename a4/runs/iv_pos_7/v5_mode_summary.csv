@@ -1,0 +1,5 @@
+mode,mean_pulls_per_seed,std_pulls,total_pulls
+adaptive,233.0,0.0,2330
+cold,144.0,0.0,1440
+floor,5615.0,0.0,56150
+singleton,8.0,0.0,80

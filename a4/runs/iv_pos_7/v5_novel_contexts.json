@@ -1,0 +1,10 @@
+{
+  "v1_union_size": 46,
+  "v5_union_size": 50,
+  "novel_locs_union_vs_v1": [
+    "ControlLoadRootAndNonce@inst_control.zir:35",
+    "ControlLoadRootAndNonce@inst_control.zir:44",
+    "ControlLoadRootAndNonce@inst_control.zir:45",
+    "ControlMRET@inst_control.zir:93"
+  ]
+}
