@@ -89,12 +89,15 @@ def _mutation_telemetry_sample(db_path: str) -> dict:
         (
             "cTS_semantic_v2_decayexp",
             "exponential",
-            {"initial": 0.55, "floor_min": 0.20, "K": 50},
+            {"initial": 0.55, "floor_min": 0.20, "K": 50.0},
         ),
         (
             "cTS_semantic_v2_decayepoch",
             "epoch",
-            {"stages": [[0, 0.55], [2000, 0.35], [4000, 0.20]]},
+            {
+                "boundaries": [[0, 0.55], [2000, 0.35], [4000, 0.20]],
+                "epoch_size": 100,
+            },
         ),
     ],
 )

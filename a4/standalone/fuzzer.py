@@ -635,14 +635,15 @@ class A4Fuzzer:
                 "floor_schedule_config": {
                     "initial": schedule.initial,
                     "floor_min": schedule.floor_min,
-                    "K": schedule.K,
+                    "K": float(schedule.K),
                 },
             }
         if isinstance(schedule, EpochStageFloor):
             return {
                 "floor_schedule_type": "epoch",
                 "floor_schedule_config": {
-                    "stages": [list(stage) for stage in schedule.stages],
+                    "boundaries": [list(stage) for stage in schedule.stages],
+                    "epoch_size": 100,
                 },
             }
         raise TypeError(f"unknown FloorSchedule type: {type(schedule)!r}")

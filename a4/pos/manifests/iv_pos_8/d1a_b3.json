@@ -1,0 +1,13 @@
+{
+  "_doc": "IV.POS.8 D1.A Batch 3 (tail, 4 jobs, seeds 1242-1243 x 2 variants on 4 Tier-S nodes). Tier-A idle on tail to avoid 10% Tier-A slowdown on the final batch.",
+  "name": "pos_iv_pos_8_d1a_b3",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "cTS_semantic_v2_decayexp",   "seed": 1242, "n": 6000, "telemetry_level": "full", "node_label": "flare"},
+    {"strategy": "cTS_semantic_v2_decayepoch", "seed": 1242, "n": 6000, "telemetry_level": "full", "node_label": "octorand"},
+    {"strategy": "cTS_semantic_v2_decayexp",   "seed": 1243, "n": 6000, "telemetry_level": "full", "node_label": "opulous"},
+    {"strategy": "cTS_semantic_v2_decayepoch", "seed": 1243, "n": 6000, "telemetry_level": "full", "node_label": "polynize"}
+  ]
+}

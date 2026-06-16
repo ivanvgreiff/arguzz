@@ -1,0 +1,17 @@
+{
+  "_doc": "IV.POS.8 D1.A Batch 2 (production, 8 jobs, seeds 1238-1241 x V5-decayexp + V5-decayepoch). Second sequential batch; dispatch only after Batch 3 smoke-gate passes Opus/Ivan review.",
+  "name": "pos_iv_pos_8_d1a_b2",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "cTS_semantic_v2_decayexp",   "seed": 1238, "n": 6000, "telemetry_level": "full", "node_label": "flare"},
+    {"strategy": "cTS_semantic_v2_decayepoch", "seed": 1238, "n": 6000, "telemetry_level": "full", "node_label": "octorand"},
+    {"strategy": "cTS_semantic_v2_decayexp",   "seed": 1239, "n": 6000, "telemetry_level": "full", "node_label": "opulous"},
+    {"strategy": "cTS_semantic_v2_decayepoch", "seed": 1239, "n": 6000, "telemetry_level": "full", "node_label": "polynize"},
+    {"strategy": "cTS_semantic_v2_decayexp",   "seed": 1240, "n": 6000, "telemetry_level": "full", "node_label": "algofi"},
+    {"strategy": "cTS_semantic_v2_decayepoch", "seed": 1240, "n": 6000, "telemetry_level": "full", "node_label": "gard"},
+    {"strategy": "cTS_semantic_v2_decayexp",   "seed": 1241, "n": 6000, "telemetry_level": "full", "node_label": "goracle"},
+    {"strategy": "cTS_semantic_v2_decayepoch", "seed": 1241, "n": 6000, "telemetry_level": "full", "node_label": "zone"}
+  ]
+}
