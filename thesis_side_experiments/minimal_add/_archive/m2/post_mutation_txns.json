@@ -1,0 +1,63 @@
+{
+  "preflight": {
+    "a0": {
+      "txn_idx": 15056,
+      "word": 3,
+      "prev_word": 3,
+      "is_read": true,
+      "is_write": false
+    },
+    "a1": {
+      "txn_idx": 15057,
+      "word": 4,
+      "prev_word": 4,
+      "is_read": true,
+      "is_write": false
+    },
+    "s0": {
+      "txn_idx": 15058,
+      "word": 7,
+      "prev_word": 0,
+      "is_read": false,
+      "is_write": true
+    }
+  },
+  "witness_effective": {
+    "a0": {
+      "txn_idx": 15056,
+      "word": 3,
+      "prev_word": 3,
+      "is_read": true,
+      "is_write": false
+    },
+    "a1": {
+      "txn_idx": 15057,
+      "word": 9,
+      "prev_word": 4,
+      "is_read": true,
+      "is_write": false,
+      "witness_mutated": true
+    },
+    "s0": {
+      "txn_idx": 15058,
+      "word": 7,
+      "prev_word": 0,
+      "is_read": false,
+      "is_write": true
+    }
+  },
+  "mutation_log": {
+    "step": 185,
+    "strategy": "next_read",
+    "txn_type": "READ",
+    "cycle_idx": 15424,
+    "txn_idx": 15057,
+    "pc": 2099236,
+    "addr": 1073725483,
+    "old_word": 4,
+    "new_word": 9,
+    "prev_word": 4,
+    "major": 0,
+    "minor": 0
+  }
+}

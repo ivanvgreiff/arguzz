@@ -1,0 +1,83 @@
+{
+  "_meta": {
+    "audit": "B1_apply_disposition",
+    "label": "inc3d_b1",
+    "source_dir": "a4/audits/audit_output/inc3b",
+    "files_consumed": [
+      "B1_V1.json",
+      "B1_V2.json",
+      "B1_V3.json",
+      "B1_V4.json",
+      "B1_V5.json"
+    ],
+    "categories": {
+      "A": "INSTR_TYPE_MOD step=0 multi-cycle (Auipc boot, hook major=7) \u2014 EXCLUDED per PHASE_7D_INC3D_B1_DISPOSITION.md \u00a74.1 (D40)",
+      "B": "MEM_VAL_MOD step=3929 ECALL last_step, byte_addr mismatch \u2014 EXCLUDED per disposition \u00a74.2 (D42+D46)",
+      "B2": "MEM_VAL_MOD step=3929 ECALL last_step, old_word/old_byte mismatch with new_word OK \u2014 EXCLUDED per D42+D46 (Inc 4 extension of B; same architectural envelope, mutation actually applied)",
+      "C": "INSTR_TYPE_MOD ECALL-adjacent hook major=8 \u2014 EXCLUDED per disposition \u00a74.2 (D46)",
+      "D": "MEM_VAL_MOD step=0 boot/ECALL boundary, byte_addr mismatch \u2014 EXCLUDED per disposition \u00a74.2 (D42+D46)",
+      "D2": "MEM_VAL_MOD step=0 boot/ECALL boundary, old_word/old_byte mismatch with new_word OK \u2014 EXCLUDED per D42+D46 (Inc 4 extension of D)",
+      "RACE": "Poseidon2 inst_p2.zir:291 race fingerprint \u2014 would map to B7, NEW if appears",
+      "OTHER": "Unclassified \u2014 needs review (counted as net failure)"
+    }
+  },
+  "summary": {
+    "raw_total": 1000,
+    "raw_pass": 1000,
+    "raw_fail": 0,
+    "raw_pass_rate": 1.0,
+    "net_pass": 1000,
+    "net_fail": 0,
+    "net_pass_rate": 1.0,
+    "category_counts": {},
+    "verdict": "PASS"
+  },
+  "per_variant": {
+    "V1": {
+      "total": 200,
+      "raw_pass": 200,
+      "raw_fail": 0,
+      "category_counts": {},
+      "net_pass": 200,
+      "net_fail": 0,
+      "verdict_after_disposition": "PASS"
+    },
+    "V2": {
+      "total": 200,
+      "raw_pass": 200,
+      "raw_fail": 0,
+      "category_counts": {},
+      "net_pass": 200,
+      "net_fail": 0,
+      "verdict_after_disposition": "PASS"
+    },
+    "V3": {
+      "total": 200,
+      "raw_pass": 200,
+      "raw_fail": 0,
+      "category_counts": {},
+      "net_pass": 200,
+      "net_fail": 0,
+      "verdict_after_disposition": "PASS"
+    },
+    "V4": {
+      "total": 200,
+      "raw_pass": 200,
+      "raw_fail": 0,
+      "category_counts": {},
+      "net_pass": 200,
+      "net_fail": 0,
+      "verdict_after_disposition": "PASS"
+    },
+    "V5": {
+      "total": 200,
+      "raw_pass": 200,
+      "raw_fail": 0,
+      "category_counts": {},
+      "net_pass": 200,
+      "net_fail": 0,
+      "verdict_after_disposition": "PASS"
+    }
+  },
+  "needs_review": []
+}

@@ -1,0 +1,46 @@
+{
+  "_doc": "IV.POS.7 Tier-A batch ta_b2. 4 jobs. Wall ~5.3h on EPYC 7543. Node order (matches orchestrator --nodes): algofi=zoned@s=1238, gard=zoned@s=1239, goracle=zoned@s=1240, zone=zoned@s=1241. Reference: PHASE_8_PLAN.md \u00a73.2 (batched-parallel).",
+  "name": "pos_iv_pos_7_ta_b2",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": [
+    "--in1",
+    "5",
+    "--in4",
+    "10"
+  ],
+  "jobs": [
+    {
+      "strategy": "zoned",
+      "seed": 1238,
+      "n": 6000,
+      "b_count": 16,
+      "telemetry_level": "full",
+      "node_label": "algofi"
+    },
+    {
+      "strategy": "zoned",
+      "seed": 1239,
+      "n": 6000,
+      "b_count": 16,
+      "telemetry_level": "full",
+      "node_label": "gard"
+    },
+    {
+      "strategy": "zoned",
+      "seed": 1240,
+      "n": 6000,
+      "b_count": 16,
+      "telemetry_level": "full",
+      "node_label": "goracle"
+    },
+    {
+      "strategy": "zoned",
+      "seed": 1241,
+      "n": 6000,
+      "b_count": 16,
+      "telemetry_level": "full",
+      "node_label": "zone"
+    }
+  ]
+}

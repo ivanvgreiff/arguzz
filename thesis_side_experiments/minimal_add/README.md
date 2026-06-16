@@ -1,50 +1,23 @@
-# Minimal Single-Add Thesis Side Experiment
+# minimal_add — Batch 1 (E0–E4)
 
-Isolated experiment for thesis §3.3.3. **Does not modify** any existing repo code,
-guests, or binaries under `workspace/output/`, `a4/`, or `workspace/risc0-modified/`.
+Frozen record of the minimal guest paired-comparison / matrix work.
 
-## Layout
+## Active engine (top level)
 
-```
-thesis_side_experiments/minimal_add/
-├── README.md           # this file
-├── PLAN.md             # experiment phases (modern A4 + Arguzz, decoupled)
-├── build.sh            # builds only into ./target/
-├── Cargo.toml          # workspace root
-├── host/               # thesis-minimal-host (separate binary name)
-├── methods/            # embeds thesis-minimal-guest ELF
-└── methods/guest/      # one explicit R-type add: t2 = t0 + t1 (3 + 4 = 7)
-```
+- `run_e0.py`, `run_e1.py`, `apply_e1_amendment.py`, `bake_e2_*.py`, `run_e2.py`, `run_e4_matrix.py`
+- `analyze_logs.py`, `host_guard.py`, `build.sh`
+- `host/`, `methods/`, `frozen_host/`, `target/`
 
-## Guest semantics
+## Docs & specs
 
-The guest loads `rs1 = 3`, `rs2 = 4`, executes a single `add rd, rs1, rs2`,
-and commits `7`. No host inputs — trace steps are minimal and the Add is easy
-to find (`major=0`, `minor=0`).
+- **`specs/`** — `EXAMPLE_PLAN.md`, `E1`–`E5` specs
+- **`docs/`** — `CONSTRAINTS_EXPLAINED.md`, `A4_CONSTRAINTS_EXPLAINED.md`, `E4_COMPARISON.md`, `MATRIX_GRANULAR.md`
+- **`_archive/`** — pre-E0 scripts and stale artifacts
 
-## Build
+## Artifacts
 
-```bash
-cd /root/arguzz/thesis_side_experiments/minimal_add
-./build.sh
-```
+- `artifacts/e0` … `artifacts/e4` — frozen experiment outputs
 
-Produces: `./target/release/thesis-minimal-host` (never overwrites `workspace/output/.../risc0-host`).
+## Batch 2 (E5 distribution study)
 
-## Arguzz trace + inject
-
-```bash
-./target/release/thesis-minimal-host --trace
-./target/release/thesis-minimal-host --trace --inject \
-  --inject-step <N> --inject-kind PRE_EXEC_REG_MOD --seed 42
-```
-
-## A4 (read-only use of existing `a4` package)
-
-Point inspection/mutation at this binary's ELF via env or CLI paths documented in `PLAN.md`.
-Do **not** use `a4/arguzz_dependent/` or coupled compare.
-
-## Dependencies
-
-Reads patched RISC Zero from `workspace/risc0-modified/` as a **path dependency only**
-(no edits to that tree).
+New workspace: **`../full_sweep/`** — separate guest/binary, no changes here.

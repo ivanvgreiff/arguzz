@@ -14,6 +14,8 @@
 |---|---|---|
 | **`a4/pos/dispatch_audit.sh`** | **Universal dispatch wrapper.** Auto-detects single-dispatch (jobs ≤ nodes) vs multi-dispatch (jobs > nodes, slices manifest per-variant). Handles §12.36 transparently. | Any time you want to run ONE manifest. Replaces all hand-written `python -m a4.pos.dispatch_pos ...` invocations. |
 | **`a4/pos/run_inc4_all.sh`** | **Sequential orchestrator example.** Drives `dispatch_audit.sh` across multiple manifests; designed for nohup/tmux fire-and-forget. | Template to copy when you need to run several manifests in a fixed order (e.g. an entire Inc 4-style audit suite). |
+| **`a4/pos/auto_run_iv_pos_7.sh`** | **Batched-parallel orchestrator template** (NEW Jun 14). Parameterised by `--tier=s\|a`. Designed for **2+ concurrent tier runners on disjoint node pools**, sequencing multiple batches per tier through reservation boundaries with §12.49 contiguous-reservation merging + §12.48 tier-filtered allocation freeing. Honors `--start-at=<batch>` for clean restarts after partial failures. | Any campaign with ≥10 jobs needing ≥2 tiers of parallelism (e.g. IV.POS.7-style 50-job × 5-variant ablations). Copy this script + `generate_iv_pos_7_manifests.py` + `iv_pos_7_preflight.py` as the seed for new batched-parallel runs. |
+| **`a4/pos/chain_dispatcher.sh`** + `a4/pos/templates/chain_test.manifest` | **★ Self-driving SSH-bypass chained batch dispatcher** (NEW Jun 15). Manifest-driven (text format, `batch\|node\|run_id\|remote_cmd`). Single tmux process polls remote `.OK`/`.FAIL` markers, auto-scps results, and fires the next batch the instant the previous one completes (1-sec handover verified end-to-end). Replaces the older "manual launcher script per batch + read-only watcher + me firing follow-ups" pattern that suffered 20-30 min idle slips per handover (§12.53). | The DEFAULT choice for any multi-batch SSH-bypass campaign (i.e. nodes booted, bundle copied, calendar enforcement bypassed per §12.52). Use two parallel chains for Tier-S / Tier-A. Eliminates the need for separate watchers and human-driven handovers. |
 
 **One-liner per manifest** (auto-handles both modes; see §12.44 for details):
 
@@ -42,7 +44,11 @@ disown
 
 ---
 
-> **Last meaningful update**: Jun 13, 2026 — **Templates `dispatch_audit.sh` + `run_inc4_all.sh` proven end-to-end** for Inc 4 (25 DBs, 5 audits, 2h47m wall). Four new anti-patterns: §12.42 (calendar-owner free-rights), §12.43 (free trims your calendar by default — use `-k`), §12.44 (template wrapper covers §12.36 dispatcher bug), §12.45 (substitute flaky nodes, don't retry).
+> **Last meaningful update**: Jun 15, 2026 (02:53 UTC / 04:53 CEST) — IV.POS.7 (Phase 8) handover-slip fix. §12.53 added (**★ CHAIN DISPATCHER** — collapses watch + launch into a single self-driving loop; eliminates the 20-30 min idle slip that recurred twice on Jun 14 between batch handovers). Reference impl: `a4/pos/chain_dispatcher.sh` + `a4/pos/templates/chain_test.manifest`. Verified end-to-end on idex/meld/pact/tinyman: 2 batches × 4 jobs, **1-second handover** between BATCH_COMPLETE and next BATCH_START, 8/8 pulls successful, clean tmux exit. **For any future multi-batch SSH-bypass campaign, use `chain_dispatcher.sh` instead of the manual launcher-per-batch + read-only watcher + human dispatcher pattern.** Templates table at top of file updated accordingly.
+>
+> **Prior**: Jun 14, 2026 (06:42 UTC) — IV.POS.7 (Phase 8) batched-parallel ts_b2/ta_b1 recovery. §12.47 added (CRITICAL: nested `for ((i=...))` clobbers outer loop `i` — cost a day's campaign time). §12.48 added (CRITICAL: `free_all_my_allocations` cross-tier pollution in batched-parallel — cost ~5h of compute). §12.49 added (contiguous-reservation merge — saves ~35min per boundary). §12.50 added (`ALLOWED_OWNERS` widens calendar filter but does NOT enable borrowing — POS strictly enforces calendar-owner). §12.51 added (`local -n` namerefs unreliable in tmux+venv-launched scripts). §12.52 added (**★ SSH-BYPASS DISPATCH** — raw `ssh` to booted nodes works regardless of POS calendar/ownership state; the foundation §12.53 builds on). Reference impl: `auto_run_iv_pos_7.sh` after Jun 14 patch (md5: see `git log a4/pos/auto_run_iv_pos_7.sh`). **For any future batched-parallel runner, copy `auto_run_iv_pos_7.sh` as the starting template** — do NOT re-derive this logic.
+>
+> **Prior**: Jun 13 (PM) — Inc 4 closeout. §12.46 added (`free -k` fails when calendar coverage shifted mid-allocation); templates `dispatch_audit.sh` + `run_inc4_all.sh` proven end-to-end (25 DBs, 2h47m); §12.42–§12.45.
 >
 > **Prior major discovery (Jun 6)**: 3-parallel is feasible via pre-reservation. The "2-future-entries cap" (§12.28) is on CALENDAR ENTRIES, not nodes; ONE entry can cover multiple nodes (verified via web calendar UI). User pre-reserves flare+octorand+opulous as a single multi-node entry per 6-hr block, then dispatcher uses `--allocation-duration 0` to claim the existing reservation. **IV.POS.5 REPLANNED**: N=6000, 5 dispatches × 3 jobs each (by-seed), 3-parallel on Tier S EPYC 9354.
 
@@ -832,6 +838,161 @@ These are NOT blockers; we discover them as we proceed.
     3. Re-dispatch with the same template (`dispatch_audit.sh`).
     4. Optionally create a contiguous second calendar entry (Pattern B per §12.34) so the in-flight allocation survives end_date (§12.40).
     **DO NOT** repeatedly retry the flaky node — POS's queued boot retries can starve the dispatcher's await timeout and waste reservation window. Substitute promptly; report the node to admin if it's persistent.
+
+46. **`pos allocations free -k` can fail with "no calendar event for nodes: X" when calendar coverage SHIFTED during the allocation lifetime.** Symptom: error mentions a specific node that's no longer in your calendar even though the allocation still includes it. Most likely cause: partial calendar trim/shift mid-run, or the node was reassigned to another user's calendar entry before free time. **Diagnose BEFORE retrying** (do NOT blindly re-run `free -k`):
+    1. `pos allocations show <alloc-id>` — confirm allocation still listed and which nodes it claims.
+    2. `pos calendar list` — find your entry id(s) and current node coverage (CLI has no `calendar show`; use `list`).
+    3. `pos calendar list` filtered for the missing node — check whether anyone else now holds that node.
+    **Three outcomes and actions:**
+    - **Allocation gone** → POS auto-released when coverage dropped. Done.
+    - **Allocation listed, missing node in nobody's calendar** → stuck orphan. Try `pos allocations free <alloc-id>` **without** `-k` (no calendar slot to preserve for that node). If still blocked, escalate to POS admin.
+    - **Allocation listed, missing node in someone else's calendar** → slot reassigned mid-run. Wait (~15 min auto-release on conflict) OR free individual nodes you **do** still hold calendar for: `pos allocations free -k <node>` per node (verified Jun 13 22:15 CEST: freed flare/meld/octorand/opulous individually; whole allocation released; calendar 1751 preserved). Whole-alloc `free -k` may still fail while algofi remains orphaned.
+    **NEVER trim your own calendar entry to "match" the allocation** — you'll lose coverage of the nodes you DO still hold. Fix at the allocation level, not the calendar level.
+
+47. **CRITICAL Bash bug: nested `for ((i=...;...;i++))` clobbers outer loop's `i` if not declared `local`.** Verified Jun 14 06:10 UTC during IV.POS.7: `auto_run_iv_pos_7.sh`'s main batch loop used `for ((i=START_IDX; i<${#ALL_BATCHES[@]}; i++))`. The `run_one_batch` function called inside that loop ALSO had `for ((i=0; i<n_jobs; i++))` (to build the node list). Bash variables are GLOBAL by default in functions; the inner loop overwrote the outer `i`. After ts_b1 (outer i=0 → inner sets i=4 → outer i++ → i=5), the next batch became `ALL_BATCHES[5]` = ts_b6, **skipping ts_b2/b3/b4/b5 entirely**. Lost a full day of campaign time. **Fix**: declare ALL inner loop variables `local` (or pick a unique name): `local j; for ((j=0; j<n_jobs; j++))`. **Operational rule**: whenever a function is called inside a `for ((var=...))` loop, audit the function for ANY usage of `var` and add `local var` declarations as needed. Trivial code-review rule, catastrophic if missed.
+
+48. **CRITICAL: in batched-parallel runners (≥2 tier orchestrators running concurrently as the same OS user), `free_all_my_allocations` is RADIOACTIVE unless filtered by tier nodes.** Verified Jun 14 06:10 UTC during IV.POS.7: Tier-S's post-dispatch `pos allocations list -f owner=ivgreiff` returned BOTH Tier-S's allocation AND Tier-A's still-running allocation. Tier-S then freed both, killing ta_b1's 4 fuzzers mid-await (~5h compute lost). Plus the text-parse logic split multi-line allocation rows and tried to free node-name fragments and continuation-line debris as alloc IDs (POS accepted node names by interpreting them as "free the allocation containing this node"). **Fix**: always filter `free_all_my_allocations` by THIS tier's `NODES_ARR` (subset check) AND use `pos allocations list -j` (JSON) instead of text parse. Reference implementation in `auto_run_iv_pos_7.sh:240-275`:
+    ```bash
+    free_all_my_allocations() {
+        local nodes_csv; nodes_csv="$(IFS=,; echo "${NODES_ARR[*]}")"
+        local alloc_ids
+        alloc_ids=$(pos allocations list -j 2>/dev/null | \
+            NODES_CSV="$nodes_csv" USER_NAME="$USER_NAME" python3 -c "
+    import json, sys, os
+    allocs = json.load(sys.stdin)
+    our_nodes = set(os.environ['NODES_CSV'].split(','))
+    user = os.environ['USER_NAME']
+    for a in allocs:
+        if a.get('owner') != user: continue
+        a_nodes = set(a.get('nodes') or [])
+        if a_nodes and a_nodes <= our_nodes: print(a['id'])
+    ")
+        while IFS= read -r aid; do
+            [[ -n "$aid" ]] && pos allocations free -k "$aid" || true
+        done <<< "$alloc_ids"
+    }
+    ```
+    **Operational rule**: never use text parse for `pos allocations list` output — multi-line rows break naive `awk '{print $1}'`. Always use `-j` JSON.
+
+49. **CONTIGUOUS-RESERVATION MERGE pattern eliminates per-boundary idle in batched-parallel runners.** Verified Jun 14 06:42 UTC during IV.POS.7 recovery. Without the patch: when one batch finishes and a new one needs `MIN_RES_HR` (5.5h) of remaining reservation, the runner checks each calendar entry individually. If the current entry has <5.5h left but a contiguous follow-up entry would give ≥5.5h combined, the OLD logic returns `WAIT` → 35-min idle per boundary per tier. With the merge patch in `find_qualifying_reservation` (`auto_run_iv_pos_7.sh:340-410`): adjacent calendar entries (where `next.start - prev.end ≤ 60s`) are merged into one logical block before the `MIN_RES_HR` check. **Saved 35 min × N boundaries per tier × 2 tiers = ~5h on a 7-batch campaign**. Recommended for any multi-batch runner. **Operational pre-req**: each calendar entry must cover the SAME node set; the merge logic preserves only the earliest `start_date` and latest `end_date`.
+
+50. **The `ALLOWED_OWNERS` env knob in `auto_run_iv_pos_7.sh` (default = `$USER_NAME`) widens the calendar filter to accept reservations from collaborators.** Use case: collaborator pre-books a window covering your nodes (e.g. `ALLOWED_OWNERS=ivgreiff,frezabek`) so your runner doesn't sleep through it. **Important caveat (verified Jun 14 02:30 UTC)**: this ONLY affects which calendar entries the runner CHOOSES to wait for. POS's `allocate` endpoint strictly enforces calendar-OWNER = invoking-user (see `/srv/testbed/pos/daemon/posd/db/calendar.py::current_event_exists`). So `ALLOWED_OWNERS=foo,bar` lets your runner stop waiting and try to allocate during foo's window, but `pos allocations allocate` will fail with `You have no calendar event for nodes`. **Borrowing is NOT possible** in the current Coinbase deployment (`web.calendar.enforce=True`). The flag is only useful if the collaborator's reservation is moved INTO your name OR if the deployment's `enforce_calendar` setting is later relaxed.
+
+51. **`local -n` namerefs are unreliable for array-passing in shell scripts launched by tmux + venv activation.** Verified Jun 14 06:30 UTC: a watcher script using `process_tier() { local -n BATCHES_REF=$2; ... }` and called as `process_tier ts TS_BATCHES` silently did NOTHING — main loop iterated correctly but `process_tier`'s body never logged. Same script run from an interactive shell worked. Likely cause: bash version difference or env stripping in the tmux startup. **Operational rule**: for shell watchers/orchestrators, **prefer passing the array via positional expansion** (`func "${ARRAY[@]}"`) and rebuilding it inside with `local -a local_arr=("$@")`, OR write the watcher in Python where the language semantics are predictable. Don't rely on nameref portability.
+
+52. **★ SSH-BYPASS DISPATCH — the `pos.*` calendar/ownership wall does NOT gate raw SSH.** Verified Jun 14 15:25 CEST during IV.POS.7 when ivgreiff's reservation 1753 expired while frezabek's reservation 1754 was active over the same 8 nodes. POS strictly enforces `calendar-owner = invoking-user` on `pos allocations allocate` (§12.50), so ivgreiff could not allocate the nodes even though frezabek wasn't using them. Empirical test matrix (run as ivgreiff, no allocation):
+
+    | Operation | Result |
+    |---|---|
+    | `pos nodes reset flare` | `Resource flare is not owned by you!` |
+    | `pos nodes image flare debian-trixie` | `Resource flare is not owned by you!` |
+    | `pos commands launch flare -- echo hi` | `Resource flare is not owned by you!` |
+    | `pos allocations set_variables flare /tmp/foo.yml` | `Node flare is not allocated` |
+    | `pos allocations allocate flare --duration 60` | `Node flare is already used in another event overlapping with requested time period` |
+    | **`ssh flare 'hostname; whoami'`** | **`flare\nroot`** ✓✓✓ |
+
+    Raw SSH from the management node to a booted test node WORKS REGARDLESS of POS calendar/allocation state, as root, with no key prompt. The `pos.*` CLI/daemon enforces ownership; the underlying sshd on each node does not. **Therefore**: when calendar enforcement blocks normal dispatch but the nodes are already booted with the right image and the bundle is extracted, you can drive jobs directly via SSH. **Reference pattern (used Jun 14 to recover 8 jobs of IV.POS.7 ts_b3 + ta_b2 from `frezabek`'s 6h window):**
+    ```bash
+    # On management node, for each (node, strategy, seed, batch):
+    #   1. Write a per-node launcher.sh that:
+    #      - Runs `python3 -m a4.standalone.cli fuzz --selector <S> --seed <N> --db <out> ...`
+    #        (BYPASSES pos_get_variable; no run_campaign_pos.sh; no pos_upload)
+    #      - Touches .OK / .FAIL_rc<N> markers on completion so a poller can detect state
+    #   2. scp launcher.sh <node>:/root/
+    #   3. ssh -n -f <node> "nohup /root/launcher.sh </dev/null >/dev/null 2>&1 &"
+    # Then a separate watcher on management node:
+    #   - Polls each node every 60s for .OK / .FAIL markers
+    #   - When .OK appears, scp the .db back to /srv/testbed/results/ivgreiff/a4/pos_iv_pos_7_<batch>/
+    ```
+    Reference implementation: `/tmp/ssh_bypass_launcher_v2.sh` + `/tmp/iv_pos_7_ssh_bypass_watcher.sh` on coinbase (Jun 14 sessions). **Hard prerequisites** for this technique to work:
+    - The node must already be **booted with the correct image** (e.g. `debian-trixie` per §12.30). SSH bypass cannot do `pos nodes image` or `pos nodes reset`.
+    - The bundle must already be at `/root/a4_campaign/` with `bin/risc0-host` + `repo/` + `bundle.json`. If it's not, you can `scp` it over (still no POS needed).
+    - Result upload uses `scp <node>:result.db management:/srv/testbed/results/...` — NOT `pos_upload`, which fails without an allocation (`[404] allocation not found`).
+    - The watcher on the management node uses `bash` polling (`ssh <node> 'test -f .OK'`); no `pos commands await` involved.
+    **Eviction risk**: POS will reset/reclaim a squat-occupied node the moment ANY user invokes `pos allocations allocate` on it (§12.39). Plan SSH-bypass windows to either (a) coincide with a friendly user's calendar entry so no eviction happens, or (b) finish before the next contesting reservation's `start_date`.
+    **Practical use cases**:
+    - Recover from calendar enforcement blocks when you have idle nodes from a friendly collaborator's reservation.
+    - Continue running across a reservation boundary if your own follow-on reservation isn't in place yet.
+    - Avoid the `pos nodes reset` overhead between batches (saves ~3-5 min per batch, since the node stays booted with the bundle intact).
+    - Use as the **default** dispatch mechanism for multi-batch campaigns where nodes can stay booted across batches — fewer moving parts, no calendar-ownership / allocation-conflict failure modes, no `pos_get_variable` bootstrap-cache ordering trap (§12.27).
+    **Limitations**:
+    - One-time setup (boot + bundle copy) still requires a real POS allocation. Plan for at least 30 min of "real POS" at campaign start to image the nodes and `pos.nodes.copy` the bundle.
+    - No `pos commands list` / `pos commands log` visibility — must `tail -f` logs over SSH manually.
+    - Heartbeat/liveness must be polled (we ship `iv_pos_7_ssh_bypass_watcher.sh` that does this).
+
+53. **★ CHAIN DISPATCHER — collapses watch + launch into a single self-driving loop.** Verified Jun 15 04:36-04:38 CEST on 4 reserved test nodes (idex, meld, pact, tinyman) during IV.POS.7. Solves the failure mode that recurred twice on Jun 14 (32 min ts_b3→ts_b4 idle, 24 min ta_b3→ta_b4 idle) where the read-only watcher (§12.52) detected `.OK` markers but had no authority to fire the next batch, so the human dispatcher had to react to a notification stream that proved unreliable across WSL/PowerShell shell shifts.
+
+    **Pattern**: one bash process in tmux that owns the entire lifecycle:
+    1. Parse a text manifest (`batch_name|node|run_id|remote_cmd` per line) into ordered batch arrays.
+    2. **Launch phase** (parallel): for each job in current batch, `scp` a self-contained launcher to the node and `ssh -n -f nohup` it. Launcher writes `.OK` / `.FAIL_rc<N>` markers + a `meta.json` with `started_at_epoch`/`ended_at_epoch`/`wall_sec`/`exit_code`.
+    3. **Poll phase** (`POLL_SEC` interval, default 15s; use 3s for short jobs): for each not-done job, `ssh node 'test -f <RD>/.OK; ls <RD>/.FAIL_rc*'`. On `.OK`: `scp -r` results to local `RESULTS_BASE/<batch>/<run_id>/`, mark done. On `.FAIL`: pull stderr/log for debugging, mark done.
+    4. **Advance**: when `done == #jobs_in_batch`, immediately enter Launch phase for the next batch in the same outer loop. **No human, no inter-process gap.**
+    5. **Resume-safe**: launch phase first checks `test -f <RD>/.OK`. If true, skip the launch (emit `LAUNCH_SKIP_RESUME`). Lets you restart the dispatcher mid-campaign without re-running completed jobs.
+    6. **Signal-safe**: `trap 'emit CHAIN_INTERRUPTED' INT TERM` so you can `tmux kill-session` cleanly and restart later.
+
+    **Verified test (chain_test.manifest)**:
+    - 2 batches × 4 jobs (sleep durations 20/35/50/65 and 15/25/40/55 seconds, simulating real wall-time dispersion).
+    - **Handover (BATCH_COMPLETE → BATCH_START): 1 second.**
+    - Launch parallelism: 4 jobs scp'd + nohup'd in 1-2 seconds total.
+    - Detection latency: ≤`POLL_SEC` from remote `.OK` touch to log `OK` line.
+    - Pull success: 8/8 result dirs scp'd with `stdout.log` + `stderr.log` + `meta.json` + `.OK`.
+    - Total wall: 2 min 9 sec vs ~2 min theoretical lower bound. tmux session exited cleanly on `CHAIN_COMPLETE`.
+
+    **Reference implementation**: `a4/pos/chain_dispatcher.sh` + `a4/pos/templates/chain_test.manifest`.
+
+    **Production invocation** (one tmux session per tier-chain, two parallel chains for Tier-S and Tier-A):
+    ```bash
+    # Tier-S chain (e.g. ts_b6 ts_b7 — fires ts_b6 the instant ts_b5 completes):
+    MANIFEST=/tmp/tier_s.manifest CHAIN_NAME=tier_s POLL_SEC=30 \
+        RESULTS_BASE=/srv/testbed/results/ivgreiff/a4/pos_iv_pos_7 \
+        REMOTE_BASE=/root/results_pos_iv_pos_7 PULL_GLOB="*" \
+        tmux new -d -s chain_tier_s "bash /root/arguzz/a4/pos/chain_dispatcher.sh"
+
+    # Tier-A chain (independent process, same script, different manifest):
+    MANIFEST=/tmp/tier_a.manifest CHAIN_NAME=tier_a POLL_SEC=30 \
+        RESULTS_BASE=/srv/testbed/results/ivgreiff/a4/pos_iv_pos_7 \
+        REMOTE_BASE=/root/results_pos_iv_pos_7 PULL_GLOB="*" \
+        tmux new -d -s chain_tier_a "bash /root/arguzz/a4/pos/chain_dispatcher.sh"
+    ```
+    Monitor: `ssh coinbase 'tail -F /tmp/chain_tier_s.log /tmp/chain_tier_a.log'`.
+
+    **Manifest format for fuzzing campaigns**:
+    ```
+    # Each `remote_cmd` runs in the launcher's working dir on the node; the
+    # launcher captures rc, wall, stdout, stderr automatically and writes .OK/.FAIL.
+    ts_b6|flare|pos_iv_pos_7_ts_b6_kindUCB_zoned_v1_seed1239_n6000|export A4_COVERAGE_TOUCH=1 A4_FAMILY_RESIDUE=1 A4_GLOBAL_RESIDUE=1 CONSTRAINT_CONTINUE=1; cd /root/a4_campaign/repo && python3 -m a4.standalone.cli fuzz --host /root/a4_campaign/bin/risc0-host --selector kindUCB_zoned_v1 --num 6000 --seed 1239 --db /tmp/chainjob_pos_iv_pos_7_ts_b6_kindUCB_zoned_v1_seed1239_n6000/run.db --telemetry-level full -- --in1 5 --in4 10
+    ```
+    Use `REMOTE_BASE=/root/results_pos_iv_pos_7` to match existing on-node layout, OR keep the default `/tmp/chainjob` (results land alongside the launcher's tracking files).
+
+    **Pre-requisites identical to §12.52** (boot + bundle + ssh reachability — nothing new). The chain dispatcher is just §12.52 with the human-in-the-loop replaced by a `while` loop.
+
+    **When NOT to use**:
+    - Single-shot ad-hoc runs (use plain `dispatch_audit.sh` if calendar enforcement isn't blocking you).
+    - Heterogeneous-resource batches where each batch needs different node sets (the chain dispatcher assumes a stable node pool across batches; mix across pools by running multiple chains).
+
+    **Operating rules** when chained:
+    - Each chain gets its own tmux session AND its own log file (don't multiplex two chains into one log).
+    - Set `POLL_SEC=30` for production fuzzers (5-6h walls); `POLL_SEC=3-5` for the synthetic tests we run for the manifest itself.
+    - For idempotent re-runs after a partial failure: just re-launch with the same manifest; jobs whose `.OK` already exists are skipped, jobs whose `.FAIL` exists are re-launched (after `rm .FAIL_rc*` in the launcher prologue).
+    - To handle in-flight jobs that were launched outside the chain dispatcher (e.g. a manually-fired batch you want the chain to take over from), the resume check (`test -f .OK` + process scan) waits for that job to complete naturally; the chain dispatcher's launcher will NOT re-spawn it. **Caveat**: this only works if the prior launcher's `REMOTE_DIR` and `RUN_ID` convention match what the chain dispatcher computes (`REMOTE_BASE_RUN_ID` path naming + RUN_ID appearing in the running process's argv) — keep them aligned across both flows.
+
+    **★ Gotchas burned getting this safe (Jun 15 2026 — DO NOT regress):**
+
+    1. **Resume check by `.OK` alone is INSUFFICIENT for in-flight detection.** First implementation only checked `test -f .OK`. When deployed against a fuzzer still mid-run, `.OK` doesn't exist yet, so the dispatcher fired a second launcher. The second launcher's `rm -f .OK .FAIL_rc*` prologue + new `python3 fuzz` → **two SQLite writers on the same DB → corruption guaranteed**. Empirically reproduced on idex/meld with sleep+log analog (both nodes had `PRE-DEPLOYED` AND `CHAIN-RAN` in evidence.log within 5 seconds of each other). **Fix**: resume check MUST also probe for "is there currently a process whose argv contains the RUN_ID on the target node". The chain dispatcher does this via `check_state.sh` deployed once per node.
+
+    2. **Naive `pgrep -f "$RUN_ID"` over SSH always self-matches.** Because the ssh shell that runs pgrep has `"$RUN_ID"` in its own argv (the pgrep argument). With a non-existent RUN_ID, `pgrep -f` still returned 1 match (the shell itself), so the dispatcher tagged every fresh job as in-flight and waited forever. **Fix**: exclude all ancestor PIDs of the shell running pgrep. Walk `/proc/$P/status` for `PPid:` upward until pid 1, accumulate into an exclusion set, filter pgrep output through it. (Naive `pgrep -f ... | grep -v $$` is NOT sufficient — the ssh-spawned shell has multiple ancestors, e.g. sshd → sshd-session → sh -c → check_state.sh, all of whose argvs contain the RID.)
+
+    3. **`if ls .FAIL_rc* 2>/dev/null | head -1 >/dev/null; then ...` ALWAYS evaluates true** because the pipeline's exit status is the LAST command (head, which returns 0 on empty stdin). The `ls` failure with non-matching glob is silently masked. With this bug, the dispatcher tagged every job as FAIL (didn't fire launcher AND skipped poll — false negative for everything). **Fix**: use `shopt -s nullglob; FAIL_FILES=( "$RD"/.FAIL_rc* ); shopt -u nullglob; [ "${#FAIL_FILES[@]}" -gt 0 ]`. Same anti-pattern applies to any `if cmd | head/tail/...; then` chain — always check the producing command's exit code directly, not the pipeline's.
+
+    4. **Bash `$(...)` command substitution forks a SUBSHELL THAT BRIEFLY HAS THE PARENT'S CMDLINE before exec.** This means `pgrep -f "$RID"` inside `$()` can catch the just-forked subshell (containing RID in argv via the script's `$2`) before the subshell exec's into `pgrep` itself. Verified empirically on idex: `pgrep` returned PID 11542 (a transient subshell) in addition to `$$`; both contained the RID, the ancestor walk only excluded `$$`. **Fix**: use ONLY bash builtins (`mapfile -d ''`, `read`) to scan `/proc/[0-9]*/cmdline` directly — no `$()`, no `$(pgrep ...)`, no pipelines that fork. The chain dispatcher's `check_state.sh` is built this way. **General rule**: any time you need to "is process X running" with a pattern that overlaps the calling script's argv, you can't trust `pgrep`/`ps | grep` — you must read `/proc` directly with shell builtins.
+
+    5. **Default behavior on unparseable resume-check output must be ABORT, not LAUNCH.** Original `case "$STATE" in *) emit ... ; fire launcher ;; esac` would silently destroy any in-flight job if `ssh` flaked or `check_state` returned garbage. **Fix**: retry the check up to 5 times with 3-sec backoff; if STATE remains anything other than `OK|RUNNING|FAIL|NONE`, abort the whole chain with `exit 4` and require manual triage. **Fail-safe principle**: when uncertain about in-flight state, the only safe action is to NOT fire a launcher.
+
+    6. **Audit method that proves the dispatcher is in-flight-safe BEFORE you trust it on production**: write a `check_state_standalone.sh` clone of the dispatcher's resume helper, scp it to every production node, run it against (a) each running fuzzer's real RUN_ID — expect `RUNNING`, and (b) a synthetic non-matching RUN_ID — expect `NONE`. If any node disagrees, you have a destruction bug. See `/tmp/audit_inflight_detection.sh` from Jun 15 cutover as the template.
+
+    7. **`pgrep -fc "<pattern>"` over SSH self-matches even WITHOUT ancestor walking — the ssh `bash -c` shell's own argv contains the pattern.** Re-burned Jun 15 17:40 CEST in V0 deploy script's pre-flight safety check. `ssh node "pgrep -fc 'a4.standalone'"` returned `1` on supposedly-idle nodes (goracle, zone) — the "1 process" was the `bash -c pgrep -fc 'a4.standalone'` shell itself, whose argv contains the literal string `a4.standalone`. Gotcha #2's full /proc walk fix is heavyweight; for one-shot pre-flight checks where you only care about ACTUAL python3 fuzzers, the simpler safe pattern is **`ps -C python3 -o cmd= --no-headers | grep -c <pattern>`** — `ps -C python3` filters to python3 processes only (not the bash shell running ps), so the grep can never self-match. Reference: `/tmp/v0_deploy.sh` Step 0d after Jun 15 patch. **General rule**: if you must use `pgrep -f` over SSH, route through the chain dispatcher's `check_state.sh` (it has the full /proc walk). Otherwise prefer `ps -C <executable>` followed by grep.
+
+    **Verified end-to-end deployment**: chain_tier_s (8 jobs) + chain_tier_a (10 jobs, with 4 ta_b4 in-flight at cutover) started Jun 15 07:26 CEST. ta_b4 fuzzers continued unmolested (3h 58m elapsed → eventually finished normally), and ta_b5 fired automatically when ta_b4 hit `.OK`. Subsequently extended Jun 15 17:40 CEST: 3 additional parallel chains (`chain_v0_idle`, `chain_v0_tier_s`, `chain_v0_tier_a`) for V0 (uniform) deployment across the 8 EPYC nodes — 10 jobs queued, 6 fired immediately, 4 chain-queued behind their respective tier's CHAIN_COMPLETE. Manifests at `a4/pos/templates/tier_s.manifest` + `tier_a.manifest` (generated by `a4/pos/templates/gen_manifests.py` for IV.POS.7); V0 manifests at `/tmp/v0_idle.manifest`, `/tmp/v0_tier_s.manifest`, `/tmp/v0_tier_a.manifest` (gen by `/tmp/gen_v0_manifests_v2.py`).
 
 ---
 

@@ -1,0 +1,54 @@
+{
+  "_doc": "IV.POS.7 SMOKE: N=20 per variant, 5 strategies on 5 nodes (~3 min wall). Validates: (a) all 5 v2 selectors run, (b) all v2 telemetry tables populate, (c) per-node attribution works, (d) bundle extracts cleanly, (e) the new batched-runner template can dispatch end-to-end.",
+  "name": "pos_iv_pos_7_smoke",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": [
+    "--in1",
+    "5",
+    "--in4",
+    "10"
+  ],
+  "jobs": [
+    {
+      "strategy": "zoned",
+      "seed": 9999,
+      "n": 20,
+      "b_count": 16,
+      "telemetry_level": "full",
+      "node_label": "flare"
+    },
+    {
+      "strategy": "kindUCB_zoned_v1",
+      "seed": 9999,
+      "n": 20,
+      "b_count": 16,
+      "telemetry_level": "full",
+      "node_label": "octorand"
+    },
+    {
+      "strategy": "kindUCB_zoned_v2_noQ",
+      "seed": 9999,
+      "n": 20,
+      "b_count": 16,
+      "telemetry_level": "full",
+      "node_label": "opulous"
+    },
+    {
+      "strategy": "kindTS_zoned_v2",
+      "seed": 9999,
+      "n": 20,
+      "b_count": 16,
+      "telemetry_level": "full",
+      "node_label": "polynize"
+    },
+    {
+      "strategy": "cTS_semantic_v2",
+      "seed": 9999,
+      "n": 20,
+      "b_count": 16,
+      "telemetry_level": "full",
+      "node_label": "meld"
+    }
+  ]
+}

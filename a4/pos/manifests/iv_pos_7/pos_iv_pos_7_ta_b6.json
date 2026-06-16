@@ -1,0 +1,30 @@
+{
+  "_doc": "IV.POS.7 Tier-A batch ta_b6. 2 jobs. Wall ~5.3h on EPYC 7543. Node order (matches orchestrator --nodes): algofi=kindTS_zoned_v2@s=1243, gard=cTS_semantic_v2@s=1243. Reference: PHASE_8_PLAN.md \u00a73.2 (batched-parallel).",
+  "name": "pos_iv_pos_7_ta_b6",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": [
+    "--in1",
+    "5",
+    "--in4",
+    "10"
+  ],
+  "jobs": [
+    {
+      "strategy": "kindTS_zoned_v2",
+      "seed": 1243,
+      "n": 6000,
+      "b_count": 16,
+      "telemetry_level": "full",
+      "node_label": "algofi"
+    },
+    {
+      "strategy": "cTS_semantic_v2",
+      "seed": 1243,
+      "n": 6000,
+      "b_count": 16,
+      "telemetry_level": "full",
+      "node_label": "gard"
+    }
+  ]
+}

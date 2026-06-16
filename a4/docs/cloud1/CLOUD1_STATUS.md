@@ -36,3 +36,41 @@ All 12 design decisions LOCKED on 2026-06-08. See `CLOUD1_DECISIONS_FOR_PRO_R2.m
 | `ConstrainedTSScheduler` floor logic edge cases | Phase 5 unit tests with synthetic reward |
 | POS reservation lapses during IV.POS.7 | Continuous reservation pattern from IV.POS.5 (`§40` of POS_PLAYBOOK) |
 | New tables blow up DB size | Phase 6 exit criteria: ≤3× legacy DB size for same N |
+
+## Open ideas for Pro Round 2 (post-Phase-8) — investigate, do NOT ask Pro yet
+
+Pair these two together when (and only when) Phase-8 + the ACCEPTED-audit (H2) data are in. Do not spend
+Pro's bandwidth on them before that data exists.
+
+### Idea A — Mutation-catalog expansion (carried over from ProG_Report_1)
+Revisit after results, with the new caveat below.
+
+### Idea B — Constraint-layer-isolating mutation variants (`GLOBAL_TRIGGER=OFF` / `LOCAL_TRIGGER=OFF`)
+**Premise (to validate, not assume):** local constraints vastly outnumber global, and *specific* quantities
+(e.g. register/memory values) are not pinned by any local constraint — the global permutation is the only
+backstop (cf. Arguzz reg-mutations: `0 local / 1 global`). This is "local has gaps in specific spots", NOT
+"local is globally less sound"; constraint *count* ≠ soundness.
+
+**Proposal:** add, for the **value-on-cell** A4 mutations only (`COMP_OUT_MOD`, `LOAD_VAL_MOD`,
+`STORE_OUT_MOD`, `MEM_VAL_MOD`, `PRE_EXEC_REG_MOD`), a `GLOBAL_TRIGGER=OFF` variant that co-mutates the
+*entire* memory/register permutation chain for the targeted cell (the write + its `(prev_cycle, prev_word)`
+links + all subsequent reads until the next write) so the global grand-product stays balanced — leaving only
+**local** algebraic checks able to fire. Goal: probe the *local* constraint space for under-constraints
+without the global backstop masking them. A `LOCAL_TRIGGER=OFF` dual (only global fires) is the inverse.
+
+**Critical caveats (must frame the eventual Pro question around these):**
+1. **Three mechanisms, not two:** local algebraic, global permutation (mem/reg/cycle), AND boundary/IO
+   (public output digest, termination). A real soundness break must pass all three. Co-mutating the
+   permutation does NOT fix the output digest — if the value reaches output, the boundary check rejects.
+2. **Not universal:** feasible for value-on-cell kinds; **not** for structural kinds (`INSTR_TYPE_MOD` has no
+   memory cell; `INSTR_WORD_MOD` fetch-word co-mutation means rewriting the program-image read chain). Do not
+   promise an all-mutations toggle.
+3. **Collapse risk:** co-mutate the permutation bookkeeping ONLY. Propagate too far (full re-execution) and
+   you just get a valid alternative trace → `ACCEPTED` → zero signal.
+4. **"More efficient search" is a hypothesis:** it improves *localization* (a pass cleanly implies a local
+   gap) and removes the global mask, but whether it finds *more* bugs depends on locally-free yet
+   output-affecting cells existing — exactly what the H2 audit cases will tell us first.
+
+**Dependency:** the ACCEPTED-audit H2 results (`thesis_side_experiments/full_sweep/AUDIT_ACCEPTED_PLAN.md`)
+are the direct empirical motivation — they show whether "local didn't pin it / global caught it" cells exist
+on a real guest. Decide on Idea B after reviewing them.

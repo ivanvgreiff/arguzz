@@ -1,0 +1,19 @@
+{
+  "nodes": [
+    "idex",
+    "tinyman",
+    "meld"
+  ],
+  "shard_count": 3,
+  "allocation": "ivgreiff_260614_081247_740789",
+  "bundle": "/home/ivgreiff/thesis_e5_full_sweep_thesis_493765d845d5.tar.gz",
+  "image": "debian-trixie",
+  "command_ids": {
+    "idex": "2026-06-14_08-16-13_399873_thesis_e5_shard0",
+    "tinyman": "2026-06-14_08-20-33_030611_thesis_e5_shard1",
+    "meld": "2026-06-14_08-23-31_122755_thesis_e5_shard2"
+  },
+  "host_sha256": "84ae495e5afd8261324d7daf09a02d1f9cb8437aad4edbb2de478362e2728b45",
+  "started_at": "2026-06-14T06:13:09Z",
+  "ended_at": "2026-06-14T06:35:01Z"
+}

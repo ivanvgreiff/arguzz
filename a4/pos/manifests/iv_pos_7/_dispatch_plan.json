@@ -1,0 +1,456 @@
+{
+  "_doc": "IV.POS.7 batched-parallel dispatch plan. 50 total jobs (5 variants x 10 seeds) split across 13 sequential batches in 2 independent tier runners. Total compute: ~250 node-hours; wall (8-node parallel) ~35h. See PHASE_8_PLAN.md \u00a73 for the design rationale.",
+  "N": 6000,
+  "seeds": [
+    1234,
+    1235,
+    1236,
+    1237,
+    1238,
+    1239,
+    1240,
+    1241,
+    1242,
+    1243
+  ],
+  "n_variants": 5,
+  "total_jobs": 50,
+  "n_tier_s_batches": 7,
+  "n_tier_a_batches": 6,
+  "tier_s_node_order": [
+    "flare",
+    "octorand",
+    "opulous",
+    "polynize"
+  ],
+  "tier_a_node_order": [
+    "algofi",
+    "gard",
+    "goracle",
+    "zone"
+  ],
+  "estimated_wall_hr": {
+    "tier_s_runner": 35.0,
+    "tier_a_runner": 31.8,
+    "total_with_3.5h_tier_a_delay": 35.3
+  },
+  "tier_s_batches": [
+    {
+      "manifest_name": "pos_iv_pos_7_ts_b1",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ts_b1.json",
+      "n_jobs": 4,
+      "jobs": [
+        {
+          "strategy": "kindUCB_zoned_v1",
+          "seed": 1234,
+          "n": 6000,
+          "node_label": "flare"
+        },
+        {
+          "strategy": "kindUCB_zoned_v2_noQ",
+          "seed": 1234,
+          "n": 6000,
+          "node_label": "octorand"
+        },
+        {
+          "strategy": "kindTS_zoned_v2",
+          "seed": 1234,
+          "n": 6000,
+          "node_label": "opulous"
+        },
+        {
+          "strategy": "cTS_semantic_v2",
+          "seed": 1234,
+          "n": 6000,
+          "node_label": "polynize"
+        }
+      ]
+    },
+    {
+      "manifest_name": "pos_iv_pos_7_ts_b2",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ts_b2.json",
+      "n_jobs": 4,
+      "jobs": [
+        {
+          "strategy": "kindUCB_zoned_v1",
+          "seed": 1235,
+          "n": 6000,
+          "node_label": "flare"
+        },
+        {
+          "strategy": "kindUCB_zoned_v2_noQ",
+          "seed": 1235,
+          "n": 6000,
+          "node_label": "octorand"
+        },
+        {
+          "strategy": "kindTS_zoned_v2",
+          "seed": 1235,
+          "n": 6000,
+          "node_label": "opulous"
+        },
+        {
+          "strategy": "cTS_semantic_v2",
+          "seed": 1235,
+          "n": 6000,
+          "node_label": "polynize"
+        }
+      ]
+    },
+    {
+      "manifest_name": "pos_iv_pos_7_ts_b3",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ts_b3.json",
+      "n_jobs": 4,
+      "jobs": [
+        {
+          "strategy": "kindUCB_zoned_v1",
+          "seed": 1236,
+          "n": 6000,
+          "node_label": "flare"
+        },
+        {
+          "strategy": "kindUCB_zoned_v2_noQ",
+          "seed": 1236,
+          "n": 6000,
+          "node_label": "octorand"
+        },
+        {
+          "strategy": "kindTS_zoned_v2",
+          "seed": 1236,
+          "n": 6000,
+          "node_label": "opulous"
+        },
+        {
+          "strategy": "cTS_semantic_v2",
+          "seed": 1236,
+          "n": 6000,
+          "node_label": "polynize"
+        }
+      ]
+    },
+    {
+      "manifest_name": "pos_iv_pos_7_ts_b4",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ts_b4.json",
+      "n_jobs": 4,
+      "jobs": [
+        {
+          "strategy": "kindUCB_zoned_v1",
+          "seed": 1237,
+          "n": 6000,
+          "node_label": "flare"
+        },
+        {
+          "strategy": "kindUCB_zoned_v2_noQ",
+          "seed": 1237,
+          "n": 6000,
+          "node_label": "octorand"
+        },
+        {
+          "strategy": "kindTS_zoned_v2",
+          "seed": 1237,
+          "n": 6000,
+          "node_label": "opulous"
+        },
+        {
+          "strategy": "cTS_semantic_v2",
+          "seed": 1237,
+          "n": 6000,
+          "node_label": "polynize"
+        }
+      ]
+    },
+    {
+      "manifest_name": "pos_iv_pos_7_ts_b5",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ts_b5.json",
+      "n_jobs": 4,
+      "jobs": [
+        {
+          "strategy": "kindUCB_zoned_v1",
+          "seed": 1238,
+          "n": 6000,
+          "node_label": "flare"
+        },
+        {
+          "strategy": "kindUCB_zoned_v2_noQ",
+          "seed": 1238,
+          "n": 6000,
+          "node_label": "octorand"
+        },
+        {
+          "strategy": "kindTS_zoned_v2",
+          "seed": 1238,
+          "n": 6000,
+          "node_label": "opulous"
+        },
+        {
+          "strategy": "cTS_semantic_v2",
+          "seed": 1238,
+          "n": 6000,
+          "node_label": "polynize"
+        }
+      ]
+    },
+    {
+      "manifest_name": "pos_iv_pos_7_ts_b6",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ts_b6.json",
+      "n_jobs": 4,
+      "jobs": [
+        {
+          "strategy": "kindUCB_zoned_v1",
+          "seed": 1239,
+          "n": 6000,
+          "node_label": "flare"
+        },
+        {
+          "strategy": "kindUCB_zoned_v2_noQ",
+          "seed": 1239,
+          "n": 6000,
+          "node_label": "octorand"
+        },
+        {
+          "strategy": "kindTS_zoned_v2",
+          "seed": 1239,
+          "n": 6000,
+          "node_label": "opulous"
+        },
+        {
+          "strategy": "cTS_semantic_v2",
+          "seed": 1239,
+          "n": 6000,
+          "node_label": "polynize"
+        }
+      ]
+    },
+    {
+      "manifest_name": "pos_iv_pos_7_ts_b7",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ts_b7.json",
+      "n_jobs": 4,
+      "jobs": [
+        {
+          "strategy": "kindUCB_zoned_v1",
+          "seed": 1240,
+          "n": 6000,
+          "node_label": "flare"
+        },
+        {
+          "strategy": "kindUCB_zoned_v2_noQ",
+          "seed": 1240,
+          "n": 6000,
+          "node_label": "octorand"
+        },
+        {
+          "strategy": "kindTS_zoned_v2",
+          "seed": 1240,
+          "n": 6000,
+          "node_label": "opulous"
+        },
+        {
+          "strategy": "cTS_semantic_v2",
+          "seed": 1240,
+          "n": 6000,
+          "node_label": "polynize"
+        }
+      ]
+    }
+  ],
+  "tier_a_batches": [
+    {
+      "manifest_name": "pos_iv_pos_7_ta_b1",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ta_b1.json",
+      "n_jobs": 4,
+      "jobs": [
+        {
+          "strategy": "zoned",
+          "seed": 1234,
+          "n": 6000,
+          "node_label": "algofi"
+        },
+        {
+          "strategy": "zoned",
+          "seed": 1235,
+          "n": 6000,
+          "node_label": "gard"
+        },
+        {
+          "strategy": "zoned",
+          "seed": 1236,
+          "n": 6000,
+          "node_label": "goracle"
+        },
+        {
+          "strategy": "zoned",
+          "seed": 1237,
+          "n": 6000,
+          "node_label": "zone"
+        }
+      ]
+    },
+    {
+      "manifest_name": "pos_iv_pos_7_ta_b2",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ta_b2.json",
+      "n_jobs": 4,
+      "jobs": [
+        {
+          "strategy": "zoned",
+          "seed": 1238,
+          "n": 6000,
+          "node_label": "algofi"
+        },
+        {
+          "strategy": "zoned",
+          "seed": 1239,
+          "n": 6000,
+          "node_label": "gard"
+        },
+        {
+          "strategy": "zoned",
+          "seed": 1240,
+          "n": 6000,
+          "node_label": "goracle"
+        },
+        {
+          "strategy": "zoned",
+          "seed": 1241,
+          "n": 6000,
+          "node_label": "zone"
+        }
+      ]
+    },
+    {
+      "manifest_name": "pos_iv_pos_7_ta_b3",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ta_b3.json",
+      "n_jobs": 4,
+      "jobs": [
+        {
+          "strategy": "zoned",
+          "seed": 1242,
+          "n": 6000,
+          "node_label": "algofi"
+        },
+        {
+          "strategy": "zoned",
+          "seed": 1243,
+          "n": 6000,
+          "node_label": "gard"
+        },
+        {
+          "strategy": "kindUCB_zoned_v1",
+          "seed": 1241,
+          "n": 6000,
+          "node_label": "goracle"
+        },
+        {
+          "strategy": "kindUCB_zoned_v2_noQ",
+          "seed": 1241,
+          "n": 6000,
+          "node_label": "zone"
+        }
+      ]
+    },
+    {
+      "manifest_name": "pos_iv_pos_7_ta_b4",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ta_b4.json",
+      "n_jobs": 4,
+      "jobs": [
+        {
+          "strategy": "kindTS_zoned_v2",
+          "seed": 1241,
+          "n": 6000,
+          "node_label": "algofi"
+        },
+        {
+          "strategy": "cTS_semantic_v2",
+          "seed": 1241,
+          "n": 6000,
+          "node_label": "gard"
+        },
+        {
+          "strategy": "kindUCB_zoned_v1",
+          "seed": 1242,
+          "n": 6000,
+          "node_label": "goracle"
+        },
+        {
+          "strategy": "kindUCB_zoned_v2_noQ",
+          "seed": 1242,
+          "n": 6000,
+          "node_label": "zone"
+        }
+      ]
+    },
+    {
+      "manifest_name": "pos_iv_pos_7_ta_b5",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ta_b5.json",
+      "n_jobs": 4,
+      "jobs": [
+        {
+          "strategy": "kindTS_zoned_v2",
+          "seed": 1242,
+          "n": 6000,
+          "node_label": "algofi"
+        },
+        {
+          "strategy": "cTS_semantic_v2",
+          "seed": 1242,
+          "n": 6000,
+          "node_label": "gard"
+        },
+        {
+          "strategy": "kindUCB_zoned_v1",
+          "seed": 1243,
+          "n": 6000,
+          "node_label": "goracle"
+        },
+        {
+          "strategy": "kindUCB_zoned_v2_noQ",
+          "seed": 1243,
+          "n": 6000,
+          "node_label": "zone"
+        }
+      ]
+    },
+    {
+      "manifest_name": "pos_iv_pos_7_ta_b6",
+      "manifest_path": "a4/pos/manifests/iv_pos_7/pos_iv_pos_7_ta_b6.json",
+      "n_jobs": 2,
+      "jobs": [
+        {
+          "strategy": "kindTS_zoned_v2",
+          "seed": 1243,
+          "n": 6000,
+          "node_label": "algofi"
+        },
+        {
+          "strategy": "cTS_semantic_v2",
+          "seed": 1243,
+          "n": 6000,
+          "node_label": "gard"
+        }
+      ]
+    }
+  ],
+  "per_variant_node_counts": {
+    "zoned": {
+      "algofi": 3,
+      "gard": 3,
+      "goracle": 2,
+      "zone": 2
+    },
+    "kindUCB_zoned_v1": {
+      "flare": 7,
+      "goracle": 3
+    },
+    "kindUCB_zoned_v2_noQ": {
+      "octorand": 7,
+      "zone": 3
+    },
+    "kindTS_zoned_v2": {
+      "opulous": 7,
+      "algofi": 3
+    },
+    "cTS_semantic_v2": {
+      "polynize": 7,
+      "gard": 3
+    }
+  }
+}

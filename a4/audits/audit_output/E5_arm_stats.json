@@ -1,0 +1,35 @@
+{
+  "arms": [
+    {
+      "arm_id": "LOAD_VAL_MOD|core_memory_load",
+      "kind": "LOAD_VAL_MOD",
+      "zone": "core_memory_load",
+      "status": "\u2713 CORRECT",
+      "file": "LOAD_VAL_MOD_core_memory_load.md",
+      "pool_total": 14,
+      "n_pass": 14,
+      "n_exclusion": 0,
+      "n_race": 0,
+      "n_other": 0,
+      "src_inc3": 4,
+      "src_inc4": 10,
+      "src_fuzz": 0
+    },
+    {
+      "arm_id": "LOAD_VAL_MOD|post_ecall",
+      "kind": "LOAD_VAL_MOD",
+      "zone": "post_ecall",
+      "status": "\u2713 CORRECT",
+      "file": "LOAD_VAL_MOD_post_ecall.md",
+      "pool_total": 14,
+      "n_pass": 14,
+      "n_exclusion": 0,
+      "n_race": 0,
+      "n_other": 0,
+      "src_inc3": 4,
+      "src_inc4": 10,
+      "src_fuzz": 0
+    }
+  ],
+  "errors": []
+}

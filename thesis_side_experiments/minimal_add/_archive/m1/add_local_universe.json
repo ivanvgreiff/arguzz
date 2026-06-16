@@ -1,0 +1,261 @@
+[
+  {
+    "context_key": "AddrDecompose(zirgen/circuit/rv32im/v2/dsl/u32.zir:67)|0|0",
+    "loc": "AddrDecompose(zirgen/circuit/rv32im/v2/dsl/u32.zir:67)",
+    "major": 0,
+    "minor": 0,
+    "label": "U32 normalize/decompose \u2014 32-bit value split into circuit-native limbs"
+  },
+  {
+    "context_key": "AddrDecompose(zirgen/circuit/rv32im/v2/dsl/u32.zir:71)|0|0",
+    "loc": "AddrDecompose(zirgen/circuit/rv32im/v2/dsl/u32.zir:71)",
+    "major": 0,
+    "minor": 0,
+    "label": "U32 normalize/decompose \u2014 32-bit value split into circuit-native limbs"
+  },
+  {
+    "context_key": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)|0|0",
+    "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+    "major": 0,
+    "minor": 0,
+    "label": "Decoder \u2014 instruction word decomposes to expected R-type ADD fields"
+  },
+  {
+    "context_key": "Decoder(zirgen/circuit/rv32im/v2/dsl/decode.zir:37)|0|0",
+    "loc": "Decoder(zirgen/circuit/rv32im/v2/dsl/decode.zir:37)",
+    "major": 0,
+    "minor": 0,
+    "label": "Decoder \u2014 instruction word decomposes to expected R-type ADD fields"
+  },
+  {
+    "context_key": "Decoder(zirgen/circuit/rv32im/v2/dsl/decode.zir:46)|0|0",
+    "loc": "Decoder(zirgen/circuit/rv32im/v2/dsl/decode.zir:46)",
+    "major": 0,
+    "minor": 0,
+    "label": "Decoder \u2014 instruction word decomposes to expected R-type ADD fields"
+  },
+  {
+    "context_key": "DoCycleTable(zirgen/circuit/rv32im/v2/dsl/inst.zir:21)|0|0",
+    "loc": "DoCycleTable(zirgen/circuit/rv32im/v2/dsl/inst.zir:21)",
+    "major": 0,
+    "minor": 0,
+    "label": "DoCycleTable \u2014 instruction class selects MISC0 row in cycle table"
+  },
+  {
+    "context_key": "DoCycleTable(zirgen/circuit/rv32im/v2/dsl/inst.zir:22)|0|0",
+    "loc": "DoCycleTable(zirgen/circuit/rv32im/v2/dsl/inst.zir:22)",
+    "major": 0,
+    "minor": 0,
+    "label": "DoCycleTable \u2014 instruction class selects MISC0 row in cycle table"
+  },
+  {
+    "context_key": "IsCycle(zirgen/circuit/rv32im/v2/dsl/mem.zir:61)|0|0",
+    "loc": "IsCycle(zirgen/circuit/rv32im/v2/dsl/mem.zir:61)",
+    "major": 0,
+    "minor": 0,
+    "label": "IsCycle \u2014 memory-row cycle counters consistent with circuit cycle"
+  },
+  {
+    "context_key": "IsCycle(zirgen/circuit/rv32im/v2/dsl/mem.zir:62)|0|0",
+    "loc": "IsCycle(zirgen/circuit/rv32im/v2/dsl/mem.zir:62)",
+    "major": 0,
+    "minor": 0,
+    "label": "IsCycle \u2014 memory-row cycle counters consistent with circuit cycle"
+  },
+  {
+    "context_key": "IsZero(zirgen/circuit/rv32im/v2/dsl/is_zero.zir:16)|0|0",
+    "loc": "IsZero(zirgen/circuit/rv32im/v2/dsl/is_zero.zir:16)",
+    "major": 0,
+    "minor": 0,
+    "label": "IsZero \u2014 zero-test helper used in decode/ALU plumbing"
+  },
+  {
+    "context_key": "IsZero(zirgen/circuit/rv32im/v2/dsl/is_zero.zir:18)|0|0",
+    "loc": "IsZero(zirgen/circuit/rv32im/v2/dsl/is_zero.zir:18)",
+    "major": 0,
+    "minor": 0,
+    "label": "IsZero \u2014 zero-test helper used in decode/ALU plumbing"
+  },
+  {
+    "context_key": "IsZero(zirgen/circuit/rv32im/v2/dsl/is_zero.zir:20)|0|0",
+    "loc": "IsZero(zirgen/circuit/rv32im/v2/dsl/is_zero.zir:20)",
+    "major": 0,
+    "minor": 0,
+    "label": "IsZero \u2014 zero-test helper used in decode/ALU plumbing"
+  },
+  {
+    "context_key": "MemoryIO(zirgen/circuit/rv32im/v2/dsl/mem.zir:69)|0|0",
+    "loc": "MemoryIO(zirgen/circuit/rv32im/v2/dsl/mem.zir:69)",
+    "major": 0,
+    "minor": 0,
+    "label": "MemoryIO \u2014 memory-argument row fields (addr/cycle/data) well-formed for this step"
+  },
+  {
+    "context_key": "MemoryIO(zirgen/circuit/rv32im/v2/dsl/mem.zir:70)|0|0",
+    "loc": "MemoryIO(zirgen/circuit/rv32im/v2/dsl/mem.zir:70)",
+    "major": 0,
+    "minor": 0,
+    "label": "MemoryIO \u2014 memory-argument row fields (addr/cycle/data) well-formed for this step"
+  },
+  {
+    "context_key": "MemoryIO(zirgen/circuit/rv32im/v2/dsl/mem.zir:71)|0|0",
+    "loc": "MemoryIO(zirgen/circuit/rv32im/v2/dsl/mem.zir:71)",
+    "major": 0,
+    "minor": 0,
+    "label": "MemoryIO \u2014 memory-argument row fields (addr/cycle/data) well-formed for this step"
+  },
+  {
+    "context_key": "MemoryIO(zirgen/circuit/rv32im/v2/dsl/mem.zir:73)|0|0",
+    "loc": "MemoryIO(zirgen/circuit/rv32im/v2/dsl/mem.zir:73)",
+    "major": 0,
+    "minor": 0,
+    "label": "MemoryIO \u2014 memory-argument row fields (addr/cycle/data) well-formed for this step"
+  },
+  {
+    "context_key": "MemoryIO(zirgen/circuit/rv32im/v2/dsl/mem.zir:74)|0|0",
+    "loc": "MemoryIO(zirgen/circuit/rv32im/v2/dsl/mem.zir:74)",
+    "major": 0,
+    "minor": 0,
+    "label": "MemoryIO \u2014 memory-argument row fields (addr/cycle/data) well-formed for this step"
+  },
+  {
+    "context_key": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)|0|0",
+    "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+    "major": 0,
+    "minor": 0,
+    "label": "MemoryWrite@mem.zir:100 \u2014 companion WRITE consistency check (high limb / paired row)"
+  },
+  {
+    "context_key": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)|0|0",
+    "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+    "major": 0,
+    "minor": 0,
+    "label": "MemoryWrite@mem.zir:99 \u2014 WRITE txn: written word must match the computed/read chain for this cycle"
+  },
+  {
+    "context_key": "Misc0(zirgen/circuit/rv32im/v2/dsl/inst_misc.zir:32)|0|0",
+    "loc": "Misc0(zirgen/circuit/rv32im/v2/dsl/inst_misc.zir:32)",
+    "major": 0,
+    "minor": 0,
+    "label": "Misc0 \u2014 MISC0 ALU arm active (ADD path through inst_misc.zir)"
+  },
+  {
+    "context_key": "MiscInput(zirgen/circuit/rv32im/v2/dsl/inst_misc.zir:7)|0|0",
+    "loc": "MiscInput(zirgen/circuit/rv32im/v2/dsl/inst_misc.zir:7)",
+    "major": 0,
+    "minor": 0,
+    "label": "MiscInput \u2014 ALU operand inputs wired into MISC0 block"
+  },
+  {
+    "context_key": "NondetU16Reg(zirgen/circuit/rv32im/v2/dsl/lookups.zir:43)|0|0",
+    "loc": "NondetU16Reg(zirgen/circuit/rv32im/v2/dsl/lookups.zir:43)",
+    "major": 0,
+    "minor": 0,
+    "label": "U16 lookup \u2014 register limb participates in U16 range lookup table (LogUp use-side)"
+  },
+  {
+    "context_key": "NormalizeU32(zirgen/circuit/rv32im/v2/dsl/u32.zir:46)|0|0",
+    "loc": "NormalizeU32(zirgen/circuit/rv32im/v2/dsl/u32.zir:46)",
+    "major": 0,
+    "minor": 0,
+    "label": "U32 normalize/decompose \u2014 32-bit value split into circuit-native limbs"
+  },
+  {
+    "context_key": "NormalizeU32(zirgen/circuit/rv32im/v2/dsl/u32.zir:52)|0|0",
+    "loc": "NormalizeU32(zirgen/circuit/rv32im/v2/dsl/u32.zir:52)",
+    "major": 0,
+    "minor": 0,
+    "label": "U32 normalize/decompose \u2014 32-bit value split into circuit-native limbs"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)|0|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:11)",
+    "major": 0,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)|0|0",
+    "loc": "OneHot(zirgen/circuit/rv32im/v2/dsl/one_hot.zir:9)",
+    "major": 0,
+    "minor": 0,
+    "label": "OneHot \u2014 one-hot mux selector for decode/execute routing"
+  },
+  {
+    "context_key": "ReadSourceRegs(zirgen/circuit/rv32im/v2/dsl/inst.zir:49)|0|0",
+    "loc": "ReadSourceRegs(zirgen/circuit/rv32im/v2/dsl/inst.zir:49)",
+    "major": 0,
+    "minor": 0,
+    "label": "ReadSourceRegs \u2014 rs1/rs2 register reads connected to execution unit"
+  },
+  {
+    "context_key": "Reg(<preamble>:6)|0|0",
+    "loc": "Reg(<preamble>:6)",
+    "major": 0,
+    "minor": 0,
+    "label": "Reg preamble \u2014 register file cell witness wiring"
+  },
+  {
+    "context_key": "U16Reg(zirgen/circuit/rv32im/v2/dsl/lookups.zir:51)|0|0",
+    "loc": "U16Reg(zirgen/circuit/rv32im/v2/dsl/lookups.zir:51)",
+    "major": 0,
+    "minor": 0,
+    "label": "U16 lookup \u2014 register limb participates in U16 range lookup table (LogUp use-side)"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  IsZero ( zirgen/circuit/rv32im/v2/dsl/is_zero.zir :14:13)))|0|0",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  IsZero ( zirgen/circuit/rv32im/v2/dsl/is_zero.zir :14:13)))",
+    "major": 0,
+    "minor": 0,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))|0|0",
+    "loc": "loc(callsite( AssertBit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :7:20) at  NondetBitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :14:13)))",
+    "major": 0,
+    "minor": 0,
+    "label": "Bit witness \u2014 single-bit nondeterministic value constrained to {0,1}"
+  },
+  {
+    "context_key": "loc(callsite( AssertTwit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :38:44) at  NondetTwitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :57:14)))|0|0",
+    "loc": "loc(callsite( AssertTwit ( zirgen/circuit/rv32im/v2/dsl/bits.zir :38:44) at  NondetTwitReg ( zirgen/circuit/rv32im/v2/dsl/bits.zir :57:14)))",
+    "major": 0,
+    "minor": 0,
+    "label": "Twit witness \u2014 2-bit nondeterministic value constrained to small range"
+  },
+  {
+    "context_key": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))|0|0",
+    "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+    "major": 0,
+    "minor": 0,
+    "label": "IsRead@mem.zir:79 \u2014 on a READ txn, word must equal prev_word on the same transaction (intra-txn consistency; does NOT prove cross-row memory closure \u2014 see PRESENTATION_DEEP_DIVE \u00a7Slide 2)"
+  },
+  {
+    "context_key": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))|0|0",
+    "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+    "major": 0,
+    "minor": 0,
+    "label": "IsRead@mem.zir:80 \u2014 high limb of READ word equals prev_word high limb (companion to :79)"
+  },
+  {
+    "context_key": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :102:19) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))|0|0",
+    "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :102:19) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+    "major": 0,
+    "minor": 0,
+    "label": "VerifyOpcodeF3F7 \u2014 decoded funct3/funct7 match the ADD opcode pattern"
+  },
+  {
+    "context_key": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))|0|0",
+    "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+    "major": 0,
+    "minor": 0,
+    "label": "VerifyOpcodeF3F7 \u2014 decoded funct3/funct7 match the ADD opcode pattern"
+  },
+  {
+    "context_key": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :104:18) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))|0|0",
+    "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :104:18) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+    "major": 0,
+    "minor": 0,
+    "label": "VerifyOpcodeF3F7 \u2014 decoded funct3/funct7 match the ADD opcode pattern"
+  }
+]

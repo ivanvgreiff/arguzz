@@ -1,0 +1,2917 @@
+{
+  "atom_count": 5000,
+  "group_count": 20,
+  "n_expected_per_type": 250,
+  "by_type_variant": {
+    "a4::COMP_OUT_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 0.912,
+      "P_intrastep_ge1": 0.912,
+      "P_interstep_ge1": 0.0,
+      "P_global_ge1": 0.912,
+      "mean_intrastep": 1.824,
+      "mean_interstep": 0.0,
+      "mean_global": 0.912,
+      "triple_histogram": {
+        "0/0/0": 22,
+        "1/0/1": 228
+      },
+      "guest_data_hit_rate": 0.912,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 228
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 228
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 228
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.088,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 0.912,
+      "P_intrastep_ge1_fired": 0.912,
+      "P_interstep_ge1_fired": 0.0,
+      "P_global_ge1_fired": 0.912,
+      "mean_intrastep_fired": 1.824,
+      "mean_interstep_fired": 0.0,
+      "mean_global_fired": 0.912,
+      "triple_histogram_fired": {
+        "0/0/0": 22,
+        "1/0/1": 228
+      },
+      "guest_data_hit_rate_fired": 0.912,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 228
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 228
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 228
+        }
+      ]
+    },
+    "a4::INSTR_TYPE_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 0.996,
+      "P_intrastep_ge1": 0.996,
+      "P_interstep_ge1": 0.06,
+      "P_global_ge1": 0.356,
+      "mean_intrastep": 4.232,
+      "mean_interstep": 0.076,
+      "mean_global": 0.424,
+      "triple_histogram": {
+        "1/0/0": 160,
+        "1/0/1": 74,
+        "1/1/1": 15,
+        "0/0/0": 1
+      },
+      "guest_data_hit_rate": 0.912,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 276
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 152
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 113
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 89
+        },
+        {
+          "loc": "AddrDecompose(zirgen/circuit/rv32im/v2/dsl/u32.zir:67)",
+          "count": 19
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 17
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 16
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 15
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at  OpXORI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :132:18)))",
+          "count": 7
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at  OpORI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :137:18)))",
+          "count": 7
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.004,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 0.996,
+      "P_intrastep_ge1_fired": 0.996,
+      "P_interstep_ge1_fired": 0.06,
+      "P_global_ge1_fired": 0.356,
+      "mean_intrastep_fired": 4.232,
+      "mean_interstep_fired": 0.076,
+      "mean_global_fired": 0.424,
+      "triple_histogram_fired": {
+        "1/0/0": 160,
+        "1/0/1": 74,
+        "1/1/1": 15,
+        "0/0/0": 1
+      },
+      "guest_data_hit_rate_fired": 0.912,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 276
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 152
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 113
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 89
+        },
+        {
+          "loc": "AddrDecompose(zirgen/circuit/rv32im/v2/dsl/u32.zir:67)",
+          "count": 19
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 17
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 16
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 15
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at  OpXORI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :132:18)))",
+          "count": 7
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at  OpORI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :137:18)))",
+          "count": 7
+        }
+      ]
+    },
+    "a4::INSTR_WORD_MOD_FULL::default": {
+      "n": 250,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 1.0,
+      "P_intrastep_ge1": 1.0,
+      "P_interstep_ge1": 0.036,
+      "P_global_ge1": 1.0,
+      "mean_intrastep": 3.24,
+      "mean_interstep": 0.048,
+      "mean_global": 1.064,
+      "triple_histogram": {
+        "1/0/1": 241,
+        "1/1/1": 9
+      },
+      "guest_data_hit_rate": 0.912,
+      "top_locs": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 250
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 213
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 200
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 174
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 81
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :102:19) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+          "count": 17
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :104:18) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+          "count": 17
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 16
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+          "count": 14
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 9
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.0,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 1.0,
+      "P_intrastep_ge1_fired": 1.0,
+      "P_interstep_ge1_fired": 0.036,
+      "P_global_ge1_fired": 1.0,
+      "mean_intrastep_fired": 3.24,
+      "mean_interstep_fired": 0.048,
+      "mean_global_fired": 1.064,
+      "triple_histogram_fired": {
+        "1/0/1": 241,
+        "1/1/1": 9
+      },
+      "guest_data_hit_rate_fired": 0.912,
+      "top_locs_fired": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 250
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 213
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 200
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 174
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 81
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :102:19) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+          "count": 17
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :104:18) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+          "count": 17
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 16
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+          "count": 14
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 9
+        }
+      ]
+    },
+    "a4::INSTR_WORD_MOD_SUR::funct3_xor": {
+      "n": 250,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 1.0,
+      "P_intrastep_ge1": 1.0,
+      "P_interstep_ge1": 0.0,
+      "P_global_ge1": 1.0,
+      "mean_intrastep": 1.0,
+      "mean_interstep": 0.0,
+      "mean_global": 1.0,
+      "triple_histogram": {
+        "1/0/1": 250
+      },
+      "guest_data_hit_rate": 0.912,
+      "top_locs": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 250
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 200
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+          "count": 17
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpSLLI ( zirgen/circuit/rv32im/v2/dsl/inst_mul.zir :56:20)))",
+          "count": 9
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpSUB ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :95:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :34:28))))",
+          "count": 6
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpOR ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :105:20)))",
+          "count": 6
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpSRLI ( zirgen/circuit/rv32im/v2/dsl/inst_div.zir :148:20)))",
+          "count": 6
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpMUL ( zirgen/circuit/rv32im/v2/dsl/inst_mul.zir :63:20)))",
+          "count": 2
+        },
+        {
+          "loc": "MachineECall(zirgen/circuit/rv32im/v2/dsl/inst_ecall.zir:29)",
+          "count": 2
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpXOR ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :100:20)))",
+          "count": 1
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.0,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 1.0,
+      "P_intrastep_ge1_fired": 1.0,
+      "P_interstep_ge1_fired": 0.0,
+      "P_global_ge1_fired": 1.0,
+      "mean_intrastep_fired": 1.0,
+      "mean_interstep_fired": 0.0,
+      "mean_global_fired": 1.0,
+      "triple_histogram_fired": {
+        "1/0/1": 250
+      },
+      "guest_data_hit_rate_fired": 0.912,
+      "top_locs_fired": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 250
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 200
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+          "count": 17
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpSLLI ( zirgen/circuit/rv32im/v2/dsl/inst_mul.zir :56:20)))",
+          "count": 9
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpSUB ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :95:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :34:28))))",
+          "count": 6
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpOR ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :105:20)))",
+          "count": 6
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpSRLI ( zirgen/circuit/rv32im/v2/dsl/inst_div.zir :148:20)))",
+          "count": 6
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpMUL ( zirgen/circuit/rv32im/v2/dsl/inst_mul.zir :63:20)))",
+          "count": 2
+        },
+        {
+          "loc": "MachineECall(zirgen/circuit/rv32im/v2/dsl/inst_ecall.zir:29)",
+          "count": 2
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpXOR ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :100:20)))",
+          "count": 1
+        }
+      ]
+    },
+    "a4::LOAD_VAL_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 0.924,
+      "P_intrastep_ge1": 0.924,
+      "P_interstep_ge1": 0.0,
+      "P_global_ge1": 0.924,
+      "mean_intrastep": 1.848,
+      "mean_interstep": 0.0,
+      "mean_global": 0.924,
+      "triple_histogram": {
+        "0/0/0": 19,
+        "1/0/1": 231
+      },
+      "guest_data_hit_rate": 0.932,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 231
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 231
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 231
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.076,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 0.924,
+      "P_intrastep_ge1_fired": 0.924,
+      "P_interstep_ge1_fired": 0.0,
+      "P_global_ge1_fired": 0.924,
+      "mean_intrastep_fired": 1.848,
+      "mean_interstep_fired": 0.0,
+      "mean_global_fired": 0.924,
+      "triple_histogram_fired": {
+        "0/0/0": 19,
+        "1/0/1": 231
+      },
+      "guest_data_hit_rate_fired": 0.932,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 231
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 231
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 231
+        }
+      ]
+    },
+    "a4::MEM_VAL_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 1.0,
+      "P_intrastep_ge1": 0.972,
+      "P_interstep_ge1": 0.888,
+      "P_global_ge1": 1.0,
+      "mean_intrastep": 1.888,
+      "mean_interstep": 1.776,
+      "mean_global": 1.0,
+      "triple_histogram": {
+        "0/1/1": 7,
+        "1/1/1": 215,
+        "1/0/1": 28
+      },
+      "guest_data_hit_rate": 0.664,
+      "top_locs": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 250
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 222
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 222
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 222
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 222
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 14
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 14
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.0,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 1.0,
+      "P_intrastep_ge1_fired": 0.972,
+      "P_interstep_ge1_fired": 0.888,
+      "P_global_ge1_fired": 1.0,
+      "mean_intrastep_fired": 1.888,
+      "mean_interstep_fired": 1.776,
+      "mean_global_fired": 1.0,
+      "triple_histogram_fired": {
+        "0/1/1": 7,
+        "1/1/1": 215,
+        "1/0/1": 28
+      },
+      "guest_data_hit_rate_fired": 0.664,
+      "top_locs_fired": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 250
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 222
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 222
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 222
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 222
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 14
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 14
+        }
+      ]
+    },
+    "a4::PRE_EXEC_REG_MOD::next_read": {
+      "n": 250,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 0.884,
+      "P_intrastep_ge1": 0.476,
+      "P_interstep_ge1": 0.884,
+      "P_global_ge1": 0.8,
+      "mean_intrastep": 0.916,
+      "mean_interstep": 1.768,
+      "mean_global": 0.8,
+      "triple_histogram": {
+        "0/0/0": 29,
+        "0/1/1": 81,
+        "1/1/1": 119,
+        "0/1/0": 21
+      },
+      "guest_data_hit_rate": 0.868,
+      "top_locs": [
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 221
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 221
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 200
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 93
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 81
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 21
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 14
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 10
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 6
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 4
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.116,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 0.884,
+      "P_intrastep_ge1_fired": 0.476,
+      "P_interstep_ge1_fired": 0.884,
+      "P_global_ge1_fired": 0.8,
+      "mean_intrastep_fired": 0.916,
+      "mean_interstep_fired": 1.768,
+      "mean_global_fired": 0.8,
+      "triple_histogram_fired": {
+        "0/0/0": 29,
+        "0/1/1": 81,
+        "1/1/1": 119,
+        "0/1/0": 21
+      },
+      "guest_data_hit_rate_fired": 0.868,
+      "top_locs_fired": [
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 221
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 221
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 200
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 93
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 81
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 21
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 14
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 10
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 6
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 4
+        }
+      ]
+    },
+    "a4::PRE_EXEC_REG_MOD::prev_write": {
+      "n": 250,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 0.552,
+      "P_intrastep_ge1": 0.552,
+      "P_interstep_ge1": 0.0,
+      "P_global_ge1": 0.552,
+      "mean_intrastep": 1.104,
+      "mean_interstep": 0.0,
+      "mean_global": 0.552,
+      "triple_histogram": {
+        "0/0/0": 112,
+        "1/0/1": 138
+      },
+      "guest_data_hit_rate": 0.868,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 138
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 138
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 138
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.448,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 0.552,
+      "P_intrastep_ge1_fired": 0.552,
+      "P_interstep_ge1_fired": 0.0,
+      "P_global_ge1_fired": 0.552,
+      "mean_intrastep_fired": 1.104,
+      "mean_interstep_fired": 0.0,
+      "mean_global_fired": 0.552,
+      "triple_histogram_fired": {
+        "0/0/0": 112,
+        "1/0/1": 138
+      },
+      "guest_data_hit_rate_fired": 0.868,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 138
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 138
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 138
+        }
+      ]
+    },
+    "a4::STORE_OUT_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 1.0,
+      "P_intrastep_ge1": 1.0,
+      "P_interstep_ge1": 0.0,
+      "P_global_ge1": 1.0,
+      "mean_intrastep": 2.0,
+      "mean_interstep": 0.0,
+      "mean_global": 1.0,
+      "triple_histogram": {
+        "1/0/1": 250
+      },
+      "guest_data_hit_rate": 0.992,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 250
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 250
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 250
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.0,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 1.0,
+      "P_intrastep_ge1_fired": 1.0,
+      "P_interstep_ge1_fired": 0.0,
+      "P_global_ge1_fired": 1.0,
+      "mean_intrastep_fired": 2.0,
+      "mean_interstep_fired": 0.0,
+      "mean_global_fired": 1.0,
+      "triple_histogram_fired": {
+        "1/0/1": 250
+      },
+      "guest_data_hit_rate_fired": 0.992,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 250
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 250
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 250
+        }
+      ]
+    },
+    "arguzz::BR_NEG_COND::default": {
+      "n": 250,
+      "crash_rate": 0.004,
+      "crash_stages": {
+        "prove_error": 1
+      },
+      "reached_constraints_rate": 0.248,
+      "P_intrastep_ge1": 0.248,
+      "P_interstep_ge1": 0.0,
+      "P_global_ge1": 0.248,
+      "mean_intrastep": 0.264,
+      "mean_interstep": 0.0,
+      "mean_global": 0.248,
+      "triple_histogram": {
+        "0/0/0": 188,
+        "1/0/1": 62
+      },
+      "guest_data_hit_rate": 0.932,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 66
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 62
+        }
+      ],
+      "n_fired": 72,
+      "firing_rate": 0.288,
+      "fired_silent_rate": 0.125,
+      "crash_rate_fired": 0.013888888888888888,
+      "crash_stages_fired": {
+        "prove_error": 1
+      },
+      "reached_constraints_rate_fired": 0.8611111111111112,
+      "P_intrastep_ge1_fired": 0.8611111111111112,
+      "P_interstep_ge1_fired": 0.0,
+      "P_global_ge1_fired": 0.8611111111111112,
+      "mean_intrastep_fired": 0.9166666666666666,
+      "mean_interstep_fired": 0.0,
+      "mean_global_fired": 0.8611111111111112,
+      "triple_histogram_fired": {
+        "0/0/0": 10,
+        "1/0/1": 62
+      },
+      "guest_data_hit_rate_fired": 0.9583333333333334,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 66
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 62
+        }
+      ]
+    },
+    "arguzz::COMP_OUT_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.024,
+      "crash_stages": {
+        "prove_error": 6
+      },
+      "reached_constraints_rate": 0.488,
+      "P_intrastep_ge1": 0.488,
+      "P_interstep_ge1": 0.0,
+      "P_global_ge1": 0.004,
+      "mean_intrastep": 1.044,
+      "mean_interstep": 0.0,
+      "mean_global": 0.004,
+      "triple_histogram": {
+        "1/0/0": 121,
+        "0/0/0": 128,
+        "1/0/1": 1
+      },
+      "guest_data_hit_rate": 0.912,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 127
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 80
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 28
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 10
+        },
+        {
+          "loc": "ECall0(zirgen/circuit/rv32im/v2/dsl/inst_ecall.zir:203)",
+          "count": 4
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 4
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 3
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 3
+        },
+        {
+          "loc": "ControlMRET(zirgen/circuit/rv32im/v2/dsl/inst_control.zir:89)",
+          "count": 1
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 1
+        }
+      ],
+      "n_fired": 150,
+      "firing_rate": 0.6,
+      "fired_silent_rate": 0.14666666666666667,
+      "crash_rate_fired": 0.04,
+      "crash_stages_fired": {
+        "prove_error": 6
+      },
+      "reached_constraints_rate_fired": 0.8133333333333334,
+      "P_intrastep_ge1_fired": 0.8133333333333334,
+      "P_interstep_ge1_fired": 0.0,
+      "P_global_ge1_fired": 0.006666666666666667,
+      "mean_intrastep_fired": 1.74,
+      "mean_interstep_fired": 0.0,
+      "mean_global_fired": 0.006666666666666667,
+      "triple_histogram_fired": {
+        "1/0/0": 121,
+        "0/0/0": 28,
+        "1/0/1": 1
+      },
+      "guest_data_hit_rate_fired": 0.88,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 127
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 80
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 28
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 10
+        },
+        {
+          "loc": "ECall0(zirgen/circuit/rv32im/v2/dsl/inst_ecall.zir:203)",
+          "count": 4
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 4
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 3
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 3
+        },
+        {
+          "loc": "ControlMRET(zirgen/circuit/rv32im/v2/dsl/inst_control.zir:89)",
+          "count": 1
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 1
+        }
+      ]
+    },
+    "arguzz::INSTR_WORD_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.012,
+      "crash_stages": {
+        "prove_error": 3
+      },
+      "reached_constraints_rate": 0.36,
+      "P_intrastep_ge1": 0.36,
+      "P_interstep_ge1": 0.012,
+      "P_global_ge1": 0.5,
+      "mean_intrastep": 0.84,
+      "mean_interstep": 0.024,
+      "mean_global": 0.52,
+      "triple_histogram": {
+        "0/0/0": 91,
+        "1/0/1": 53,
+        "1/0/0": 34,
+        "0/0/1": 69,
+        "1/1/1": 3
+      },
+      "guest_data_hit_rate": 0.912,
+      "top_locs": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 125
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 42
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 32
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 28
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 19
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcode ( zirgen/circuit/rv32im/v2/dsl/inst.zir :91:19) at callsite( OpAUIPC ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :214:16) at  Misc2 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :71:30))))",
+          "count": 13
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 7
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 6
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 6
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 5
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.352,
+      "crash_rate_fired": 0.012,
+      "crash_stages_fired": {
+        "prove_error": 3
+      },
+      "reached_constraints_rate_fired": 0.36,
+      "P_intrastep_ge1_fired": 0.36,
+      "P_interstep_ge1_fired": 0.012,
+      "P_global_ge1_fired": 0.5,
+      "mean_intrastep_fired": 0.84,
+      "mean_interstep_fired": 0.024,
+      "mean_global_fired": 0.52,
+      "triple_histogram_fired": {
+        "0/0/0": 91,
+        "1/0/1": 53,
+        "1/0/0": 34,
+        "0/0/1": 69,
+        "1/1/1": 3
+      },
+      "guest_data_hit_rate_fired": 0.912,
+      "top_locs_fired": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 125
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 42
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 32
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 28
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 19
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcode ( zirgen/circuit/rv32im/v2/dsl/inst.zir :91:19) at callsite( OpAUIPC ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :214:16) at  Misc2 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :71:30))))",
+          "count": 13
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 7
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 6
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 6
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 5
+        }
+      ]
+    },
+    "arguzz::LOAD_VAL_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 0.1,
+      "P_intrastep_ge1": 0.1,
+      "P_interstep_ge1": 0.0,
+      "P_global_ge1": 0.004,
+      "mean_intrastep": 0.224,
+      "mean_interstep": 0.0,
+      "mean_global": 0.004,
+      "triple_histogram": {
+        "0/0/0": 225,
+        "1/0/1": 1,
+        "1/0/0": 24
+      },
+      "guest_data_hit_rate": 0.932,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 27
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 15
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 3
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 3
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 3
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 2
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 2
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 1
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 1
+        }
+      ],
+      "n_fired": 49,
+      "firing_rate": 0.196,
+      "fired_silent_rate": 0.4897959183673469,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 0.5102040816326531,
+      "P_intrastep_ge1_fired": 0.5102040816326531,
+      "P_interstep_ge1_fired": 0.0,
+      "P_global_ge1_fired": 0.02040816326530612,
+      "mean_intrastep_fired": 1.1428571428571428,
+      "mean_interstep_fired": 0.0,
+      "mean_global_fired": 0.02040816326530612,
+      "triple_histogram_fired": {
+        "0/0/0": 24,
+        "1/0/1": 1,
+        "1/0/0": 24
+      },
+      "guest_data_hit_rate_fired": 0.8775510204081632,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 27
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 15
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 3
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 3
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 3
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 2
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 2
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 1
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 1
+        }
+      ]
+    },
+    "arguzz::POST_EXEC_MEM_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.06,
+      "crash_stages": {
+        "preflight": 15
+      },
+      "reached_constraints_rate": 0.94,
+      "P_intrastep_ge1": 0.856,
+      "P_interstep_ge1": 0.932,
+      "P_global_ge1": 0.852,
+      "mean_intrastep": 3.916,
+      "mean_interstep": 1.7,
+      "mean_global": 1.704,
+      "triple_histogram": {
+        "1/1/1": 211,
+        "0/0/0": 15,
+        "0/1/0": 21,
+        "1/1/0": 1,
+        "1/0/1": 2
+      },
+      "guest_data_hit_rate": 0.868,
+      "top_locs": [
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 233
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 221
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 214
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 213
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 213
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 192
+        },
+        {
+          "loc": "AddrDecompose(zirgen/circuit/rv32im/v2/dsl/u32.zir:67)",
+          "count": 57
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 56
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 44
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 43
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.0,
+      "crash_rate_fired": 0.06,
+      "crash_stages_fired": {
+        "preflight": 15
+      },
+      "reached_constraints_rate_fired": 0.94,
+      "P_intrastep_ge1_fired": 0.856,
+      "P_interstep_ge1_fired": 0.932,
+      "P_global_ge1_fired": 0.852,
+      "mean_intrastep_fired": 3.916,
+      "mean_interstep_fired": 1.7,
+      "mean_global_fired": 1.704,
+      "triple_histogram_fired": {
+        "1/1/1": 211,
+        "0/0/0": 15,
+        "0/1/0": 21,
+        "1/1/0": 1,
+        "1/0/1": 2
+      },
+      "guest_data_hit_rate_fired": 0.868,
+      "top_locs_fired": [
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 233
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 221
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 214
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 213
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 213
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 192
+        },
+        {
+          "loc": "AddrDecompose(zirgen/circuit/rv32im/v2/dsl/u32.zir:67)",
+          "count": 57
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 56
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 44
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 43
+        }
+      ]
+    },
+    "arguzz::POST_EXEC_PC_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.02,
+      "crash_stages": {
+        "prove_error": 5
+      },
+      "reached_constraints_rate": 0.432,
+      "P_intrastep_ge1": 0.432,
+      "P_interstep_ge1": 0.0,
+      "P_global_ge1": 0.452,
+      "mean_intrastep": 0.78,
+      "mean_interstep": 0.0,
+      "mean_global": 0.452,
+      "triple_histogram": {
+        "0/0/0": 136,
+        "1/0/1": 107,
+        "0/0/1": 6,
+        "1/0/0": 1
+      },
+      "guest_data_hit_rate": 0.868,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 177
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 113
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 11
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 4
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 1
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 1
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 1
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.524,
+      "crash_rate_fired": 0.02,
+      "crash_stages_fired": {
+        "prove_error": 5
+      },
+      "reached_constraints_rate_fired": 0.432,
+      "P_intrastep_ge1_fired": 0.432,
+      "P_interstep_ge1_fired": 0.0,
+      "P_global_ge1_fired": 0.452,
+      "mean_intrastep_fired": 0.78,
+      "mean_interstep_fired": 0.0,
+      "mean_global_fired": 0.452,
+      "triple_histogram_fired": {
+        "0/0/0": 136,
+        "1/0/1": 107,
+        "0/0/1": 6,
+        "1/0/0": 1
+      },
+      "guest_data_hit_rate_fired": 0.868,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 177
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 113
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 11
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 4
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 1
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 1
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 1
+        }
+      ]
+    },
+    "arguzz::POST_EXEC_REG_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.068,
+      "crash_stages": {
+        "preflight": 15,
+        "prove_error": 2
+      },
+      "reached_constraints_rate": 0.908,
+      "P_intrastep_ge1": 0.84,
+      "P_interstep_ge1": 0.908,
+      "P_global_ge1": 0.828,
+      "mean_intrastep": 3.716,
+      "mean_interstep": 1.672,
+      "mean_global": 1.656,
+      "triple_histogram": {
+        "1/1/1": 207,
+        "0/0/0": 23,
+        "0/1/0": 17,
+        "1/1/0": 3
+      },
+      "guest_data_hit_rate": 0.868,
+      "top_locs": [
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 224
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 216
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 207
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 207
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 206
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 194
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 63
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 54
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 45
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 40
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.024,
+      "crash_rate_fired": 0.068,
+      "crash_stages_fired": {
+        "preflight": 15,
+        "prove_error": 2
+      },
+      "reached_constraints_rate_fired": 0.908,
+      "P_intrastep_ge1_fired": 0.84,
+      "P_interstep_ge1_fired": 0.908,
+      "P_global_ge1_fired": 0.828,
+      "mean_intrastep_fired": 3.716,
+      "mean_interstep_fired": 1.672,
+      "mean_global_fired": 1.656,
+      "triple_histogram_fired": {
+        "1/1/1": 207,
+        "0/0/0": 23,
+        "0/1/0": 17,
+        "1/1/0": 3
+      },
+      "guest_data_hit_rate_fired": 0.868,
+      "top_locs_fired": [
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 224
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 216
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 207
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 207
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 206
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 194
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 63
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 54
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 45
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 40
+        }
+      ]
+    },
+    "arguzz::PRE_EXEC_MEM_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.072,
+      "crash_stages": {
+        "preflight": 18
+      },
+      "reached_constraints_rate": 0.928,
+      "P_intrastep_ge1": 0.868,
+      "P_interstep_ge1": 0.92,
+      "P_global_ge1": 0.86,
+      "mean_intrastep": 3.708,
+      "mean_interstep": 1.68,
+      "mean_global": 1.72,
+      "triple_histogram": {
+        "1/1/1": 213,
+        "0/0/0": 18,
+        "1/0/1": 2,
+        "1/1/0": 2,
+        "0/1/0": 15
+      },
+      "guest_data_hit_rate": 0.868,
+      "top_locs": [
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 230
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 215
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 215
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 215
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 208
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 190
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 56
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 52
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 44
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 44
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.0,
+      "crash_rate_fired": 0.072,
+      "crash_stages_fired": {
+        "preflight": 18
+      },
+      "reached_constraints_rate_fired": 0.928,
+      "P_intrastep_ge1_fired": 0.868,
+      "P_interstep_ge1_fired": 0.92,
+      "P_global_ge1_fired": 0.86,
+      "mean_intrastep_fired": 3.708,
+      "mean_interstep_fired": 1.68,
+      "mean_global_fired": 1.72,
+      "triple_histogram_fired": {
+        "1/1/1": 213,
+        "0/0/0": 18,
+        "1/0/1": 2,
+        "1/1/0": 2,
+        "0/1/0": 15
+      },
+      "guest_data_hit_rate_fired": 0.868,
+      "top_locs_fired": [
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 230
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 215
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 215
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 215
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 208
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 190
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 56
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 52
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 44
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 44
+        }
+      ]
+    },
+    "arguzz::PRE_EXEC_PC_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.02,
+      "crash_stages": {
+        "prove_error": 5
+      },
+      "reached_constraints_rate": 0.532,
+      "P_intrastep_ge1": 0.532,
+      "P_interstep_ge1": 0.0,
+      "P_global_ge1": 0.552,
+      "mean_intrastep": 0.94,
+      "mean_interstep": 0.0,
+      "mean_global": 0.552,
+      "triple_histogram": {
+        "0/0/0": 111,
+        "1/0/1": 132,
+        "0/0/1": 6,
+        "1/0/0": 1
+      },
+      "guest_data_hit_rate": 0.868,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 216
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 138
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 11
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 5
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 1
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 1
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 1
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.424,
+      "crash_rate_fired": 0.02,
+      "crash_stages_fired": {
+        "prove_error": 5
+      },
+      "reached_constraints_rate_fired": 0.532,
+      "P_intrastep_ge1_fired": 0.532,
+      "P_interstep_ge1_fired": 0.0,
+      "P_global_ge1_fired": 0.552,
+      "mean_intrastep_fired": 0.94,
+      "mean_interstep_fired": 0.0,
+      "mean_global_fired": 0.552,
+      "triple_histogram_fired": {
+        "0/0/0": 111,
+        "1/0/1": 132,
+        "0/0/1": 6,
+        "1/0/0": 1
+      },
+      "guest_data_hit_rate_fired": 0.868,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 216
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 138
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 11
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 5
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 1
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 1
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 1
+        }
+      ]
+    },
+    "arguzz::PRE_EXEC_REG_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.052,
+      "crash_stages": {
+        "preflight": 11,
+        "prove_error": 2
+      },
+      "reached_constraints_rate": 0.928,
+      "P_intrastep_ge1": 0.868,
+      "P_interstep_ge1": 0.928,
+      "P_global_ge1": 0.852,
+      "mean_intrastep": 3.808,
+      "mean_interstep": 1.708,
+      "mean_global": 1.704,
+      "triple_histogram": {
+        "1/1/1": 213,
+        "0/0/0": 18,
+        "1/1/0": 4,
+        "0/1/0": 15
+      },
+      "guest_data_hit_rate": 0.868,
+      "top_locs": [
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 229
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 219
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 213
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 213
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 213
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 198
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 59
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 48
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 41
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 38
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.02,
+      "crash_rate_fired": 0.052,
+      "crash_stages_fired": {
+        "preflight": 11,
+        "prove_error": 2
+      },
+      "reached_constraints_rate_fired": 0.928,
+      "P_intrastep_ge1_fired": 0.868,
+      "P_interstep_ge1_fired": 0.928,
+      "P_global_ge1_fired": 0.852,
+      "mean_intrastep_fired": 3.808,
+      "mean_interstep_fired": 1.708,
+      "mean_global_fired": 1.704,
+      "triple_histogram_fired": {
+        "1/1/1": 213,
+        "0/0/0": 18,
+        "1/1/0": 4,
+        "0/1/0": 15
+      },
+      "guest_data_hit_rate_fired": 0.868,
+      "top_locs_fired": [
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 229
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 219
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 213
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 213
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 213
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 198
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 59
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 48
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 41
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 38
+        }
+      ]
+    },
+    "arguzz::STORE_OUT_MOD::default": {
+      "n": 250,
+      "crash_rate": 0.004,
+      "crash_stages": {
+        "prove_error": 1
+      },
+      "reached_constraints_rate": 0.344,
+      "P_intrastep_ge1": 0.344,
+      "P_interstep_ge1": 0.0,
+      "P_global_ge1": 0.004,
+      "mean_intrastep": 0.6,
+      "mean_interstep": 0.0,
+      "mean_global": 0.004,
+      "triple_histogram": {
+        "0/0/0": 164,
+        "1/0/0": 85,
+        "1/0/1": 1
+      },
+      "guest_data_hit_rate": 0.992,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 86
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 62
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 1
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 1
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 1
+        }
+      ],
+      "n_fired": 99,
+      "firing_rate": 0.396,
+      "fired_silent_rate": 0.12121212121212122,
+      "crash_rate_fired": 0.010101010101010102,
+      "crash_stages_fired": {
+        "prove_error": 1
+      },
+      "reached_constraints_rate_fired": 0.8686868686868687,
+      "P_intrastep_ge1_fired": 0.8686868686868687,
+      "P_interstep_ge1_fired": 0.0,
+      "P_global_ge1_fired": 0.010101010101010102,
+      "mean_intrastep_fired": 1.5151515151515151,
+      "mean_interstep_fired": 0.0,
+      "mean_global_fired": 0.010101010101010102,
+      "triple_histogram_fired": {
+        "0/0/0": 13,
+        "1/0/0": 85,
+        "1/0/1": 1
+      },
+      "guest_data_hit_rate_fired": 0.9797979797979798,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 86
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 62
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 1
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 1
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "stage_rollups": {
+    "a4:mem_read": {
+      "n": 250,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 1.0,
+      "P_intrastep_ge1": 0.972,
+      "P_interstep_ge1": 0.888,
+      "P_global_ge1": 1.0,
+      "mean_intrastep": 1.888,
+      "mean_interstep": 1.776,
+      "mean_global": 1.0,
+      "triple_histogram": {
+        "0/1/1": 7,
+        "1/1/1": 215,
+        "1/0/1": 28
+      },
+      "guest_data_hit_rate": 0.664,
+      "top_locs": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 250
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 222
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 222
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 222
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 222
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 14
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 14
+        }
+      ],
+      "n_fired": 250,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.0,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 1.0,
+      "P_intrastep_ge1_fired": 0.972,
+      "P_interstep_ge1_fired": 0.888,
+      "P_global_ge1_fired": 1.0,
+      "mean_intrastep_fired": 1.888,
+      "mean_interstep_fired": 1.776,
+      "mean_global_fired": 1.0,
+      "triple_histogram_fired": {
+        "0/1/1": 7,
+        "1/1/1": 215,
+        "1/0/1": 28
+      },
+      "guest_data_hit_rate_fired": 0.664,
+      "top_locs_fired": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 250
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 222
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 222
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 222
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 222
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 14
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 14
+        }
+      ]
+    },
+    "a4:reg": {
+      "n": 500,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 0.718,
+      "P_intrastep_ge1": 0.514,
+      "P_interstep_ge1": 0.442,
+      "P_global_ge1": 0.676,
+      "mean_intrastep": 1.01,
+      "mean_interstep": 0.884,
+      "mean_global": 0.676,
+      "triple_histogram": {
+        "0/0/0": 141,
+        "0/1/1": 81,
+        "1/1/1": 119,
+        "0/1/0": 21,
+        "1/0/1": 138
+      },
+      "guest_data_hit_rate": 0.868,
+      "top_locs": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 338
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 231
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 221
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 221
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 219
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 21
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 14
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 10
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 6
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 4
+        }
+      ],
+      "n_fired": 500,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.282,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 0.718,
+      "P_intrastep_ge1_fired": 0.514,
+      "P_interstep_ge1_fired": 0.442,
+      "P_global_ge1_fired": 0.676,
+      "mean_intrastep_fired": 1.01,
+      "mean_interstep_fired": 0.884,
+      "mean_global_fired": 0.676,
+      "triple_histogram_fired": {
+        "0/0/0": 141,
+        "0/1/1": 81,
+        "1/1/1": 119,
+        "0/1/0": 21,
+        "1/0/1": 138
+      },
+      "guest_data_hit_rate_fired": 0.868,
+      "top_locs_fired": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 338
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 231
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 221
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 221
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 219
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 21
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 14
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 10
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 6
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 4
+        }
+      ]
+    },
+    "a4:witness_value": {
+      "n": 750,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 0.9453333333333334,
+      "P_intrastep_ge1": 0.9453333333333334,
+      "P_interstep_ge1": 0.0,
+      "P_global_ge1": 0.9453333333333334,
+      "mean_intrastep": 1.8906666666666667,
+      "mean_interstep": 0.0,
+      "mean_global": 0.9453333333333334,
+      "triple_histogram": {
+        "0/0/0": 41,
+        "1/0/1": 709
+      },
+      "guest_data_hit_rate": 0.9453333333333334,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 709
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 709
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 709
+        }
+      ],
+      "n_fired": 750,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.05466666666666667,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 0.9453333333333334,
+      "P_intrastep_ge1_fired": 0.9453333333333334,
+      "P_interstep_ge1_fired": 0.0,
+      "P_global_ge1_fired": 0.9453333333333334,
+      "mean_intrastep_fired": 1.8906666666666667,
+      "mean_interstep_fired": 0.0,
+      "mean_global_fired": 0.9453333333333334,
+      "triple_histogram_fired": {
+        "0/0/0": 41,
+        "1/0/1": 709
+      },
+      "guest_data_hit_rate_fired": 0.9453333333333334,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 709
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 709
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 709
+        }
+      ]
+    },
+    "a4:word_type": {
+      "n": 750,
+      "crash_rate": 0.0,
+      "crash_stages": {},
+      "reached_constraints_rate": 0.9986666666666667,
+      "P_intrastep_ge1": 0.9986666666666667,
+      "P_interstep_ge1": 0.032,
+      "P_global_ge1": 0.7853333333333333,
+      "mean_intrastep": 2.824,
+      "mean_interstep": 0.04133333333333333,
+      "mean_global": 0.8293333333333334,
+      "triple_histogram": {
+        "1/0/0": 160,
+        "1/0/1": 565,
+        "1/1/1": 24,
+        "0/0/0": 1
+      },
+      "guest_data_hit_rate": 0.912,
+      "top_locs": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 589
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 489
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 374
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 233
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 201
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 113
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 33
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+          "count": 32
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 24
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpSLLI ( zirgen/circuit/rv32im/v2/dsl/inst_mul.zir :56:20)))",
+          "count": 23
+        }
+      ],
+      "n_fired": 750,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.0013333333333333333,
+      "crash_rate_fired": 0.0,
+      "crash_stages_fired": {},
+      "reached_constraints_rate_fired": 0.9986666666666667,
+      "P_intrastep_ge1_fired": 0.9986666666666667,
+      "P_interstep_ge1_fired": 0.032,
+      "P_global_ge1_fired": 0.7853333333333333,
+      "mean_intrastep_fired": 2.824,
+      "mean_interstep_fired": 0.04133333333333333,
+      "mean_global_fired": 0.8293333333333334,
+      "triple_histogram_fired": {
+        "1/0/0": 160,
+        "1/0/1": 565,
+        "1/1/1": 24,
+        "0/0/0": 1
+      },
+      "guest_data_hit_rate_fired": 0.912,
+      "top_locs_fired": [
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 589
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 489
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 374
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 233
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 201
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 113
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 33
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at callsite( OpADD ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :90:20) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :33:28))))",
+          "count": 32
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 24
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpSLLI ( zirgen/circuit/rv32im/v2/dsl/inst_mul.zir :56:20)))",
+          "count": 23
+        }
+      ]
+    },
+    "arguzz:in_place": {
+      "n": 1250,
+      "crash_rate": 0.0088,
+      "crash_stages": {
+        "prove_error": 11
+      },
+      "reached_constraints_rate": 0.308,
+      "P_intrastep_ge1": 0.308,
+      "P_interstep_ge1": 0.0024,
+      "P_global_ge1": 0.152,
+      "mean_intrastep": 0.5944,
+      "mean_interstep": 0.0048,
+      "mean_global": 0.156,
+      "triple_histogram": {
+        "0/0/0": 796,
+        "1/0/1": 118,
+        "1/0/0": 264,
+        "0/0/1": 69,
+        "1/1/1": 3
+      },
+      "guest_data_hit_rate": 0.936,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 348
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 190
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 176
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 62
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 39
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 13
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 13
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 13
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcode ( zirgen/circuit/rv32im/v2/dsl/inst.zir :91:19) at callsite( OpAUIPC ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :214:16) at  Misc2 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :71:30))))",
+          "count": 13
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 8
+        }
+      ],
+      "n_fired": 620,
+      "firing_rate": 0.496,
+      "fired_silent_rate": 0.25,
+      "crash_rate_fired": 0.017741935483870968,
+      "crash_stages_fired": {
+        "prove_error": 11
+      },
+      "reached_constraints_rate_fired": 0.6209677419354839,
+      "P_intrastep_ge1_fired": 0.6209677419354839,
+      "P_interstep_ge1_fired": 0.004838709677419355,
+      "P_global_ge1_fired": 0.3064516129032258,
+      "mean_intrastep_fired": 1.1983870967741936,
+      "mean_interstep_fired": 0.00967741935483871,
+      "mean_global_fired": 0.31451612903225806,
+      "triple_histogram_fired": {
+        "0/0/0": 166,
+        "1/0/1": 118,
+        "1/0/0": 264,
+        "0/0/1": 69,
+        "1/1/1": 3
+      },
+      "guest_data_hit_rate_fired": 0.917741935483871,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 348
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 190
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 176
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 62
+        },
+        {
+          "loc": "AddrDecomposeBits(zirgen/circuit/rv32im/v2/dsl/u32.zir:87)",
+          "count": 39
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :109:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 13
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :161:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 13
+        },
+        {
+          "loc": "loc(callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :160:20) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10)))",
+          "count": 13
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcode ( zirgen/circuit/rv32im/v2/dsl/inst.zir :91:19) at callsite( OpAUIPC ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :214:16) at  Misc2 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :71:30))))",
+          "count": 13
+        },
+        {
+          "loc": "loc(callsite( OpLW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :108:20) at  Mem0 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :55:10)))",
+          "count": 8
+        }
+      ]
+    },
+    "arguzz:post": {
+      "n": 750,
+      "crash_rate": 0.04933333333333333,
+      "crash_stages": {
+        "preflight": 30,
+        "prove_error": 7
+      },
+      "reached_constraints_rate": 0.76,
+      "P_intrastep_ge1": 0.7093333333333334,
+      "P_interstep_ge1": 0.6133333333333333,
+      "P_global_ge1": 0.7106666666666667,
+      "mean_intrastep": 2.804,
+      "mean_interstep": 1.124,
+      "mean_global": 1.2706666666666666,
+      "triple_histogram": {
+        "1/1/1": 418,
+        "0/0/0": 174,
+        "0/1/0": 38,
+        "1/1/0": 4,
+        "1/0/1": 109,
+        "0/0/1": 6,
+        "1/0/0": 1
+      },
+      "guest_data_hit_rate": 0.868,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 614
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 533
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 457
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 420
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 420
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 386
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 110
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 100
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 89
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 83
+        }
+      ],
+      "n_fired": 750,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.18266666666666667,
+      "crash_rate_fired": 0.04933333333333333,
+      "crash_stages_fired": {
+        "preflight": 30,
+        "prove_error": 7
+      },
+      "reached_constraints_rate_fired": 0.76,
+      "P_intrastep_ge1_fired": 0.7093333333333334,
+      "P_interstep_ge1_fired": 0.6133333333333333,
+      "P_global_ge1_fired": 0.7106666666666667,
+      "mean_intrastep_fired": 2.804,
+      "mean_interstep_fired": 1.124,
+      "mean_global_fired": 1.2706666666666666,
+      "triple_histogram_fired": {
+        "1/1/1": 418,
+        "0/0/0": 174,
+        "0/1/0": 38,
+        "1/1/0": 4,
+        "1/0/1": 109,
+        "0/0/1": 6,
+        "1/0/0": 1
+      },
+      "guest_data_hit_rate_fired": 0.868,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 614
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 533
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 457
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 420
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 420
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 386
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 110
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 100
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 89
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 83
+        }
+      ]
+    },
+    "arguzz:pre": {
+      "n": 750,
+      "crash_rate": 0.048,
+      "crash_stages": {
+        "preflight": 29,
+        "prove_error": 7
+      },
+      "reached_constraints_rate": 0.796,
+      "P_intrastep_ge1": 0.756,
+      "P_interstep_ge1": 0.616,
+      "P_global_ge1": 0.7546666666666667,
+      "mean_intrastep": 2.8186666666666667,
+      "mean_interstep": 1.1293333333333333,
+      "mean_global": 1.3253333333333333,
+      "triple_histogram": {
+        "1/1/1": 426,
+        "0/0/0": 147,
+        "1/0/1": 134,
+        "1/1/0": 6,
+        "0/1/0": 30,
+        "0/0/1": 6,
+        "1/0/0": 1
+      },
+      "guest_data_hit_rate": 0.868,
+      "top_locs": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 650
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 566
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 459
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 428
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 421
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 388
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 115
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 100
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 85
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 82
+        }
+      ],
+      "n_fired": 750,
+      "firing_rate": 1.0,
+      "fired_silent_rate": 0.148,
+      "crash_rate_fired": 0.048,
+      "crash_stages_fired": {
+        "preflight": 29,
+        "prove_error": 7
+      },
+      "reached_constraints_rate_fired": 0.796,
+      "P_intrastep_ge1_fired": 0.756,
+      "P_interstep_ge1_fired": 0.616,
+      "P_global_ge1_fired": 0.7546666666666667,
+      "mean_intrastep_fired": 2.8186666666666667,
+      "mean_interstep_fired": 1.1293333333333333,
+      "mean_global_fired": 1.3253333333333333,
+      "triple_histogram_fired": {
+        "1/1/1": 426,
+        "0/0/0": 147,
+        "1/0/1": 134,
+        "1/1/0": 6,
+        "0/1/0": 30,
+        "0/0/1": 6,
+        "1/0/0": 1
+      },
+      "guest_data_hit_rate_fired": 0.868,
+      "top_locs_fired": [
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+          "count": 650
+        },
+        {
+          "loc": "GLOBAL:family:memory residue nonzero",
+          "count": 566
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 459
+        },
+        {
+          "loc": "GLOBAL:family:cycle residue nonzero",
+          "count": 428
+        },
+        {
+          "loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+          "count": 421
+        },
+        {
+          "loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+          "count": 388
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpADDI ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :127:18) at  Misc0 ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :40:29))))",
+          "count": 115
+        },
+        {
+          "loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+          "count": 100
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 85
+        },
+        {
+          "loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at callsite( OpSW ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :159:18) at  Mem1 ( zirgen/circuit/rv32im/v2/dsl/inst_mem.zir :73:10))))",
+          "count": 82
+        }
+      ]
+    }
+  },
+  "validation": {
+    "fired_counts": {
+      "checks": {
+        "('arguzz', 'COMP_OUT_MOD')": {
+          "got": 150,
+          "expected": 150,
+          "ok": true
+        },
+        "('arguzz', 'LOAD_VAL_MOD')": {
+          "got": 49,
+          "expected": 49,
+          "ok": true
+        },
+        "('arguzz', 'STORE_OUT_MOD')": {
+          "got": 99,
+          "expected": 99,
+          "ok": true
+        },
+        "('arguzz', 'BR_NEG_COND')": {
+          "got": 72,
+          "expected": 72,
+          "ok": true
+        }
+      },
+      "all_ok": true
+    },
+    "crash_counts": {
+      "a4_crashes": 0,
+      "arguzz_crashes": 84,
+      "arguzz_by_type": {
+        "BR_NEG_COND": {
+          "prove_error": 1
+        },
+        "COMP_OUT_MOD": {
+          "prove_error": 6
+        },
+        "INSTR_WORD_MOD": {
+          "prove_error": 3
+        },
+        "POST_EXEC_MEM_MOD": {
+          "preflight": 15
+        },
+        "POST_EXEC_PC_MOD": {
+          "prove_error": 5
+        },
+        "POST_EXEC_REG_MOD": {
+          "preflight": 15,
+          "prove_error": 2
+        },
+        "PRE_EXEC_MEM_MOD": {
+          "preflight": 18
+        },
+        "PRE_EXEC_PC_MOD": {
+          "prove_error": 5
+        },
+        "PRE_EXEC_REG_MOD": {
+          "preflight": 11,
+          "prove_error": 2
+        },
+        "STORE_OUT_MOD": {
+          "prove_error": 1
+        }
+      }
+    }
+  },
+  "count_mismatches": []
+}
