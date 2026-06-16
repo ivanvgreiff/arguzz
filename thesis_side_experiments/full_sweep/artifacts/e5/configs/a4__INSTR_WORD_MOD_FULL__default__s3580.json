@@ -1,0 +1,17 @@
+{
+  "mutation_type": "INSTR_WORD_MOD",
+  "step": 220,
+  "word": 291537972,
+  "_info": {
+    "description": "INSTR_WORD_MOD: Mutate instruction fetch word",
+    "note": "Rust handler sets both word and prev_word to preserve IsRead",
+    "fetch_word_addr": 524843,
+    "fetch_byte_addr": "0x002008ac",
+    "original_value": 30606131,
+    "original_word": "0x01d30333",
+    "mutated_word": "0x11608434",
+    "next_pc": "0x002008b0",
+    "major": 0,
+    "minor": 0
+  }
+}

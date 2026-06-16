@@ -1,0 +1,107 @@
+{
+  "sample_id": "a4__INSTR_TYPE_MOD__default__s4986",
+  "fuzzer": "a4",
+  "mutation_type": "INSTR_TYPE_MOD",
+  "variant": null,
+  "seed": 236,
+  "inject": {
+    "step": 621,
+    "pc": 2193828,
+    "instr_at_site": "bne a2, zero, -24",
+    "target_kind": null,
+    "target_addr_or_reg": null
+  },
+  "target_region": "guest_data",
+  "hits_guest_data": true,
+  "outcome_class": "CONSTRAINT_REJECT",
+  "crashed": false,
+  "crash_stage": null,
+  "layers": {
+    "intrastep_local": 4,
+    "interstep_local": 0,
+    "global": 1
+  },
+  "constraints": [
+    {
+      "layer": "intrastep-local",
+      "full_loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at  OpBLTU ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :183:18)))",
+      "residue": 2013265841,
+      "cycle": 14255,
+      "step": 621,
+      "major": 2,
+      "minor": 1,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at  OpBLTU ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :183:18)))",
+      "residue": 2013265915,
+      "cycle": 14255,
+      "step": 621,
+      "major": 2,
+      "minor": 1,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "residue": 37641,
+      "cycle": 14255,
+      "step": 621,
+      "major": 2,
+      "minor": 1,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+      "residue": 33,
+      "cycle": 14255,
+      "step": 621,
+      "major": 2,
+      "minor": 1,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "global",
+      "full_loc": "GLOBAL:family:memory residue nonzero",
+      "residue": null,
+      "family": "memory"
+    }
+  ],
+  "global_families": [
+    {
+      "family": "memory",
+      "address": null
+    }
+  ],
+  "fault_info": "<a4_config_loaded>{\"path\":\"/root/a4_campaign/thesis/e5_configs/a4__INSTR_TYPE_MOD__default__s4986.json\", \"mutation_type\":Some(\"INSTR_TYPE_MOD\"), \"step\":Some(621)}</a4_config_loaded>",
+  "failure_count": 4,
+  "raw_log_path": "artifacts/e5/pos_raw_n250/a4__INSTR_TYPE_MOD__default__s4986.log.gz",
+  "config_path": "artifacts/e5/configs/a4__INSTR_TYPE_MOD__default__s4986.json",
+  "cmd": null,
+  "env": {
+    "CONSTRAINT_CONTINUE": "1",
+    "A4_COVERAGE_TOUCH": "1",
+    "A4_COVERAGE_TOUCH_VERBOSE": "1",
+    "A4_FAMILY_RESIDUE": "1",
+    "A4_GLOBAL_RESIDUE": "1"
+  },
+  "host_sha256": "84ae495e5afd8261324d7daf09a02d1f9cb8437aad4edbb2de478362e2728b45"
+}

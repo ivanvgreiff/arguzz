@@ -1,0 +1,219 @@
+{
+  "sample_id": "a4__INSTR_TYPE_MOD__default__s0393",
+  "fuzzer": "a4",
+  "mutation_type": "INSTR_TYPE_MOD",
+  "variant": null,
+  "seed": 13,
+  "inject": {
+    "step": 40,
+    "pc": 2100188,
+    "instr_at_site": "addi a0, a0, 1320",
+    "target_kind": null,
+    "target_addr_or_reg": null
+  },
+  "target_region": "guest_data",
+  "hits_guest_data": true,
+  "outcome_class": "CONSTRAINT_REJECT",
+  "crashed": false,
+  "crash_stage": null,
+  "layers": {
+    "intrastep_local": 12,
+    "interstep_local": 0,
+    "global": 1
+  },
+  "constraints": [
+    {
+      "layer": "intrastep-local",
+      "full_loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :96:19) at  OpBNE ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :165:18)))",
+      "residue": 2013265841,
+      "cycle": 13663,
+      "step": 40,
+      "major": 1,
+      "minor": 6,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "loc(callsite( VerifyOpcodeF3 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :97:18) at  OpBNE ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :165:18)))",
+      "residue": 2013265920,
+      "cycle": 13663,
+      "step": 40,
+      "major": 1,
+      "minor": 6,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "residue": 1320,
+      "cycle": 13663,
+      "step": 40,
+      "major": 1,
+      "minor": 6,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+      "residue": 34,
+      "cycle": 13663,
+      "step": 40,
+      "major": 1,
+      "minor": 6,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+      "residue": 2,
+      "cycle": 13664,
+      "step": 41,
+      "major": 5,
+      "minor": 2,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+      "residue": 2,
+      "cycle": 13665,
+      "step": 42,
+      "major": 1,
+      "minor": 6,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+      "residue": 2,
+      "cycle": 13666,
+      "step": 43,
+      "major": 0,
+      "minor": 7,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+      "residue": 2,
+      "cycle": 13667,
+      "step": 44,
+      "major": 6,
+      "minor": 2,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+      "residue": 2,
+      "cycle": 13671,
+      "step": 48,
+      "major": 2,
+      "minor": 6,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "residue": 2013264603,
+      "cycle": 13671,
+      "step": 48,
+      "major": 2,
+      "minor": 6,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "DecodeInst(zirgen/circuit/rv32im/v2/dsl/inst.zir:29)",
+      "residue": 2,
+      "cycle": 13672,
+      "step": 49,
+      "major": 2,
+      "minor": 4,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "residue": 2013264603,
+      "cycle": 13672,
+      "step": 49,
+      "major": 2,
+      "minor": 4,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "global",
+      "full_loc": "GLOBAL:family:memory residue nonzero",
+      "residue": null,
+      "family": "memory"
+    }
+  ],
+  "global_families": [
+    {
+      "family": "memory",
+      "address": null
+    }
+  ],
+  "fault_info": "<a4_config_loaded>{\"path\":\"/root/a4_campaign/thesis/e5_configs/a4__INSTR_TYPE_MOD__default__s0393.json\", \"mutation_type\":Some(\"INSTR_TYPE_MOD\"), \"step\":Some(40)}</a4_config_loaded>",
+  "failure_count": 12,
+  "raw_log_path": "artifacts/e5/pos_raw/a4__INSTR_TYPE_MOD__default__s0393.log.gz",
+  "config_path": "artifacts/e5/configs/a4__INSTR_TYPE_MOD__default__s0393.json",
+  "cmd": null,
+  "env": {
+    "CONSTRAINT_CONTINUE": "1",
+    "A4_COVERAGE_TOUCH": "1",
+    "A4_COVERAGE_TOUCH_VERBOSE": "1",
+    "A4_FAMILY_RESIDUE": "1",
+    "A4_GLOBAL_RESIDUE": "1"
+  },
+  "host_sha256": "84ae495e5afd8261324d7daf09a02d1f9cb8437aad4edbb2de478362e2728b45"
+}

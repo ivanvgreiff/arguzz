@@ -1,0 +1,93 @@
+{
+  "sample_id": "a4__PRE_EXEC_REG_MOD__next_read__s4442",
+  "fuzzer": "a4",
+  "mutation_type": "PRE_EXEC_REG_MOD",
+  "variant": "next_read",
+  "seed": 192,
+  "inject": {
+    "step": 196,
+    "pc": 2099280,
+    "instr_at_site": "lbu t1, 1184(a7)",
+    "target_kind": null,
+    "target_addr_or_reg": null
+  },
+  "target_region": "guest_data",
+  "hits_guest_data": true,
+  "outcome_class": "CONSTRAINT_REJECT",
+  "crashed": false,
+  "crash_stage": null,
+  "layers": {
+    "intrastep_local": 1,
+    "interstep_local": 2,
+    "global": 1
+  },
+  "constraints": [
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "residue": 2013265920,
+      "cycle": 13825,
+      "step": 196,
+      "major": 5,
+      "minor": 3,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "interstep-local",
+      "full_loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+      "residue": 2013217168,
+      "cycle": 13825,
+      "step": 196,
+      "major": 5,
+      "minor": 3,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "interstep-local",
+      "full_loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+      "residue": 2013247535,
+      "cycle": 13825,
+      "step": 196,
+      "major": 5,
+      "minor": 3,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "global",
+      "full_loc": "GLOBAL:family:memory residue nonzero",
+      "residue": null,
+      "family": "memory"
+    }
+  ],
+  "global_families": [
+    {
+      "family": "memory",
+      "address": null
+    }
+  ],
+  "fault_info": "<a4_config_loaded>{\"path\":\"/root/a4_campaign/thesis/e5_configs/a4__PRE_EXEC_REG_MOD__next_read__s4442.json\", \"mutation_type\":Some(\"PRE_EXEC_REG_MOD\"), \"step\":Some(196)}</a4_config_loaded>",
+  "failure_count": 3,
+  "raw_log_path": "artifacts/e5/pos_raw_n250/a4__PRE_EXEC_REG_MOD__next_read__s4442.log.gz",
+  "config_path": "artifacts/e5/configs/a4__PRE_EXEC_REG_MOD__next_read__s4442.json",
+  "cmd": null,
+  "env": {
+    "CONSTRAINT_CONTINUE": "1",
+    "A4_COVERAGE_TOUCH": "1",
+    "A4_COVERAGE_TOUCH_VERBOSE": "1",
+    "A4_FAMILY_RESIDUE": "1",
+    "A4_GLOBAL_RESIDUE": "1"
+  },
+  "host_sha256": "84ae495e5afd8261324d7daf09a02d1f9cb8437aad4edbb2de478362e2728b45"
+}

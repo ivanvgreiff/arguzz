@@ -1,0 +1,24 @@
+{
+  "mutation_type": "INSTR_WORD_MOD",
+  "step": 220,
+  "word": 30610227,
+  "_surgical": {
+    "field": "funct3",
+    "original_field_value": 0,
+    "mutated_field_value": 1,
+    "instruction_format": "R",
+    "format_name": "OP"
+  },
+  "_info": {
+    "description": "INSTR_WORD_MOD_SUR: Mutate funct3 field",
+    "fetch_word_addr": 524843,
+    "fetch_byte_addr": "0x002008ac",
+    "original_value": 30606131,
+    "original_word": "0x01d30333",
+    "mutated_word": "0x01d31333",
+    "disasm_original": "ADD x6, x6, x29",
+    "next_pc": "0x002008b0",
+    "major": 0,
+    "minor": 0
+  }
+}

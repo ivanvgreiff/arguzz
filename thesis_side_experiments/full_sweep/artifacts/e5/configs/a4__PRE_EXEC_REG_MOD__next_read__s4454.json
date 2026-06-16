@@ -1,0 +1,19 @@
+{
+  "mutation_type": "PRE_EXEC_REG_MOD",
+  "step": 208,
+  "txn_idx": 13829,
+  "word": 2993451716,
+  "strategy": "next_read",
+  "_info": {
+    "register": "s0",
+    "register_idx": 8,
+    "original_value": 7,
+    "original_word": 7,
+    "prev_word": 7,
+    "is_write_target": false,
+    "pc": "0x00200880",
+    "major": 3,
+    "minor": 1,
+    "note": "Modifies READ word to create word != prev_word (triggers IsRead + MemoryWrite)"
+  }
+}

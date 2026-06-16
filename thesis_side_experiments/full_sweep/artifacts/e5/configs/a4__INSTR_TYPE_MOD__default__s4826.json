@@ -1,0 +1,14 @@
+{
+  "mutation_type": "INSTR_TYPE_MOD",
+  "step": 216,
+  "major": 4,
+  "minor": 4,
+  "_info": {
+    "original_major": 3,
+    "original_minor": 1,
+    "original_kind": "SllI",
+    "mutated_kind": "Div",
+    "pc": "0x002008a0",
+    "is_valid_combination": true
+  }
+}

@@ -49,6 +49,64 @@ def arm_id(kind: str, zone: Optional[str] = None) -> str:
 
 
 # =============================================================================
+# V5 coverage-floor schedules (IV.POS.8 D1.A)
+# =============================================================================
+
+
+class FloorSchedule:
+    """Returns coverage_floor_fraction at a given scheduler state."""
+
+    def current(self, *, total_mutations: int, local_discoveries: int) -> float:
+        raise NotImplementedError
+
+
+class ConstantFloor(FloorSchedule):
+    """Fixed floor fraction (V5-static back-compat default)."""
+
+    def __init__(self, value: float = 0.55) -> None:
+        self.value = value
+
+    def current(self, *, total_mutations: int, local_discoveries: int) -> float:
+        return self.value
+
+
+class ExponentialDecayFloor(FloorSchedule):
+    """max(floor_min, initial × exp(-local_discoveries / K))."""
+
+    def __init__(
+        self,
+        initial: float = 0.55,
+        floor_min: float = 0.20,
+        K: float = 50,
+    ) -> None:
+        self.initial = initial
+        self.floor_min = floor_min
+        self.K = K
+
+    def current(self, *, total_mutations: int, local_discoveries: int) -> float:
+        raw = self.initial * math.exp(-local_discoveries / self.K)
+        return max(self.floor_min, raw)
+
+
+class EpochStageFloor(FloorSchedule):
+    """Piecewise-constant floor over total_mutations (mutation-count space)."""
+
+    def __init__(self, stages: List[Tuple[int, float]]) -> None:
+        if not stages:
+            raise ValueError("EpochStageFloor requires at least one stage")
+        self.stages = sorted(stages, key=lambda s: s[0])
+
+    def current(self, *, total_mutations: int, local_discoveries: int) -> float:
+        frac = self.stages[0][1]
+        for lower, value in self.stages:
+            if total_mutations >= lower:
+                frac = value
+            else:
+                break
+        return frac
+
+
+# =============================================================================
 # Constrained TS over (kind, semantic_zone)
 # =============================================================================
 
@@ -72,6 +130,7 @@ class ConstrainedTSScheduler:
         forced_singleton_pulls: int = 5,
         epoch_size: int = 100,
         seed: Optional[int] = None,
+        floor_schedule: Optional[FloorSchedule] = None,
     ):
         self.universe = universe
         self.prior_alpha = prior_alpha
@@ -81,6 +140,11 @@ class ConstrainedTSScheduler:
         self.forced_singleton_pulls = forced_singleton_pulls
         self.epoch_size = epoch_size
         self.rng = random.Random(seed)
+        self.floor_schedule = (
+            floor_schedule
+            if floor_schedule is not None
+            else ConstantFloor(coverage_floor_fraction)
+        )
 
         self.arms: List[ArmKey] = universe.available_arms
         self._singleton_set = set(universe.singleton_arms())
@@ -90,6 +154,7 @@ class ConstrainedTSScheduler:
         self.epoch_pulls: Dict[ArmKey, int] = {a: 0 for a in self.arms}
         self._epoch_mutations: int = 0
         self._total_mutations: int = 0
+        self._local_discoveries: int = 0
         self._cold_rr: int = 0
 
     def _alpha(self, a: ArmKey) -> float:
@@ -101,7 +166,15 @@ class ConstrainedTSScheduler:
     def _floor_target(self) -> float:
         if not self.arms:
             return 0.0
-        return self.coverage_floor_fraction * self.epoch_size / len(self.arms)
+        frac = self.floor_schedule.current(
+            total_mutations=self._total_mutations,
+            local_discoveries=self._local_discoveries,
+        )
+        return frac * self.epoch_size / len(self.arms)
+
+    def update_local_coverage(self, n: int) -> None:
+        """Set cumulative legacy constraint_loc discoveries (Pro local_coverage_seen)."""
+        self._local_discoveries = n
 
     def _pick_round_robin(self, candidates: List[ArmKey]) -> ArmKey:
         if not candidates:
@@ -363,7 +436,11 @@ class KindLevelTSScheduler:
 __all__ = [
     "BanditDecision",
     "arm_id",
+    "ConstantFloor",
     "ConstrainedTSScheduler",
+    "EpochStageFloor",
+    "ExponentialDecayFloor",
+    "FloorSchedule",
     "KindLevelUCBScheduler",
     "KindLevelTSScheduler",
 ]

@@ -1,0 +1,68 @@
+{
+  "sample_id": "arguzz__STORE_OUT_MOD__default__s0058",
+  "fuzzer": "arguzz",
+  "mutation_type": "STORE_OUT_MOD",
+  "variant": null,
+  "seed": 18,
+  "inject": {
+    "step": 80,
+    "pc": 2113756,
+    "instr_at_site": "sw a1, 8(a3)",
+    "target_kind": "value",
+    "target_addr_or_reg": null
+  },
+  "target_region": "guest_data",
+  "hits_guest_data": true,
+  "outcome_class": "CONSTRAINT_REJECT",
+  "crashed": false,
+  "crash_stage": null,
+  "layers": {
+    "intrastep_local": 2,
+    "interstep_local": 0,
+    "global": 0
+  },
+  "constraints": [
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "residue": 65535,
+      "cycle": 13703,
+      "step": 80,
+      "major": 6,
+      "minor": 2,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+      "residue": 65535,
+      "cycle": 13703,
+      "step": 80,
+      "major": 6,
+      "minor": 2,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    }
+  ],
+  "global_families": [],
+  "fault_info": "<fault>{\"step\":80, \"pc\":2113752, \"kind\":\"STORE_OUT_MOD\", \"info\":\"data:0 => data:4294967295\"}</fault>",
+  "failure_count": 2,
+  "raw_log_path": "artifacts/e5/pos_raw/arguzz__STORE_OUT_MOD__default__s0058.log.gz",
+  "config_path": null,
+  "cmd": null,
+  "env": {
+    "CONSTRAINT_CONTINUE": "1",
+    "A4_COVERAGE_TOUCH": "1",
+    "A4_COVERAGE_TOUCH_VERBOSE": "1",
+    "A4_FAMILY_RESIDUE": "1",
+    "A4_GLOBAL_RESIDUE": "1"
+  },
+  "host_sha256": "84ae495e5afd8261324d7daf09a02d1f9cb8437aad4edbb2de478362e2728b45"
+}

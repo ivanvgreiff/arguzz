@@ -1,0 +1,13 @@
+{
+  "mutation_type": "LOAD_VAL_MOD",
+  "step": 667,
+  "txn_idx": 15724,
+  "word": 704711419,
+  "_info": {
+    "register": "a3",
+    "original_value": 25,
+    "pc": "0x00217998",
+    "major": 5,
+    "minor": 3
+  }
+}

@@ -115,6 +115,10 @@ class CoverageDB:
             cursor.execute(
                 "ALTER TABLE mutations ADD COLUMN original_value INTEGER NOT NULL DEFAULT 0"
             )
+            mut_cols.add("original_value")
+        for col in ("proof_generated", "proof_verify_failed", "elapsed_ms"):
+            if col not in mut_cols:
+                cursor.execute(f"ALTER TABLE mutations ADD COLUMN {col} INTEGER")
         
         # Failures table
         cursor.execute("""
@@ -705,6 +709,10 @@ class CoverageDB:
         txn_idx: Optional[int] = None,
         verifier_accepted: bool = False,
         original_value: int = 0,
+        *,
+        proof_generated: Optional[bool] = None,
+        proof_verify_failed: Optional[bool] = None,
+        elapsed_ms: Optional[int] = None,
     ) -> int:
         """
         Record a mutation attempt.
@@ -718,6 +726,9 @@ class CoverageDB:
             txn_idx: Transaction index (if applicable)
             verifier_accepted: Whether the verifier accepted the proof
             original_value: Pre-mutation txn.word (or encoded major/minor for INSTR_TYPE_MOD)
+            proof_generated: Whether a proof was generated (IV.POS.8 D1.A)
+            proof_verify_failed: Whether proof verification failed (IV.POS.8 D1.A)
+            elapsed_ms: Wall-clock execution time in milliseconds (IV.POS.8 D1.A)
             
         Returns:
             Mutation ID
@@ -726,11 +737,15 @@ class CoverageDB:
         cursor.execute("""
             INSERT INTO mutations 
             (campaign_id, kind, step, txn_idx, mutated_value, original_value,
-             config_json, executed_at, verifier_accepted)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+             config_json, executed_at, verifier_accepted,
+             proof_generated, proof_verify_failed, elapsed_ms)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             campaign_id, kind, step, txn_idx, mutated_value, int(original_value),
-            json.dumps(config), datetime.now().isoformat(), int(verifier_accepted)
+            json.dumps(config), datetime.now().isoformat(), int(verifier_accepted),
+            (int(proof_generated) if proof_generated is not None else None),
+            (int(proof_verify_failed) if proof_verify_failed is not None else None),
+            elapsed_ms,
         ))
         
         self.conn.commit()

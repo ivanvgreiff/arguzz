@@ -1,0 +1,54 @@
+{
+  "sample_id": "arguzz__INSTR_WORD_MOD__default__s0074",
+  "fuzzer": "arguzz",
+  "mutation_type": "INSTR_WORD_MOD",
+  "variant": null,
+  "seed": 14,
+  "inject": {
+    "step": 43,
+    "pc": 2100200,
+    "instr_at_site": "li a1, 1",
+    "target_kind": "value",
+    "target_addr_or_reg": null
+  },
+  "target_region": "guest_data",
+  "hits_guest_data": true,
+  "outcome_class": "CONSTRAINT_REJECT",
+  "crashed": false,
+  "crash_stage": null,
+  "layers": {
+    "intrastep_local": 1,
+    "interstep_local": 0,
+    "global": 0
+  },
+  "constraints": [
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "residue": 128,
+      "cycle": 13666,
+      "step": 43,
+      "major": 0,
+      "minor": 7,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    }
+  ],
+  "global_families": [],
+  "fault_info": "<fault>{\"step\":43, \"pc\":2100196, \"kind\":\"INSTR_WORD_MOD\", \"info\":\"word:1050003 => word:135267731\"}</fault>",
+  "failure_count": 1,
+  "raw_log_path": "artifacts/e5/pos_raw/arguzz__INSTR_WORD_MOD__default__s0074.log.gz",
+  "config_path": null,
+  "cmd": null,
+  "env": {
+    "CONSTRAINT_CONTINUE": "1",
+    "A4_COVERAGE_TOUCH": "1",
+    "A4_COVERAGE_TOUCH_VERBOSE": "1",
+    "A4_FAMILY_RESIDUE": "1",
+    "A4_GLOBAL_RESIDUE": "1"
+  },
+  "host_sha256": "84ae495e5afd8261324d7daf09a02d1f9cb8437aad4edbb2de478362e2728b45"
+}

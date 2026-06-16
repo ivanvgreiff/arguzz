@@ -1,0 +1,13 @@
+{
+  "mutation_type": "COMP_OUT_MOD",
+  "step": 531,
+  "txn_idx": 15180,
+  "word": 4246706334,
+  "_info": {
+    "register": "a2",
+    "original_value": 20,
+    "pc": "0x002179a8",
+    "major": 0,
+    "minor": 7
+  }
+}

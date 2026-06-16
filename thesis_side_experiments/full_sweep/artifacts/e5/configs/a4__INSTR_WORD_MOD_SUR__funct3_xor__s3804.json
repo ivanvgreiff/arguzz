@@ -1,0 +1,24 @@
+{
+  "mutation_type": "INSTR_WORD_MOD",
+  "step": 170,
+  "word": 20595,
+  "_surgical": {
+    "field": "funct3",
+    "original_field_value": 0,
+    "mutated_field_value": 5,
+    "instruction_format": "I",
+    "format_name": "SYSTEM"
+  },
+  "_info": {
+    "description": "INSTR_WORD_MOD_SUR: Mutate funct3 field",
+    "fetch_word_addr": 805306451,
+    "fetch_byte_addr": "0xc000014c",
+    "original_value": 115,
+    "original_word": "0x00000073",
+    "mutated_word": "0x00005073",
+    "disasm_original": "ECALL x0, x0, 0",
+    "next_pc": "0xc000014c",
+    "major": 8,
+    "minor": 0
+  }
+}

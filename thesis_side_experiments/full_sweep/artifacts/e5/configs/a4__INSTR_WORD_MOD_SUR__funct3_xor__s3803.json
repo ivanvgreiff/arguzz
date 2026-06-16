@@ -1,0 +1,24 @@
+{
+  "mutation_type": "INSTR_WORD_MOD",
+  "step": 168,
+  "word": 2504211,
+  "_surgical": {
+    "field": "funct3",
+    "original_field_value": 1,
+    "mutated_field_value": 3,
+    "instruction_format": "I",
+    "format_name": "OP-IMM"
+  },
+  "_info": {
+    "description": "INSTR_WORD_MOD_SUR: Mutate funct3 field",
+    "fetch_word_addr": 805306449,
+    "fetch_byte_addr": "0xc0000144",
+    "original_value": 2496019,
+    "original_word": "0x00261613",
+    "mutated_word": "0x00263613",
+    "disasm_original": "SLLI x12, x12, 2",
+    "next_pc": "0xc0000148",
+    "major": 3,
+    "minor": 1
+  }
+}

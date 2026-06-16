@@ -1,0 +1,14 @@
+{
+  "mutation_type": "INSTR_TYPE_MOD",
+  "step": 12,
+  "major": 0,
+  "minor": 5,
+  "_info": {
+    "original_major": 0,
+    "original_minor": 7,
+    "original_kind": "AddI",
+    "mutated_kind": "Slt",
+    "pc": "0xc0000034",
+    "is_valid_combination": true
+  }
+}

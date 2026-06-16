@@ -1,0 +1,14 @@
+{
+  "mutation_type": "INSTR_TYPE_MOD",
+  "step": 517,
+  "major": 2,
+  "minor": 1,
+  "_info": {
+    "original_major": 0,
+    "original_minor": 7,
+    "original_kind": "AddI",
+    "mutated_kind": "BltU",
+    "pc": "0x002179a8",
+    "is_valid_combination": true
+  }
+}

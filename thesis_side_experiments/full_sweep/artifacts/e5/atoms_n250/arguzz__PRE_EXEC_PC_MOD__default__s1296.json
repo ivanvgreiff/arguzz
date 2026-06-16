@@ -1,0 +1,39 @@
+{
+  "sample_id": "arguzz__PRE_EXEC_PC_MOD__default__s1296",
+  "fuzzer": "arguzz",
+  "mutation_type": "PRE_EXEC_PC_MOD",
+  "variant": null,
+  "seed": 46,
+  "inject": {
+    "step": 48,
+    "pc": 2100220,
+    "instr_at_site": "auipc ra, 0x00000003",
+    "target_kind": "pc",
+    "target_addr_or_reg": null
+  },
+  "target_region": "guest_data",
+  "hits_guest_data": true,
+  "outcome_class": "PROVE_ERROR",
+  "crashed": false,
+  "crash_stage": "prove",
+  "layers": {
+    "intrastep_local": 0,
+    "interstep_local": 0,
+    "global": 0
+  },
+  "constraints": [],
+  "global_families": [],
+  "fault_info": "<fault>{\"step\":48, \"pc\":2100216, \"kind\":\"PRE_EXEC_PC_MOD\", \"info\":\"pc:2100216 => pc:2097676\"}</fault>",
+  "failure_count": 0,
+  "raw_log_path": "artifacts/e5/pos_raw_n250/arguzz__PRE_EXEC_PC_MOD__default__s1296.log.gz",
+  "config_path": null,
+  "cmd": null,
+  "env": {
+    "CONSTRAINT_CONTINUE": "1",
+    "A4_COVERAGE_TOUCH": "1",
+    "A4_COVERAGE_TOUCH_VERBOSE": "1",
+    "A4_FAMILY_RESIDUE": "1",
+    "A4_GLOBAL_RESIDUE": "1"
+  },
+  "host_sha256": "84ae495e5afd8261324d7daf09a02d1f9cb8437aad4edbb2de478362e2728b45"
+}

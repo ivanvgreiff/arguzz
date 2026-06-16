@@ -1,0 +1,14 @@
+{
+  "mutation_type": "INSTR_TYPE_MOD",
+  "step": 208,
+  "major": 3,
+  "minor": 4,
+  "_info": {
+    "original_major": 3,
+    "original_minor": 1,
+    "original_kind": "SllI",
+    "mutated_kind": "MulHSU",
+    "pc": "0x00200880",
+    "is_valid_combination": true
+  }
+}

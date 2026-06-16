@@ -1,0 +1,159 @@
+{
+  "sample_id": "arguzz__POST_EXEC_MEM_MOD__default__s2211",
+  "fuzzer": "arguzz",
+  "mutation_type": "POST_EXEC_MEM_MOD",
+  "variant": null,
+  "seed": 211,
+  "inject": {
+    "step": 215,
+    "pc": 2099356,
+    "instr_at_site": "li t0, 3",
+    "target_kind": "mem",
+    "target_addr_or_reg": null
+  },
+  "target_region": "guest_data",
+  "hits_guest_data": true,
+  "outcome_class": "CONSTRAINT_REJECT",
+  "crashed": false,
+  "crash_stage": null,
+  "layers": {
+    "intrastep_local": 5,
+    "interstep_local": 2,
+    "global": 2
+  },
+  "constraints": [
+    {
+      "layer": "intrastep-local",
+      "full_loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :102:19) at  OpOR ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :105:20)))",
+      "residue": 2013265883,
+      "cycle": 14373,
+      "step": 214,
+      "major": 0,
+      "minor": 3,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :103:18) at  OpOR ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :105:20)))",
+      "residue": 2013265916,
+      "cycle": 14373,
+      "step": 214,
+      "major": 0,
+      "minor": 3,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "loc(callsite( VerifyOpcodeF3F7 ( zirgen/circuit/rv32im/v2/dsl/inst.zir :104:18) at  OpOR ( zirgen/circuit/rv32im/v2/dsl/inst_misc.zir :105:20)))",
+      "residue": 114,
+      "cycle": 14373,
+      "step": 214,
+      "major": 0,
+      "minor": 3,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "residue": 2013204810,
+      "cycle": 14373,
+      "step": 214,
+      "major": 0,
+      "minor": 3,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+      "residue": 1912,
+      "cycle": 14373,
+      "step": 214,
+      "major": 0,
+      "minor": 3,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "interstep-local",
+      "full_loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :79:22) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+      "residue": 2013260020,
+      "cycle": 14373,
+      "step": 214,
+      "major": 0,
+      "minor": 3,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "interstep-local",
+      "full_loc": "loc(callsite( IsRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :80:23) at  MemoryRead ( zirgen/circuit/rv32im/v2/dsl/mem.zir :90:10)))",
+      "residue": 2013207479,
+      "cycle": 14373,
+      "step": 214,
+      "major": 0,
+      "minor": 3,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "global",
+      "full_loc": "GLOBAL:family:memory residue nonzero",
+      "residue": null,
+      "family": "memory"
+    },
+    {
+      "layer": "global",
+      "full_loc": "GLOBAL:family:cycle residue nonzero",
+      "residue": null,
+      "family": "cycle"
+    }
+  ],
+  "global_families": [
+    {
+      "family": "memory",
+      "address": null
+    },
+    {
+      "family": "cycle",
+      "address": null
+    }
+  ],
+  "fault_info": "<fault>{\"step\":215, \"pc\":2099344, \"kind\":\"POST_EXEC_MEM_MOD\", \"info\":\"MEM[$0x3e725ea4] = 3830060813\"}</fault>",
+  "failure_count": 7,
+  "raw_log_path": "artifacts/e5/pos_raw_n250/arguzz__POST_EXEC_MEM_MOD__default__s2211.log.gz",
+  "config_path": null,
+  "cmd": null,
+  "env": {
+    "CONSTRAINT_CONTINUE": "1",
+    "A4_COVERAGE_TOUCH": "1",
+    "A4_COVERAGE_TOUCH_VERBOSE": "1",
+    "A4_FAMILY_RESIDUE": "1",
+    "A4_GLOBAL_RESIDUE": "1"
+  },
+  "host_sha256": "84ae495e5afd8261324d7daf09a02d1f9cb8437aad4edbb2de478362e2728b45"
+}

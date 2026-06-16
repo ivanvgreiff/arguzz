@@ -1,0 +1,14 @@
+{
+  "mutation_type": "INSTR_TYPE_MOD",
+  "step": 53,
+  "major": 2,
+  "minor": 4,
+  "_info": {
+    "original_major": 0,
+    "original_minor": 7,
+    "original_kind": "AddI",
+    "mutated_kind": "JalR",
+    "pc": "0x00204070",
+    "is_valid_combination": true
+  }
+}

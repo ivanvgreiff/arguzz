@@ -1,0 +1,19 @@
+{
+  "mutation_type": "PRE_EXEC_REG_MOD",
+  "step": 154,
+  "txn_idx": 13594,
+  "word": 2403945161,
+  "strategy": "prev_write",
+  "_info": {
+    "register": "a2",
+    "register_idx": 12,
+    "original_value": 2199552,
+    "original_word": 2199552,
+    "prev_word": 2229456,
+    "is_write_target": true,
+    "pc": "0x00205c30",
+    "major": 2,
+    "minor": 5,
+    "note": "Modifies WRITE word; subsequent READ's prev_word won't match (triggers MemoryWrite)"
+  }
+}

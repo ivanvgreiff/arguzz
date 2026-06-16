@@ -1,0 +1,32 @@
+{
+  "milestone": "E5-E0",
+  "generated_at": "2026-06-14T06:00:20.484483+00:00",
+  "host_sha256": "84ae495e5afd8261324d7daf09a02d1f9cb8437aad4edbb2de478362e2728b45",
+  "baseline_output": "269358329",
+  "baseline_runs": [
+    {
+      "run": 1,
+      "output_ok": true,
+      "verifier_ok": true,
+      "constraint_fails": 0,
+      "global_nonzero": false
+    },
+    {
+      "run": 2,
+      "output_ok": true,
+      "verifier_ok": true,
+      "constraint_fails": 0,
+      "global_nonzero": false
+    }
+  ],
+  "cycle_count": 32768,
+  "txn_count": 28255,
+  "site_counts": {
+    "compute": 1102,
+    "load": 574,
+    "store": 512,
+    "branch": 393,
+    "any": 3018
+  },
+  "gate_pass": true
+}

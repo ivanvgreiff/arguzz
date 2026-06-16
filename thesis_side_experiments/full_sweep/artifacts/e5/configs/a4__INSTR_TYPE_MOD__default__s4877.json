@@ -1,0 +1,14 @@
+{
+  "mutation_type": "INSTR_TYPE_MOD",
+  "step": 321,
+  "major": 5,
+  "minor": 3,
+  "_info": {
+    "original_major": 4,
+    "original_minor": 2,
+    "original_kind": "SrlI",
+    "mutated_kind": "LbU",
+    "pc": "0x002009bc",
+    "is_valid_combination": true
+  }
+}

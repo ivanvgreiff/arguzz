@@ -1,0 +1,14 @@
+{
+  "mutation_type": "INSTR_TYPE_MOD",
+  "step": 113,
+  "major": 4,
+  "minor": 7,
+  "_info": {
+    "original_major": 0,
+    "original_minor": 7,
+    "original_kind": "AddI",
+    "mutated_kind": "RemU",
+    "pc": "0x00200c08",
+    "is_valid_combination": true
+  }
+}

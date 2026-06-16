@@ -42,6 +42,10 @@ from a4.standalone.value_generator import (
 from a4.standalone.bandit import DiscountedUCBScheduler
 from a4.standalone.bandit_ts import (
     ConstrainedTSScheduler,
+    ConstantFloor,
+    EpochStageFloor,
+    ExponentialDecayFloor,
+    FloorSchedule,
     KindLevelUCBScheduler,
     KindLevelTSScheduler,
     BanditDecision,
@@ -101,6 +105,14 @@ V2_BANDIT_STRATEGIES = frozenset({
     "kindUCB_zoned_v2_noQ",
     "kindTS_zoned_v2",
     "cTS_semantic_v2",
+    "cTS_semantic_v2_decayexp",
+    "cTS_semantic_v2_decayepoch",
+})
+
+CTS_SEMANTIC_V2_FAMILY = frozenset({
+    "cTS_semantic_v2",
+    "cTS_semantic_v2_decayexp",
+    "cTS_semantic_v2_decayepoch",
 })
 
 
@@ -173,6 +185,8 @@ STRATEGY_DISPLAY_NAMES = {
     "kindUCB_zoned_v2_noQ": "kindUCB_zoned_v2_noQ",  # Variant 3
     "kindTS_zoned_v2":      "kindTS_zoned_v2",       # Variant 4
     "cTS_semantic_v2":      "cTS_semantic_v2",       # Variant 5 (main candidate)
+    "cTS_semantic_v2_decayexp": "cTS_semantic_v2_decayexp",
+    "cTS_semantic_v2_decayepoch": "cTS_semantic_v2_decayepoch",
 }
 
 
@@ -295,6 +309,7 @@ class A4Fuzzer:
         self._seen_compressed_global: Set[str] = set()
         self._seen_structural: Set[StructuralCell] = set()
         self._v2_mutation_count: int = 0
+        self._local_loc_discoveries: int = 0
         
         # Temp directory for config files
         self.temp_dir = Path(tempfile.mkdtemp(prefix="a4_fuzz_"))
@@ -462,8 +477,10 @@ class A4Fuzzer:
             mutation_id = self.db.record_mutation(
                 self.campaign_id, kind, step or 0, mv, config, txn_idx,
                 verifier_accepted, original_value=ov,
+                **self._mutation_record_kwargs(pilot_result),
             )
-            self.db.record_failures(mutation_id, failures)
+            _, new_coverage = self.db.record_failures(mutation_id, failures)
+            self._sync_local_coverage_after_failures(new_coverage)
             # Phase III.1: pilot-phase mutations also produce Hook 3 globals; persist them
             # so analyze_campaign can include the pilot rows in cumulative-coverage curves.
             _, _, _, pilot_global_ctx = self._derive_global_info(exec_result, failures)
@@ -593,6 +610,61 @@ class A4Fuzzer:
             return list(self.MUTATION_KINDS)
         return [self.kind]
 
+    @staticmethod
+    def _floor_schedule_for_strategy(selector_strategy: str) -> FloorSchedule:
+        """Map IV.POS.8 D1.A cTS semantic-zone selectors to floor schedules."""
+        if selector_strategy == "cTS_semantic_v2":
+            return ConstantFloor(0.55)
+        if selector_strategy == "cTS_semantic_v2_decayexp":
+            return ExponentialDecayFloor(initial=0.55, floor_min=0.20, K=50)
+        if selector_strategy == "cTS_semantic_v2_decayepoch":
+            return EpochStageFloor([(0, 0.55), (2000, 0.35), (4000, 0.20)])
+        raise ValueError(f"no floor schedule for strategy: {selector_strategy}")
+
+    @staticmethod
+    def _floor_schedule_extra(schedule: FloorSchedule) -> dict:
+        """Serialize floor schedule for campaign_params.extra_json."""
+        if isinstance(schedule, ConstantFloor):
+            return {
+                "floor_schedule_type": "constant",
+                "floor_schedule_config": {"value": schedule.value},
+            }
+        if isinstance(schedule, ExponentialDecayFloor):
+            return {
+                "floor_schedule_type": "exponential",
+                "floor_schedule_config": {
+                    "initial": schedule.initial,
+                    "floor_min": schedule.floor_min,
+                    "K": schedule.K,
+                },
+            }
+        if isinstance(schedule, EpochStageFloor):
+            return {
+                "floor_schedule_type": "epoch",
+                "floor_schedule_config": {
+                    "stages": [list(stage) for stage in schedule.stages],
+                },
+            }
+        raise TypeError(f"unknown FloorSchedule type: {type(schedule)!r}")
+
+    def _sync_local_coverage_after_failures(self, new_coverage: int) -> None:
+        """Push cumulative legacy loc discoveries to cTS scheduler (Option B)."""
+        self._local_loc_discoveries += new_coverage
+        if (
+            self.v2_scheduler is not None
+            and self.selector_strategy in CTS_SEMANTIC_V2_FAMILY
+            and isinstance(self.v2_scheduler, ConstrainedTSScheduler)
+        ):
+            self.v2_scheduler.update_local_coverage(self._local_loc_discoveries)
+
+    def _mutation_record_kwargs(self, result: "MutationResult") -> dict:
+        """Optional D1.A schema fields for record_mutation."""
+        return {
+            "proof_generated": result.proof_generated,
+            "proof_verify_failed": result.proof_verify_failed,
+            "elapsed_ms": int(result.execution_time_ms),
+        }
+
     def _setup_v2_bandit(self, num_mutations: int) -> None:
         """Initialize IV.POS.7 v2 bandit schedulers — no pilot (D2)."""
         if self.verbose:
@@ -616,13 +688,17 @@ class A4Fuzzer:
         self._seen_compressed_global = set()
         self._seen_structural = set()
         self._v2_mutation_count = 0
+        self._local_loc_discoveries = 0
 
         kinds = self._active_mutation_kinds()
 
-        if self.selector_strategy == "cTS_semantic_v2":
+        if self.selector_strategy in CTS_SEMANTIC_V2_FAMILY:
+            floor_schedule = self._floor_schedule_for_strategy(self.selector_strategy)
             self.semantic_arm_universe = SemanticArmUniverse.build(self.data, kinds)
             self.v2_scheduler = ConstrainedTSScheduler(
-                self.semantic_arm_universe, seed=self.seed,
+                self.semantic_arm_universe,
+                seed=self.seed,
+                floor_schedule=floor_schedule,
             )
             self.semantic_zone_selector = SemanticZoneStepSelector(
                 self.semantic_arm_universe, seed=self.seed + 1,
@@ -662,6 +738,19 @@ class A4Fuzzer:
         if self.campaign_id is None or self.coverage_state is None:
             return
         params = self.coverage_state.params
+        extra: Optional[dict] = None
+        if self.arm_universe is not None:
+            extra = {"num_arms": int(self.arm_universe.num_arms)}
+        elif self.selector_strategy in CTS_SEMANTIC_V2_FAMILY:
+            schedule = self._floor_schedule_for_strategy(self.selector_strategy)
+            extra = self._floor_schedule_extra(schedule)
+            if self.semantic_arm_universe is not None:
+                extra["num_arms"] = int(self.semantic_arm_universe.num_arms)
+        elif self.v2_scheduler is not None:
+            if self.semantic_arm_universe is not None:
+                extra = {"num_arms": int(self.semantic_arm_universe.num_arms)}
+            elif hasattr(self.v2_scheduler, "kinds"):
+                extra = {"num_arms": len(self.v2_scheduler.kinds)}
         self.db.record_campaign_params(
             self.campaign_id,
             tau_new=float(params.tau_new),
@@ -673,7 +762,7 @@ class A4Fuzzer:
                 int(self.arm_universe.B_count) if self.arm_universe is not None else None
             ),
             selector=self.selector_strategy,
-            extra={"num_arms": int(self.arm_universe.num_arms)} if self.arm_universe is not None else None,
+            extra=extra,
         )
 
     def _setup_uniform(self, num_mutations: int, stats: 'CampaignStats') -> None:
@@ -807,8 +896,10 @@ class A4Fuzzer:
         mutation_id = self.db.record_mutation(
             self.campaign_id, kind, step, mutated_value, config, txn_idx,
             verifier_accepted, original_value=original_value,
+            **self._mutation_record_kwargs(result),
         )
         total_recorded, new_coverage = self.db.record_failures(mutation_id, failures)
+        self._sync_local_coverage_after_failures(new_coverage)
         # Phase III.1: persist global Hook 3 contexts for offline analysis.
         if global_contexts:
             self.db.record_global_failures(mutation_id, global_contexts)
@@ -843,7 +934,7 @@ class A4Fuzzer:
     ) -> Optional['MutationResult']:
         """Run one mutation under IV.POS.7 v2 bandit schedulers (Phase 5)."""
         decision: BanditDecision
-        if self.selector_strategy == "cTS_semantic_v2":
+        if self.selector_strategy in CTS_SEMANTIC_V2_FAMILY:
             decision = self.v2_scheduler.select()
             kind, zone, step = decision.kind, decision.zone, decision.step
         else:
@@ -860,7 +951,7 @@ class A4Fuzzer:
                 return None
 
         bandit_kind = kind
-        bandit_zone = zone if self.selector_strategy == "cTS_semantic_v2" else None
+        bandit_zone = zone if self.selector_strategy in CTS_SEMANTIC_V2_FAMILY else None
         bandit_step_at_select = step
 
         config = None
@@ -875,7 +966,7 @@ class A4Fuzzer:
                 config = None
             if config is not None:
                 break
-            if self.selector_strategy == "cTS_semantic_v2" and zone is not None:
+            if self.selector_strategy in CTS_SEMANTIC_V2_FAMILY and zone is not None:
                 alt = self.semantic_zone_selector.pick_step_in_zone(kind, zone)
                 if alt is not None:
                     step = alt
@@ -886,7 +977,7 @@ class A4Fuzzer:
 
         if config is None:
             stats.skipped_mutations += 1
-            if self.selector_strategy == "cTS_semantic_v2" and zone is not None:
+            if self.selector_strategy in CTS_SEMANTIC_V2_FAMILY and zone is not None:
                 self.v2_scheduler.update(kind, zone, 0)
             elif self.selector_strategy in ("kindUCB_zoned_v1", "kindUCB_zoned_v2_noQ"):
                 self.v2_scheduler.update(kind, 0.0)
@@ -1019,7 +1110,7 @@ class A4Fuzzer:
             self.v2_scheduler.update(kind, reward_v2)
         elif self.selector_strategy == "kindTS_zoned_v2":
             self.v2_scheduler.update(kind, bandit_success)
-        elif self.selector_strategy == "cTS_semantic_v2":
+        elif self.selector_strategy in CTS_SEMANTIC_V2_FAMILY:
             self.v2_scheduler.update(kind, zone, bandit_success)
 
         update_state(
@@ -1031,8 +1122,10 @@ class A4Fuzzer:
         mutation_id = self.db.record_mutation(
             self.campaign_id, kind, step, mutated_value, config, txn_idx,
             verifier_accepted, original_value=original_value,
+            **self._mutation_record_kwargs(result),
         )
         total_recorded, new_coverage = self.db.record_failures(mutation_id, failures)
+        self._sync_local_coverage_after_failures(new_coverage)
         if global_contexts:
             self.db.record_global_failures(mutation_id, global_contexts)
         if self.telemetry_level != "none":
@@ -1393,9 +1486,11 @@ class A4Fuzzer:
             txn_idx,
             verifier_accepted,
             original_value=original_value,
+            **self._mutation_record_kwargs(result),
         )
         
         total_recorded, new_coverage = self.db.record_failures(mutation_id, failures)
+        self._sync_local_coverage_after_failures(new_coverage)
         # Phase III.1: persist global Hook 3 contexts for offline analysis.
         if global_contexts:
             self.db.record_global_failures(mutation_id, global_contexts)

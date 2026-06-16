@@ -1,0 +1,14 @@
+{
+  "mutation_type": "INSTR_TYPE_MOD",
+  "step": 268,
+  "major": 1,
+  "minor": 5,
+  "_info": {
+    "original_major": 0,
+    "original_minor": 7,
+    "original_kind": "AddI",
+    "mutated_kind": "Beq",
+    "pc": "0x00200970",
+    "is_valid_combination": true
+  }
+}

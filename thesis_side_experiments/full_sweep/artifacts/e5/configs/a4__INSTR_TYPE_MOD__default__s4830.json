@@ -1,0 +1,14 @@
+{
+  "mutation_type": "INSTR_TYPE_MOD",
+  "step": 220,
+  "major": 5,
+  "minor": 0,
+  "_info": {
+    "original_major": 0,
+    "original_minor": 0,
+    "original_kind": "Add",
+    "mutated_kind": "Lb",
+    "pc": "0x002008b0",
+    "is_valid_combination": true
+  }
+}

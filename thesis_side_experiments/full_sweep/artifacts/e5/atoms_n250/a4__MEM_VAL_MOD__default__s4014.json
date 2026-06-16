@@ -1,0 +1,79 @@
+{
+  "sample_id": "a4__MEM_VAL_MOD__default__s4014",
+  "fuzzer": "a4",
+  "mutation_type": "MEM_VAL_MOD",
+  "variant": null,
+  "seed": 14,
+  "inject": {
+    "step": 16,
+    "pc": 3221225540,
+    "instr_at_site": "lw a2, 0(a0)",
+    "target_kind": null,
+    "target_addr_or_reg": null
+  },
+  "target_region": "machine_kernel",
+  "hits_guest_data": false,
+  "outcome_class": "CONSTRAINT_REJECT",
+  "crashed": false,
+  "crash_stage": null,
+  "layers": {
+    "intrastep_local": 2,
+    "interstep_local": 0,
+    "global": 1
+  },
+  "constraints": [
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:99)",
+      "residue": 2013256703,
+      "cycle": 13639,
+      "step": 16,
+      "major": 5,
+      "minor": 2,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "intrastep-local",
+      "full_loc": "MemoryWrite(zirgen/circuit/rv32im/v2/dsl/mem.zir:100)",
+      "residue": 17696,
+      "cycle": 13639,
+      "step": 16,
+      "major": 5,
+      "minor": 2,
+      "provenance_verified": false,
+      "provenance": {
+        "verified": false,
+        "reason": "non-scalar mutation"
+      }
+    },
+    {
+      "layer": "global",
+      "full_loc": "GLOBAL:family:memory residue nonzero",
+      "residue": null,
+      "family": "memory"
+    }
+  ],
+  "global_families": [
+    {
+      "family": "memory",
+      "address": null
+    }
+  ],
+  "fault_info": "<a4_config_loaded>{\"path\":\"/root/a4_campaign/thesis/e5_configs/a4__MEM_VAL_MOD__default__s4014.json\", \"mutation_type\":Some(\"MEM_VAL_MOD\"), \"step\":Some(16)}</a4_config_loaded>",
+  "failure_count": 2,
+  "raw_log_path": "artifacts/e5/pos_raw_n250/a4__MEM_VAL_MOD__default__s4014.log.gz",
+  "config_path": "artifacts/e5/configs/a4__MEM_VAL_MOD__default__s4014.json",
+  "cmd": null,
+  "env": {
+    "CONSTRAINT_CONTINUE": "1",
+    "A4_COVERAGE_TOUCH": "1",
+    "A4_COVERAGE_TOUCH_VERBOSE": "1",
+    "A4_FAMILY_RESIDUE": "1",
+    "A4_GLOBAL_RESIDUE": "1"
+  },
+  "host_sha256": "84ae495e5afd8261324d7daf09a02d1f9cb8437aad4edbb2de478362e2728b45"
+}

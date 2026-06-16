@@ -1,0 +1,13 @@
+{
+  "mutation_type": "COMP_OUT_MOD",
+  "step": 322,
+  "txn_idx": 14314,
+  "word": 3119796792,
+  "_info": {
+    "register": "a3",
+    "original_value": 4110,
+    "pc": "0x002009c0",
+    "major": 4,
+    "minor": 2
+  }
+}
