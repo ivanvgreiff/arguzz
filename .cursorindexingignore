@@ -1,0 +1,8 @@
+# Cursor INDEXING IGNORE — removed from the search index for speed, but Opus
+# CAN still open/read these on request. Full explanation: a4/docs/CURSOR_IGNORE.md
+
+# Text run-logs / captured outputs, repo-wide (includes a4/).
+*.log
+*.stdout
+*.stderr
+*_output.txt

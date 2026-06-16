@@ -1,0 +1,20 @@
+# Cursor IGNORE — excluded from the index AND blocked from AI (Opus) reads.
+# Full explanation: a4/docs/CURSOR_IGNORE.md
+
+# Cargo build output — ALL target/ dirs (thesis + workspace).
+# Pure compiled artifacts (.rlib/.rmeta/binaries); not human- or LLM-readable.
+**/target/
+
+# Generated experiment artifacts + frozen host binaries (~13k raw files).
+thesis_side_experiments/*/artifacts/
+thesis_side_experiments/*/frozen_host/
+
+# Database files — THESIS experiments only.
+# (root-level *.db and a4/**/*.db stay readable.)
+thesis_side_experiments/**/*.db
+
+# Archive tarball bundles (~1.5 GB of *.tar.gz).
+bundles/
+
+# Reference clone — not part of arguzz.
+pos-examples/

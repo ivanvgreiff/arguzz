@@ -1,0 +1,53 @@
+{
+  // ---------------------------------------------------------------------------
+  // Performance settings for this large (~21GB) repo. These control the file
+  // watcher, search, and Python language server. They do NOT block Opus reads.
+  // Kept consistent with .cursorignore — see a4/docs/CURSOR_IGNORE.md.
+  //
+  // NOTE: ALL Cargo target/ build dirs (thesis + workspace) are now excluded.
+  // workspace/output/ and workspace/risc0-modified/ SOURCE (everything outside
+  // target/) and all of a4/ remain fully watched, searched, and analyzed.
+  // ---------------------------------------------------------------------------
+
+  "files.watcherExclude": {
+    "**/.git/**": true,
+    "**/.venv/**": true,
+    "**/__pycache__/**": true,
+    "**/.mypy_cache/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.ruff_cache/**": true,
+    "**/node_modules/**": true,
+    "**/target/**": true,
+    "thesis_side_experiments/*/artifacts/**": true,
+    "thesis_side_experiments/*/frozen_host/**": true,
+    "bundles/**": true,
+    "pos-examples/**": true
+  },
+
+  "search.exclude": {
+    "**/.venv/**": true,
+    "**/__pycache__/**": true,
+    "**/target/**": true,
+    "thesis_side_experiments/*/artifacts/**": true,
+    "thesis_side_experiments/*/frozen_host/**": true,
+    "bundles/**": true,
+    "pos-examples/**": true
+  },
+
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/.mypy_cache": true
+  },
+
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python.analysis.exclude": [
+    "**/.venv/**",
+    "**/target/**",
+    "thesis_side_experiments/*/artifacts/**",
+    "thesis_side_experiments/*/frozen_host/**",
+    "bundles/**",
+    "pos-examples/**"
+  ]
+}

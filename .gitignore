@@ -5,7 +5,57 @@
 a4/output/*
 a4/notebooks/*
 a4/notebooks
-a4/runs/
+
+# ---------------------------------------------------------------------------
+# a4/runs/ — per-campaign output trees. We want to track the *code* and the
+# *Pro-facing artifacts* that ship with each campaign, and ignore everything
+# else (heavy regeneratable artifacts + POS dispatch byproducts).
+#
+# TRACKED (re-included below):
+#   - analysis code (*.py, *.sh, requirements.txt) anywhere in the tree
+#   - reports / plans (*.md), notebooks (*.ipynb), rendered notebooks (*.html)
+#   - plots (*.png, *.svg) — typically under plots*/ subdirs
+#   - analysis output tables (*.csv) anywhere in the tree
+#   - top-level run summary JSONs (a4/runs/<run>/*.json only — deeper JSONs
+#     are POS dispatch config/meta noise and stay ignored)
+#
+# IGNORED (everything else, including):
+#   - dbs/ / raw_dbs/ / dbs_internal/ — SQLite DB stores (e.g. iv_pos_7/dbs/
+#     is ~1.3 GB)
+#   - __pycache__/                    — Python bytecode caches
+#   - *.zip                           — packaged delivery archives
+#   - POS dispatch byproducts: *.stdout, *.stderr, *.status, *.file,
+#     bootstrap scripts, per-node setup PDFs, per-run config/meta JSONs
+#
+# Strategy: blanket-ignore the tree, then re-include valuable file types.
+# To track a new artifact type from a future campaign, add another
+# `!a4/runs/**/<pattern>` line below.
+#
+# NOTE: gitignore semantics require that we re-include directories first
+# (so git traverses them) before we can re-include individual files.
+# ---------------------------------------------------------------------------
+a4/runs/**
+# re-include directories so the file-level re-includes below can match
+!a4/runs/**/
+# re-include valuable code + reports + plots + analysis output tables
+!a4/runs/**/*.py
+!a4/runs/**/*.md
+!a4/runs/**/*.ipynb
+!a4/runs/**/*.html
+!a4/runs/**/*.png
+!a4/runs/**/*.svg
+!a4/runs/**/*.csv
+!a4/runs/**/*.sh
+!a4/runs/**/*.txt
+# top-level run summary JSONs only (one level deep under a4/runs/);
+# deeper JSONs (e.g. <run>/<timestamp>/config/*.json) stay ignored
+!a4/runs/*/*.json
+# heavy / generated subtrees: re-ignore so git doesn't even traverse into them
+a4/runs/**/dbs/
+a4/runs/**/raw_dbs/
+a4/runs/**/dbs_internal/
+a4/runs/**/__pycache__/
+
 bundles/
 dispatch_manifest.json
 collection_report.json
