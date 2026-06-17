@@ -1,4 +1,10 @@
-"""Normalize constraint_loc strings across A4 and V6 DB formats.
+"""**Legacy / R2-compat only.** D2.A onward, DBs ship with ``Name@basename:line``
+already canonicalized at write-time via ``ConstraintFailure.short_loc()``. This
+module is retained only to read the R2 ``v6_arguzz`` archive DBs (which bypassed
+``short_loc()`` — see ``a4/runs/iv_pos_7/drivers/v6_driver_v2.py``). Do not
+import this in new code.
+
+Normalize constraint_loc strings across A4 and V6 DB formats.
 
 A4 (V0–V5): ``Name@file.zir:line``
 V6 (arguzz): ``Name(full/path/file.zir:line)``

@@ -49,6 +49,7 @@ from a4.standalone.bandit_ts import (
     KindLevelUCBScheduler,
     KindLevelTSScheduler,
     BanditDecision,
+    MutationOutcome,
 )
 from a4.standalone.arm_universe import ArmUniverse
 from a4.standalone.semantic_arm_universe import SemanticArmUniverse
@@ -658,12 +659,21 @@ class A4Fuzzer:
         ):
             self.v2_scheduler.update_local_coverage(self._local_loc_discoveries)
 
+    def _outcome_for(self, result: "MutationResult") -> str:
+        """Classify mutation outcome for D2.A ``mutations.outcome`` column."""
+        if result.crashed:
+            return MutationOutcome.ERROR.value
+        if result.config is None:
+            return MutationOutcome.SKIPPED.value
+        return MutationOutcome.APPLIED.value
+
     def _mutation_record_kwargs(self, result: "MutationResult") -> dict:
-        """Optional D1.A schema fields for record_mutation."""
+        """Optional D1.A / D2.A schema fields for record_mutation."""
         return {
             "proof_generated": result.proof_generated,
             "proof_verify_failed": result.proof_verify_failed,
             "elapsed_ms": int(result.execution_time_ms),
+            "outcome": self._outcome_for(result),
         }
 
     def _setup_v2_bandit(self, num_mutations: int) -> None:

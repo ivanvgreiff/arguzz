@@ -119,6 +119,9 @@ class CoverageDB:
         for col in ("proof_generated", "proof_verify_failed", "elapsed_ms"):
             if col not in mut_cols:
                 cursor.execute(f"ALTER TABLE mutations ADD COLUMN {col} INTEGER")
+        if "outcome" not in mut_cols:
+            cursor.execute("ALTER TABLE mutations ADD COLUMN outcome TEXT")
+            mut_cols.add("outcome")
         
         # Failures table
         cursor.execute("""
@@ -173,6 +176,10 @@ class CoverageDB:
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_mutations_campaign 
             ON mutations(campaign_id)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_mutations_outcome
+            ON mutations(outcome)
         """)
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_failures_mutation 
@@ -713,6 +720,7 @@ class CoverageDB:
         proof_generated: Optional[bool] = None,
         proof_verify_failed: Optional[bool] = None,
         elapsed_ms: Optional[int] = None,
+        outcome: Optional[str] = None,
     ) -> int:
         """
         Record a mutation attempt.
@@ -729,6 +737,7 @@ class CoverageDB:
             proof_generated: Whether a proof was generated (IV.POS.8 D1.A)
             proof_verify_failed: Whether proof verification failed (IV.POS.8 D1.A)
             elapsed_ms: Wall-clock execution time in milliseconds (IV.POS.8 D1.A)
+            outcome: Mutation outcome (IV.POS.8 D2.A): applied / skipped / error
             
         Returns:
             Mutation ID
@@ -738,14 +747,15 @@ class CoverageDB:
             INSERT INTO mutations 
             (campaign_id, kind, step, txn_idx, mutated_value, original_value,
              config_json, executed_at, verifier_accepted,
-             proof_generated, proof_verify_failed, elapsed_ms)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             proof_generated, proof_verify_failed, elapsed_ms, outcome)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             campaign_id, kind, step, txn_idx, mutated_value, int(original_value),
             json.dumps(config), datetime.now().isoformat(), int(verifier_accepted),
             (int(proof_generated) if proof_generated is not None else None),
             (int(proof_verify_failed) if proof_verify_failed is not None else None),
             elapsed_ms,
+            outcome,
         ))
         
         self.conn.commit()
