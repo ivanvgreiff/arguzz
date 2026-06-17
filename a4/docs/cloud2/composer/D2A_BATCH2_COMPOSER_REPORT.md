@@ -5,6 +5,7 @@
 **Kickoff:** [`D2A_BATCH2_COMPOSER_KICKOFF.md`](./D2A_BATCH2_COMPOSER_KICKOFF.md)
 **Predecessor:** Batch 1 at `b844e8e`
 **Date:** 2026-06-17
+**Commit:** `7b66fb9`
 **Author:** Composer
 
 ---
@@ -72,8 +73,8 @@ The golden trace lives in `test_d2a_back_compat_golden_trace.py`. It is **schedu
 | 5 | `constraint_loc_normalize.py` deprecation docstring; module not deleted | ✅ |
 | 6 | `test_d2a_outcome_column.py` passes | ✅ |
 | 7 | `test_d2a_normalize_parity.py` passes | ✅ |
-| 8 | Full pytest sweep green (~505) | ✅ see § Test results |
-| 9 | Single commit on `cloud2` | ✅ pending commit |
+| 8 | Full pytest sweep green (~505) | ✅ 510 passed, 7 skipped |
+| 9 | Single commit on `cloud2` | ✅ `7b66fb9` |
 
 ---
 
@@ -94,7 +95,7 @@ pytest a4/standalone/tests/test_d2a_outcome_column.py \
 7 passed in 2.36s
 
 pytest a4/standalone/tests/ -q
-<full sweep — see commit message / CI>
+510 passed, 7 skipped, 8 warnings in 660.92s (0:11:00)
 ```
 
 New tests: +7 functions across 2 files. Expected full suite: **510 passed** (503 Batch 1 + 7 Batch 2), 7 skipped.
