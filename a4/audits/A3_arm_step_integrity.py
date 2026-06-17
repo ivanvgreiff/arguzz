@@ -21,6 +21,7 @@ from a4.core.inspection_data import InspectionData
 from a4.standalone.zone_classifier import zone_to_steps
 from a4.standalone.semantic_zones import SEMANTIC_ZONES
 from a4.standalone.semantic_arm_universe import (
+    ArmKey,
     SemanticArmUniverse, _MUTATION_MODULES, _step_has_real_target,
 )
 
@@ -63,8 +64,9 @@ def main():
             if not intersect:
                 continue
             naive = len(intersect)
-            if (kind, zone) in universe.arms:
-                kept = universe.arms[(kind, zone)]
+            arm = ArmKey.v5(kind, zone)
+            if arm in universe.arms:
+                kept = universe.arms[arm]
                 real = sum(1 for s in kept if _step_has_real_target(kind, s, data))
                 phantom = len(kept) - real
                 pct = 100.0 * phantom / len(kept) if kept else 0

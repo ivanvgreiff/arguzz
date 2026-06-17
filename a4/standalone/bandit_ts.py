@@ -19,6 +19,7 @@ from __future__ import annotations
 import math
 import random
 from dataclasses import dataclass
+from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
 
 from a4.standalone.semantic_arm_universe import SemanticArmUniverse, ArmKey
@@ -42,10 +43,21 @@ class BanditDecision:
 
 
 def arm_id(kind: str, zone: Optional[str] = None) -> str:
-    """Stable string key for DB / logging."""
+    """Stable string key for DB / logging (V5 legacy 2-pipe format)."""
     if zone is None:
         return kind
     return f"{kind}|{zone}"
+
+
+def arm_id_for_decision(arm: ArmKey) -> str:
+    """Format selected_arm for bandit_decisions (V5 vs full Hybrid shape)."""
+    return str(arm)
+
+
+class MutationOutcome(str, Enum):
+    APPLIED = "applied"
+    SKIPPED = "skipped"
+    ERROR = "error"
 
 
 # =============================================================================
@@ -131,6 +143,7 @@ class ConstrainedTSScheduler:
         epoch_size: int = 100,
         seed: Optional[int] = None,
         floor_schedule: Optional[FloorSchedule] = None,
+        applied_accounting_mode: bool = False,
     ):
         self.universe = universe
         self.prior_alpha = prior_alpha
@@ -140,6 +153,7 @@ class ConstrainedTSScheduler:
         self.forced_singleton_pulls = forced_singleton_pulls
         self.epoch_size = epoch_size
         self.rng = random.Random(seed)
+        self.applied_accounting_mode = applied_accounting_mode
         self.floor_schedule = (
             floor_schedule
             if floor_schedule is not None
@@ -234,11 +248,13 @@ class ConstrainedTSScheduler:
                     score = thetas[chosen]
                     mode = "adaptive"
                     if len(sorted_arms) > 1:
-                        runnerup_arm = arm_id(*sorted_arms[1])
+                        runnerup_arm = arm_id_for_decision(sorted_arms[1])
                         runnerup_score = thetas[sorted_arms[1]]
 
-        kind, zone = chosen
-        steps = self.universe.steps_in_arm(kind, zone)
+        kind, zone = chosen.kind, chosen.zone
+        steps = self.universe.steps_for_arm(chosen)
+        if not steps:
+            steps = self.universe.steps_in_arm(kind, zone)
         if not steps:
             raise RuntimeError(f"selected empty arm {chosen}")
         step = steps[0] if len(steps) == 1 else self.rng.choice(steps)
@@ -247,7 +263,7 @@ class ConstrainedTSScheduler:
             kind=kind,
             zone=zone,
             step=step,
-            arm_id=arm_id(kind, zone),
+            arm_id=arm_id_for_decision(chosen),
             mode=mode,
             score=score,
             runnerup_arm=runnerup_arm,
@@ -255,9 +271,7 @@ class ConstrainedTSScheduler:
             exploration=exploration,
         )
 
-    def update(self, kind: str, zone: str, success: int) -> None:
-        """Bernoulli update (success ∈ {0, 1}) per D-I."""
-        key = (kind, zone)
+    def _advance_state(self, key: ArmKey, success: int) -> None:
         if key not in self.pulls:
             return
         self.pulls[key] += 1
@@ -270,6 +284,43 @@ class ConstrainedTSScheduler:
                 self.epoch_pulls[a] = 0
             self._epoch_mutations = 0
 
+    def update(self, kind_or_arm: Union[str, ArmKey], zone_or_success: Union[str, int], success: Optional[int] = None) -> None:
+        """Bernoulli update (success ∈ {0, 1}) per D-I.
+
+        Back-compat overload: ``update(kind, zone, success)``.
+        Primary form: ``update(arm, success)`` when *success* is passed positionally
+        as the second arg to a single ArmKey — use ``update_with_outcome`` for
+        applied-accounting mode instead.
+        """
+        if isinstance(kind_or_arm, ArmKey):
+            arm = kind_or_arm
+            if success is None:
+                if isinstance(zone_or_success, int):
+                    success = zone_or_success
+                else:
+                    raise TypeError("update(arm, success) requires int success")
+            self._advance_state(arm, success)
+            return
+        kind = kind_or_arm
+        zone = zone_or_success
+        if success is None:
+            raise TypeError("update(kind, zone, success) requires success int")
+        self._advance_state(ArmKey.v5(kind, zone), success)
+
+    def update_with_outcome(
+        self,
+        arm: ArmKey,
+        outcome: MutationOutcome,
+        success: Optional[int] = None,
+    ) -> None:
+        """Update scheduler state respecting applied-mutation accounting."""
+        if self.applied_accounting_mode and outcome != MutationOutcome.APPLIED:
+            return
+        if outcome == MutationOutcome.APPLIED:
+            self._advance_state(arm, int(success or 0))
+        elif not self.applied_accounting_mode:
+            self._advance_state(arm, 0)
+
     def arm_state_rows(self) -> List[dict]:
         """Snapshot rows for `arm_state_snapshot` (Pro §12)."""
         rows = []
@@ -277,7 +328,7 @@ class ConstrainedTSScheduler:
             p = self.pulls[a]
             s = self.successes[a]
             rows.append({
-                "arm_id": arm_id(*a),
+                "arm_id": arm_id_for_decision(a),
                 "pulls": p,
                 "posterior_alpha": self._alpha(a),
                 "posterior_beta": self._beta(a),
@@ -435,7 +486,9 @@ class KindLevelTSScheduler:
 
 __all__ = [
     "BanditDecision",
+    "MutationOutcome",
     "arm_id",
+    "arm_id_for_decision",
     "ConstantFloor",
     "ConstrainedTSScheduler",
     "EpochStageFloor",

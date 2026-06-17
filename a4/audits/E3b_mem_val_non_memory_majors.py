@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from a4.audits.audit_common import GLOSSARY_META, OUTPUT_DIR, DEFAULT_HOST, load_inspection
 from a4.standalone.mutations import mem_val_mod
+from a4.standalone.semantic_arm_universe import ArmKey
 from a4.standalone.semantic_zones import KERNEL_PC_RANGE, USER_PC_RANGE
 
 USER_REGS = 0xFFFF0000
@@ -98,7 +99,7 @@ def main() -> int:
     per_arm: Dict[str, Any] = {}
     for aid in arms:
         kind, zone = aid.split("|", 1)
-        steps = sorted(universe.arms.get((kind, zone), []))
+        steps = sorted(universe.arms.get(ArmKey.v5(kind, zone), []))
         per_arm[aid] = _analyze_arm(kind, zone, steps, data)
         print(f"  {aid}: steps={len(steps)} txns={per_arm[aid]['total_mem_txns']}")
 

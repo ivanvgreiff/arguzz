@@ -37,7 +37,7 @@ def _reg_txn(
         prev_cycle=0,
         prev_word=word if not is_write else 0,
     )
-from a4.standalone.semantic_arm_universe import SemanticArmUniverse
+from a4.standalone.semantic_arm_universe import ArmKey, SemanticArmUniverse
 from a4.standalone.semantic_zones import (
     SEMANTIC_ZONES, SINGLETON_ZONES, BOUNDARY_ZONES, USER_PC_RANGE,
 )
@@ -118,8 +118,8 @@ def test_empty_intersections_are_skipped(small_data):
     LOAD_VAL_MOD only applies to major=5, and no major=5 cycle is in
     core_arithmetic."""
     au = SemanticArmUniverse.build(small_data, ["LOAD_VAL_MOD"])
-    assert ("LOAD_VAL_MOD", "core_arithmetic") not in au.arms
-    assert ("LOAD_VAL_MOD", "core_memory_load") in au.arms
+    assert ArmKey.v5("LOAD_VAL_MOD", "core_arithmetic") not in au.arms
+    assert ArmKey.v5("LOAD_VAL_MOD", "core_memory_load") in au.arms
     assert au.steps_in_arm("LOAD_VAL_MOD", "core_memory_load") == [2, 3]
 
 
@@ -128,9 +128,9 @@ def test_singleton_arms_for_instr_type_mod(small_data):
     Step 0 is one such step → (INSTR_TYPE_MOD, step0) is a singleton arm."""
     au = SemanticArmUniverse.build(small_data, ["INSTR_TYPE_MOD"])
     singletons = au.singleton_arms()
-    assert ("INSTR_TYPE_MOD", "step0") in singletons
+    assert ArmKey.v5("INSTR_TYPE_MOD", "step0") in singletons
     # last_step at step 7 also a singleton (major=0 → INSTR_TYPE_MOD applies)
-    assert ("INSTR_TYPE_MOD", "last_step") in singletons
+    assert ArmKey.v5("INSTR_TYPE_MOD", "last_step") in singletons
 
 
 def test_boundary_arms_for_instr_type_mod_excludes_pre_ecall(small_data):
@@ -148,7 +148,7 @@ def test_boundary_arms_for_instr_type_mod_excludes_pre_ecall(small_data):
     """
     au = SemanticArmUniverse.build(small_data, ["INSTR_TYPE_MOD"])
     barms = au.boundary_arms()
-    boundary_zones_in_arms = {z for (k, z) in barms}
+    boundary_zones_in_arms = {a.zone for a in barms}
     assert "step0" in boundary_zones_in_arms
     assert "last_step" in boundary_zones_in_arms
     # pre_ecall is structurally empty for INSTR_TYPE_MOD (ECALL has major 8;
@@ -168,7 +168,7 @@ def test_boundary_arms_for_instr_word_mod_includes_pre_ecall(small_data):
     ECALL cycles correctly for this kind."""
     au = SemanticArmUniverse.build(small_data, ["INSTR_WORD_MOD"])
     barms = au.boundary_arms()
-    boundary_zones_in_arms = {z for (k, z) in barms}
+    boundary_zones_in_arms = {a.zone for a in barms}
     assert "pre_ecall" in boundary_zones_in_arms
     # The ECALL cycle is at step 5 in small_data:
     assert au.steps_in_arm("INSTR_WORD_MOD", "pre_ecall") == [5]

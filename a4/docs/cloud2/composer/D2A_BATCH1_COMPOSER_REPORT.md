@@ -104,6 +104,8 @@ I read `IV_POS_8_D2_PLAN.md` v0.3, `IV_POS_8_D2_A_SPEC.md` v0.2, and the Batch 1
 | `order=True` on dataclass | Spec §4.1 mentions `frozen=True` only | Added `order=True` | Required for deterministic `sorted(available_arms)` iteration; without it golden trace could fail on dict-order sensitivity (spec §8 footnote fallback). |
 | `steps_for_arm(arm)` helper | Not explicitly listed | Added to `SemanticArmUniverse` | `select()` must resolve steps for Arguzz-shaped arms that don't share V5 `(kind, zone)` dict keys with the legacy `steps_in_arm(kind, zone)` path. |
 | `__iter__` on `ArmKey` | Spec mentions `.kind`/`.zone` accessors | Also yields `(kind, zone)` for unpack | Preserves legacy test/caller patterns without mass fuzzer edits. |
+| Golden trace level | Kickoff pass criteria mentioned DB blob | JSON scheduler-level trace only | Endorsed by Opus review — sufficient for Batch 1 since `fuzzer.py` is 0 LOC; DB-level golden trace deferred to Batch 2. |
+| **Audit hot-patch (Opus review)** | Not in original Batch 1 scope | Fixed tuple-key lookups in `A3`, `E3`, `E3b` (+ `B2` membership checks Opus missed) | `universe.arms` keys are now `ArmKey`, not `(kind, zone)` tuples. Without this fix, Phase 7D audits silently returned empty/wrong results. `--help` smoke-checked on all four modules. |
 
 ---
 
@@ -183,21 +185,27 @@ New tests added: 3 files (~15 test functions). Pre-existing suite: 494+ tests al
 
 ---
 
-## 11. Open questions / surprises for Ivan + Opus
+## 11. Opus review follow-up
 
-1. **Commit bundle:** D2 docs (3 untracked), this report, driver archive, and Batch 1 code are ready but uncommitted. Say the word for a single squash commit or separate PRs.
+**Verdict:** APPROVE WITH 1 MUST-FIX — applied.
 
-2. **Golden fixture format:** Recommend updating kickoff pass-criteria bullet from `.db` to JSON trace (or generate both). Functionally equivalent.
+| Opus item | Composer response |
+|---|---|
+| Audit tuple-key bug (A3, E3, E3b) | **Agree — fixed.** Pytest doesn't run audits; silent wrong output was a real regression. |
+| B2 membership checks (lines 52, 88) | **Agree — fixed proactively.** Opus said B2 loop was fine via `__iter__`, but two `(kind, zone) in universe.arms` checks had the same silent-fail pattern. |
+| Golden trace JSON vs DB | **Agree with Opus endorsement.** Scheduler-level is the right Batch 1 gate; kickoff updated. |
+| Synthetic test arm lookup by (kind, zone) | **Agree it's a footgun, defer.** No name collision today; fix when Hybrid dispatch lands (Batch 2 nice-to-have). |
+| `order=True` footnote in spec | **Agree.** Spec v0.3 footnote when Ivan next edits. |
+| DB-level golden trace in Batch 2 | **Agree.** Will add once outcome column + fuzzer plumbing land. |
 
-3. **D1.A Batch 3 (parallel track):** Not part of this Batch 1 work. Dispatch was running on coinbase when last checked; monitor/collect/validate remains Track-α.
+## 12. Open questions / surprises for Ivan + Opus
 
-4. **PR branch:** Kickoff specifies `cloud2-d2a-batch1-arm-shape`. Current work is on `cloud2` working tree — can branch before commit if preferred.
-
-5. **No surprises on arm-shape mechanics.** The refactor was straightforward; golden trace passed on first baseline capture after `order=True` fix.
+1. **Ready for PR** on branch `cloud2-d2a-batch1-arm-shape` — code + audits + driver + report update pending commit.
+2. **D1.A Batch 3** — Track-α; not managed here.
 
 ---
 
-## 12. Suggested next steps
+## 13. Suggested next steps
 
 | Priority | Action | Owner |
 |---|---|---|

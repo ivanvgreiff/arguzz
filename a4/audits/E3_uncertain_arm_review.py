@@ -26,6 +26,7 @@ from a4.standalone.mutations import instr_word_mod
 from a4.standalone.semantic_zones import SINGLETON_ZONES, BOUNDARY_ZONES
 from a4.standalone.zone_classifier import ECALL_MAJOR, classify_zones, _primary_decode_cycle
 from a4.standalone.semantic_zones import major_minor_to_core_zone, pc_in_kernel, pc_in_user
+from a4.standalone.semantic_arm_universe import ArmKey
 
 
 _UNCERTAIN_ROW_RE = re.compile(
@@ -125,8 +126,8 @@ def main() -> int:
     for arm in uncertain:
         kind, zone = arm["kind"], arm["zone"]
         aid = arm_key(kind, zone)
-        in_univ = (kind, zone) in universe.arms
-        steps = sorted(universe.arms.get((kind, zone), []))
+        in_univ = ArmKey.v5(kind, zone) in universe.arms
+        steps = sorted(universe.arms.get(ArmKey.v5(kind, zone), []))
         sample_steps = steps[: args.samples]
         if len(sample_steps) < args.samples and steps:
             # if fewer than 5, take all

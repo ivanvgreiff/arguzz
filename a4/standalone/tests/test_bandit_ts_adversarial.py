@@ -21,7 +21,7 @@ import pytest
 
 from a4.core.trace_parser import A4CycleInfo
 from a4.core.inspection_data import InspectionData
-from a4.standalone.semantic_arm_universe import SemanticArmUniverse
+from a4.standalone.semantic_arm_universe import SemanticArmUniverse, ArmKey
 from a4.standalone.bandit_ts import (
     ConstrainedTSScheduler,
     KindLevelUCBScheduler,
@@ -243,7 +243,7 @@ class TestEpochReset:
         first = au.available_arms[0]
         for _ in range(50):
             d = sched.select()
-            success = 1 if (d.kind, d.zone) == first else 0
+            success = 1 if ArmKey.v5(d.kind, d.zone) == first else 0
             sched.update(d.kind, d.zone, success)
         # Posterior should reflect all successes (alpha=1+s_total)
         s_first = sched.successes[first]
@@ -369,9 +369,9 @@ class TestPosteriorArithmetic:
         )
         arm = au.available_arms[0]
         for _ in range(7):
-            sched.update(arm[0], arm[1], 1)  # 7 successes
+            sched.update(arm.kind, arm.zone, 1)  # 7 successes
         for _ in range(3):
-            sched.update(arm[0], arm[1], 0)  # 3 failures
+            sched.update(arm.kind, arm.zone, 0)  # 3 failures
         assert sched.pulls[arm] == 10
         assert sched.successes[arm] == 7
         assert sched._alpha(arm) == 1.0 + 7
@@ -389,7 +389,7 @@ class TestPosteriorArithmetic:
         au = _small_universe()
         sched = ConstrainedTSScheduler(au, seed=1)
         arm = au.available_arms[0]
-        sched.update(arm[0], arm[1], True)   # bool → int
+        sched.update(arm.kind, arm.zone, True)   # bool → int
         assert sched.successes[arm] == 1
 
 

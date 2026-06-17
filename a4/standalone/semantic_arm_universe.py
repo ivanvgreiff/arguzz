@@ -22,7 +22,7 @@ selected strategy.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import Dict, List, Optional, Tuple, TYPE_CHECKING, Union
 
 from a4.standalone.semantic_zones import (
     SEMANTIC_ZONES, SINGLETON_ZONES, BOUNDARY_ZONES,
@@ -111,10 +111,73 @@ def _filter_real_target_steps(
     )
 
 
-# An arm key is the pair `(mutation_kind, semantic_zone)`. We use string
-# tuples directly instead of a dataclass for keyspace simplicity (these
-# are hashable, comparable, and pickleable out of the box).
-ArmKey = Tuple[str, str]
+# ---------------------------------------------------------------------------
+# Arm key — D2.A 5-tuple (surface, kind, zone, opcode_class, pre_post)
+# ---------------------------------------------------------------------------
+
+A4_TRACE_CELL = "A4_trace_cell"
+ARGUZZ_EXEC_FAULT = "arguzz_exec_fault"
+NA = "n/a"
+
+
+@dataclass(frozen=True, order=True)
+class ArmKey:
+    """Bandit arm identity for Hybrid V7 (D2.A). Hashable dict key."""
+
+    surface: str
+    kind: str
+    zone: str
+    opcode_class: str
+    pre_post: str
+
+    @classmethod
+    def v5(cls, kind: str, zone: str) -> "ArmKey":
+        """V5 / pure-A4 arm with collapsed opcode_class and pre_post."""
+        return cls(A4_TRACE_CELL, kind, zone, NA, NA)
+
+    def as_tuple(self) -> Tuple[str, str, str, str, str]:
+        return (self.surface, self.kind, self.zone, self.opcode_class, self.pre_post)
+
+    def is_v5_shape(self) -> bool:
+        return (
+            self.surface == A4_TRACE_CELL
+            and self.opcode_class == NA
+            and self.pre_post == NA
+        )
+
+    def __str__(self) -> str:
+        if self.is_v5_shape():
+            return f"{self.kind}|{self.zone}"
+        return (
+            f"{self.surface}|{self.kind}|{self.zone}|"
+            f"{self.opcode_class}|{self.pre_post}"
+        )
+
+    @classmethod
+    def parse(cls, arm_id_str: str) -> "ArmKey":
+        parts = arm_id_str.split("|")
+        if len(parts) == 2:
+            return cls.v5(parts[0], parts[1])
+        if len(parts) == 5:
+            return cls(*parts)
+        raise ValueError(f"invalid arm_id string: {arm_id_str!r}")
+
+    def __iter__(self):
+        """Back-compat: `kind, zone = arm` in legacy call sites."""
+        yield self.kind
+        yield self.zone
+
+
+def kind_of(arm: Union[ArmKey, Tuple[str, str]]) -> str:
+    if isinstance(arm, ArmKey):
+        return arm.kind
+    return arm[0]
+
+
+def zone_of(arm: Union[ArmKey, Tuple[str, str]]) -> str:
+    if isinstance(arm, ArmKey):
+        return arm.zone
+    return arm[1]
 
 
 @dataclass
@@ -155,7 +218,7 @@ class SemanticArmUniverse:
                 )
                 if not real_steps:
                     continue
-                arms[(kind, zone)] = real_steps
+                arms[ArmKey.v5(kind, zone)] = real_steps
 
         return cls(
             mutation_kinds=list(mutation_kinds),
@@ -180,23 +243,27 @@ class SemanticArmUniverse:
 
     def steps_in_arm(self, kind: str, zone: str) -> List[int]:
         """Return the (sorted) valid steps for `(kind, zone)`, or []."""
-        return self.arms.get((kind, zone), [])
+        return self.arms.get(ArmKey.v5(kind, zone), [])
+
+    def steps_for_arm(self, arm: ArmKey) -> List[int]:
+        """Return valid steps for an `ArmKey`."""
+        return self.arms.get(arm, [])
 
     def zones_for_kind(self, kind: str) -> List[str]:
         """Return all zones that contain at least one valid step for `kind`."""
-        return sorted({z for (k, z) in self.arms if k == kind})
+        return sorted({z for (k, z) in ((a.kind, a.zone) for a in self.arms) if k == kind})
 
     def kinds_for_zone(self, zone: str) -> List[str]:
         """Return all kinds with at least one valid step in `zone`."""
-        return sorted({k for (k, z) in self.arms if z == zone})
+        return sorted({k for (k, z) in ((a.kind, a.zone) for a in self.arms) if z == zone})
 
     def singleton_arms(self) -> List[ArmKey]:
         """Arms whose step set has exactly one step AND whose zone is a
         SINGLETON_ZONE. These get the forced-pull floor from
         ConstrainedTSScheduler (Pro §7.A)."""
         return sorted(
-            (k, z) for (k, z), steps in self.arms.items()
-            if z in SINGLETON_ZONES and len(steps) == 1
+            arm for arm, steps in self.arms.items()
+            if arm.zone in SINGLETON_ZONES and len(steps) == 1
         )
 
     def boundary_arms(self) -> List[ArmKey]:
@@ -204,7 +271,7 @@ class SemanticArmUniverse:
         floor in ConstrainedTSScheduler — Pro §7.C 'minimum pulls for
         boundary zones')."""
         return sorted(
-            (k, z) for (k, z) in self.arms.keys() if z in BOUNDARY_ZONES
+            arm for arm in self.arms if arm.zone in BOUNDARY_ZONES
         )
 
     # ------------------------------------------------------------------
@@ -225,7 +292,7 @@ class SemanticArmUniverse:
         ]
         for k in self.mutation_kinds:
             zones = self.zones_for_kind(k)
-            total_steps_for_kind = sum(len(self.arms[(k, z)]) for z in zones)
+            total_steps_for_kind = sum(len(steps) for arm, steps in self.arms.items() if arm.kind == k)
             lines.append(
                 f"    {k:25} {len(zones):>3} zones, "
                 f"{total_steps_for_kind:>5} steps total"
@@ -235,7 +302,7 @@ class SemanticArmUniverse:
         from a4.standalone.semantic_zones import SEMANTIC_ZONES as ALL_Z
         for z in ALL_Z:
             kinds = self.kinds_for_zone(z)
-            total_steps_for_zone = sum(len(self.arms[(k, z)]) for k in kinds)
+            total_steps_for_zone = sum(len(steps) for arm, steps in self.arms.items() if arm.zone == z)
             marker = ""
             if z in SINGLETON_ZONES:
                 marker = " (singleton)"
@@ -248,4 +315,12 @@ class SemanticArmUniverse:
         return "\n".join(lines)
 
 
-__all__ = ["SemanticArmUniverse", "ArmKey"]
+__all__ = [
+    "A4_TRACE_CELL",
+    "ARGUZZ_EXEC_FAULT",
+    "ArmKey",
+    "NA",
+    "SemanticArmUniverse",
+    "kind_of",
+    "zone_of",
+]

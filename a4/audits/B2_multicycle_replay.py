@@ -18,6 +18,8 @@ from a4.audits.audit_common import (
     load_inspection,
 )
 from a4.standalone.semantic_arm_universe import (
+    ArmKey,
+    SemanticArmUniverse,
     _MAJOR_FILTER_KINDS,
     _matching_cycles_at_step,
 )
@@ -49,7 +51,7 @@ def _step0_cycles(data, universe: SemanticArmUniverse) -> Dict[str, int]:
 
 
 def _instr_type_mod_step0_in_universe(universe: SemanticArmUniverse) -> bool:
-    return ("INSTR_TYPE_MOD", "step0") in universe.arms
+    return ArmKey.v5("INSTR_TYPE_MOD", "step0") in universe.arms
 
 
 def _b1_multicycle_violations(b1_path: Path) -> int:
@@ -85,7 +87,7 @@ def main() -> int:
     all_single = all(n <= 1 for n in major_filter_cycles.values())
 
     dropped_absent = all(
-        (kind, zone) not in universe.arms
+        ArmKey.v5(kind, zone) not in universe.arms
         for kind, zone in D40_REMOVED_ARMS
     )
 

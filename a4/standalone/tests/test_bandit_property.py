@@ -20,7 +20,7 @@ from a4.standalone.bandit_ts import (
     KindLevelUCBScheduler,
     KindLevelTSScheduler,
 )
-from a4.standalone.semantic_arm_universe import SemanticArmUniverse
+from a4.standalone.semantic_arm_universe import SemanticArmUniverse, ArmKey
 
 _TRIALS = 200
 _TOL = 1e-9
@@ -53,7 +53,7 @@ class TestConstrainedTSProperties:
             sched = ConstrainedTSScheduler(au, seed=seed)
             arm = sched.arms[seed % len(sched.arms)]
             a0, b0 = sched._alpha(arm), sched._beta(arm)
-            sched.update(arm[0], arm[1], 1)
+            sched.update(arm.kind, arm.zone, 1)
             assert sched._alpha(arm) == pytest.approx(a0 + 1)
             assert sched._beta(arm) == pytest.approx(b0)
 
@@ -63,7 +63,7 @@ class TestConstrainedTSProperties:
             sched = ConstrainedTSScheduler(au, seed=seed)
             arm = sched.arms[seed % len(sched.arms)]
             a0, b0 = sched._alpha(arm), sched._beta(arm)
-            sched.update(arm[0], arm[1], 0)
+            sched.update(arm.kind, arm.zone, 0)
             assert sched._alpha(arm) == pytest.approx(a0)
             assert sched._beta(arm) == pytest.approx(b0 + 1)
 
@@ -74,7 +74,7 @@ class TestConstrainedTSProperties:
             arm = sched.arms[seed % len(sched.arms)]
             success = seed % 2
             p0 = sched.pulls[arm]
-            sched.update(arm[0], arm[1], success)
+            sched.update(arm.kind, arm.zone, success)
             assert sched.pulls[arm] == p0 + 1
 
     def test_cold_start_mode_and_candidate(self):
@@ -87,7 +87,7 @@ class TestConstrainedTSProperties:
                 break
             d = sched.select()
             assert d.mode == "cold"
-            chosen = (d.kind, d.zone)
+            chosen = ArmKey.v5(d.kind, d.zone)
             assert chosen in cold
             min_pull = min(sched.pulls[a] for a in cold)
             assert sched.pulls[chosen] == min_pull

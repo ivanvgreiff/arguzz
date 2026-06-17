@@ -75,7 +75,7 @@ If you find yourself touching any of the above, stop and confirm with Ivan befor
 - [ ] `update_with_outcome(arm, outcome, success=None)` method exists on `ConstrainedTSScheduler` and is exercised by the synthetic test (NOT yet by the fuzzer — that's Batch 2)
 - [ ] `arm_id_for_decision(arm)` emits 2-pipe V5 format for `ArmKey.v5(...)` arms and 5-pipe full format for Arguzz-shape arms
 - [ ] All 3 new test files pass; full pytest sweep green
-- [ ] **Golden trace** test asserts byte-identity on a seed=42, V5 selector, N=200 mutation slice against a committed golden-DB blob (committed under `a4/standalone/tests/fixtures/d2a_golden_v5_seed42_n200.db`). The first time the test runs, it generates the golden; subsequent runs compare
+- [ ] **Golden trace** test asserts byte-identity on a seed=42, V5 selector, N=200 mutation slice against a committed golden fixture (`a4/standalone/tests/fixtures/d2a_golden_v5_trace_seed42_n200.json`). Scheduler-level JSON trace is sufficient for Batch 1; DB-level golden trace is Batch 2 scope once `outcome` column lands.
 - [ ] **Synthetic Arguzz-shape simulation** test passes per the 5 assertions in §4.6 row 3
 
 ---

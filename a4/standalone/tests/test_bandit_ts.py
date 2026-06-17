@@ -11,7 +11,7 @@ import pytest
 
 from a4.core.trace_parser import A4CycleInfo
 from a4.core.inspection_data import InspectionData
-from a4.standalone.semantic_arm_universe import SemanticArmUniverse
+from a4.standalone.semantic_arm_universe import SemanticArmUniverse, ArmKey
 from a4.standalone.bandit_ts import (
     ConstrainedTSScheduler,
     ConstantFloor,
@@ -94,8 +94,9 @@ class TestConstrainedTSSingletonFloor:
         singleton_counts = {a: 0 for a in singleton_arms}
         for _ in range(80):
             d = sched.select()
-            if (d.kind, d.zone) in singleton_counts:
-                singleton_counts[(d.kind, d.zone)] += 1
+            arm = ArmKey.v5(d.kind, d.zone)
+            if arm in singleton_counts:
+                singleton_counts[arm] += 1
             sched.update(d.kind, d.zone, 0)
 
         for a, cnt in singleton_counts.items():
@@ -123,7 +124,8 @@ class TestConstrainedTSFloorEnforcement:
         counts = {a: 0 for a in sched.arms}
         for _ in range(sched.epoch_size):
             d = sched.select()
-            counts[(d.kind, d.zone)] += 1
+            arm = next(a for a in sched.arms if a.kind == d.kind and a.zone == d.zone)
+            counts[arm] += 1
             sched.update(d.kind, d.zone, 0)
 
         min_count = min(counts.values())
