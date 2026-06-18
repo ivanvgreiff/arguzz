@@ -28,6 +28,9 @@ class A4CycleInfo:
     major: int
     minor: int
     machine_mode: int = 0
+    state: int = 0
+    diff_count_0: int = 0
+    diff_count_1: int = 0
     
     @classmethod
     def parse(cls, line: str) -> Optional['A4CycleInfo']:
@@ -46,6 +49,9 @@ class A4CycleInfo:
                 major=data['major'],
                 minor=data['minor'],
                 machine_mode=data.get('machine_mode', 0),
+                state=data.get('state', 0),
+                diff_count_0=data.get('diff_count_0', 0),
+                diff_count_1=data.get('diff_count_1', 0),
             )
         except (json.JSONDecodeError, KeyError):
             return None
@@ -479,6 +485,9 @@ class A4PostMutCycleDump:
     minor: int
     machine_mode: int
     txn_idx: int
+    state: int = 0
+    diff_count_0: int = 0
+    diff_count_1: int = 0
 
     @classmethod
     def parse(cls, line: str) -> Optional["A4PostMutCycleDump"]:
@@ -497,6 +506,9 @@ class A4PostMutCycleDump:
                 minor=data["minor"],
                 machine_mode=data["machine_mode"],
                 txn_idx=data["txn_idx"],
+                state=data.get("state", 0),
+                diff_count_0=data.get("diff_count_0", 0),
+                diff_count_1=data.get("diff_count_1", 0),
             )
         except (json.JSONDecodeError, KeyError):
             return None
@@ -515,3 +527,197 @@ def parse_cycle_mode_mod(output: str) -> List[A4CycleModeMod]:
 def parse_post_mut_cycle_dump(output: str) -> List[A4PostMutCycleDump]:
     """Parse all <a4_post_mut_cycle_dump> entries from output."""
     return [d for line in output.splitlines() if (d := A4PostMutCycleDump.parse(line))]
+
+
+@dataclass
+class A4TxnAddrMod:
+    step: int
+    txn_idx: int
+    old_addr: int
+    new_addr: int
+    cycle: int
+    word: int
+    prev_cycle: int
+    prev_word: int
+    cycle_idx: Optional[int] = None
+    pc: Optional[int] = None
+    major: Optional[int] = None
+    minor: Optional[int] = None
+
+    @classmethod
+    def parse(cls, line: str) -> Optional["A4TxnAddrMod"]:
+        match = re.search(r"<a4_txn_addr_mod>({.*?})</a4_txn_addr_mod>", line)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(1))
+            return cls(
+                step=data["step"],
+                txn_idx=data["txn_idx"],
+                old_addr=data["old_addr"],
+                new_addr=data["new_addr"],
+                cycle=data["cycle"],
+                word=data["word"],
+                prev_cycle=data["prev_cycle"],
+                prev_word=data["prev_word"],
+                cycle_idx=data.get("cycle_idx"),
+                pc=data.get("pc"),
+                major=data.get("major"),
+                minor=data.get("minor"),
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+
+
+@dataclass
+class A4TxnCyclePhaseMod:
+    step: int
+    txn_idx: int
+    addr: int
+    old_cycle: int
+    new_cycle: int
+    old_phase: str
+    new_phase: str
+    word: int
+    prev_word: int
+    cycle_idx: Optional[int] = None
+    pc: Optional[int] = None
+    major: Optional[int] = None
+    minor: Optional[int] = None
+
+    @classmethod
+    def parse(cls, line: str) -> Optional["A4TxnCyclePhaseMod"]:
+        match = re.search(r"<a4_txn_cycle_phase_mod>({.*?})</a4_txn_cycle_phase_mod>", line)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(1))
+            return cls(
+                step=data["step"],
+                txn_idx=data["txn_idx"],
+                addr=data["addr"],
+                old_cycle=data["old_cycle"],
+                new_cycle=data["new_cycle"],
+                old_phase=data["old_phase"],
+                new_phase=data["new_phase"],
+                word=data["word"],
+                prev_word=data["prev_word"],
+                cycle_idx=data.get("cycle_idx"),
+                pc=data.get("pc"),
+                major=data.get("major"),
+                minor=data.get("minor"),
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+
+
+@dataclass
+class A4CyclePcMod:
+    step: int
+    cycle_idx: int
+    old_pc: int
+    new_pc: int
+    major: int
+    minor: int
+    machine_mode: int
+
+    @classmethod
+    def parse(cls, line: str) -> Optional["A4CyclePcMod"]:
+        match = re.search(r"<a4_cycle_pc_mod>({.*?})</a4_cycle_pc_mod>", line)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(1))
+            return cls(
+                step=data["step"],
+                cycle_idx=data["cycle_idx"],
+                old_pc=data["old_pc"],
+                new_pc=data["new_pc"],
+                major=data["major"],
+                minor=data["minor"],
+                machine_mode=data["machine_mode"],
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+
+
+@dataclass
+class A4CycleStateMod:
+    step: int
+    cycle_idx: int
+    pc: int
+    old_state: int
+    new_state: int
+    major: int
+    minor: int
+
+    @classmethod
+    def parse(cls, line: str) -> Optional["A4CycleStateMod"]:
+        match = re.search(r"<a4_cycle_state_mod>({.*?})</a4_cycle_state_mod>", line)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(1))
+            return cls(
+                step=data["step"],
+                cycle_idx=data["cycle_idx"],
+                pc=data["pc"],
+                old_state=data["old_state"],
+                new_state=data["new_state"],
+                major=data["major"],
+                minor=data["minor"],
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+
+
+@dataclass
+class A4CycleDiffCountMod:
+    step: int
+    cycle_idx: int
+    index: int
+    old_diff_count: int
+    new_diff_count: int
+    pc: int
+    major: int
+    minor: int
+
+    @classmethod
+    def parse(cls, line: str) -> Optional["A4CycleDiffCountMod"]:
+        match = re.search(r"<a4_cycle_diff_count_mod>({.*?})</a4_cycle_diff_count_mod>", line)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(1))
+            return cls(
+                step=data["step"],
+                cycle_idx=data["cycle_idx"],
+                index=data["index"],
+                old_diff_count=data["old_diff_count"],
+                new_diff_count=data["new_diff_count"],
+                pc=data["pc"],
+                major=data["major"],
+                minor=data["minor"],
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+
+
+def parse_txn_addr_mod(output: str) -> List[A4TxnAddrMod]:
+    return [t for line in output.splitlines() if (t := A4TxnAddrMod.parse(line))]
+
+
+def parse_txn_cycle_phase_mod(output: str) -> List[A4TxnCyclePhaseMod]:
+    return [t for line in output.splitlines() if (t := A4TxnCyclePhaseMod.parse(line))]
+
+
+def parse_cycle_pc_mod(output: str) -> List[A4CyclePcMod]:
+    return [t for line in output.splitlines() if (t := A4CyclePcMod.parse(line))]
+
+
+def parse_cycle_state_mod(output: str) -> List[A4CycleStateMod]:
+    return [t for line in output.splitlines() if (t := A4CycleStateMod.parse(line))]
+
+
+def parse_cycle_diff_count_mod(output: str) -> List[A4CycleDiffCountMod]:
+    return [t for line in output.splitlines() if (t := A4CycleDiffCountMod.parse(line))]

@@ -223,6 +223,26 @@ class InspectionData:
             elif kind == "CYCLE_MODE_MOD":
                 if cycle.step != 0:
                     valid_steps.add(cycle.step)
+
+            elif kind == "TXN_ADDR_MOD":
+                if cycle.step != 0 and cycle.step in self._step_to_mem_txns:
+                    valid_steps.add(cycle.step)
+
+            elif kind == "TXN_CYCLE_PHASE_MOD":
+                if cycle.step != 0 and cycle.step in self._step_to_all_txns:
+                    valid_steps.add(cycle.step)
+
+            elif kind == "CYCLE_PC_MOD":
+                if cycle.step != 0 and cycle.major <= 6:
+                    valid_steps.add(cycle.step)
+
+            elif kind == "CYCLE_STATE_MOD":
+                if cycle.step != 0:
+                    valid_steps.add(cycle.step)
+
+            elif kind == "CYCLE_DIFF_COUNT_MOD":
+                if cycle.step != 0:
+                    valid_steps.add(cycle.step)
         
         # Return sorted list for deterministic ordering
         return sorted(valid_steps)

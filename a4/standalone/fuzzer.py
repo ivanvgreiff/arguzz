@@ -87,9 +87,17 @@ from a4.standalone.mutations import (
     get_txn_prev_word_targets, create_txn_prev_word_config, TxnPrevWordModTarget,
     get_txn_prev_cycle_targets, create_txn_prev_cycle_config, TxnPrevCycleModTarget,
     get_cycle_mode_targets, create_cycle_mode_config, CycleModeModTarget,
+    get_txn_addr_targets, create_txn_addr_config, TxnAddrModTarget,
+    get_txn_cycle_phase_targets, create_txn_cycle_phase_config, TxnCyclePhaseModTarget,
+    get_cycle_pc_targets, create_cycle_pc_config, CyclePcModTarget,
+    get_cycle_state_targets, create_cycle_state_config, CycleStateModTarget,
 )
 from a4.standalone.mutations.txn_prev_word_mod import generate_new_value as generate_txn_prev_word_value
 from a4.standalone.mutations.txn_prev_cycle_mod import generate_new_value as generate_txn_prev_cycle_value
+from a4.standalone.mutations.txn_addr_mod import generate_new_value as generate_txn_addr_value
+from a4.standalone.mutations.cycle_pc_mod import generate_new_value as generate_cycle_pc_value
+from a4.standalone.mutations.cycle_state_mod import generate_new_value as generate_cycle_state_value
+from a4.standalone.mutations.cycle_diff_count_mod import generate_new_value as generate_cycle_diff_count_value
 from a4.standalone.mutations.instr_type_mod import generate_random_mutation as generate_instr_mutation
 
 # Surgical instruction mutations
@@ -231,6 +239,11 @@ class A4Fuzzer:
         "TXN_PREV_WORD_MOD",
         "TXN_PREV_CYCLE_MOD",
         "CYCLE_MODE_MOD",
+        "TXN_ADDR_MOD",
+        "TXN_CYCLE_PHASE_MOD",
+        "CYCLE_PC_MOD",
+        "CYCLE_STATE_MOD",
+        "CYCLE_DIFF_COUNT_MOD",
     ]
     
     def __init__(
@@ -1237,6 +1250,11 @@ class A4Fuzzer:
         "TXN_PREV_WORD_MOD": "a4_txn_prev_word_mod",
         "TXN_PREV_CYCLE_MOD": "a4_txn_prev_cycle_mod",
         "CYCLE_MODE_MOD": "a4_cycle_mode_mod",
+        "TXN_ADDR_MOD": "a4_txn_addr_mod",
+        "TXN_CYCLE_PHASE_MOD": "a4_txn_cycle_phase_mod",
+        "CYCLE_PC_MOD": "a4_cycle_pc_mod",
+        "CYCLE_STATE_MOD": "a4_cycle_state_mod",
+        "CYCLE_DIFF_COUNT_MOD": "a4_cycle_diff_count_mod",
     }
     _BANDIT_TRACE_MOD_RE = re.compile(r"<(\w+)>({.*?})</\1>")
 
@@ -1733,6 +1751,95 @@ class A4Fuzzer:
                 },
             }
             return config, new_mode, target.original_mode
+
+        elif kind == "TXN_ADDR_MOD":
+            targets = get_txn_addr_targets(step, self.data)
+            if not targets:
+                return None, 0, 0
+            target = self.rng.choice(targets)
+            mutated_value = generate_txn_addr_value(target, self.rng, self.data)
+            config = {
+                "mutation_type": "TXN_ADDR_MOD",
+                "step": target.step,
+                "txn_idx": target.txn_idx,
+                "addr": mutated_value,
+                "_info": {
+                    "original_addr": target.original_addr,
+                    "original_cycle": target.original_cycle,
+                    "original_word": target.original_word,
+                },
+            }
+            return config, mutated_value, target.original_addr
+
+        elif kind == "TXN_CYCLE_PHASE_MOD":
+            targets = get_txn_cycle_phase_targets(step, self.data)
+            if not targets:
+                return None, 0, 0
+            target = self.rng.choice(targets)
+            new_cycle = target.original_cycle ^ 1
+            config = {
+                "mutation_type": "TXN_CYCLE_PHASE_MOD",
+                "step": target.step,
+                "txn_idx": target.txn_idx,
+                "_info": {
+                    "addr": f"0x{target.addr:08x}",
+                    "original_cycle": target.original_cycle,
+                    "new_cycle": new_cycle,
+                },
+            }
+            return config, new_cycle, target.original_cycle
+
+        elif kind == "CYCLE_PC_MOD":
+            target = get_cycle_pc_targets(step, self.data)
+            if not target:
+                return None, 0, 0
+            mutated_value = generate_cycle_pc_value(target, self.rng)
+            config = {
+                "mutation_type": "CYCLE_PC_MOD",
+                "step": target.step,
+                "pc": mutated_value,
+                "_info": {
+                    "original_pc": target.original_pc,
+                    "major": target.major,
+                    "minor": target.minor,
+                },
+            }
+            return config, mutated_value, target.original_pc
+
+        elif kind == "CYCLE_STATE_MOD":
+            target = get_cycle_state_targets(step, self.data)
+            if not target:
+                return None, 0, 0
+            mutated_value = generate_cycle_state_value(target, self.rng)
+            config = {
+                "mutation_type": "CYCLE_STATE_MOD",
+                "step": target.step,
+                "state": mutated_value,
+                "_info": {
+                    "original_state": target.original_state,
+                    "pc": f"0x{target.pc:08x}",
+                },
+            }
+            return config, mutated_value, target.original_state
+
+        elif kind == "CYCLE_DIFF_COUNT_MOD":
+            from a4.standalone.mutations.cycle_diff_count_mod import get_all_targets as get_cycle_diff_count_all
+            targets = [t for t in get_cycle_diff_count_all(self.data) if t.step == step]
+            if not targets:
+                return None, 0, 0
+            target = self.rng.choice(targets)
+            mutated_value = generate_cycle_diff_count_value(target, self.rng)
+            config = {
+                "mutation_type": "CYCLE_DIFF_COUNT_MOD",
+                "step": target.step,
+                "index": target.index,
+                "diff_count": mutated_value,
+                "_info": {
+                    "original_value": target.original_value,
+                    "index": target.index,
+                },
+            }
+            return config, mutated_value, target.original_value
 
         elif kind == "INSTR_TYPE_MOD":
             target = get_instr_type_targets(step, self.data)

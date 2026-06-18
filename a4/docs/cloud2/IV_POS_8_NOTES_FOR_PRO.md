@@ -20,6 +20,7 @@ This is **not** the final Pro-facing report — that lives at `IV_POS_8_D2_REPOR
 - [NFP-8: D1.B paired-test corpus — V5-static + decay variants only (20 rows); V1 excluded from decay paired tests](#nfp-8-d1b-paired-test-corpus--v5-static--decay-variants-only-20-rows-v1-excluded-from-decay-paired-tests)
 - [NFP-9: D1.E reward rewire — L0 + L1 only; K stays anchored to `_local_discoveries` per Pro §7](#nfp-9-d1e-reward-rewire--l0--l1-only-k-stays-anchored-to-_local_discoveries-per-pro-7)
 - [NFP-10: Hook 3 `addr` vs `byte_addr` field-priority bug — production CGC memory regions mis-labeled across all V1-V5 + D1.A; post-hoc replay corrects R2/D1.A; cloud2 forward runs fixed](#nfp-10-hook-3-addr-vs-byte_addr-field-priority-bug--production-cgc-memory-regions-mis-labeled-across-all-v1-v5--d1a-post-hoc-replay-corrects-r2d1a-cloud2-forward-runs-fixed)
+- [NFP-11: D2.B dead/live A4-kind split — 3 live + 5 dead arms on sha2-host](#nfp-11-d2b-deadlive-a4-kind-split--3-live--5-dead-arms-on-sha2-host)
 
 ---
 
@@ -324,6 +325,45 @@ D2.B Batch 1 ships a small retrofix (task 1.5e, ~10 LOC):
 4. **Ask:** Pro confirms (a) `byte_addr` is the correct field for VM-region and page-class labeling (we believe yes based on D8 + ELF semantics + the explicit `ffi.cpp` calculation), and (b) post-hoc replay is acceptable for D1.B / R2 corrected metrics (re-dispatch only warranted if Pro wants legally-clean bandit trajectory under corrected reward).
 
 **Source:** `IV_POS_8_D1_B_SPEC.md` v0.4 §3.2.5 (Batch 1.6); `D1B_BATCH1_REPORT.md` §7 (Batch 1.6 amendment, to be drafted by Composer); `compressed_global_extractor.py:216` (the fix); `coverage_db.py:162-173` (corrected comment already landed); `ffi.cpp:113, 553-556, 590-593` (C++ ground truth); this `NFP-10` entry.
+
+---
+
+## NFP-11: D2.B dead/live A4-kind split — 3 live + 5 dead arms on sha2-host
+
+**Decision:** Of the **8 A4 mutation kinds Pro requested** for D2.B expansion, attestation on sha2-host (user-instruction cycles, `--in1 5 --in4 10`) shows **3 are live bandit signals** and **5 are dead arms** (trace mutates; witness unchanged; verifier accepts).
+
+**Live kinds (constraint rejection fires):**
+
+| Kind | Mechanism | Hook 3 family |
+|------|-----------|---------------|
+| B.1 `TXN_PREV_WORD_MOD` | `getMemoryTxn` returns mutated `prevWord` → memory delta | `memory` |
+| B.2 `TXN_PREV_CYCLE_MOD` | `getMemoryTxn` returns mutated `prevCycle` → memory delta | `memory` + `cycle` |
+| B.8 `CYCLE_DIFF_COUNT_MOD` | `extern_getDiffCount` reads trace directly | `cycle` |
+
+**Dead-arm kinds (telemetry-only on sha2-host):**
+
+| Kind | Watchlist | Mechanism |
+|------|-----------|-----------|
+| B.3 `CYCLE_MODE_MOD` | W-17 | `set_cycle` preset overwritten by `step_Top` `exec_Reg(newMode)` |
+| B.4 `TXN_ADDR_MOD` | W-18 | Witness addr = execution `addrElem`; trace `txn.addr` sanity-check only |
+| B.5 `TXN_CYCLE_PHASE_MOD` | W-18 | Witness phase = execution `memCycle`; trace LSB unused |
+| B.6 `CYCLE_PC_MOD` | W-17 | `set_cycle` preset overwritten by `exec_Reg(newPc)` |
+| B.7 `CYCLE_STATE_MOD` | W-17 | `set_cycle` preset overwritten by `exec_Reg(newState)` |
+
+**Why this matters for D2.G:**
+
+- `V5_expanded={16 A4 kinds}` in registry includes all 8 Pro-requested kinds, but **campaign-effective live set on sha2-host is ~11 kinds** (3 txn/cycle live + 8 pre-existing live − 5 dead among the 8 new).
+- Dead arms remain implemented + attested (xfail) for continuous verification; **D2.B-PS-1 postscript** (post-Batch-4) removes them from `MUTATION_KINDS` so bandit does not waste pulls.
+- This is **not a soundness bug (W-16)** — proofs attest original execution; witness columns were not corrupted.
+
+**Mechanistic proof:**
+
+- W-17: [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md)
+- W-18: [`D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md)
+
+**Qualification:** Dead-arm claims scoped to **sha2-host user-instruction memory txns** unless noted. Paging/ECALL cycle classes may differ (same qualification as B.3 paging caveat in Batch 2 audit).
+
+**Source:** [`D2B_BATCH3_COMPOSER_REPORT.md`](./composer/D2B_BATCH3_COMPOSER_REPORT.md); [`IV_POS_8_D2_PLAN.md`](./IV_POS_8_D2_PLAN.md) v0.13 §6d, W-17, W-18; this `NFP-11` entry.
 
 ---
 

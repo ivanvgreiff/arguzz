@@ -33,6 +33,8 @@ from a4.standalone.mutations import pre_exec_reg_mod, instr_type_mod, mem_val_mo
 from a4.standalone.mutations import instr_word_mod, instr_word_mod_sur
 from a4.standalone.mutations import txn_prev_word_mod
 from a4.standalone.mutations import txn_prev_cycle_mod, cycle_mode_mod
+from a4.standalone.mutations import txn_addr_mod, txn_cycle_phase_mod
+from a4.standalone.mutations import cycle_pc_mod, cycle_state_mod, cycle_diff_count_mod
 
 if TYPE_CHECKING:
     from a4.core.inspection_data import InspectionData
@@ -49,6 +51,11 @@ _MUTATION_MODULES = {
     "TXN_PREV_WORD_MOD": txn_prev_word_mod,
     "TXN_PREV_CYCLE_MOD": txn_prev_cycle_mod,
     "CYCLE_MODE_MOD": cycle_mode_mod,
+    "TXN_ADDR_MOD": txn_addr_mod,
+    "TXN_CYCLE_PHASE_MOD": txn_cycle_phase_mod,
+    "CYCLE_PC_MOD": cycle_pc_mod,
+    "CYCLE_STATE_MOD": cycle_state_mod,
+    "CYCLE_DIFF_COUNT_MOD": cycle_diff_count_mod,
 }
 
 def _cycle_matches_kind_filter(kind: str, cycle, data: "InspectionData") -> bool:
@@ -71,6 +78,14 @@ def _cycle_matches_kind_filter(kind: str, cycle, data: "InspectionData") -> bool
         return cycle.step != 0 and cycle.step in data._step_to_all_txns
     if kind == "CYCLE_MODE_MOD":
         return cycle.step != 0
+    if kind == "TXN_ADDR_MOD":
+        return cycle.step != 0 and cycle.step in data._step_to_mem_txns
+    if kind == "TXN_CYCLE_PHASE_MOD":
+        return cycle.step != 0 and cycle.step in data._step_to_all_txns
+    if kind == "CYCLE_PC_MOD":
+        return cycle.step != 0 and cycle.major <= 6
+    if kind in ("CYCLE_STATE_MOD", "CYCLE_DIFF_COUNT_MOD"):
+        return cycle.step != 0
     return True
 
 
@@ -86,6 +101,7 @@ _MAJOR_FILTER_KINDS = frozenset({
     "COMP_OUT_MOD", "LOAD_VAL_MOD", "STORE_OUT_MOD",
     "PRE_EXEC_REG_MOD", "INSTR_TYPE_MOD",
     "INSTR_WORD_MOD_FULL", "INSTR_WORD_MOD_SUR",
+    "CYCLE_PC_MOD",
 })
 
 
@@ -111,6 +127,19 @@ def _step_has_real_target(kind: str, step: int, data: "InspectionData") -> bool:
         elif kind == "CYCLE_MODE_MOD":
             t = mod.get_targets_at_step(step, data)
             t = [t] if t is not None else []
+        elif kind == "TXN_ADDR_MOD":
+            t = mod.get_targets_at_step(step, data)
+        elif kind == "TXN_CYCLE_PHASE_MOD":
+            t = mod.get_targets_at_step(step, data)
+        elif kind == "CYCLE_PC_MOD":
+            t = mod.get_targets_at_step(step, data)
+            t = [t] if t is not None else []
+        elif kind == "CYCLE_STATE_MOD":
+            t = mod.get_targets_at_step(step, data)
+            t = [t] if t is not None else []
+        elif kind == "CYCLE_DIFF_COUNT_MOD":
+            t = mod.get_all_targets(data)
+            t = [x for x in t if x.step == step]
         else:
             t = mod.get_targets_at_step(step, data)
     except Exception:

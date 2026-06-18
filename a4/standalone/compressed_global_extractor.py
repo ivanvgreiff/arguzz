@@ -174,6 +174,9 @@ _TXN_ROLE_BY_KIND: Dict[str, str] = {
     "TXN_PREV_WORD_MOD":   "prev_word",
     "TXN_PREV_CYCLE_MOD":  "prev_cycle",
     "CYCLE_MODE_MOD":        "read",
+    "TXN_ADDR_MOD":          "addr",
+    "TXN_CYCLE_PHASE_MOD":   "cycle_phase",
+    "CYCLE_DIFF_COUNT_MOD":  "diff_count",
 }
 
 

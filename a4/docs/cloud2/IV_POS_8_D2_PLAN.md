@@ -3,7 +3,7 @@
 **Branch:** `cloud2`
 **Date opened:** 2026-06-16
 **Author:** Ivan + Opus (planning); Composer (implementation, future batches)
-**Status:** **DRAFT v0.11** — D2.A merged at `7b66fb9`; D2.B Batch 1 landed; **Batch 2 complete in working tree** (B.2 live, B.3 dead-arm proven). **v0.11 additions (post Batch 2 dead-arm audit):** (1) **W-17** — `set_cycle` / `exec_Reg` overwrite dead-arm class; B.3 **confirmed** dead on sha2-host user cycles; **B.6 and B.7 predicted dead** on same mechanism — Batch 3 attestation must verify or reconcile against [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md). (2) **§6c S3** extended with Layer 3b (witness persistence) gap. (3) New **§6d** Batch 3 attestation prediction table. (4) **§9b** clarifies guard `SoundnessBugSuspected` fires for both W-16 (real soundness gap) and W-17 (dead arm); investigation distinguishes them. Prior v0.10: §6c certainty stack, four-channel §9b, W-15/W-16. D2.B v0.5.3 spec patch tracks audit findings. Next: Batch 2 commit after Ivan sign-off; Batch 3 kickoff with B.6/B.7 dead-arm expectations locked.
+**Status:** **DRAFT v0.13** — D2.A merged at `7b66fb9`; D2.B Batch 1 landed; Batch 2 committed `f81523c`; **Batch 3 complete in working tree** (B.8 live; B.4–B.7 dead arms mechanism-proven). **v0.13 additions (post Batch 3 txn dead-arm audit):** **W-18** execution-derived witness-key dead-arm class for B.4/B.5; §6d empirical column populated; §9c postscript scope expanded to 5 dead kinds (B.3–B.7). v0.12: W-17b, §9c postscript. Next: Batch 4; then D2.B postscript §9c.
 **Parent:** [`IV_POS_8_PRELIMINARY_PLAN.md`](./IV_POS_8_PRELIMINARY_PLAN.md) — the 4-deliverable master plan
 **Sibling specs (D1):** [`IV_POS_8_D1_A_SPEC.md`](./IV_POS_8_D1_A_SPEC.md) (locked, running on POS)
 **Sibling specs (D2):** [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) (D2.A — foundation; in review)
@@ -502,11 +502,11 @@ trace.cycles[N].field mutated
 | Kind | Trace field | Witness path | **Expected attestation outcome** | If outcome differs → |
 |------|-------------|--------------|----------------------------------|----------------------|
 | **B.3** `CYCLE_MODE_MOD` | `machine_mode` | set_cycle → overwritten | **CONFIRMED DEAD** (Batch 2): guard fires, verifier accepts, xfail documented | N/A — baseline |
-| **B.4** `TXN_ADDR_MOD` | `txns[].addr` | extern memory path | **LIVE** — C2 and/or C3 `memory` rejection expected | Investigate if all channels silent |
-| **B.5** `TXN_CYCLE_PHASE_MOD` | `txns[].cycle` LSB | extern memory path | **LIVE** — C2 and/or C3 rejection expected | Investigate if all channels silent |
-| **B.6** `CYCLE_PC_MOD` | `cycle.pc` | set_cycle → **predicted** same overwrite as B.3 (`steps.cpp:14739-14740`) | **PREDICTED DEAD** — same pattern as B.3: Layers 2–4 pass, guard fires, verifier accepts | **Reconcile audit** — find alternate witness path we missed |
-| **B.7** `CYCLE_STATE_MOD` | `cycle.state` | set_cycle → **predicted** same overwrite as B.3 (`steps.cpp:14743`) | **PREDICTED DEAD** — same pattern as B.3 | **Reconcile audit** — state may drive witness layout via path we didn't trace |
-| **B.8** `CYCLE_DIFF_COUNT_MOD` | `diff_count[]` | `extern_getDiffCount` reads trace directly | **PREDICTED LIVE** — rejection expected (W-3 drop only if dead arm proven) | Reconcile if dead — check extern wiring |
+| **B.4** `TXN_ADDR_MOD` | `txns[].addr` | execution-derived `addrElem` in `MemoryIO`; trace addr sanity-check only | **CONFIRMED DEAD (W-18)** — Batch 3 empirical + [`D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md) | Investigate if live rejection appears |
+| **B.5** `TXN_CYCLE_PHASE_MOD` | `txns[].cycle` LSB | execution-derived `memCycle` (2×cycle±1); trace LSB unused in witness | **CONFIRMED DEAD (W-18)** — same audit | Investigate if live rejection appears |
+| **B.6** `CYCLE_PC_MOD` | `cycle.pc` | set_cycle → **confirmed** same overwrite as B.3 (`steps.cpp:14739-14740`) | **CONFIRMED DEAD (W-17)** — Batch 3 attestation | **Reconcile audit** if live |
+| **B.7** `CYCLE_STATE_MOD` | `cycle.state` | set_cycle → **confirmed** same overwrite as B.3 (`steps.cpp:14743`) | **CONFIRMED DEAD (W-17)** — Batch 3 attestation | **Reconcile audit** if live |
+| **B.8** `CYCLE_DIFF_COUNT_MOD` | `diff_count[]` | `extern_getDiffCount` reads trace directly | **CONFIRMED LIVE** — `cycle` Hook 3 family | Reconcile if dead |
 
 ### Attestation pattern for predicted-dead kinds (B.6, B.7)
 
@@ -590,7 +590,9 @@ These are decisions we intentionally made "go with X for now, revisit at Y if Z"
 | **W-14** | Pro-presentation timing changed (was D2.G end, now end of D2.B) — interim Pro check-in becomes the gate for D2.C kickoff | **End of D2.B Batch 4** | Pro does not greenlight D2 continuation OR Pro requests scope changes that invalidate D2.C/D2.D drafts | Pause D2.C kickoff; re-spec per Pro feedback; document scope shift in `IV_POS_8_D2_PLAN.md` v0.9+ |
 | **W-15** | S1 zone classifier has only the D54 spot pin — no systematic per-(step, zone) audit (cf. §6c) | **D2.D variant filtering kickoff** | A run shows arm `(kind, zoneX)` pulling steps the classifier doesn't actually map to `zoneX` | Add sampled audit: N=100 random `(step, kind)` pulls from a D2.D run, assert zone matches classifier; if mismatches found, harden classifier before D2.E |
 | **W-16** | Soundness-bug guard's rejection channels (post D2.B Batch 1 Issue #6) — guard accepts `<constraint_fail>` OR `verify segment` OR `<a4_family_residue nonzero=true>` (Hook 3) OR `<a4_error>` as rejection; fires only on `verifier_accepted=True` after edit | **Each D2.B kind attestation** | Any new kind reaches Layer 4 with all four channels silent AND verifier accepts — re-investigate; do not relax guard | Surface as NFP candidate; consult mem.zir / lookups.zir source to find which constraint the kind should have broken; either fix kind to actually exercise that constraint, or document as known soundness gap with Pro disclosure |
-| **W-17** | **`set_cycle` overwrite dead-arm class** — `trace.cycles[N].pc / .state / .machine_mode` preset via `set_cycle` (`witgen/mod.rs:1063-1075`) but overwritten by `step_Top`'s `exec_Reg(inst_result.new*, ...)` (`steps.cpp:14739-14745` → `exec_NondetReg` STORE). B.3 **confirmed dead** on sha2-host user cycles (Batch 2). **B.6 and B.7 predicted dead** on same mechanism. B.4/B.5/B.8 use extern-read paths — predicted live. | **D2.B Batch 3 attestation** (B.4–B.8) | B.6 or B.7 attestation shows **live rejection** (C1/C2/C3 fires) OR predicted-dead kind fails guard assertion | **Stop Batch 3 merge**; re-read [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md); find missed witness path; update §6d table + W-17. If confirmed live → demote W-17 prediction for that kind; if confirmed dead → xfail + consider dropping from sha2-host arm universe |
+| **W-17** | **`set_cycle` overwrite dead-arm class** — `trace.cycles[N].pc / .state / .machine_mode` preset via `set_cycle` (`witgen/mod.rs:1063-1075`) but overwritten by `step_Top`'s `exec_Reg(inst_result.new*, ...)` (`steps.cpp:14739-14745` → `exec_NondetReg` STORE). B.3 **confirmed dead** (Batch 2). B.6 and B.7 **confirmed dead** (Batch 3). | **D2.B Batch 3 attestation** | Predicted-dead set_cycle kind shows live rejection OR guard does not fire while verifier accepts | Re-read [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md); update §6d + W-17. |
+| **W-18** | **Execution-derived witness-key dead-arm class (txn fields)** — `trace.txns[i].addr` and `trace.txns[i].cycle` LSB are mutated in trace but **never enter witness columns**. `extern_getMemoryTxn(addrElem)` takes execution-derived address; returns only `prevCycle`, `prevWord`, `word`. Witness addr/phase come from DSL `MemoryIO(addr, memCycle)` execution args (`mem.zir:65-75`, `88-101`). B.4 and B.5 **confirmed dead** on sha2-host user memory txns (Batch 3 + [`D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md)). Distinct from W-17 (not set_cycle overwrite). `FAULT_INJECTION_ENABLED` suppresses sanity **throws** on addr/cycle mismatch but does **not** suppress Hook 3 or verify segment. | **D2.B Batch 3 attestation + txn audit** | B.4 or B.5 shows live rejection with witness path audit showing mutated field in committed column | Stop merge; investigate W-16 vs incomplete audit. If confirmed dead → xfail + drop from `MUTATION_KINDS` at §9c postscript. |
+| **W-17b** | **Dead-arm campaign exclusion implemented via registry absence** — confirmed-dead kinds are excluded from campaigns by deliberately NOT being in `A4Fuzzer.MUTATION_KINDS` (rather than via runtime filter logic). All campaign kind-selection paths (`_run_pilot` line 453, `ArmUniverse` lines 419/816, `_run_one_mutation` line 1402, `SemanticArmUniverse.build` line 729) read from the same `MUTATION_KINDS` registry, so absence is structurally enforced. Python module + Rust handler + `_MUTATION_MODULES` registration + `inspection_data.get_valid_steps_for_kind` branches + attestation tests + unit tests all KEPT so the W-17 mechanism remains under continuous verification (attestation tests bypass the registry — they import the module directly and reference the kind string literally). Decision rationale: avoiding runtime filter logic eliminates bypass risk (the registry IS the filter). | **D2.B postscript task (§13)** — runs after Batch 4 completes; performed by Opus | A new code site is introduced that uses `MUTATION_KINDS` for a purpose where dead kinds should NOT be filtered (e.g., a kind-implementation audit) — would need to use a different source-of-truth | Add a parallel `IMPLEMENTED_KINDS_ALL` constant if needed, but only when an actual use case appears. Until then, the registry-exclusion approach is sufficient. |
 
 **Convention:** when one of these triggers fires, the team's first action is to **read the row's "Fallback" column** and check whether the fallback is still viable given current state. Then re-decide.
 
@@ -611,7 +613,7 @@ These are decisions we intentionally made "go with X for now, revisit at Y if Z"
 
 **True soundness bug (W-16) = (mutation applied) AND (trace changed) AND (ALL FOUR channels silent) AND (verifier_accepted=True) AND (witness columns genuinely corrupted).**
 
-**Dead arm (W-17) = same guard trigger (trace changed + verifier accepts + all channels silent) BUT witness columns were NOT corrupted** — trace preset overwritten before constraints bind. Investigation (source-level witgen path audit) distinguishes W-16 from W-17. B.3 Batch 2 is the template: call guard → assert it fires → document dead arm via xfail; **do not** treat guard fire alone as W-16.
+**Dead arm (W-17 / W-18) = same guard trigger (trace changed + verifier accepts + all channels silent) BUT witness columns were NOT corrupted** — W-17: trace preset overwritten before constraints bind; W-18: execution-derived witness keys never read mutated txn fields. Investigation (source-level witgen path audit) distinguishes W-16 from W-17/W-18. B.3 Batch 2 and B.4/B.5 Batch 3 are templates: call guard → assert it fires → document dead arm via xfail; **do not** treat guard fire alone as W-16.
 
 In particular, **C2 alone catches what C1 misses** — this is the Path A vs Path B asymmetry documented in `a4/docs/precloud/PHASE_III_2_5_INSTR_TYPE_MOD_INVESTIGATION.md` §0.1. C3 (Hook 3) provides redundant + family-attributable signal.
 
@@ -653,6 +655,75 @@ Every `test_d2b_<kind>_attestation.py` MUST:
 - D2.G analysis pipeline MUST classify outcomes by which channel rejected (for Pro telemetry)
 
 This rule applies retroactively to existing kinds too — if a smoke shows an existing kind has a clean-success path that wasn't trace-verified across all four channels, log it as an incident and re-test.
+
+---
+
+## 9c. D2.B postscript: dead-arm registry exclusion (added 2026-06-18, scheduled post-Batch-4)
+
+**Task ID:** D2.B-PS-1 ("postscript 1") — runs **after** D2.B Batch 4 completes and **before** D2.C kickoff.
+**Owner:** Opus (single small commit).
+**Trigger:** Batch 4 commit landed on `cloud2`.
+**Authority:** W-17 + W-17b in §9a. Rationale audited 2026-06-18 (see Cursor chat IV.POS.8 D2 thread — "why not finish D2.B first then edit MUTATION_KINDS").
+
+### Why this exists
+
+D2.B Batch 2 confirmed B.3 `CYCLE_MODE_MOD` is a W-17 dead arm on sha2-host user-instruction cycles. Batch 3 attestation will either confirm or falsify the prediction that B.6 `CYCLE_PC_MOD` and B.7 `CYCLE_STATE_MOD` are dead via the same `set_cycle`/`exec_Reg` overwrite mechanism. Dead arms must NOT enter campaign kind-selection paths because:
+
+1. They pollute campaign DB with `ACCEPTED` rows that look like baseline successes but came from mutated-trace inputs (misleading reward signal).
+2. They waste bandit budget that should go to signal-generating kinds.
+3. They contaminate per-kind statistics (failure-rate denominators get inflated).
+
+**Architectural decision (W-17b):** exclusion is implemented via **registry absence** — confirmed-dead kinds are simply not added to `A4Fuzzer.MUTATION_KINDS`. No filter logic is introduced; the registry IS the campaign list. Attestation tests are unaffected because they import the Python module directly and reference the kind string literally; they do not iterate `MUTATION_KINDS`.
+
+### Verified safety (no architectural malfunction risk)
+
+Pre-implementation audit (2026-06-18) confirmed `MUTATION_KINDS` size variation does not break any campaign code path:
+
+- `compute_N_pilot(budget)` — depends on budget only.
+- `prior_alpha/prior_beta` — per-arm hardcoded, no kind-count normalization.
+- `ConstantFloor(0.55)` and other floor schedules — hardcoded values.
+- `b_count` / bucket count — per-kind, kind-count independent.
+- `num_arms` — derived from `len(kinds) × buckets`; fewer kinds → fewer arms is correct behavior.
+- `test_v5_phantom_arm_pruning.py` — pinned to `V5_CONTROL_KINDS_8` (hardcoded), unaffected.
+- `test_semantic_arm_universe.py` — uses explicit subsets, not the full registry.
+- Audit scripts (`B1_hook_fidelity.py:96`) — using `A4Fuzzer.MUTATION_KINDS` directly is **correct** for auditing the production set; dead arms should not be in scope.
+- Standalone test campaigns (`run_diagnostic_campaign.py` etc.) — have their own local `MUTATION_KINDS = [...]` constants, independent.
+
+### Tasks (single commit, Batch 4 postscript)
+
+1. Edit `a4/standalone/fuzzer.py` `MUTATION_KINDS`:
+   - Remove `CYCLE_MODE_MOD` (B.3 — confirmed dead in Batch 2).
+   - Remove `TXN_ADDR_MOD` (B.4) and `TXN_CYCLE_PHASE_MOD` (B.5) — confirmed dead W-18 (Batch 3 audit).
+   - Remove `CYCLE_PC_MOD` (B.6) and `CYCLE_STATE_MOD` (B.7) — confirmed dead W-17 (Batch 3).
+   - Add a comment block explaining the registry-exclusion pattern with W-17/W-18 links.
+2. Invert these unit-test assertions and add a `# W-17 dead arm` comment:
+   - `test_d2b_cycle_mode_mod_unit.py:83` — `assert "CYCLE_MODE_MOD" in fuzzer.MUTATION_KINDS` → `assert "CYCLE_MODE_MOD" not in fuzzer.MUTATION_KINDS`
+   - `test_d2b_batch3_unit.py:53` — same inversion for any confirmed-dead Batch 3 kind.
+   - Per-kind unit tests for B.6 / B.7 (Composer writes these in Batch 3) — same inversion for the confirmed-dead kinds.
+3. Add postscript-completion entry to `IV_POS_8_NOTES_FOR_PRO.md` (this becomes a new NFP entry summarizing the W-17 dead-arm class for Pro).
+4. Update §9a W-17 / W-17b state to "implemented" with the commit hash.
+5. Update `IV_POS_8_D2_B_SPEC.md` §5.4 / §7 Batch 3 with the postscript completion.
+
+### Reconciliation rule (if any predicted-dead kind attests live)
+
+If Batch 3 attestation shows B.6 or B.7 actually live (rejection channel fires), the audit reconciliation rule in §6d applies BEFORE this postscript runs. The live kind stays in `MUTATION_KINDS`; only confirmed-dead kinds are removed by this postscript.
+
+### Optional follow-up: full deletion of dead-arm code (D2.B-PS-2)
+
+After §9c (D2.B-PS-1) lands and the cleanup has been stable for at least one D2.G analysis run, we may decide to **fully delete** all code, tests, and Rust handlers for confirmed-dead kinds rather than keeping them inert in the repo. The decision criteria:
+
+- The dead-arm mechanism (W-17 / future W-18 etc.) is documented in the spec / NOTES_FOR_PRO so we don't lose the architectural lesson.
+- The deletion commit references the prior implementation commit hashes so anyone can `git checkout <hash>` to recover the code if a future RISC Zero version changes the witgen pipeline and renders the dead arm live again.
+- The deletion is a single explicit commit ("D2.B-PS-2: delete W-17 dead-arm implementations") rather than a creep across multiple changes.
+- W-17b / §9c remains in this plan as historical record of the decision sequence.
+
+**Rationale for the option:** the dead-arm Python modules / Rust handlers / attestation tests carry maintenance cost (build time, test runtime, code complexity) for zero campaign signal. Git history is sufficient backup. Keeping the W-17 mechanism documentation (which IS valuable) does NOT require keeping the code. This is a deferred decision — execute only if the cost outweighs the "continuous verification of the W-17 prediction" benefit. Status: **TBD, post-D2.G**.
+
+### Why we don't do this DURING Batch 3
+
+- Composer's kickoff already instructs to add B.6/B.7 to `MUTATION_KINDS` and assert membership in unit tests. Changing rules mid-batch causes churn.
+- The cleanup decision per kind depends on attestation outcomes that Composer hasn't reported yet.
+- No campaigns run during D2.B (POS dispatch is D2.F). The "dead arms in registry" window during Batch 3/4 is theoretical only — no real campaign pollution.
 
 ---
 

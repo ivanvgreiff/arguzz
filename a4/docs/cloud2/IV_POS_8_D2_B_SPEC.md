@@ -3,7 +3,7 @@
 **Branch:** `cloud2` (direct commit, no feature branches)
 **Date opened:** 2026-06-17
 **Author:** Ivan + Opus (planning); Composer (implementation)
-**Status:** **v0.5.3 LOCKED + audit patch** (2026-06-18) — design locked at v0.5.2; **v0.5.3 adds Batch 2 dead-arm audit findings only** (no kind design changes): B.3 confirmed dead arm on sha2-host user cycles; **B.6 and B.7 predicted dead** on same `set_cycle`/`exec_Reg` overwrite mechanism; Batch 3 attestation expectations in **§5.4** and **§7 Batch 3**; cross-ref **W-17** in [`IV_POS_8_D2_PLAN.md`](./IV_POS_8_D2_PLAN.md) §6d. Full proof: [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md). Prior: v0.5.2 lock stamps; v0.5.1 NFP-10; Batch 1.5e retrofix.
+**Status:** **v0.5.4 LOCKED + Batch 3 audit patch** (2026-06-18) — v0.5.3 Batch 2 dead-arm audit; **v0.5.4 adds Batch 3 outcomes:** B.4/B.5 **confirmed dead (W-18)** via [`D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md); B.6/B.7 **confirmed dead (W-17)**; B.8 **confirmed LIVE**. Plan mirror: [`IV_POS_8_D2_PLAN.md`](./IV_POS_8_D2_PLAN.md) v0.13 §6d + W-18.
 **Parent:** [`IV_POS_8_D2_PLAN.md`](./IV_POS_8_D2_PLAN.md) v0.5 §3 (sub-deliverable D2.B)
 **Predecessor:** [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) v0.2 LOCKED (merged at `7b66fb9`)
 **Authoritative reference:** [`a4/docs/standalone/MUTATION_TAXONOMY.md`](../standalone/MUTATION_TAXONOMY.md) — every per-kind decision below is cross-referenced to this document.
@@ -489,6 +489,8 @@ Steps where `get_mem_txns_at_step(step)` returns at least one non-fetch memory t
 
 Memory addressing constraints + permutation chain breakage + possibly paging-table mismatch. May produce many failures per single mutation due to cascade through downstream same-address txns.
 
+**Attestation outcome (Batch 3 — CONFIRMED dead arm via W-18):** Trace `addr` mutates (Layers 2–4 pass); all four rejection channels silent; verifier accepts. Root cause: witness address columns bind to execution-derived `addrElem` passed to `GetMemoryTxn`, not trace `txn.addr`. `extern_getMemoryTxn` compares trace addr but returns only prevCycle/prevWord/word. `FAULT_INJECTION_ENABLED` suppresses sanity throws, not Hook 3. Full proof: [`D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md). Attestation: guard fires → assert → xfail.
+
 ---
 
 ### 3.5 B.5 — `TXN_CYCLE_PHASE_MOD`
@@ -554,6 +556,8 @@ Target dataclass: `step, cycle_idx, txn_idx, addr, original_cycle, original_phas
 - `IsRead` constraint fires for any txn that was originally a READ and now classified as WRITE (because `word == prev_word` may not hold)
 - The classification constraint that determines which constraint family applies fires
 - Possibly cascade if a downstream txn's `prev_cycle` pointed at this txn (its phase has effectively changed)
+
+**Attestation outcome (Batch 3 — CONFIRMED dead arm via W-18):** Trace `cycle` LSB mutates; all channels silent; verifier accepts. Root cause: read/write phase encoded in execution-derived `memCycle` (`MemoryRead` → `2*cycle`, `MemoryWrite` → `2*cycle+1`), not trace `txn.cycle` LSB. `getMemoryTxn` returns prevCycle/prevWord/word only. Full proof: [`D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md). Attestation: guard fires → assert → xfail.
 
 ---
 
@@ -910,29 +914,36 @@ The cascading-changes log is included in the attestation test output for human r
 | B.1 `at_write` | Strict-no-cascade in trace (constraint cascade = IsRead/permutation failure at witness time, not a post-mut trace diff) |
 | B.2 | Strict-no-cascade in trace (constraint cascade = downstream `prev_cycle` chain failure at witness time, not a post-mut trace diff) |
 | B.3 | Strict-no-cascade in trace | **CONFIRMED dead arm** (W-17) on sha2-host user cycles — witness overwrite, not trace no-op |
-| B.4 | Likely: downstream txns at original_addr have broken chain; downstream txns at new_addr have spurious entry | **Predicted LIVE** (extern memory path) |
-| B.5 | Possible: same as B.1/B.2 if a downstream txn referenced this txn's cycle | **Predicted LIVE** (extern memory path) |
+| B.4 | Strict-no-cascade in trace (Rust handler touches `addr` only) | **CONFIRMED dead arm (W-18)** — witness addr execution-derived; see §3.4 |
+| B.5 | Strict-no-cascade in trace | **CONFIRMED dead arm (W-18)** — witness phase execution-derived; see §3.5 |
 | B.6 | Likely cascade at witness time if trace pc reached constraints — **superseded by W-17 audit** | **PREDICTED DEAD** (set_cycle overwrite) — see §5.4 |
 | B.7 | Tentatively strict-no-cascade in trace — witness layout interaction TBD | **PREDICTED DEAD** (set_cycle overwrite) — see §5.4 |
 | B.8 | Strict-no-cascade in trace | **Predicted LIVE** (`extern_getDiffCount` reads trace) — W-3 drop only if dead proven |
 
 Composer's per-kind attestation test asserts cascade shape matches the expected signature.
 
-### 5.4 Batch 3 attestation predictions — W-17 set_cycle dead-arm class (added v0.5.3)
+### 5.4 Batch 3 attestation outcomes — W-17 + W-18 dead-arm classes (updated v0.5.4)
 
-**Locked before Batch 3 implementation** so outcomes can be checked against the Batch 2 audit. Authoritative proof: [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md). Plan mirror: [`IV_POS_8_D2_PLAN.md`](./IV_POS_8_D2_PLAN.md) §6d + watchlist **W-17**.
+**Locked before Batch 3 implementation** (v0.5.3 predictions); **updated with Batch 3 empirical + audit results.** Authoritative proofs: [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md) (W-17), [`D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md) (W-18). Plan mirror: [`IV_POS_8_D2_PLAN.md`](./IV_POS_8_D2_PLAN.md) §6d + W-17/W-18.
 
-| Kind | Expected Batch 3 attestation | If different → |
-|------|------------------------------|----------------|
-| B.4 `TXN_ADDR_MOD` | **LIVE** — C2 and/or C3 `memory` | Investigate witness path |
-| B.5 `TXN_CYCLE_PHASE_MOD` | **LIVE** — C2 and/or C3 | Investigate witness path |
-| B.6 `CYCLE_PC_MOD` | **PREDICTED DEAD** — guard + xfail (mirror B.3) | **Reconcile audit** — missed witness path |
-| B.7 `CYCLE_STATE_MOD` | **PREDICTED DEAD** — guard + xfail (mirror B.3) | **Reconcile audit** — state may affect layout |
-| B.8 `CYCLE_DIFF_COUNT_MOD` | **PREDICTED LIVE** — rejection expected | Reconcile if dead; W-3 drop path |
+| Kind | v0.5.3 prediction | **Batch 3 actual outcome** |
+|------|-------------------|---------------------------|
+| B.4 `TXN_ADDR_MOD` | LIVE — C2/C3 `memory` | **DEAD (W-18)** — guard + xfail; audit proves execution-derived addr |
+| B.5 `TXN_CYCLE_PHASE_MOD` | LIVE — C2/C3 | **DEAD (W-18)** — guard + xfail; audit proves execution-derived memCycle |
+| B.6 `CYCLE_PC_MOD` | PREDICTED DEAD (W-17) | **CONFIRMED DEAD (W-17)** — guard + xfail |
+| B.7 `CYCLE_STATE_MOD` | PREDICTED DEAD (W-17) | **CONFIRMED DEAD (W-17)** — guard + xfail |
+| B.8 `CYCLE_DIFF_COUNT_MOD` | PREDICTED LIVE | **CONFIRMED LIVE** — `cycle` Hook 3 family |
 
-**Reconciliation rule:** Any predicted-dead kind (B.6, B.7) that shows live rejection means the set_cycle overwrite model is incomplete — stop, trace witgen path, update audit + W-17 before proceeding.
+**Reconciliation rule:** Any confirmed-dead kind that shows live rejection means the corresponding audit (W-17 or W-18) is incomplete — stop, trace witgen path, update audit before proceeding.
 
-**Predicted-dead attestation pattern:** Layers 2–4 pass → call `check_soundness_bug_guard` → assert `SoundnessBugSuspected` → `pytest.xfail()` with W-17 rationale (same as B.3 Batch 2).
+**Dead-arm attestation pattern:** Layers 2–4 pass → call `check_soundness_bug_guard` → assert `SoundnessBugSuspected` → `pytest.xfail()` with W-17 or W-18 rationale + audit cross-ref.
+
+### 5.5 D2.B postscript — dead-arm cleanup (added v0.5.3 patch)
+
+Two postscript tasks tracked in plan §9c:
+
+- **D2.B-PS-1** (runs post-Batch-4): remove confirmed-dead kinds from `A4Fuzzer.MUTATION_KINDS`, invert 2–3 unit-test asserts, add NFP entry. Architectural decision: registry exclusion via absence, no runtime filter logic (W-17b).
+- **D2.B-PS-2** (optional, post-D2.G): may **fully delete** all dead-arm code (Python modules, Rust handlers, attestation tests, dispatch entries) if the maintenance cost outweighs the continuous-verification benefit. Git history preserves recovery path; W-17 mechanism documentation stays in plan + Notes-for-Pro. Single explicit commit with cross-refs. **Status: TBD, post-D2.G.**
 
 ## 6. Open questions — ALL RESOLVED (Ivan locked 2026-06-17)
 
@@ -1293,19 +1304,17 @@ Same shape as Batch 1, per kind. ~2 Rust handlers + 2 Python modules + 2 unit te
 
 Same shape, 5-sub-sequence batch. Each kind individually gated on Layer 4.
 
-**Attestation expectations locked (v0.5.3 / plan §6d / W-17):**
+**Attestation outcomes (v0.5.4 / plan §6d / W-17 + W-18):**
 
-| Kind | Priority | Expected outcome |
-|------|----------|-------------------|
-| B.4 `TXN_ADDR_MOD` | Full attestation — **predicted LIVE** | C2 + C3 `memory` |
-| B.5 `TXN_CYCLE_PHASE_MOD` | Full attestation — **predicted LIVE** | C2 + C3 |
-| B.6 `CYCLE_PC_MOD` | Implement + attestation — **predicted DEAD** (W-17) | Guard fires + xfail; reconcile audit if live |
-| B.7 `CYCLE_STATE_MOD` | Implement + attestation — **predicted DEAD** (W-17) | Guard fires + xfail; reconcile audit if live |
-| B.8 `CYCLE_DIFF_COUNT_MOD` | Full attestation — **predicted LIVE** | Rejection expected; W-3 drop only if dead proven |
+| Kind | Priority | Outcome |
+|------|----------|---------|
+| B.4 `TXN_ADDR_MOD` | Full attestation | **DEAD (W-18)** — guard + xfail |
+| B.5 `TXN_CYCLE_PHASE_MOD` | Full attestation | **DEAD (W-18)** — guard + xfail |
+| B.6 `CYCLE_PC_MOD` | Implement + attestation | **DEAD (W-17 confirmed)** — guard + xfail |
+| B.7 `CYCLE_STATE_MOD` | Implement + attestation | **DEAD (W-17 confirmed)** — guard + xfail |
+| B.8 `CYCLE_DIFF_COUNT_MOD` | Full attestation | **LIVE** — `cycle` Hook 3 |
 
-B.6/B.7 are **not optional skips** — they must be implemented and attested to **confirm or falsify** the Batch 2 audit. A live result is a first-class signal requiring audit reconciliation, not a test failure to paper over.
-
-Reference: [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md)
+Reference: [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md), [`D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md)
 
 ### Batch 4 — Cross-cutting + smoke
 

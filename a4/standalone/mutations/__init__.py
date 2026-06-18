@@ -81,6 +81,36 @@ from a4.standalone.mutations.cycle_mode_mod import (
     create_config as create_cycle_mode_config,
 )
 
+from a4.standalone.mutations.txn_addr_mod import (
+    TxnAddrModTarget,
+    get_targets_at_step as get_txn_addr_targets,
+    create_config as create_txn_addr_config,
+)
+
+from a4.standalone.mutations.txn_cycle_phase_mod import (
+    TxnCyclePhaseModTarget,
+    get_targets_at_step as get_txn_cycle_phase_targets,
+    create_config as create_txn_cycle_phase_config,
+)
+
+from a4.standalone.mutations.cycle_pc_mod import (
+    CyclePcModTarget,
+    get_targets_at_step as get_cycle_pc_targets,
+    create_config as create_cycle_pc_config,
+)
+
+from a4.standalone.mutations.cycle_state_mod import (
+    CycleStateModTarget,
+    get_targets_at_step as get_cycle_state_targets,
+    create_config as create_cycle_state_config,
+)
+
+from a4.standalone.mutations.cycle_diff_count_mod import (
+    CycleDiffCountModTarget,
+    get_all_targets as get_cycle_diff_count_targets,
+    create_config as create_cycle_diff_count_config,
+)
+
 __all__ = [
     # COMP_OUT_MOD
     'CompOutModTarget',
@@ -124,4 +154,24 @@ __all__ = [
     'CycleModeModTarget',
     'get_cycle_mode_targets',
     'create_cycle_mode_config',
+    # TXN_ADDR_MOD
+    'TxnAddrModTarget',
+    'get_txn_addr_targets',
+    'create_txn_addr_config',
+    # TXN_CYCLE_PHASE_MOD
+    'TxnCyclePhaseModTarget',
+    'get_txn_cycle_phase_targets',
+    'create_txn_cycle_phase_config',
+    # CYCLE_PC_MOD
+    'CyclePcModTarget',
+    'get_cycle_pc_targets',
+    'create_cycle_pc_config',
+    # CYCLE_STATE_MOD
+    'CycleStateModTarget',
+    'get_cycle_state_targets',
+    'create_cycle_state_config',
+    # CYCLE_DIFF_COUNT_MOD
+    'CycleDiffCountModTarget',
+    'get_cycle_diff_count_targets',
+    'create_cycle_diff_count_config',
 ]
