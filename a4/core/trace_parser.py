@@ -246,6 +246,84 @@ class A4AllTxn:
 
 
 @dataclass
+class A4PostMutDump:
+    """Parsed A4 <a4_post_mut_dump> output — post-mutation txn snapshot."""
+    kind: str
+    entity: str
+    txn_idx: int
+    step: int
+    addr: int
+    cycle: int
+    word: int
+    prev_cycle: int
+    prev_word: int
+
+    @classmethod
+    def parse(cls, line: str) -> Optional["A4PostMutDump"]:
+        match = re.search(r"<a4_post_mut_dump>({.*?})</a4_post_mut_dump>", line)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(1))
+            return cls(
+                kind=data["kind"],
+                entity=data["entity"],
+                txn_idx=data["txn_idx"],
+                step=data["step"],
+                addr=data["addr"],
+                cycle=data["cycle"],
+                word=data["word"],
+                prev_cycle=data["prev_cycle"],
+                prev_word=data["prev_word"],
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+
+
+@dataclass
+class A4TxnPrevWordMod:
+    """Parsed A4 <a4_txn_prev_word_mod> evidence tag."""
+    step: int
+    strategy: str
+    txn_type: str
+    txn_idx: int
+    addr: int
+    old_prev_word: int
+    new_prev_word: int
+    word: int
+    prev_cycle: int
+    cycle_idx: Optional[int] = None
+    pc: Optional[int] = None
+    major: Optional[int] = None
+    minor: Optional[int] = None
+
+    @classmethod
+    def parse(cls, line: str) -> Optional["A4TxnPrevWordMod"]:
+        match = re.search(r"<a4_txn_prev_word_mod>({.*?})</a4_txn_prev_word_mod>", line)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(1))
+            return cls(
+                step=data["step"],
+                strategy=data["strategy"],
+                txn_type=data["txn_type"],
+                txn_idx=data["txn_idx"],
+                addr=data["addr"],
+                old_prev_word=data["old_prev_word"],
+                new_prev_word=data["new_prev_word"],
+                word=data["word"],
+                prev_cycle=data["prev_cycle"],
+                cycle_idx=data.get("cycle_idx"),
+                pc=data.get("pc"),
+                major=data.get("major"),
+                minor=data.get("minor"),
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+
+
+@dataclass
 class A4InstrTypeMod:
     """Parsed A4 <a4_instr_type_mod> output"""
     step: int
@@ -303,3 +381,13 @@ def parse_all_reg_txns(output: str) -> List[A4RegTxn]:
 def parse_all_all_txns(output: str) -> List[A4AllTxn]:
     """Parse all <a4_all_txn> entries from output"""
     return [t for line in output.splitlines() if (t := A4AllTxn.parse(line))]
+
+
+def parse_post_mut_dump(output: str) -> List[A4PostMutDump]:
+    """Parse all <a4_post_mut_dump> entries from output."""
+    return [d for line in output.splitlines() if (d := A4PostMutDump.parse(line))]
+
+
+def parse_txn_prev_word_mod(output: str) -> List[A4TxnPrevWordMod]:
+    """Parse all <a4_txn_prev_word_mod> evidence tags from output."""
+    return [t for line in output.splitlines() if (t := A4TxnPrevWordMod.parse(line))]

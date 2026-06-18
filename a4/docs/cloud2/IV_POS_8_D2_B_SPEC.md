@@ -3,7 +3,7 @@
 **Branch:** `cloud2` (direct commit, no feature branches)
 **Date opened:** 2026-06-17
 **Author:** Ivan + Opus (planning); Composer (implementation)
-**Status:** **v0.5 LOCKED** (2026-06-17) — §6 all 17 questions resolved by Ivan; Q5 Option A (Pro-valid roles); Q6 variant-specific subsets; 15 secondary recommendations accepted; new Batch 1.5e adds `PRE_EXEC_REG_MOD` retrofix (NFP-6); soundness-bug guard cross-references plan §9b; deferred decisions tracked in plan §9a watchlist (W-1 through W-11).
+**Status:** **v0.5.2 LOCKED** (2026-06-17) — §6 all 17 questions resolved with explicit **LOCKED:** stamps at the top of each Q; §8 Decisions Confirmed table populated with all 17 + cross-cutting decisions (PRE_EXEC_REG_MOD retrofix, soundness-bug guard, NFP surfacing, watchlist, D2.C/Pro timing). Q5 Option A; Q6 variant-specific subsets; Batch 1.5e adds `PRE_EXEC_REG_MOD` retrofix (NFP-6). **v0.5.1 patch (post D1-chat catch-up):** §4.7 gains NFP-10 awareness paragraph; Batch 1.5e task gains explicit "commit message must contain 'Batch 1.5e' literal" instruction (D1 chat's git-log poll signal per `IV_POS_8_D1_REVISIT_PLAN.md` §4.3). **v0.5.2 patch (2026-06-17 late evening):** propagated lock stamps inline into §6 and populated §8 — no design changes, just making the resolved state visible at every read-point in the document. Watchlist W-12 through W-14 in plan §9a.
 **Parent:** [`IV_POS_8_D2_PLAN.md`](./IV_POS_8_D2_PLAN.md) v0.5 §3 (sub-deliverable D2.B)
 **Predecessor:** [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) v0.2 LOCKED (merged at `7b66fb9`)
 **Authoritative reference:** [`a4/docs/standalone/MUTATION_TAXONOMY.md`](../standalone/MUTATION_TAXONOMY.md) — every per-kind decision below is cross-referenced to this document.
@@ -810,6 +810,8 @@ The "step 0" exclusion applies to all 8 (bootloader cycles, ~16k entries, almost
 
 **REVISED v0.4 per Composer review.** v0.2/v0.3 proposed field-name role labels (`mode`, `addr`, `phase`, `pc`, `state`, `diff_count`) — these would violate `MEMORY_TXN_ROLES` (the 6-tuple at `compressed_global.py:52-54`) and break `test_compressed_global_extractor.py` lines 152 and 480 which assert role ∈ `MEMORY_TXN_ROLES`. See Q5 in §6 for the decision rationale.
 
+**Critical heads-up for Composer (added v0.5 — NFP-10 awareness):** This file recently received the **`_coerce_broken_addr` byte_addr field-priority fix** at line 216 (commit `71dae77`, per NFP-10 in `IV_POS_8_NOTES_FOR_PRO.md`). The field-priority tuple is now `("byte_addr", "addr", "address")` — byte_addr FIRST. **DO NOT REVERT THIS.** D2.B's edits are strictly additive on `_TXN_ROLE_BY_KIND` (around line 161); the byte_addr fix lives in a different function and must remain untouched. Sanity-check before committing: `rg 'byte_addr.*addr.*address' compressed_global_extractor.py` should still hit line 216.
+
 **Two locking options for Q5:**
 
 - **Option A (recommended — Composer-aligned):** Map all 8 to Pro-valid roles. Per-kind attribution comes from `producer_kind` (the full mutation kind string, already in `GLOBAL_LOOKUP` schema — see `compressed_global.py:41`), so we don't lose information.
@@ -885,9 +887,9 @@ The cascading-changes log is included in the attestation test output for human r
 
 | Kind | Expected cascade |
 |---|---|
-| B.1 `at_read` | Strict-no-cascade |
-| B.1 `at_write` | Possible: downstream READ at same address shows mismatched `prev_word` |
-| B.2 | Possible: downstream txn at same address shows mismatched `prev_cycle` chain |
+| B.1 `at_read` | Strict-no-cascade in trace |
+| B.1 `at_write` | Strict-no-cascade in trace (constraint cascade = IsRead/permutation failure at witness time, not a post-mut trace diff) |
+| B.2 | Strict-no-cascade in trace (constraint cascade = downstream `prev_cycle` chain failure at witness time, not a post-mut trace diff) |
 | B.3 | Strict-no-cascade (metadata only) |
 | B.4 | Likely: downstream txns at original_addr have broken chain; downstream txns at new_addr have spurious entry |
 | B.5 | Possible: same as B.1/B.2 if a downstream txn referenced this txn's cycle |
@@ -897,13 +899,17 @@ The cascading-changes log is included in the attestation test output for human r
 
 Composer's per-kind attestation test asserts cascade shape matches the expected signature.
 
-## 6. Open questions (plain-English explanations + recommendations)
+## 6. Open questions — ALL RESOLVED (Ivan locked 2026-06-17)
 
-Each question: **What we're asking → My recommendation → Why → Counterfactual.**
+Each question is now stamped with **LOCKED:** at the top showing Ivan's final decision. The "My recommendation / Why / Counterfactual" content below each lock is preserved for traceability (it's the reasoning that fed the decision).
 
-The v0.2 list (10 questions) is preserved; new questions discovered during the v0.3 deep-dive are appended (Q11–Q16). Several v0.2 recommendations are **revised** based on what the taxonomy and existing code revealed.
+**Summary of all 17 locks lives in [§8 Decisions Confirmed](#8-decisions-confirmed).**
+
+The v0.2 list (10 questions) is preserved; new questions discovered during the v0.3 deep-dive are appended (Q11–Q16); Q17 added in v0.4 (Layer 3 infrastructure spike).
 
 ### Q1 — `CYCLE_MODE_MOD` scope: every cycle or only at ECALL/MRET boundaries?
+
+**LOCKED (Ivan 2026-06-17): Broad scope — any cycle.** Watchlist W-1 tracks D2.G revisit if <1% failure rate outside boundary zones.
 
 **Plain question:** Should we mutate `machine_mode` on every cycle, or only on cycles near ECALL/MRET (where the mode actually changes in real execution)?
 
@@ -919,6 +925,8 @@ The v0.2 list (10 questions) is preserved; new questions discovered during the v
 
 ### Q2 — Value generation distribution for "nearby + random" kinds
 
+**LOCKED (Ivan 2026-06-17): §3 percentages as starting heuristics; D2.G retunes from DB `outcome` column without spec revision.** Watchlist W-2.
+
 **Plain question:** For kinds where the value-generation is "nearby vs random" (B.1, B.2, B.4, B.6, B.7, B.8), what's the right split?
 
 **My recommendation:** **Per-kind mixes documented in §3** — 33/33/34 for B.1, 35/35/30 for B.2, 40/30/30 for B.4 and B.6, 50/30/20 for B.7, 60/40 for B.8. These are calibrated per-kind to the structure of the field's value space (e.g., diff_counts are small, so we lean nearby; addresses span a large range, so more random).
@@ -928,6 +936,8 @@ The v0.2 list (10 questions) is preserved; new questions discovered during the v
 **If you pick differently:** Composer can override per-kind during Batch 1; the §3 percentages are starting points, not fixed.
 
 ### Q3 — Does `CYCLE_DIFF_COUNT_MOD` (B.8) ship? (REVISED v0.4 — lean ship)
+
+**LOCKED (Ivan 2026-06-17): Lean ship.** Batch 1.0b investigates with 3-way classification (constraint_fail / ERROR / clean-success). Clean-success rows MUST be cross-verified with `A4_DUMP_POST_MUT` per §9b soundness guard before any drop classification. Watchlist W-3.
 
 **Plain question:** B.8's field is `[u32; 2]` (array of 2), and v0.3 wasn't sure whether any constraint family actually USES diff_count. Updated evidence below.
 
@@ -958,6 +968,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 
 ### Q4 — How do we run the 100%-certainty tests (Layers 2/3/4) in CI?
 
+**LOCKED (Ivan 2026-06-17): Per-batch landing gate via `A4_REAL_BINARY=1`.** Composer runs locally before each batch commit. No CI binary infra in D2.B.
+
 **Plain question:** Real-binary tests are slow (~5–10s per invocation × 8 kinds × multiple test cases ≈ 3–5 minutes). Every PR or on demand?
 
 **My recommendation:** **Per-kind gate at landing time (not every PR), via `A4_REAL_BINARY=1` env var.** Composer runs them before committing each batch.
@@ -967,6 +979,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 **If you pick differently:** Every-PR requires CI binary setup (potentially worth doing in D2.E or later).
 
 ### Q5 — CGC role mappings (§4.7) — REVISED v0.4 per Composer pushback
+
+**LOCKED (Ivan 2026-06-17 via AskQuestion): Option A — Pro-valid `MEMORY_TXN_ROLES` only; per-kind D2.G via `producer_kind`.** Schema bump to add `cycle_meta` deferred to IV.POS.9 if Pro requests it in D2.G review. **Surfaced as NFP-4 in `IV_POS_8_NOTES_FOR_PRO.md` so Pro sees it explicitly.** Watchlist W-4.
 
 **Plain question:** What `txn_role` label do we use for each new kind in the `_TXN_ROLE_BY_KIND` dict?
 
@@ -990,6 +1004,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 **If you pick differently:** Option B is acceptable if you want exact `txn_role` semantics for cycle-meta kinds — flag as a D2.D dependency and we ship the Pro-coordination diff separately. But this WILL push Batch 1 by ~1 d minimum.
 
 ### Q6 — D2.B kinds in V5 only, or also in Hybrid-cTS? — REVISED v0.4 per Composer pushback
+
+**LOCKED (Ivan 2026-06-17 via AskQuestion): Variant-specific kind subsets.** Global `MUTATION_KINDS` = union of 20 kinds. D2.D CLI defines: `V5_control={8 existing}` (D1.A archive reuse intact), `V5_expanded={16 A4}`, `Hybrid_cTS={16 A4 + 4 V6}`, `V6_uniform/cTS={4 V6}`. **Surfaced as NFP-2.** Watchlist W-5.
 
 **Plain question:** When D2.D wires up the variant CLI, do D2.B kinds appear only in pure-A4 variants (V5), or also in Hybrid-cTS (A4 + Arguzz arms)?
 
@@ -1015,6 +1031,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 
 ### Q7 — Python module file naming
 
+**LOCKED (Ivan 2026-06-17): `lowercase_snake_case` matching kind string.** E.g., `txn_prev_word_mod.py`. Zero stakes.
+
 **Plain question:** Naming convention?
 
 **My recommendation:** **Lowercase snake_case matching kind string** (e.g., `txn_prev_word_mod.py`).
@@ -1024,6 +1042,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 **If you pick differently:** N/A — low-stakes convention.
 
 ### Q8 — Composer batch granularity
+
+**LOCKED (Ivan 2026-06-17): 4 batches** — (1) spikes + B.1 end-to-end; (2) B.2+B.3; (3) B.4–B.8; (4) cross-cutting tests + smoke. Watchlist W-10 (split Batch 3 if attestation churn exceeds ~1 week).
 
 **Plain question:** One huge batch vs multiple?
 
@@ -1035,6 +1055,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 
 ### Q9 — Composer Batch 1 task ordering (Rust first or Python first?)
 
+**LOCKED (Ivan 2026-06-17): Rust first.** AND task 1.0a (Layer 3 hook) MUST land BEFORE 1.1 (B.1 handler). Without 1.0a, Layer 3 is broken even with B.1 done.
+
 **Plain question:** Rust handler first, then Python module? Or reverse?
 
 **My recommendation:** **Rust first.**
@@ -1044,6 +1066,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 **If you pick differently:** Reasonable if Composer wants to design the JSON schema independently first — but the existing 7 Rust handlers already establish the schema pattern.
 
 ### Q10 — Escalation path if Rust build fights back
+
+**LOCKED (Ivan 2026-06-17): Pause + report to Ivan/Opus.** Don't burn cycles on opaque Cargo issues. No alternative escalation path.
 
 **Plain question:** If Composer hits Cargo/build issues, what's the fallback?
 
@@ -1056,6 +1080,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 ---
 
 ### Q11 — `TXN_PREV_WORD_MOD` (B.1): two strategies — how does the bandit wire them? (REVISED v0.4 per Composer feedback)
+
+**LOCKED (Ivan 2026-06-17): Option A — single `MUTATION_KINDS` entry `"TXN_PREV_WORD_MOD"`; fuzzer RNG-picks `at_read`/`at_write` per pull; strategy logged in config JSON for reproducibility; `_step_has_real_target` ORs both strategies (mandatory).** PRE_EXEC_REG_MOD gets the same retrofix in **Batch 1.5e** (NFP-6, A4-only — Arguzz explicitly NOT touched). **Surfaced as NFP-3 + NFP-6.** Watchlist W-6.
 
 **Plain question:** Per §3.1, B.1 mirrors PRE_EXEC_REG_MOD's two-strategy pattern (`at_read` vs `at_write`) because the constraint surface is genuinely different per txn type. Two sub-questions:
   - (a) Do we ship both strategies in D2.B?
@@ -1100,6 +1126,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 
 ### Q12 — `TXN_ADDR_MOD` (B.4): exclude instruction-fetch txns? (NEW IN v0.3)
 
+**LOCKED (Ivan 2026-06-17): Yes — exclude fetch txns.** Reuse `mem_val_mod._is_instruction_fetch()` helper (extract to shared util if needed).
+
 **Plain question:** §3.4 recommends excluding instruction-fetch txns from B.4's target set. Confirm?
 
 **My recommendation:** **YES — exclude instruction-fetch txns from B.4.**
@@ -1111,6 +1139,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 **If you pick differently:** Including fetch txns means many B.4 mutations will return outcome=ERROR (witgen panic) — pollutes the arm's success rate without producing constraint failures.
 
 ### Q13 — `TXN_ADDR_MOD` (B.4): exclude register txns? (NEW IN v0.3)
+
+**LOCKED (Ivan 2026-06-17): Yes — exclude register txns in v1.** Within-register-range redirection is a different mutation shape (would be a future `TXN_REG_REDIRECT_MOD`); explicitly out of D2.B scope.
 
 **Plain question:** §3.4 also recommends excluding register txns from B.4. Confirm?
 
@@ -1124,6 +1154,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 
 ### Q14 — `TXN_CYCLE_PHASE_MOD` (B.5): exclude instruction-fetch txns? (NEW IN v0.3)
 
+**LOCKED (Ivan 2026-06-17): Yes — exclude fetch txns.** Fetch txns are always reads; LSB-flipping them to write triggers `IsRead` instantly with no novel info — pure arm-space clutter.
+
 **Plain question:** §3.5 recommends excluding fetch txns from B.5. Confirm?
 
 **My recommendation:** **YES — exclude.**
@@ -1133,6 +1165,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 **If you pick differently:** Including fetch txns just clutters the arm-space; no realistic counter-argument.
 
 ### Q15 — `CYCLE_STATE_MOD` (B.7): how does Composer enumerate valid state values? (NEW IN v0.3)
+
+**LOCKED (Ivan 2026-06-17): Hardcode from `platform.rs::CycleState` extracted at Batch 1.0b.** Snapshot to `a4/standalone/mutations/_cycle_state_enum.py`. Re-check on risc0 pin bumps. Watchlist W-8.
 
 **Plain question:** Taxonomy Appendix A lists *some* CycleState values but uses `...` ellipsis (incomplete). Composer needs the full enum for the "50% valid-but-different state" value-generation strategy. What's the source of truth?
 
@@ -1146,6 +1180,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 
 ### Q16 — Layer 3 risk-tiered strictness (NEW IN v0.3)
 
+**LOCKED (Ivan 2026-06-17): Shared `assert_trace_diff_matches_signature(diff, expected_signature)` helper in Batch 1 task 1.7.** Minimal v1 signature DSL (primary field + allowed cascade tags); evolve as Batch 3 reveals real cascade shapes. Helper ALSO implements §9b soundness-bug guard: when `outcome=applied` + trace genuinely changed + zero `<constraint_fail>` + zero error → raise `SoundnessBugSuspected`.
+
 **Plain question:** Per §5.2, low-risk kinds use strict Layer 3 (no cascade allowed); high-risk kinds use risk-tiered Layer 3 (expected cascade documented). Composer needs a precise way to assert "cascade matches the expected signature per kind" without writing a kind-by-kind diff parser.
 
 **My recommendation:** **Composer Batch 1 writes a shared `assert_trace_diff_matches_signature(diff, expected_signature)` helper** that consumes a signature spec (e.g., `{"primary":{"txn_idx":I,"field":"prev_word","old":X,"new":Y}, "cascade":["same_addr_downstream_prev_word_mismatch"]}`) and checks the diff matches it. Per-kind tests pass their signature.
@@ -1158,6 +1194,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 **If you pick differently:** Per-kind bespoke diff assertions are fine for v1 but duplicate work.
 
 ### Q17 — Layer 3 infrastructure: how do we actually dump the trace AFTER mutation? (NEW IN v0.4 per Composer feedback)
+
+**LOCKED (Ivan 2026-06-17): Option A1 — `A4_DUMP_POST_MUT=1` Rust hook at end of mutation match arm (~30 LOC).** Batch 1 task 1.0a delivers; smoke-verifies on existing `COMP_OUT_MOD` handler before B.1 work starts. **Surfaced as NFP-5.** Watchlist W-9 (fallback to Option B tag-only Layer 3 if A1 hits unexpected Rust blockers — requires explicit Ivan approval).
 
 **Plain question:** Layer 3 of the testing methodology (§5.1) compares a baseline pre-mutation trace dump against a post-mutation trace dump. v0.3 implicitly assumed running with `A4_INSPECT=1 A4_DUMP_ALL_TXNS=1 A4_MUTATION_CONFIG=...` would produce a *post-mutation* dump. **It does not.** In `witgen/mod.rs` the inspection block runs at lines ~72–187, *before* the mutation block at lines ~189–601. So the dump captures the **pre-mutation** state — the baseline-vs-mutated diff would always be NULL by construction.
 
@@ -1202,7 +1240,7 @@ Pending §6 lock-in; not started.
 | 1.5b | Register in `semantic_arm_universe.py` (`_MUTATION_MODULES`, `_cycle_matches_kind_filter`, `_step_has_real_target` check BOTH strategies per Q11) | §4.5 |
 | 1.5c | Register in `fuzzer.py::_create_mutation` (RNG-picked strategy per Q11 Option A) | §4.6 |
 | 1.5d | Register in `compressed_global_extractor.py` role mapping (Pro-valid role per Q5 Option A) | §4.7 |
-| **1.5e** | **`PRE_EXEC_REG_MOD` retrofix (NFP-6 in NOTES_FOR_PRO): mirror B.1 Option A pattern** | **`fuzzer.py:1639` RNG-picks `next_read`/`prev_write`; `semantic_arm_universe.py:90-91` ORs both. ~10 LOC. Rust + Python already support both strategies. A4-only — does NOT touch Arguzz.** |
+| **1.5e** | **`PRE_EXEC_REG_MOD` retrofix (NFP-6 in NOTES_FOR_PRO): mirror B.1 Option A pattern** | **`fuzzer.py:1639` RNG-picks `next_read`/`prev_write`; `semantic_arm_universe.py:90-91` ORs both. ~10 LOC. Rust + Python already support both strategies. A4-only — does NOT touch Arguzz. **CRITICAL: commit message MUST contain the literal string "Batch 1.5e" so D1 chat's git-log poll detects the merge and unblocks D1.E spec drafting** (per `IV_POS_8_D1_REVISIT_PLAN.md` §4.1 SYNC row and §4.3 Option B).** |
 | 1.5f | Add unit test `test_d2b_pre_exec_reg_mod_two_strategy.py` covering the retrofix dispatch | Verifies both strategies are now reachable; archive-reuse-divergence note in batch report |
 | 1.6 | Unit test `test_d2b_txn_prev_word_mod_unit.py` | Layer 1 — covers BOTH strategies and the RNG-picks-strategy dispatch path |
 | 1.7 | Write shared `assert_trace_diff_matches_signature` helper (Q16) | Used by all attestation tests |
@@ -1232,11 +1270,45 @@ Same shape, 5-sub-sequence batch. Each kind individually gated on Layer 4.
 
 ## 8. Decisions Confirmed
 
-(empty until Ivan resolves §6)
+All 17 §6 questions resolved by Ivan on 2026-06-17. Each Q section in §6 now carries an inline **LOCKED:** stamp; this section is the consolidated table. Spec is **v0.5.2 LOCKED**.
 
-| # | Question | Resolution | Resolved on |
+### Major decisions (Q5 + Q6 — explicit Ivan votes via AskQuestion)
+
+| # | Question | **LOCKED resolution** | Why |
 |---|---|---|---|
-| — | — | — | — |
+| **Q5** | CGC `txn_role` mappings | **Option A — Pro-valid `MEMORY_TXN_ROLES` only; per-kind D2.G via `producer_kind`.** Schema bump to add `cycle_meta` deferred to IV.POS.9 if Pro requests. | Tests at `test_compressed_global_extractor.py:152, 480` enforce `role ∈ MEMORY_TXN_ROLES`. Field-name labels would break them. `producer_kind` is the correct separation axis. **Surfaced as NFP-4 in `IV_POS_8_NOTES_FOR_PRO.md` so Pro sees it explicitly.** |
+| **Q6** | D2.B kinds: V5-only or also Hybrid? | **Variant-specific kind subsets.** Global `MUTATION_KINDS` = union of 20. D2.D CLI filters: `V5_control={8 existing}` (D1.A archive reuse intact), `V5_expanded={16 A4}`, `Hybrid_cTS={16 A4 + 4 V6}`, `V6_uniform/cTS={4 V6}`. | Plan v0.7+ line 100 defines V5 control as "8 kinds + D1.A static archive reuse" — global expansion would break that. **Surfaced as NFP-2.** |
+
+### Secondary decisions (Q1, Q2, Q3, Q4, Q7, Q8, Q9, Q10, Q11, Q12–Q14, Q15, Q16, Q17 — 15 questions, Ivan accepted as written via AskQuestion option_a)
+
+| # | Question | **LOCKED resolution** | Watchlist entry |
+|---|---|---|---|
+| **Q1** | `CYCLE_MODE_MOD` scope: broad vs ECALL/MRET-only | **Broad scope — any cycle.** Per taxonomy §3.14. | W-1 (revisit in D2.G if <1% failure rate outside boundary zones) |
+| **Q2** | Value generation mixes (nearby vs random) | **Per-kind §3 percentages as heuristics.** D2.G retunes from DB `outcome` column without spec revision. | W-2 (retune at D2.G if per-mix-bucket skew detected) |
+| **Q3** | Does B.8 `CYCLE_DIFF_COUNT_MOD` ship? | **Lean ship.** Field verifiably live (`preflight.rs:227,306` populate; zirgen `get_diff_count`). Batch 1.0b confirms with 5-mutation 3-way classification (constraint_fail / ERROR / clean-success). Clean-success rows MUST be cross-verified with `A4_DUMP_POST_MUT` per §9b soundness guard before drop. | W-3 (drop only if Batch 1.0b shows zero useful signal AND trace changes verified — i.e., dead arm, not soundness bug) |
+| **Q4** | Layer 2/3/4 tests in CI | **Per-batch landing gate via `A4_REAL_BINARY=1`.** Composer runs locally before commit. No CI binary infra in D2.B; that's D2.E scope if needed later. | — |
+| **Q7** | Python module file naming | **lowercase_snake_case matching kind string.** Zero stakes. | — |
+| **Q8** | Composer batch granularity | **4 batches:** (1) spikes + B.1; (2) B.2+B.3; (3) B.4–B.8; (4) cross-cutting tests + smoke. | W-10 (isolate B.4 only if Batch 3 attestation churn exceeds ~1 week) |
+| **Q9** | Batch 1 ordering: Rust first or Python first | **Rust first.** AND task 1.0a (Layer 3 hook) comes BEFORE 1.1 (B.1 handler). Without 1.0a, Layer 3 is broken even with B.1 handler done. | — |
+| **Q10** | Rust build escalation | **Pause + report.** No alternative — don't burn cycles on opaque Cargo issues. | — |
+| **Q11** | B.1 two strategies — bandit wiring | **Option A — single `MUTATION_KINDS` entry "TXN_PREV_WORD_MOD"; fuzzer RNG-picks `at_read`/`at_write` per pull; strategy logged in config JSON; `_step_has_real_target` ORs both strategies.** PRE_EXEC_REG_MOD retrofix follows the same pattern in Batch 1.5e (NFP-6, A4-only — does NOT touch Arguzz). | W-6 (split to Option B if D2.G shows one strategy dominates rewards >80% on same zone) |
+| **Q12** | B.4 `TXN_ADDR_MOD` exclude fetch txns | **Yes — exclude.** Reuse `mem_val_mod._is_instruction_fetch()` helper. | — |
+| **Q13** | B.4 `TXN_ADDR_MOD` exclude register txns | **Yes — exclude in v1.** Within-register-range redirection is a different mutation shape (`TXN_REG_REDIRECT_MOD`); defer to future cycle. | — |
+| **Q14** | B.5 `TXN_CYCLE_PHASE_MOD` exclude fetch txns | **Yes — exclude.** Fetch txns are always reads; flipping to write triggers IsRead instantly with no novel info. | — |
+| **Q15** | B.7 `CycleState` enum source of truth | **Hardcode from `platform.rs::CycleState` extracted at Batch 1.0b.** Snapshot to `a4/standalone/mutations/_cycle_state_enum.py`; re-check on risc0 pin bumps. | W-8 (re-extract on any risc0 pin bump) |
+| **Q16** | Layer 3 risk-tiered strictness / shared helper | **Shared `assert_trace_diff_matches_signature(diff, expected_signature)` helper in Batch 1 task 1.7.** Minimal v1 signature DSL (primary field + allowed cascade tags); evolve as Batch 3 reveals real cascade shapes. Helper also implements §9b soundness-bug guard (raise `SoundnessBugSuspected` when applied + trace changed + no constraint fail + no error). | — |
+| **Q17** | Layer 3 post-mutation dump infrastructure | **Option A1 — `A4_DUMP_POST_MUT=1` Rust hook at end of mutation match arm (~30 LOC).** Batch 1.0a delivers; smoke-verifies on COMP_OUT_MOD before B.1 handler work. | W-9 (fallback to Option B tag-only Layer 3 with explicit Ivan approval IF A1 hits unexpected Rust blockers) |
+
+### Cross-cutting decisions added during lock
+
+| Topic | **LOCKED resolution** | Source |
+|---|---|---|
+| `PRE_EXEC_REG_MOD` retrofix (NFP-6) | Ships in **D2.B Batch 1 task 1.5e** alongside B.1. A4-only (does NOT touch Arguzz). Same Option A pattern as Q11. ~10 LOC. Commit message MUST contain literal "Batch 1.5e" for D1 chat git-log poll. | Ivan 2026-06-17 + NFP-6 in `IV_POS_8_NOTES_FOR_PRO.md` |
+| Soundness-bug guard | Every clean-success outcome MUST be cross-verified against `A4_DUMP_POST_MUT` dump before classification as "dead arm". If trace genuinely changed but no constraint failed and no error emitted → raise `SoundnessBugSuspected` and surface to Pro. Applies to B.8 (Q3) and all D2.B kinds. | Ivan 2026-06-17, `IV_POS_8_D2_PLAN.md` §9b |
+| Pro-facing decision surfacing | Major architectural decisions get an `NFP-N` entry in `IV_POS_8_NOTES_FOR_PRO.md` as they're made. D2.B contributes NFP-2 (8 kinds + variant subsets), NFP-3 (B.1 Option A), NFP-4 (Q5 Pro-valid roles), NFP-5 (Layer 3 hook), NFP-6 (PRE_EXEC_REG_MOD retrofix). | Ivan 2026-06-17 |
+| Deferred-decisions tracking | Every "go with X now, revisit at Y if Z" decision gets a watchlist row in `IV_POS_8_D2_PLAN.md` §9a (W-1 through W-14). Reviewed at each watch's "first check" point. | Ivan 2026-06-17, plan §9a |
+| D2.C review timing | Deferred until D2.B finishes. D2.B and D2.C are structurally independent (additive edits to same files; no semantic conflict). | Ivan 2026-06-17 |
+| Pro-presentation timing | Pro check-in moves to **end of D2.B** (was D2.G). D2.B Batch 4 report becomes Pro-facing artifact alongside `IV_POS_8_NOTES_FOR_PRO.md` and spec. D2.C/D/E/F/G proceed after Pro greenlight. | Ivan 2026-06-17, plan §9a W-14 |
 
 ## 9. Risks + mitigations
 

@@ -7,14 +7,28 @@ from pathlib import Path
 import pytest
 
 from a4.core.inspection_data import InspectionData
-from a4.standalone.fuzzer import A4Fuzzer
 from a4.standalone.semantic_arm_universe import SemanticArmUniverse
 
 HOST = Path("workspace/output/target/release/risc0-host")
 HOST_ARGS = ["--in1", "5", "--in4", "10"]
-# 48 arms after Phase 7 Bug A phantom pruning; D40 (Inc 0) may drop ≤4 more.
+
+# V5_control baseline (8 existing kinds). D2.D enforces variant-specific subsets;
+# global MUTATION_KINDS grows during D2.B — this test must NOT track that union.
+V5_CONTROL_KINDS_8 = [
+    "COMP_OUT_MOD",
+    "LOAD_VAL_MOD",
+    "STORE_OUT_MOD",
+    "PRE_EXEC_REG_MOD",
+    "INSTR_TYPE_MOD",
+    "MEM_VAL_MOD",
+    "INSTR_WORD_MOD_FULL",
+    "INSTR_WORD_MOD_SUR",
+]
+
+# ~48 arms after Phase 7 Bug A phantom pruning on sha2-host; D40 may drop ≤4.
+# PRE_EXEC_REG_MOD retrofix (OR both strategies) may add ≤4 arms within V5_control.
 PRODUCTION_ARM_COUNT_MIN = 44
-PRODUCTION_ARM_COUNT_MAX = 48
+PRODUCTION_ARM_COUNT_MAX = 52
 
 
 @pytest.fixture(scope="module")
@@ -26,8 +40,7 @@ def production_data() -> InspectionData:
 
 @pytest.fixture(scope="module")
 def production_universe(production_data) -> SemanticArmUniverse:
-    kinds = A4Fuzzer.MUTATION_KINDS
-    return SemanticArmUniverse.build(production_data, kinds)
+    return SemanticArmUniverse.build(production_data, V5_CONTROL_KINDS_8)
 
 
 def test_production_arm_count_in_d40_range(production_universe):

@@ -210,6 +210,11 @@ class InspectionData:
                 # Both FULL (entire word) and SUR (surgical field) use same targets
                 if cycle.major <= 6 or cycle.major == 8:
                     valid_steps.add(cycle.step)
+
+            elif kind == "TXN_PREV_WORD_MOD":
+                # Any non-bootstrap step with at least one txn
+                if cycle.step != 0 and cycle.step in self._step_to_all_txns:
+                    valid_steps.add(cycle.step)
         
         # Return sorted list for deterministic ordering
         return sorted(valid_steps)

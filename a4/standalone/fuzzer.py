@@ -84,7 +84,9 @@ from a4.standalone.mutations import (
     get_instr_type_targets, create_instr_type_config, InstrTypeModTarget,
     get_mem_val_targets, create_mem_val_config, MemValModTarget,
     get_instr_word_targets, create_instr_word_config, InstrWordModTarget,
+    get_txn_prev_word_targets, create_txn_prev_word_config, TxnPrevWordModTarget,
 )
+from a4.standalone.mutations.txn_prev_word_mod import generate_new_value as generate_txn_prev_word_value
 from a4.standalone.mutations.instr_type_mod import generate_random_mutation as generate_instr_mutation
 
 # Surgical instruction mutations
@@ -223,6 +225,7 @@ class A4Fuzzer:
         "MEM_VAL_MOD",
         "INSTR_WORD_MOD_FULL",  # Full 32-bit instruction word mutation
         "INSTR_WORD_MOD_SUR",   # Surgical field-level mutation
+        "TXN_PREV_WORD_MOD",
     ]
     
     def __init__(
@@ -1226,6 +1229,7 @@ class A4Fuzzer:
         "MEM_VAL_MOD": "a4_mem_val_mod",
         "INSTR_WORD_MOD_FULL": "a4_instr_word_mod",
         "INSTR_WORD_MOD_SUR": "a4_instr_word_mod",
+        "TXN_PREV_WORD_MOD": "a4_txn_prev_word_mod",
     }
     _BANDIT_TRACE_MOD_RE = re.compile(r"<(\w+)>({.*?})</\1>")
 
@@ -1636,7 +1640,8 @@ class A4Fuzzer:
             return config, mutated_value, target.original_value
         
         elif kind == "PRE_EXEC_REG_MOD":
-            targets = get_pre_exec_reg_targets(step, self.data, strategy="next_read")
+            strategy = self.rng.choice(["next_read", "prev_write"])
+            targets = get_pre_exec_reg_targets(step, self.data, strategy=strategy)
             if not targets:
                 return None, 0, 0
             target = self.rng.choice(targets)
@@ -1649,7 +1654,7 @@ class A4Fuzzer:
                 "step": target.step,
                 "txn_idx": target.txn_idx,
                 "word": mutated_value,
-                "strategy": target.strategy,
+                "strategy": strategy,
                 "_info": {
                     "register_idx": target.register_idx,
                     "register_name": target.register_name,
@@ -1659,6 +1664,29 @@ class A4Fuzzer:
                 },
             }
             return config, mutated_value, target.original_word
+        
+        elif kind == "TXN_PREV_WORD_MOD":
+            strategy = self.rng.choice(["at_read", "at_write"])
+            targets = get_txn_prev_word_targets(step, self.data, strategy=strategy)
+            if not targets:
+                return None, 0, 0
+            target = self.rng.choice(targets)
+            mutated_value = generate_txn_prev_word_value(target, self.rng)
+            config = {
+                "mutation_type": "TXN_PREV_WORD_MOD",
+                "step": target.step,
+                "txn_idx": target.txn_idx,
+                "prev_word": mutated_value,
+                "strategy": strategy,
+                "_info": {
+                    "addr": f"0x{target.addr:08x}",
+                    "is_read": target.is_read,
+                    "original_prev_word": target.original_prev_word,
+                    "original_word": target.original_word,
+                    "original_prev_cycle": target.original_prev_cycle,
+                },
+            }
+            return config, mutated_value, target.original_prev_word
         
         elif kind == "INSTR_TYPE_MOD":
             target = get_instr_type_targets(step, self.data)

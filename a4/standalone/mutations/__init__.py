@@ -63,6 +63,12 @@ from a4.standalone.mutations.instr_word_mod import (
     get_valid_steps as get_instr_word_valid_steps,
 )
 
+from a4.standalone.mutations.txn_prev_word_mod import (
+    TxnPrevWordModTarget,
+    get_targets_at_step as get_txn_prev_word_targets,
+    create_config as create_txn_prev_word_config,
+)
+
 __all__ = [
     # COMP_OUT_MOD
     'CompOutModTarget',
@@ -94,4 +100,8 @@ __all__ = [
     'get_instr_word_targets',
     'create_instr_word_config',
     'get_instr_word_valid_steps',
+    # TXN_PREV_WORD_MOD
+    'TxnPrevWordModTarget',
+    'get_txn_prev_word_targets',
+    'create_txn_prev_word_config',
 ]

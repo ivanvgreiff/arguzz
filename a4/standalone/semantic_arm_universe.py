@@ -31,6 +31,7 @@ from a4.standalone.zone_classifier import zone_to_steps
 from a4.standalone.mutations import comp_out_mod, load_val_mod, store_out_mod
 from a4.standalone.mutations import pre_exec_reg_mod, instr_type_mod, mem_val_mod
 from a4.standalone.mutations import instr_word_mod, instr_word_mod_sur
+from a4.standalone.mutations import txn_prev_word_mod
 
 if TYPE_CHECKING:
     from a4.core.inspection_data import InspectionData
@@ -44,6 +45,7 @@ _MUTATION_MODULES = {
     "MEM_VAL_MOD": mem_val_mod,
     "INSTR_WORD_MOD_FULL": instr_word_mod,
     "INSTR_WORD_MOD_SUR": instr_word_mod_sur,
+    "TXN_PREV_WORD_MOD": txn_prev_word_mod,
 }
 
 def _cycle_matches_kind_filter(kind: str, cycle, data: "InspectionData") -> bool:
@@ -60,6 +62,8 @@ def _cycle_matches_kind_filter(kind: str, cycle, data: "InspectionData") -> bool
         return cycle.step in data._step_to_mem_txns
     if kind in ("INSTR_WORD_MOD_FULL", "INSTR_WORD_MOD_SUR"):
         return cycle.major <= 6 or cycle.major == 8
+    if kind == "TXN_PREV_WORD_MOD":
+        return cycle.step != 0 and cycle.step in data._step_to_all_txns
     return True
 
 
@@ -88,7 +92,13 @@ def _step_has_real_target(kind: str, step: int, data: "InspectionData") -> bool:
         return True
     try:
         if kind == "PRE_EXEC_REG_MOD":
-            t = mod.get_targets_at_step(step, data, strategy="next_read")
+            t_read = mod.get_targets_at_step(step, data, strategy="next_read")
+            t_write = mod.get_targets_at_step(step, data, strategy="prev_write")
+            t = t_read or t_write
+        elif kind == "TXN_PREV_WORD_MOD":
+            t_read = mod.get_targets_at_step(step, data, strategy="at_read")
+            t_write = mod.get_targets_at_step(step, data, strategy="at_write")
+            t = t_read or t_write
         else:
             t = mod.get_targets_at_step(step, data)
     except Exception:

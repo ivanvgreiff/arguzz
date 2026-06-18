@@ -171,6 +171,7 @@ _TXN_ROLE_BY_KIND: Dict[str, str] = {
     # Register kinds:
     "PRE_EXEC_REG_MOD":    "register",
     "COMP_OUT_MOD":        "register",
+    "TXN_PREV_WORD_MOD":   "prev_word",
 }
 
 

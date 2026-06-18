@@ -5,7 +5,7 @@
 **This is NOT the final D1 report.** That deliverable (`IV_POS_8_D1_REPORT_FOR_PRO.md`) folds D1.A + D1.B + D1.C + D1.E together at Stage 4 (after D1.E completes). This briefing exists earlier in the pipeline so Pro can confirm or correct the architectural framing while the choices are still cheap to revise.
 **Branch:** `cloud2`
 **Author:** Opus
-**Status:** **DRAFT v0.1 — covers completed work through 2026-06-17.** Sections marked **IN PROGRESS** are placeholders that Ivan will fill as D1.C, D2.B, and D1.E land.
+**Status:** **DRAFT v0.2 — covers completed work through 2026-06-17.** D1.C extension landed (§4); D2.B (§5) and D1.E preview (§6) sections will grow as those deliverables land.
 
 ---
 
@@ -19,12 +19,15 @@ We have completed **three load-bearing deliverables** since IV.POS.8 began:
 | 2 | **D2.A** — 5-tuple ArmKey refactor + `mutations.outcome` column + applied accounting | `b844e8e` then `7b66fb9` | **DONE** | Scheduler shape that D1.E, D2.B, D2.C, D2.D all build on; V5 byte-identity preserved → D1.A archive remains a valid paired baseline |
 | 3 | **D1.B** — CGC coarsening variants (3 alternates evaluated; corrected baseline) | `71dae77` | **DONE** | Recommendation: keep corrected `production_log2_corrected` as L0; coarsenings saturate EARLIER than local; L1 enrichment via D1.C is the primary remaining lever |
 
-Two deliverables are **IN PROGRESS** in parallel chats:
+One more deliverable is **DONE** and one is **IN PROGRESS**:
+
+| # | Deliverable | Commit | Status | What it produced |
+|---|---|---|---|---|
+| 4 | **D1.C** — bug-proximity metric stack (Tier-1 per-mutation signals + Tier-2 per-campaign metrics) | `3a8487c` | **DONE** | 3 L1 OR-channel candidates pass D1.E pre-screening; singleton-failure rate is the only Tier-2 decay discriminator (p=2.6e-06); `f_new` L1 channel dead on V5 |
 
 | # | Deliverable | Owner | Status |
 |---|---|---|---|
-| 4 | **D1.C** — bug-proximity metric stack (Tier-1 per-mutation signals + Tier-2 per-campaign metrics) | D1 chat (this one) | Spec v0.3 LOCKED 2026-06-17; Composer Batch 1 about to kick off |
-| 5 | **D2.B** — eight new pure-A4 mutation kinds + attestation hook + `PRE_EXEC_REG_MOD` retrofix | D2 chat (parallel) | Spec v0.5 LOCKED; Composer Batch 1 kickoff pending |
+| 5 | **D2.B** — eight new pure-A4 mutation kinds + attestation hook + `PRE_EXEC_REG_MOD` retrofix | D2 chat (parallel) | Spec v0.5 LOCKED; Composer Batch 1 in flight |
 
 D1.E (the V5 + decay re-run under enriched reward path) is the **integration point** for D1.A + D1.B + D1.C + D2.A + the specific `PRE_EXEC_REG_MOD` retrofix portion of D2.B. The other D2.B work (eight new kinds, attestation hook, `txn_role` mappings) feeds the D2 variants (V6, Hybrid-cTS), NOT D1.E.
 
@@ -274,55 +277,123 @@ If you correct any of these, D1.B's `page_class` definition gets re-run; this do
 
 ---
 
-## 4. D1.C — Bug-proximity metric stack (IN PROGRESS)
+## 4. D1.C — Bug-proximity metric stack (DONE — committed `3a8487c`)
 
 ### 4.1 Status as of 2026-06-17
 
-**Spec locked at v0.3** (`a4/docs/cloud2/IV_POS_8_D1_C_SPEC.md`). Composer Batch 1 kickoff brief written at `a4/docs/cloud2/composer/D1C_BATCH1_COMPOSER_KICKOFF.md`. Ivan has greenlit all 7 Q-C-* recommendations and the v0.2 + v0.3 audit fixes.
+**DONE.** Spec was locked at v0.3 (`a4/docs/cloud2/IV_POS_8_D1_C_SPEC.md`). Composer shipped Batches 1+2+3 plus a post-implementation systematic audit (`a4/docs/cloud2/composer/D1C_AUDIT_REPORT.md`). All work was squash-committed as **`3a8487c "Check d1.c"`** on `cloud2`.
 
-### 4.2 Planned scope (from spec)
+**Full Pro-facing details** are in `a4/runs/iv_pos_8/d1c/D1C_SUBSECTION.md` (will fold into Stage 4 final D1 report) and `a4/runs/iv_pos_8/d1c/d1c_signal_shortlist.md` (full reference). This section is the chronological narrative; the subsection has the per-signal catalog with construction details.
 
-D1.C ships **two tiers of signals + one coordination artifact** on the same 30-DB Cat-A corpus D1.B used:
+### 4.2 What we did
 
-| Tier | Granularity | Purpose | Count |
-|---|---|---|---:|
-| **Tier-1** | Per-mutation | L1 OR-channel candidates for D1.E reward rewire | **5 candidates** |
-| **Tier-2** | Per-campaign | D2.G's V5-vs-V6 comparison table + Pro-facing bug-proximity disclosure | **8 metrics** |
+D1.C tested **all 8 of Pro Report 3 §5/§8 bug-proximity metrics** (per-campaign Tier-2) and **5 candidate per-mutation reward signals** (Tier-1) on a 30-DB Cat-A corpus:
 
-**Tier-1 candidates** (each scoped via §1.4 Option A channel reconstruction — uses `discovery_binary_reward` directly from `reward_counterfactuals`, no replay):
-1. `f_new_flag` — exact proxy for `f_new ≥ 1` via `fnew_only_reward > 0` (already-computed family novelty, free addition)
-2. `recent_marginal_discovery_rate` — rolling mean of `discovery_binary_reward` over W=100 pulls (momentum / smoothed bandit-success rate)
-3. `singleton_failure_flag` — exactly one constraint_loc broke this pull
-4. `mutation_substrategy_uniqueness` — first occurrence of composite kind-specific substrategy key
-5. `d_loc_le_2_flag` — per-pull threshold flag from Pro Report 3 §8 "unique locs discovered with d_loc ≤ 2"
+- 10 R2 V1 DBs (b1/cTS V1 — context only)
+- 10 R2 V5 DBs (b1/cTS V5_semantic_v2 — primary D1.E target)
+- 10 D1.A decay DBs (V5_decayexp + V5_decayepoch, 5 paired seeds each)
 
-**Tier-2 metrics** (Pro-§-tagged column names; D2.G consumes these via `cat_a_pro_s*` schema):
-1. `pro_s5_verifier_accepted_invalid_count` (aligned to D1.A spec locked SQL)
-2. `pro_s5_co_failure_graph_degree_p95`
-3. `pro_s5_singleton_failure_rate`
-4. `pro_s5_d_loc_p95`
-5. `pro_s8_unique_locs_with_d_loc_le_2`
-6. `pro_s8_unique_locs_with_d_glob_le_1` (Pro §8 paired)
-7. `pro_s5_proof_generated_zero_residue_rejected_rate` (Cat-B; D1.A 10 DBs only)
-8. `pro_b_wall_clock_per_normalized_discovery` (Cat-B)
+**Tier-1 signals tested** (per-mutation; Pro §7 Stage 2 reward-signal candidates + two derived from Pro §5/§8 catalog):
 
-**Critical scope disclaimer:** D1.C identifies CANDIDATE signals; it does NOT prove the bandit benefits from learning on them. That validation is D1.E's forward-run job. D1.C's only claim is "these signals have empirically promising properties (orthogonality to existing channels + non-saturation past mut 3000)."
+| Signal | Source idea | Result |
+|---|---|---|
+| `f_new_flag` | Pro §8 + NFP-9 "free" L1 channel — `fnew_only_reward > 0` proxy for `f_new ≥ 1` | **DEAD post-local on V5** (~0% fire rate); see Finding A below |
+| `recent_marginal_discovery_rate` | Pro §7 Stage 2 "recent marginal discovery" — 100-pull rolling mean of `discovery_binary_reward` | **Passes gates** — surprise: spec expected ρ ≈ 0.4-0.7 by construction, actual ≤ 0.114 (Finding B) |
+| `singleton_failure_flag` | Per-pull form of Pro §5 singleton-failure rate | **Passes gates**; per-campaign form is THE Tier-2 decay discriminator (Finding C) |
+| `mutation_substrategy_uniqueness` | Proxy for Pro §7 Stage 2 "underexplored semantic zones" — first occurrence of composite `(kind, substrategy)` key | **Passes gates with best orthogonality** (max \|ρ\| = 0.069); rank 1 in shortlist |
+| `d_loc_le_2_flag` | Per-pull form of Pro §8 d_loc analytics (`mutation_rewards.d_loc ≤ 2`) | **Passes gates with highest fire rate** (60.7%); opposite-saturation caveat (Finding D) |
 
-### 4.3 Expected output → D1.E hand-off
+**Tier-2 metrics tested** (per-campaign; Pro §5/§8 catalog + 2 derived):
 
-- `d1c_signal_shortlist.md` — Top 2–3 Tier-1 signals (Bucket A: RECOMMENDED for D1.E L1) + deferred candidates with rationale (Bucket B: ortho failure; Bucket C: ortho failure but kept as NFP-9 scalar-bandit candidate)
-- `d1e_handoff_L1_signals.md` — Per-seed disjoint-fire rates + sample L1 OR sketch + ≤3 OR'd channels stopping rule
-- `d1c_metrics_table.csv` (30 rows × 8 metric columns) — feeds D2.G headline comparison table
-- `d1c_tier2_schema.md` — column schema for D2.G `build_d2_artifacts.py` consumption
+`pro_s5_verifier_accepted_invalid_count`, `pro_s5_co_failure_graph_degree_p95`, `pro_s5_singleton_failure_rate`, `pro_s5_d_loc_p95`, `pro_s8_unique_locs_with_d_loc_le_2`, `pro_s8_unique_locs_with_d_glob_le_1`, `pro_s5_proof_generated_zero_residue_rejected_rate` (Cat-B), `pro_b_wall_clock_per_normalized_discovery` (Cat-B).
 
-### 4.4 ❓ Pro asks (to be surfaced when D1.C completes)
+Gates were `fire_rate(post_local_window=[3000, 6000)) > 5%` (non-saturation) and `max |Pearson ρ| < 0.4` (orthogonality vs `discovery_binary_reward` + `f_new_flag` via spec §1.4 "Option A" — no per-pull replay).
 
-> _**[IVAN TO FILL after D1.C Batch 3 completes]**_
->
-> Likely asks based on spec v0.3:
-> 1. Confirmation of Tier-2 metric schema (especially the Pro §5 `verifier_accepted_invalid_count` SQL — D1.A spec locked one definition, Pro Report 3 §5 wrote a slightly different one; we shipped the D1.A-locked Cat-A variant and flagged the Cat-B-literal variant as a possible later add)
-> 2. Endorsement of Tier-1 shortlist (Bucket A) for D1.E L1 wiring, or pushback if Pro wants different signals prioritized
-> 3. Acknowledgment of Bucket C (continuous signals kept for future scalar-bandit consideration per NFP-9 deferred L2)
+### 4.3 What we found — five headline findings
+
+#### Finding A — Pro's "free f_new L1 channel" is empirically dead on V5
+
+`fnew_only_reward > 0` (exact proxy for `f_new ≥ 1`) fires on **0.17%** of pulls full-campaign and **~0%** post-local on the V5 corpus. NFP-9's "free engineering addition" framing is technically true (already computed in `reward_v2.py`) but **practically vacuous on this catalog** — OR-ing it into `bandit_success` adds essentially zero new signal post-local. **Likely re-activates on Hybrid V7** if V6-only kinds discover new constraint families.
+
+NFP-9's narrative is being tightened in the notes index from "free useful" to "free but empirically zero-value on V5; available for non-V5 catalogs."
+
+#### Finding B — Orthogonality surprise (`recent_marginal_discovery_rate` passes)
+
+Pro §7 Stage 2 listed "recent marginal discovery" as a candidate adaptive-bandit reward signal. The spec docstring predicted that a rolling mean of `discovery_binary_reward` would correlate ρ ≈ 0.4-0.7 with the instant bit "by construction." **Reality post-local: max |ρ| = 0.114 (discretized at 0.05); max continuous Pearson 0.134.**
+
+The mechanism: once `discovery_binary_reward` becomes sparse post-local (~3% fire rate on V5), the 100-pull rolling mean also stays low and decouples from the instant bit. **Pro gains a 4th L1 candidate that the spec did not predict would be available as a binary OR channel.**
+
+#### Finding C — Singleton-failure rate discriminates V5-decay from V5-static (p = 2.6e-06)
+
+Of 8 Tier-2 metrics, **only `pro_s5_singleton_failure_rate` significantly separates decay variants from V5-static**:
+
+| Comparison | Mean A | Mean B | p (paired t, n=5) |
+|---|---:|---:|---:|
+| V5_decayexp vs V5-static | 12.93% | 16.69% | **2.6 × 10⁻⁶** |
+| V5_decayepoch vs V5-static | 13.44% | 16.69% | **9.7 × 10⁻⁵** |
+| V5_decayexp vs V5_decayepoch | 12.93% | 13.44% | 0.059 (n.s.) |
+
+Decay variants find **~22% fewer singleton failures** than V5-static. This is the FIRST statistically significant per-campaign metric to discriminate decay variants — D1.A's `local_context_final` paired tests were all n.s. at p > 0.62.
+
+**Two plausible architectural interpretations, both consistent with the data:**
+- **(a)** Decay schedules push the bandit toward exploring mutations that break MULTIPLE constraint_locs simultaneously (higher d_loc). Weak supporting evidence: `d_loc_p95` is +1 on decayexp vs V5 across all 5 paired seeds (Wilcoxon p = 0.0625, smallest possible at n=5). If true, decay is finding **more complex failure modes**.
+- **(b)** Decay schedules MISS the singleton-failure mutations entirely. If true, decay is **less efficient at surgical bug witnesses**.
+
+**D1.C cannot distinguish (a) from (b).** D1.E forward-run with the singleton signal wired into L1 is the only way to tell — if decay's gradient improves with the singleton signal, (b) is supported; if it doesn't, (a) is.
+
+#### Finding D — Top-3 L1 OR-channel candidates pass D1.E pre-screening
+
+Three new per-mutation signals pass both gates on the V5 catalog, ordered by rank score `(1 / max|ρ|) × mean_fire_rate_post_local`:
+
+| Rank | Signal | Mean post-local fire | Max \|ρ\| | Disjoint-fire vs `discovery_binary_reward` |
+|---:|---|---:|---:|---:|
+| 1 | `mutation_substrategy_uniqueness` | 33.7% | 0.069 | 98.1% |
+| 2 | `d_loc_le_2_flag` | 60.7% | 0.239 | 99.3% |
+| 3 | `singleton_failure_flag` | 16.5% | 0.082 | 99.6% |
+| 4th alt. | `recent_marginal_discovery_rate` | 15.8% | 0.114 | — (continuous) |
+
+**Opposite-saturation caveat (rank 2):** `d_loc_le_2_flag` at 60%+ post-local fire risks pushing `bandit_success` always-on — the OPPOSITE failure mode from saturation. D1.E must cap L1 OR channels at ≤ 3 per revisit plan §3.3 and consider non-naive compositions.
+
+#### Finding E — D1.C has zero NFP-10-class field-priority dependency
+
+Composer's systematic audit verified `git grep` over `bug_proximity.py` shows zero references to `compressed_global_coverage`, `byte_addr`, or `address_region`. The NFP-10 class of bug (wrong field fed to a downstream function, plausible aggregates) **cannot apply** to this metric stack. The closest semantic schism is crash-mode `d_loc = 0` with non-empty `failures` (~1.1% of pulls; 100% are `mode='crash'`; bounded < 0.2 pp impact on `d_loc_le_2_flag` post-local fire rate; traced to `coverage_state.py:190-198`).
+
+### 4.4 Critical scope disclaimer
+
+**Every D1.C result is scoped to the V5_semantic_v2 catalog under the cTS scheduler.** We did NOT test under:
+
+| Architecture | Why results might differ |
+|---|---|
+| **Hybrid-cTS** (Pro §15 Priority 1) | Expanded arm count (V5 + V6-only kinds). `mutation_substrategy_uniqueness` fire rate would likely change; `f_new_flag` near-deadness may not hold if V6 kinds introduce new families; `singleton_failure_rate` decay discrimination may differ. |
+| **V7** (Pro §15 Priority 3 — new TXN_PREV_*, CYCLE_* kinds) | Different reachability surface; new kinds each need substrategy-field audit; `INSTR_TYPE_MOD` all-NULL degeneracy may not generalize. |
+| **Arguzz-with-thompson** (Pro §14 ablation) | Different scheduler dynamics; post-local sparse-discovery regime that drove the orthogonality surprise may not hold. |
+
+**A Tier-1 re-audit on the first Hybrid-cTS campaign is recommended before wiring L1 in any Hybrid V7 architecture.** D1.E's V5-only forward run uses the V5-scoped shortlist as-is.
+
+### 4.5 What D1.C did NOT claim
+
+1. That L1 enrichment will help the bandit — D1.E forward-run is the causal test
+2. That signals generalize to Hybrid V7 / V7 / Arguzz-with-thompson — see §4.4
+3. That `f_new_flag` is universally dead — only on V5 catalog
+4. That the singleton-decay discrimination explains decay's overall behavior — separate from D1.A's `local_context_final` n.s. result
+
+### 4.6 Hand-off to D1.E
+
+| Artifact | Use |
+|---|---|
+| `a4/runs/iv_pos_8/d1c/d1c_signal_shortlist.md` | Full reference: per-signal catalog, gates, bucket assignments |
+| `a4/runs/iv_pos_8/d1c/d1e_handoff_L1_signals.md` | D1.E spec input — recommended L1 wiring + decay disclosures |
+| `a4/runs/iv_pos_8/d1c/d1c_metrics_table.csv` | D2.G headline comparison table feed |
+| `a4/runs/iv_pos_8/d1c/d1c_tier2_schema.md` | D2.G `build_d2_artifacts.py` column schema lock |
+| `a4/runs/iv_pos_7/analysis/bug_proximity.py` | Tier-1/Tier-2 extractors (analysis-only — no production paths touched) |
+
+### 4.7 ❓ Pro asks
+
+1. **Endorsement of Top-3 L1 shortlist** (`mutation_substrategy_uniqueness`, `d_loc_le_2_flag`, `singleton_failure_flag`) for D1.E L1 wiring, or pushback if Pro wants different signals prioritized given the V5-only scope.
+2. **Architectural interpretation of singleton decay finding** (§4.3 Finding C interpretations a vs b) — Pro may have prior intuition that breaks the tie before D1.E forward-run.
+3. **Acknowledgment that `f_new` L1 channel is dead on V5** but stays available for Hybrid V7 — Pro may want this called out explicitly in NFP-9 vs deferred.
+4. **Hybrid V7 re-audit timing** — should D1.E gate on a Hybrid V7 sanity pass first, or is V5-only D1.E sufficient as the architectural test of L0+L1 rewire?
+5. **Tier-2 metric schema** for D2.G consumption (locked in `d1c_tier2_schema.md`; Pro may want column rename / additions before D2.G consumes).
 
 ---
 

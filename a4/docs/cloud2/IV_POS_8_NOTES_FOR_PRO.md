@@ -226,7 +226,7 @@ D2.B Batch 1 ships a small retrofix (task 1.5e, ~10 LOC):
 | Layer | Change | Purpose |
 |---|---|---|
 | **L0** | Replace production `compressed_global_context` log2 bucketing in `compressed_global_extractor.py` with D1.B's recommended coarsening (or keep log2 and add a coarsened channel) | `g_new` keeps discriminating past `_local_discoveries` saturation |
-| **L1** | Extend `compute_bandit_success` to OR-in (a) `f_new > 0` (family novelty — already computed in `reward_v2.py:compute_reward_v2_components` but excluded from today's Bernoulli; free addition) + (b) one or more Tier-1 per-mutation D1.C bug-proximity signals | Extends `bandit_success` discriminating window |
+| **L1** | Extend `compute_bandit_success` to OR-in one or more Tier-1 per-mutation D1.C bug-proximity signals (top 3 from `d1c_signal_shortlist.md`: `mutation_substrategy_uniqueness`, `d_loc_le_2_flag` with opposite-saturation guard, `singleton_failure_flag`). `f_new > 0` was originally listed here as a "free" addition (already computed in `reward_v2.py:compute_reward_v2_components` but excluded from today's Bernoulli) but **D1.C empirically found it dead on V5** (~0% post-local fire rate; see UPDATE 2026-06-17 below). Keep available as engineering hook for non-V5 catalogs (Hybrid V7) where new constraint families may re-activate it. | Extends `bandit_success` discriminating window |
 
 **Layer 2 (replace Beta-Bernoulli TS with scalar-reward bandit) is explicitly OUT of D1.E v1 scope.** Pro §7 Stage 2 does not literally require it; binary suffices if OR-of-signals is informative. Defer to D2 or follow-on.
 
@@ -240,6 +240,17 @@ D2.B Batch 1 ships a small retrofix (task 1.5e, ~10 LOC):
 - D1.A decay variants are NOT yet discarded — D1.A's FROZEN report (`D1A_SUBSECTION.md`) explicitly limits its scope to "old sparse binary reward signal." D1.E re-tests under enriched signals before any deprecate recommendation.
 
 **Source:** `IV_POS_8_D1_REVISIT_PLAN.md` v0.4 §3.3 + §4 (D1.E section); `IV_POS_8_D1_B_SPEC.md` v0.3.1 §0.1.1; `D1A_SUBSECTION.md` Limitations 6-8; this `NFP-9` entry.
+
+**UPDATE 2026-06-17 (D1.C commit `3a8487c`):** D1.C empirically tested `f_new > 0` as a Tier-1 L1 OR-channel candidate on the 30-DB Cat-A corpus (10 V1 + 10 V5 + 10 D1.A decay). Result: `fnew_only_reward > 0` (exact proxy for `f_new ≥ 1`) fires on **0.17%** of pulls full-campaign and **~0%** post-local on the V5 corpus. **0 of 30 DBs pass the 5% non-saturation gate.** Family-novelty events are concentrated very early in V5 campaigns and don't extend the bandit signal post-local.
+
+**Tightened framing:**
+- **Engineering cost:** still free (computation already in `reward_v2.py:148-156`, just not OR'd into `compute_bandit_success`).
+- **Practical value on V5:** **zero post-local discrimination.** Wiring it into D1.E's L1 OR on the V5 catalog adds essentially no information.
+- **Practical value on Hybrid V7 / V7-only:** **unknown — possibly re-activated.** V6-only kinds (per Pro §15 Priority 1) discover constraint families V5 cannot reach; `f_new` may fire materially more often on those catalogs. Re-audit required before assuming.
+
+**D1.E decision (committed for V5 forward run):** Do NOT OR `f_new > 0` into L1 on the V5 + decay re-run. Keep the engineering hook in place so a future Hybrid V7 forward run can flip it on after a Tier-1 re-audit on Hybrid V7 telemetry. The top-3 D1.C L1 candidates (`mutation_substrategy_uniqueness`, `d_loc_le_2_flag`, `singleton_failure_flag`) replace `f_new` as the load-bearing L1 signals for D1.E.
+
+**Sources for this update:** `a4/runs/iv_pos_8/d1c/D1C_SUBSECTION.md` §5.1 + Finding C; `a4/runs/iv_pos_8/d1c/d1c_signal_shortlist.md` §5.1; D1.C commit `3a8487c`.
 
 ---
 

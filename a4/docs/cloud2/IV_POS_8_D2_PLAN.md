@@ -3,14 +3,18 @@
 **Branch:** `cloud2`
 **Date opened:** 2026-06-16
 **Author:** Ivan + Opus (planning); Composer (implementation, future batches)
-**Status:** **DRAFT v0.8** — D2.A merged at `7b66fb9`; v6_driver_v2.py recovered; **D2.B v0.5 LOCKED** (17 §6 questions resolved); deferred-decisions watchlist (§9a) + soundness-bug guard (§9b) added; new sibling doc `IV_POS_8_NOTES_FOR_PRO.md` (NFP-1 through NFP-6) tracks vital architectural decisions Pro needs to understand. D2.C v0.1 deferred review (independent of D2.B). Next: D2.B Batch 1 Composer kickoff.
+**Status:** **DRAFT v0.10** — D2.A merged at `7b66fb9`; D1 chat has landed D1.B + D1.C work (commits `71dae77`, `3a8487c`); D2.B Batch 1 work is in working tree pending re-review (mechanical fixes #1-#5 + §5.3 hygiene all verified clean; Issue #6 investigation completed and confirmed not-a-soundness-bug). **v0.10 additions (post Batch 1 Issue #6):** (1) New **§6c "Arm semantic certainty stack"** documents the 6-layer (S1–S6) certainty model explicitly, with known gaps and where each closes. (2) **§9b rewritten** to capture the **four-channel rejection model** (C1=`<constraint_fail>`, C2=`verify segment`, C3=`<a4_family_residue>` Hook 3, C4=`<a4_error>`) verified empirically against `fuzzer.py:345`'s production rejection logic — the soundness guard MUST treat all four as rejection channels, and attestation tests MUST enable `A4_FAMILY_RESIDUE=1`. (3) Watchlist extended with **W-15** (S1 zone classifier systematic audit, deferred to D2.D) and **W-16** (Hook 3 wiring into soundness guard — currently missing; Composer Issue #6 fix added only C2, not C3). D2.B v0.5 spec still LOCKED. Next: Composer adds Hook 3 channel to the guard + re-runs attestation, then Batch 1 commits with "Batch 1.5e" literal.
 **Parent:** [`IV_POS_8_PRELIMINARY_PLAN.md`](./IV_POS_8_PRELIMINARY_PLAN.md) — the 4-deliverable master plan
 **Sibling specs (D1):** [`IV_POS_8_D1_A_SPEC.md`](./IV_POS_8_D1_A_SPEC.md) (locked, running on POS)
 **Sibling specs (D2):** [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) (D2.A — foundation; in review)
 
 ## Changelog
 
-- **v0.8 (2026-06-17, latest):** D2.B §6 LOCKED at v0.5 after Ivan reviewed two Composer-review cycles. Key locks:
+- **v0.9 (2026-06-17, latest):** Catch-up after D1-chat productivity burst. D1 chat landed D1.B Batch 1 + D1.C investigation (commits `71dae77`, `3a8487c`); added NFP-7 (page_class), NFP-8 (paired-test corpus), NFP-9 (D1.E reward rewire scope), and **NFP-10 (`addr` vs `byte_addr` field-priority bug)** to `IV_POS_8_NOTES_FOR_PRO.md`. **NFP-10 has been verified independently against `compressed_global_extractor.py:216` — fix is already in cloud2; field-priority tuple is now `("byte_addr","addr","address")`.** New `IV_POS_8_D1_REVISIT_PLAN.md` introduces **D1.E sub-deliverable** (V5 reward rewire + decay re-run) which **HALTS waiting for D2.B Batch 1.5e** to merge. Pro-presentation timing changed: end-of-D2.B becomes interim Pro check-in, with D2.C/D2.D/D2.E/D2.F/D2.G proceeding after Pro greenlight. Plan changes captured:
+  - **§9a watchlist extended** — added W-12 (Batch 1.5e merge signal for D1.E sync), W-13 (NFP-10 revert guard for D2.B §4.7 edits), W-14 (Pro-presentation pivot to end-of-D2.B).
+  - **D2.B spec v0.5 minor edits** — §4.7 gets NFP-10 awareness paragraph + `rg` sanity-check snippet; Batch 1.5e task gets explicit "commit message must contain 'Batch 1.5e' literal" instruction for D1 chat's git-log poll signal.
+  - **No D2.B redesign needed.** NFP-10 affects `address_region`/`address_bucket` labeling (a different function in the same file); D2.B's `_TXN_ROLE_BY_KIND` edits are additive and independent. Layer 3/Layer 4 attestation tests don't go through `_coerce_broken_addr`. Q5 + Q6 locks unchanged.
+- **v0.8 (2026-06-17):** D2.B §6 LOCKED at v0.5 after Ivan reviewed two Composer-review cycles. Key locks:
   - **Q5: Option A** (Pro-valid `MEMORY_TXN_ROLES` only; per-kind D2.G pivots on `producer_kind`) — surfaced to Pro in new doc `IV_POS_8_NOTES_FOR_PRO.md` (NFP-4) so Pro can request schema bump in IV.POS.9 if wanted.
   - **Q6: Variant-specific kind subsets** (V5_control = 8 kinds + D1.A archive reuse; V5_expanded/Hybrid/V6 = larger subsets) — surfaced as NFP-2.
   - **15 secondary recommendations** accepted as Opus/Composer aligned: broad CYCLE_MODE scope, §3 value-gen heuristics, lean-ship B.8, per-batch CI gate, snake_case, 4 batches, Rust-first with 1.0a before 1.1, pause-on-build-failure, Option A bandit wiring (Q11), exclude fetch/register helpers, hardcode CycleState, shared signature helper, A1 post-mut dump.
@@ -385,6 +389,93 @@ We aim to need only the D2.F.1 smoke-gate (8 jobs, ~5.5 h wall, doubles as produ
 
 ---
 
+## 6c. Arm semantic certainty stack (added 2026-06-18, post-Batch 1 review)
+
+The §6 table covers the **gates** but understates how certainty stacks across layers. This section makes the layered story explicit so future Composer/Opus pairs know what's covered and what isn't.
+
+**Question this addresses:** "If we pull arm `(TXN_PREV_WORD_MOD, core_arithmetic)` on step 1234, can we prove (a) step 1234 really belongs in `core_arithmetic`, (b) the kind really mutates the right field on that step, (c) the variant we're running really should have access to this arm, and (d) the bandit history really reflects what got pulled?" The answer is *yes*, but only by stacking six layers, each of which protects a different invariant.
+
+### Layer S1 — Zone classifier correctness (`zone_classifier.py`)
+
+| | |
+|---|---|
+| **What it protects** | Each user_cycle is assigned to the correct one of 19 `SEMANTIC_ZONES` per the D13/D50/D53/D54 precedence rules |
+| **Authoritative source** | `a4/standalone/semantic_zones.py` (zone list) + `a4/standalone/zone_classifier.py` (assignment logic) |
+| **Current coverage** | One canonical spot pin: `test_mem_val_kernel_other_has_targets` (cloud1 D54 — step 3921 on sha2-host must land in `kernel_other`, not `core_div`). No systematic per-step audit. |
+| **Known gap** | If the classifier silently drifts for steps not covered by D54, downstream S2–S6 won't catch it. Currently we rely on the classifier being cloud1-frozen. |
+| **Mitigation (planned)** | W-15: when D2.D variant filtering lands, add a sampled audit (N=100 random (step, kind) pulls, assert zone matches classifier) |
+
+### Layer S2 — Arm universe construction (`semantic_arm_universe.py`)
+
+| | |
+|---|---|
+| **What it protects** | The (kind, zone) lattice phantom-prunes correctly: arms exist iff `steps(kind) ∩ steps(zone) ≠ ∅` AND at least one step has a real target |
+| **Authoritative source** | `SemanticArmUniverse.build()` + `_cycle_matches_kind_filter` + `_step_has_real_target` |
+| **Current coverage** | `test_v5_phantom_arm_pruning::test_production_arm_count_in_d40_range` — V5 control 8-kind universe size stays in [44, 52] on sha2-host (count regression) |
+| **Known gap** | Count test doesn't prove **which** arms survived — just that the total is in range. A drifted classifier that produced wrong-but-same-count arm sets would still pass. |
+| **Mitigation** | Spot pin (D54 step 3921) at the per-arm level lives in `test_mem_val_kernel_other_has_targets` |
+
+### Layer S3 — Per-kind trace-field attestation (D2.B Layers 2–4)
+
+| | |
+|---|---|
+| **What it protects** | When a kind is pulled, the Rust handler actually mutates the trace field the kind claims (`<a4_kind>` evidence tag), the post-mutation trace dump confirms only that field changed (`<a4_post_mut_dump>` window), and the two views agree |
+| **Authoritative source** | Per-kind attestation tests: `test_d2b_<kind>_attestation.py` using `_test_helpers/diff_signature.py` |
+| **Current coverage (post D2.B Batch 1)** | B.1 `TXN_PREV_WORD_MOD` (both strategies) attested with `assert_trace_diff_matches_signature` (`cascade=[]`) + `check_soundness_bug_guard` |
+| **Critical insight from Batch 1** | Rejection is observed across **four independent channels** (see §9b updated section); the attestation guard must accept all four, not just `<constraint_fail>` |
+| **Known gap** | Does NOT prove the mutation hit a step in the **right zone** — only that it hit the right field. Cross-checking against the classifier is S1 × S3, not yet automated. |
+
+### Layer S4 — Cross-kind registry consistency (`test_d2b_arm_registration.py`)
+
+| | |
+|---|---|
+| **What it protects** | All N D2.B kinds are registered consistently across the 5 plumbing files: `MUTATION_KINDS`, `_MUTATION_MODULES`, `_cycle_matches_kind_filter`, `_step_has_real_target`, `_TXN_ROLE_BY_KIND`, `inspection_data.get_valid_steps_for_kind`, `_BANDIT_TRACE_MOD_TAGS` |
+| **Authoritative source** | Cross-cutting Layer 1 test in **D2.B Batch 4** (not yet built — pending B.4-B.8 completion) |
+| **Current coverage** | None until Batch 4. Manual review of each batch's plumbing diff is the interim check. |
+
+### Layer S5 — Variant kind dispatch (`test_d2_variant_dispatch.py`)
+
+| | |
+|---|---|
+| **What it protects** | Variant gating: V5_control may only emit the 8 V5 kinds; Hybrid_cTS may emit 16 A4 + 4 V6 kinds; etc. No variant pulls outside its declared kind subset |
+| **Authoritative source** | **D2.D** spec (not yet drafted as a Composer kickoff); plan §6 row "Variant arm coverage" |
+| **Current coverage** | None — D2.D is downstream. The phantom test's `V5_CONTROL_KINDS_8` pinning is a *defensive* measure that anticipates this layer. |
+
+### Layer S6 — Campaign arm_history audit (`tests/test_d2_applied_accounting.py`, `validate_d2_dbs.py`)
+
+| | |
+|---|---|
+| **What it protects** | After a real (or mocked) campaign run: every row in `arm_history` references an `ArmKey` that's a member of the variant's allowed kinds; outcomes are accounted (APPLIED vs SKIPPED vs ERROR); applied-pull counts agree with scheduler |
+| **Authoritative source** | **D2.E** tests + **D2.F** end-to-end DB validator |
+
+### What this stack does and does NOT guarantee
+
+**Does guarantee** (with current D2.B Batch 1 work in place):
+- A pulled arm produced exactly the trace edit it claimed (S3)
+- V5 control universe size is regression-pinned (S2)
+- One canonical zone misassignment cannot regress silently (S1 D54 pin)
+- Soundness-bug guard catches verifier acceptance of edited traces (S3 + §9b)
+
+**Does NOT guarantee** (gaps acknowledged):
+- The classifier is correct for ALL 19 zones × all reachable steps (S1 — only spot-pinned)
+- The full arm set after pruning is semantically correct, just that the count is plausible (S2)
+- Cross-kind registry consistency before Batch 4 lands (S4)
+- Variant filtering enforced before D2.D lands (S5)
+
+**Where each gap closes:**
+
+```
+S1 systematic audit → W-15 (D2.D + sampling test)
+S2 per-arm correctness → S1 × S3 cross-check (post D2.D)
+S4 cross-kind consistency → D2.B Batch 4
+S5 variant filtering → D2.D spec + tests
+S6 campaign-level audit → D2.E + D2.F
+```
+
+**Why this stack matters:** A4's whole value proposition depends on us being able to say "we mutated X in zone Y of N traces and observed M failures." If any layer silently breaks, the per-variant comparison numbers we ship to Pro become meaningless. The stack exists because cloud1 learned the hard way (R2 § 7.2.2 pull-direction flip; D54 kernel mis-bucketing).
+
+---
+
 ## 7. What ships to Pro at the end of D2
 
 Single bundle (matching the D1 + D2-design pattern):
@@ -445,28 +536,71 @@ These are decisions we intentionally made "go with X for now, revisit at Y if Z"
 | **W-9** | Q17 / NFP-5: Layer 3 via `A4_DUMP_POST_MUT=1` Rust hook (Option A1) | **D2.B Batch 1.0a** smoke | Rust patch fails to build or doesn't emit expected tags | Fall back to Option B (tag-only Layer 3), explicitly downgrade "100% certainty" claim |
 | **W-10** | Q8: 4 batches (Batch 3 = B.4-B.8, 5 kinds) | **D2.B Batch 2 completion** | Batch 3 attestation churn exceeds ~1 week with one kind blocking | Isolate B.4 in its own sub-batch |
 | **W-11** | Pro's wider §8 catalog (BIGINT_DATA_MOD, CRYPTO_STATE_MOD, etc.) deferred to a future IV.POS cycle | **IV.POS.9** scoping | Pro explicitly requests in D2.G review | Add as IV.POS.9 D-series |
+| **W-12** | D2.B Batch 1.5e merge is the SYNC point that unblocks D1.E (per `IV_POS_8_D1_REVISIT_PLAN.md` §4.1) | **End of D2.B Batch 1** | Batch 1 merges but commit message does not contain literal "Batch 1.5e" string | Manually ping D1 chat with the commit hash + force-update `NOTES_FOR_PRO.md` revision history so D1 chat catches the signal |
+| **W-13** | NFP-10 byte_addr fix (`compressed_global_extractor.py:216`) must not be reverted during D2.B's §4.7 edits | **D2.B Batch 1 Composer review** | Composer commit diff shows line 216 reverted from `("byte_addr","addr","address")` to `("addr","byte_addr","address")` | Block merge; require Composer to re-apply NFP-10 fix; flag as instruction-comprehension miss |
+| **W-14** | Pro-presentation timing changed (was D2.G end, now end of D2.B) — interim Pro check-in becomes the gate for D2.C kickoff | **End of D2.B Batch 4** | Pro does not greenlight D2 continuation OR Pro requests scope changes that invalidate D2.C/D2.D drafts | Pause D2.C kickoff; re-spec per Pro feedback; document scope shift in `IV_POS_8_D2_PLAN.md` v0.9+ |
+| **W-15** | S1 zone classifier has only the D54 spot pin — no systematic per-(step, zone) audit (cf. §6c) | **D2.D variant filtering kickoff** | A run shows arm `(kind, zoneX)` pulling steps the classifier doesn't actually map to `zoneX` | Add sampled audit: N=100 random `(step, kind)` pulls from a D2.D run, assert zone matches classifier; if mismatches found, harden classifier before D2.E |
+| **W-16** | Soundness-bug guard's rejection channels (post D2.B Batch 1 Issue #6) — guard accepts `<constraint_fail>` OR `verify segment` OR `<a4_family_residue nonzero=true>` (Hook 3) OR `<a4_error>` as rejection; fires only on `verifier_accepted=True` after edit | **Each D2.B kind attestation** | Any new kind reaches Layer 4 with all four channels silent AND verifier accepts — re-investigate; do not relax guard | Surface as NFP candidate; consult mem.zir / lookups.zir source to find which constraint the kind should have broken; either fix kind to actually exercise that constraint, or document as known soundness gap with Pro disclosure |
 
 **Convention:** when one of these triggers fires, the team's first action is to **read the row's "Fallback" column** and check whether the fallback is still viable given current state. Then re-decide.
 
 ---
 
-## 9b. Soundness-bug guard (added 2026-06-17)
+## 9b. Soundness-bug guard (added 2026-06-17; revised 2026-06-18 post-Batch 1 Issue #6)
 
-**Rule:** any "clean success" outcome (mutation applied, no `<constraint_fail>` emitted, no `<a4_error>`) MUST be cross-checked against a post-mutation trace dump before being classified as a "dead arm".
+**Rule:** any "clean success" outcome MUST be cross-checked against ALL FOUR rejection channels before being classified as a "dead arm" or soundness bug.
 
-**Why:** a clean success could mean one of three things:
-1. **Dead arm** — mutation applied but no constraint observes the changed field. Drop from kind registry.
-2. **Skipped silently** — mutation didn't actually apply (config validation rejected, target missing). Treat as `outcome=SKIPPED`, not dead.
-3. **SOUNDNESS BUG** — mutation applied, trace genuinely changed, but the zirgen circuit accepted it as valid. **STOP and surface to Pro.** This is exactly the failure mode A4 was designed to discover.
+### The four rejection channels (verified against `a4/standalone/fuzzer.py:345` production rejection logic)
 
-**Implementation:** the Layer 3 dump-diff helper (`assert_trace_diff_matches_signature`, Q16) takes a third assertion: if the dispatcher tag claims `applied` AND the post-mutation dump confirms the field changed AND no constraint failed AND no error emitted → **raise `SoundnessBugSuspected`** with the full trace excerpt for Pro review.
+| Channel | Source | What it catches | Env var to enable |
+|---|---|---|---|
+| **C1 — `<constraint_fail>` (Path A)** | `witgen.h:184-206` (`eqz()`) — fires on local witgen EQZ during arm exec or accum phase | Constraint violations the in-arm code checks directly (e.g., `IsRead.dataLow == dataHigh` on a READ) | `CONSTRAINT_CONTINUE=1` (to continue past first failure for full diagnostic) |
+| **C2 — `verify segment` panic (Path B)** | `risc0-host/main.rs:150` — fires when `prove::prove()` returns `Err` because prover's `verify_integrity_with_context` rejects | The polynomial / `check_poly` constraint over committed witness columns — the **mathematically authoritative** check that the verifier replicates. Catches violations Path A misses (e.g., B.1 `at_write` where mutated `prev_word` breaks memory permutation but no local EQZ checks `oldTxn.data == prev_word`). | Always emitted |
+| **C3 — `<a4_family_residue>{"nonzero":true}` (Hook 3)** | `ffi.cpp:510-518` — fires when per-family permutation/lookup residue is non-zero after accum phase | Per-family diagnostic of WHICH constraint family broke (`memory`, `u16`, `u8`, `cycle`); semantically richer than `verify segment` because it tells you the family, not just "something broke" | `A4_FAMILY_RESIDUE=1` (REQUIRED — without this, Hook 3 is silent even when the memory permutation is broken) |
+| **C4 — `<a4_error>`** | A4 dispatcher in `witgen/mod.rs` | Mutation skipped or errored before/during application (e.g., strategy mismatch, txn_idx out of range) | Always emitted |
 
-**Affected places:**
-- `a4/standalone/tests/_test_helpers/diff_signature.py` (new helper, Q16)
-- All 8 D2.B attestation tests (`test_d2b_<kind>_attestation.py`) MUST call this helper and not silently skip clean-success outcomes
-- D2.G analysis pipeline MUST report soundness-suspect outcomes separately from dead-arm classifications
+**True soundness bug = (mutation applied) AND (trace changed) AND (ALL FOUR channels silent) AND (verifier_accepted=True)**.
 
-This rule applies retroactively to existing kinds too — if a Batch 1 smoke shows an existing kind has a clean-success path that wasn't trace-verified, log it as an incident and re-test.
+In particular, **C2 alone catches what C1 misses** — this is the Path A vs Path B asymmetry documented in `a4/docs/precloud/PHASE_III_2_5_INSTR_TYPE_MOD_INVESTIGATION.md` §0.1. C3 (Hook 3) provides redundant + family-attributable signal.
+
+### Why this matters — empirical from D2.B Batch 1 Issue #6
+
+`TXN_PREV_WORD_MOD at_write` mutation on sha2-host:
+- C1 (`<constraint_fail>`): **silent** — `MemoryWrite` in `mem.zir:95-101` calls `IsForward` but NOT `IsRead`; its only EQZ checks are `newTxn.data == data` (lines 99-100). Mutated `prev_word` flows into `oldTxn.dataLow/dataHigh` but is never locally EQZ'd.
+- C2 (`verify segment`): **fires** — `check_poly` reports 32768/32768 cycles non-zero; `verify_integrity_with_context` rejects
+- C3 (Hook 3 memory family residue): **expected to fire** when enabled — `extern_memoryDelta` records mutated `prev_word` into the residue accumulator; `res_memory` should be non-zero, emitting `<a4_family_residue>{"family":"memory","nonzero":true,...}`
+- C4 (`<a4_error>`): **silent** — strategy validates, mutation applies cleanly
+- Verifier acceptance: **never observed** (prover panics at `main.rs:150` before any seal is produced)
+
+**Verdict:** NOT a soundness bug; rejected via C2. Composer's initial guard was C1+C4-only (missed C2 and C3); the post-Issue #6 fix added C2. **W-16 tracks the remaining wiring of C3** into the attestation flow.
+
+### Implementation requirements for D2.B attestation tests
+
+Every `test_d2b_<kind>_attestation.py` MUST:
+
+1. Set **`A4_FAMILY_RESIDUE=1`** in the host-run env so C3 is emitted
+2. Parse `<a4_family_residue>` tags using `a4.core.touch_coverage.parse_family_residues`
+3. Pass all four channels' state to `check_soundness_bug_guard`:
+   ```python
+   check_soundness_bug_guard(
+       mutation_applied=True,
+       trace_changed=bool(diffs),
+       constraint_failed="constraint_fail" in mut_out.lower(),
+       error_emitted="<a4_error>" in mut_out,
+       proof_verify_failed="verify segment" in mut_out,
+       broken_families_nonzero=any(fr.get("nonzero") for fr in parse_family_residues(mut_out)),
+       verifier_accepted=False,  # would be True only if a verifiable receipt was produced
+   )
+   ```
+4. The guard MUST fire ONLY when all four channels are silent AND `verifier_accepted=True`.
+
+### Affected files
+
+- `a4/standalone/tests/_test_helpers/diff_signature.py` — extend `check_soundness_bug_guard` to accept `broken_families_nonzero` parameter as a third independent rejection channel (current state post-Issue #6: only `proof_verify_failed` was added; Hook 3 is still missing)
+- All D2.B attestation tests — must enable `A4_FAMILY_RESIDUE=1` and pass Hook 3 state to the guard
+- D2.G analysis pipeline MUST classify outcomes by which channel rejected (for Pro telemetry)
+
+This rule applies retroactively to existing kinds too — if a smoke shows an existing kind has a clean-success path that wasn't trace-verified across all four channels, log it as an incident and re-test.
 
 ---
 
