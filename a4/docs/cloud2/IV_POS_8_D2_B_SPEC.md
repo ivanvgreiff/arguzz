@@ -3,7 +3,7 @@
 **Branch:** `cloud2` (direct commit, no feature branches)
 **Date opened:** 2026-06-17
 **Author:** Ivan + Opus (planning); Composer (implementation)
-**Status:** **v0.5.2 LOCKED** (2026-06-17) — §6 all 17 questions resolved with explicit **LOCKED:** stamps at the top of each Q; §8 Decisions Confirmed table populated with all 17 + cross-cutting decisions (PRE_EXEC_REG_MOD retrofix, soundness-bug guard, NFP surfacing, watchlist, D2.C/Pro timing). Q5 Option A; Q6 variant-specific subsets; Batch 1.5e adds `PRE_EXEC_REG_MOD` retrofix (NFP-6). **v0.5.1 patch (post D1-chat catch-up):** §4.7 gains NFP-10 awareness paragraph; Batch 1.5e task gains explicit "commit message must contain 'Batch 1.5e' literal" instruction (D1 chat's git-log poll signal per `IV_POS_8_D1_REVISIT_PLAN.md` §4.3). **v0.5.2 patch (2026-06-17 late evening):** propagated lock stamps inline into §6 and populated §8 — no design changes, just making the resolved state visible at every read-point in the document. Watchlist W-12 through W-14 in plan §9a.
+**Status:** **v0.5.3 LOCKED + audit patch** (2026-06-18) — design locked at v0.5.2; **v0.5.3 adds Batch 2 dead-arm audit findings only** (no kind design changes): B.3 confirmed dead arm on sha2-host user cycles; **B.6 and B.7 predicted dead** on same `set_cycle`/`exec_Reg` overwrite mechanism; Batch 3 attestation expectations in **§5.4** and **§7 Batch 3**; cross-ref **W-17** in [`IV_POS_8_D2_PLAN.md`](./IV_POS_8_D2_PLAN.md) §6d. Full proof: [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md). Prior: v0.5.2 lock stamps; v0.5.1 NFP-10; Batch 1.5e retrofix.
 **Parent:** [`IV_POS_8_D2_PLAN.md`](./IV_POS_8_D2_PLAN.md) v0.5 §3 (sub-deliverable D2.B)
 **Predecessor:** [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) v0.2 LOCKED (merged at `7b66fb9`)
 **Authoritative reference:** [`a4/docs/standalone/MUTATION_TAXONOMY.md`](../standalone/MUTATION_TAXONOMY.md) — every per-kind decision below is cross-referenced to this document.
@@ -411,6 +411,14 @@ Any non-zero step where `data.get_cycle(step)` exists.
 
 Privilege/mode-check constraints. ECALL/MRET cycles are the high-signal zone. User-mode cycles where mode is flipped to kernel will fire mode-coherence checks at the next ECALL/MRET boundary.
 
+#### Attestation outcome (Batch 2 — CONFIRMED, sha2-host user cycles)
+
+**Status: W-17 dead arm (not W-16 soundness bug).** Trace mutates (Layers 2–4 pass); all four rejection channels silent; verifier accepts. Root cause: `set_cycle` presets `NEXT_MACHINE_MODE` from trace, then `step_Top` overwrites via `exec_Reg(inst_result.newMode, ...)` — witness never sees mutation. See [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md). Attestation: guard fires → assert → xfail.
+
+**Qualification:** May be live on **paging cycles** via `extern_nextPagingIdx` reading trace directly — not tested in Batch 2 (step 1, major 0). W-1 revisit at D2.G still applies for zone-level failure rates.
+
+**Spec correction:** `machine_mode` is not a binary privilege bit — preflight uses values 0–5 (page-in/out/suspend states). Handler restricts flips to `mode <= 1`.
+
 ---
 
 ### 3.4 B.4 — `TXN_ADDR_MOD` (HIGH RISK)
@@ -599,10 +607,15 @@ Same pattern as `instr_type_mod.py` (cycle-level mutation, single target per ste
 - **30% jump-target-style**: `original_pc + rng.choice([-1024, -512, 256, 512, 1024])` — simulates "what if a branch went elsewhere"; still 4-byte aligned (constraint: `new_pc % 4 == 0`).
 - **30% random**: random `u32` with 4-byte alignment.
 
-#### Expected constraint failures
+#### Expected constraint failures (pre-audit design intent)
 
-- PC-coherence constraint at cycle N
-- Fetch-coherence at cycle N+1 (the next cycle's `trace.txns[txn_idx].addr` no longer equals `(cycle.pc - 4) / 4`)
+PC-coherence constraint at cycle N; fetch-coherence at cycle N+1.
+
+#### Attestation expectation (Batch 3 — **PREDICTED DEAD**, sha2-host user cycles)
+
+**Same W-17 mechanism as B.3:** `cycle.pc` is preset via `set_cycle` (`witgen/mod.rs:1071-1072`) but overwritten by `exec_Reg(inst_result.newPc, ...)` at `steps.cpp:14739-14740`. Original taxonomy expected PC/fetch constraints to fire — that assumed trace `pc` reaches witness. **Batch 3 attestation MUST verify dead-arm pattern** (guard fires, verifier accepts) or **reconcile audit** if any rejection channel fires.
+
+Attestation template: mirror B.3 (`test_d2b_cycle_mode_mod_attestation.py`). See plan **§6d** and **W-17**.
 
 ---
 
@@ -651,9 +664,15 @@ The state enum has known valid values (Appendix A in taxonomy). Composer Batch 1
 
 Any cycle (per taxonomy §3.13), except step 0.
 
-#### Expected constraint failures
+#### Expected constraint failures (pre-audit design intent)
 
 Cycle-state-machine constraints. The exact constraint depends on what `original_state → new_state` transition we mutated to. Composer's per-kind report should include a table of common (original, mutated) pairs and the constraints they trigger.
+
+#### Attestation expectation (Batch 3 — **PREDICTED DEAD**, sha2-host user cycles)
+
+**Same W-17 mechanism as B.3:** `cycle.state` preset via `set_cycle` (`witgen/mod.rs:1073`) overwritten by `exec_Reg(inst_result.newState, ...)` at `steps.cpp:14743`. Batch 1.0b tentatively expected state transitions might drive witness layout — **Batch 2 audit found no extern-read path for `cycle.state`**; overwrite model predicts dead arm. Batch 3 attestation confirms or **forces audit reconciliation**.
+
+Attestation template: mirror B.3. See plan **§6d** and **W-17**.
 
 ---
 
@@ -890,14 +909,30 @@ The cascading-changes log is included in the attestation test output for human r
 | B.1 `at_read` | Strict-no-cascade in trace |
 | B.1 `at_write` | Strict-no-cascade in trace (constraint cascade = IsRead/permutation failure at witness time, not a post-mut trace diff) |
 | B.2 | Strict-no-cascade in trace (constraint cascade = downstream `prev_cycle` chain failure at witness time, not a post-mut trace diff) |
-| B.3 | Strict-no-cascade (metadata only) |
-| B.4 | Likely: downstream txns at original_addr have broken chain; downstream txns at new_addr have spurious entry |
-| B.5 | Possible: same as B.1/B.2 if a downstream txn referenced this txn's cycle |
-| B.6 | Likely: next cycle's instruction-fetch txn's `addr` no longer matches `(new_pc - 4)/4` |
-| B.7 | **Tentatively strict-no-cascade** — `state` is metadata but state transitions may drive which witness columns are populated, so cross-state mutations could touch witness layout. **Composer Batch 1.0b investigates: run a single B.7 mutation with `A4_DUMP_POST_MUT=1` and inspect whether neighboring columns change. If yes → reclassify as "primary + downstream column-mask change"; if no → confirm strict-no-cascade.** |
-| B.8 | Strict-no-cascade (metadata only — diff_count is a scalar tally per cycle) |
+| B.3 | Strict-no-cascade in trace | **CONFIRMED dead arm** (W-17) on sha2-host user cycles — witness overwrite, not trace no-op |
+| B.4 | Likely: downstream txns at original_addr have broken chain; downstream txns at new_addr have spurious entry | **Predicted LIVE** (extern memory path) |
+| B.5 | Possible: same as B.1/B.2 if a downstream txn referenced this txn's cycle | **Predicted LIVE** (extern memory path) |
+| B.6 | Likely cascade at witness time if trace pc reached constraints — **superseded by W-17 audit** | **PREDICTED DEAD** (set_cycle overwrite) — see §5.4 |
+| B.7 | Tentatively strict-no-cascade in trace — witness layout interaction TBD | **PREDICTED DEAD** (set_cycle overwrite) — see §5.4 |
+| B.8 | Strict-no-cascade in trace | **Predicted LIVE** (`extern_getDiffCount` reads trace) — W-3 drop only if dead proven |
 
 Composer's per-kind attestation test asserts cascade shape matches the expected signature.
+
+### 5.4 Batch 3 attestation predictions — W-17 set_cycle dead-arm class (added v0.5.3)
+
+**Locked before Batch 3 implementation** so outcomes can be checked against the Batch 2 audit. Authoritative proof: [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md). Plan mirror: [`IV_POS_8_D2_PLAN.md`](./IV_POS_8_D2_PLAN.md) §6d + watchlist **W-17**.
+
+| Kind | Expected Batch 3 attestation | If different → |
+|------|------------------------------|----------------|
+| B.4 `TXN_ADDR_MOD` | **LIVE** — C2 and/or C3 `memory` | Investigate witness path |
+| B.5 `TXN_CYCLE_PHASE_MOD` | **LIVE** — C2 and/or C3 | Investigate witness path |
+| B.6 `CYCLE_PC_MOD` | **PREDICTED DEAD** — guard + xfail (mirror B.3) | **Reconcile audit** — missed witness path |
+| B.7 `CYCLE_STATE_MOD` | **PREDICTED DEAD** — guard + xfail (mirror B.3) | **Reconcile audit** — state may affect layout |
+| B.8 `CYCLE_DIFF_COUNT_MOD` | **PREDICTED LIVE** — rejection expected | Reconcile if dead; W-3 drop path |
+
+**Reconciliation rule:** Any predicted-dead kind (B.6, B.7) that shows live rejection means the set_cycle overwrite model is incomplete — stop, trace witgen path, update audit + W-17 before proceeding.
+
+**Predicted-dead attestation pattern:** Layers 2–4 pass → call `check_soundness_bug_guard` → assert `SoundnessBugSuspected` → `pytest.xfail()` with W-17 rationale (same as B.3 Batch 2).
 
 ## 6. Open questions — ALL RESOLVED (Ivan locked 2026-06-17)
 
@@ -1258,6 +1293,20 @@ Same shape as Batch 1, per kind. ~2 Rust handlers + 2 Python modules + 2 unit te
 
 Same shape, 5-sub-sequence batch. Each kind individually gated on Layer 4.
 
+**Attestation expectations locked (v0.5.3 / plan §6d / W-17):**
+
+| Kind | Priority | Expected outcome |
+|------|----------|-------------------|
+| B.4 `TXN_ADDR_MOD` | Full attestation — **predicted LIVE** | C2 + C3 `memory` |
+| B.5 `TXN_CYCLE_PHASE_MOD` | Full attestation — **predicted LIVE** | C2 + C3 |
+| B.6 `CYCLE_PC_MOD` | Implement + attestation — **predicted DEAD** (W-17) | Guard fires + xfail; reconcile audit if live |
+| B.7 `CYCLE_STATE_MOD` | Implement + attestation — **predicted DEAD** (W-17) | Guard fires + xfail; reconcile audit if live |
+| B.8 `CYCLE_DIFF_COUNT_MOD` | Full attestation — **predicted LIVE** | Rejection expected; W-3 drop only if dead proven |
+
+B.6/B.7 are **not optional skips** — they must be implemented and attested to **confirm or falsify** the Batch 2 audit. A live result is a first-class signal requiring audit reconciliation, not a test failure to paper over.
+
+Reference: [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md)
+
 ### Batch 4 — Cross-cutting + smoke
 
 | # | Task |
@@ -1288,7 +1337,7 @@ All 17 §6 questions resolved by Ivan on 2026-06-17. Each Q section in §6 now c
 | **Q3** | Does B.8 `CYCLE_DIFF_COUNT_MOD` ship? | **Lean ship.** Field verifiably live (`preflight.rs:227,306` populate; zirgen `get_diff_count`). Batch 1.0b confirms with 5-mutation 3-way classification (constraint_fail / ERROR / clean-success). Clean-success rows MUST be cross-verified with `A4_DUMP_POST_MUT` per §9b soundness guard before drop. | W-3 (drop only if Batch 1.0b shows zero useful signal AND trace changes verified — i.e., dead arm, not soundness bug) |
 | **Q4** | Layer 2/3/4 tests in CI | **Per-batch landing gate via `A4_REAL_BINARY=1`.** Composer runs locally before commit. No CI binary infra in D2.B; that's D2.E scope if needed later. | — |
 | **Q7** | Python module file naming | **lowercase_snake_case matching kind string.** Zero stakes. | — |
-| **Q8** | Composer batch granularity | **4 batches:** (1) spikes + B.1; (2) B.2+B.3; (3) B.4–B.8; (4) cross-cutting tests + smoke. | W-10 (isolate B.4 only if Batch 3 attestation churn exceeds ~1 week) |
+| **Q8** | Composer batch granularity | **4 batches:** (1) spikes + B.1; (2) B.2+B.3; (3) B.4–B.8; (4) cross-cutting tests + smoke. | W-10 (isolate B.4 only if Batch 3 attestation churn exceeds ~1 week); **W-17** (B.6/B.7 predicted dead — reconcile audit if live) |
 | **Q9** | Batch 1 ordering: Rust first or Python first | **Rust first.** AND task 1.0a (Layer 3 hook) comes BEFORE 1.1 (B.1 handler). Without 1.0a, Layer 3 is broken even with B.1 handler done. | — |
 | **Q10** | Rust build escalation | **Pause + report.** No alternative — don't burn cycles on opaque Cargo issues. | — |
 | **Q11** | B.1 two strategies — bandit wiring | **Option A — single `MUTATION_KINDS` entry "TXN_PREV_WORD_MOD"; fuzzer RNG-picks `at_read`/`at_write` per pull; strategy logged in config JSON; `_step_has_real_target` ORs both strategies.** PRE_EXEC_REG_MOD retrofix follows the same pattern in Batch 1.5e (NFP-6, A4-only — does NOT touch Arguzz). | W-6 (split to Option B if D2.G shows one strategy dominates rewards >80% on same zone) |

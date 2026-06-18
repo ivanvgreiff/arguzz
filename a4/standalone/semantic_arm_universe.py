@@ -32,6 +32,7 @@ from a4.standalone.mutations import comp_out_mod, load_val_mod, store_out_mod
 from a4.standalone.mutations import pre_exec_reg_mod, instr_type_mod, mem_val_mod
 from a4.standalone.mutations import instr_word_mod, instr_word_mod_sur
 from a4.standalone.mutations import txn_prev_word_mod
+from a4.standalone.mutations import txn_prev_cycle_mod, cycle_mode_mod
 
 if TYPE_CHECKING:
     from a4.core.inspection_data import InspectionData
@@ -46,6 +47,8 @@ _MUTATION_MODULES = {
     "INSTR_WORD_MOD_FULL": instr_word_mod,
     "INSTR_WORD_MOD_SUR": instr_word_mod_sur,
     "TXN_PREV_WORD_MOD": txn_prev_word_mod,
+    "TXN_PREV_CYCLE_MOD": txn_prev_cycle_mod,
+    "CYCLE_MODE_MOD": cycle_mode_mod,
 }
 
 def _cycle_matches_kind_filter(kind: str, cycle, data: "InspectionData") -> bool:
@@ -64,6 +67,10 @@ def _cycle_matches_kind_filter(kind: str, cycle, data: "InspectionData") -> bool
         return cycle.major <= 6 or cycle.major == 8
     if kind == "TXN_PREV_WORD_MOD":
         return cycle.step != 0 and cycle.step in data._step_to_all_txns
+    if kind == "TXN_PREV_CYCLE_MOD":
+        return cycle.step != 0 and cycle.step in data._step_to_all_txns
+    if kind == "CYCLE_MODE_MOD":
+        return cycle.step != 0
     return True
 
 
@@ -99,6 +106,11 @@ def _step_has_real_target(kind: str, step: int, data: "InspectionData") -> bool:
             t_read = mod.get_targets_at_step(step, data, strategy="at_read")
             t_write = mod.get_targets_at_step(step, data, strategy="at_write")
             t = t_read or t_write
+        elif kind == "TXN_PREV_CYCLE_MOD":
+            t = mod.get_targets_at_step(step, data)
+        elif kind == "CYCLE_MODE_MOD":
+            t = mod.get_targets_at_step(step, data)
+            t = [t] if t is not None else []
         else:
             t = mod.get_targets_at_step(step, data)
     except Exception:

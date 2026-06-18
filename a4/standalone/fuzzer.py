@@ -85,8 +85,11 @@ from a4.standalone.mutations import (
     get_mem_val_targets, create_mem_val_config, MemValModTarget,
     get_instr_word_targets, create_instr_word_config, InstrWordModTarget,
     get_txn_prev_word_targets, create_txn_prev_word_config, TxnPrevWordModTarget,
+    get_txn_prev_cycle_targets, create_txn_prev_cycle_config, TxnPrevCycleModTarget,
+    get_cycle_mode_targets, create_cycle_mode_config, CycleModeModTarget,
 )
 from a4.standalone.mutations.txn_prev_word_mod import generate_new_value as generate_txn_prev_word_value
+from a4.standalone.mutations.txn_prev_cycle_mod import generate_new_value as generate_txn_prev_cycle_value
 from a4.standalone.mutations.instr_type_mod import generate_random_mutation as generate_instr_mutation
 
 # Surgical instruction mutations
@@ -226,6 +229,8 @@ class A4Fuzzer:
         "INSTR_WORD_MOD_FULL",  # Full 32-bit instruction word mutation
         "INSTR_WORD_MOD_SUR",   # Surgical field-level mutation
         "TXN_PREV_WORD_MOD",
+        "TXN_PREV_CYCLE_MOD",
+        "CYCLE_MODE_MOD",
     ]
     
     def __init__(
@@ -1230,6 +1235,8 @@ class A4Fuzzer:
         "INSTR_WORD_MOD_FULL": "a4_instr_word_mod",
         "INSTR_WORD_MOD_SUR": "a4_instr_word_mod",
         "TXN_PREV_WORD_MOD": "a4_txn_prev_word_mod",
+        "TXN_PREV_CYCLE_MOD": "a4_txn_prev_cycle_mod",
+        "CYCLE_MODE_MOD": "a4_cycle_mode_mod",
     }
     _BANDIT_TRACE_MOD_RE = re.compile(r"<(\w+)>({.*?})</\1>")
 
@@ -1687,7 +1694,46 @@ class A4Fuzzer:
                 },
             }
             return config, mutated_value, target.original_prev_word
-        
+
+        elif kind == "TXN_PREV_CYCLE_MOD":
+            targets = get_txn_prev_cycle_targets(step, self.data)
+            if not targets:
+                return None, 0, 0
+            target = self.rng.choice(targets)
+            mutated_value = generate_txn_prev_cycle_value(target, self.rng)
+            config = {
+                "mutation_type": "TXN_PREV_CYCLE_MOD",
+                "step": target.step,
+                "txn_idx": target.txn_idx,
+                "prev_cycle": mutated_value,
+                "_info": {
+                    "addr": f"0x{target.addr:08x}",
+                    "original_prev_cycle": target.original_prev_cycle,
+                    "original_cycle": target.original_cycle,
+                    "original_word": target.original_word,
+                    "original_prev_word": target.original_prev_word,
+                },
+            }
+            return config, mutated_value, target.original_prev_cycle
+
+        elif kind == "CYCLE_MODE_MOD":
+            target = get_cycle_mode_targets(step, self.data)
+            if not target:
+                return None, 0, 0
+            new_mode = 1 - target.original_mode
+            config = {
+                "mutation_type": "CYCLE_MODE_MOD",
+                "step": target.step,
+                "mode": new_mode,
+                "_info": {
+                    "pc": f"0x{target.pc:08x}",
+                    "original_mode": target.original_mode,
+                    "major": target.major,
+                    "minor": target.minor,
+                },
+            }
+            return config, new_mode, target.original_mode
+
         elif kind == "INSTR_TYPE_MOD":
             target = get_instr_type_targets(step, self.data)
             if not target:

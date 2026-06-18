@@ -87,6 +87,76 @@ def assert_trace_diff_matches_signature(
             )
 
 
+def collect_cycle_field_diffs(
+    pre_cycles: Iterable[Dict[str, Any]],
+    post_cycles: Iterable[Dict[str, Any]],
+    *,
+    fields: Tuple[str, ...] = ("machine_mode", "pc", "major", "minor"),
+) -> List[Dict[str, Any]]:
+    """Return per-cycle field diffs between pre and post mutation snapshots."""
+    pre_list = list(pre_cycles)
+    post_list = list(post_cycles)
+    diffs: List[Dict[str, Any]] = []
+    for before, after in zip(pre_list, post_list):
+        idx = before.get("cycle_idx", after.get("cycle_idx"))
+        changed = {
+            field: {"before": before.get(field), "after": after.get(field)}
+            for field in fields
+            if before.get(field) != after.get(field)
+        }
+        if changed:
+            diffs.append({"cycle_idx": idx, "changed": changed})
+    if len(pre_list) != len(post_list):
+        diffs.append(
+            {
+                "cycle_idx": None,
+                "changed": {
+                    "len": {"before": len(pre_list), "after": len(post_list)},
+                },
+            }
+        )
+    return diffs
+
+
+def assert_cycle_diff_matches_signature(
+    diff: List[Dict[str, Any]],
+    expected_signature: Dict[str, Any],
+) -> None:
+    """Like assert_trace_diff_matches_signature but keyed by cycle_idx."""
+    primary = expected_signature["primary"]
+    cycle_idx = primary["cycle_idx"]
+    field = primary["field"]
+    old_val = primary["old"]
+    new_val = primary["new"]
+
+    matching = [
+        d for d in diff
+        if d.get("cycle_idx") == cycle_idx and field in d.get("changed", {})
+    ]
+    if not matching:
+        raise AssertionError(
+            f"Expected change on cycle {cycle_idx}.{field} {old_val}->{new_val}; diff={diff}"
+        )
+
+    actual = matching[0]["changed"][field]
+    if actual["before"] != old_val or actual["after"] != new_val:
+        raise AssertionError(
+            f"Signature mismatch on cycle {cycle_idx}.{field}: "
+            f"expected {old_val}->{new_val}, got {actual}; diff={diff}"
+        )
+
+    cascade = expected_signature.get("cascade") or []
+    for entry in diff:
+        if entry.get("cycle_idx") == cycle_idx:
+            continue
+        extra_fields = set(entry.get("changed", {}).keys()) - set(cascade)
+        if extra_fields:
+            raise AssertionError(
+                f"Unexpected cascade fields {extra_fields} on cycle {entry.get('cycle_idx')}; "
+                f"allowed cascade={cascade}; diff={diff}"
+            )
+
+
 def check_soundness_bug_guard(
     *,
     mutation_applied: bool,

@@ -3,13 +3,14 @@
 **Branch:** `cloud2`
 **Date opened:** 2026-06-16
 **Author:** Ivan + Opus (planning); Composer (implementation, future batches)
-**Status:** **DRAFT v0.10** — D2.A merged at `7b66fb9`; D1 chat has landed D1.B + D1.C work (commits `71dae77`, `3a8487c`); D2.B Batch 1 work is in working tree pending re-review (mechanical fixes #1-#5 + §5.3 hygiene all verified clean; Issue #6 investigation completed and confirmed not-a-soundness-bug). **v0.10 additions (post Batch 1 Issue #6):** (1) New **§6c "Arm semantic certainty stack"** documents the 6-layer (S1–S6) certainty model explicitly, with known gaps and where each closes. (2) **§9b rewritten** to capture the **four-channel rejection model** (C1=`<constraint_fail>`, C2=`verify segment`, C3=`<a4_family_residue>` Hook 3, C4=`<a4_error>`) verified empirically against `fuzzer.py:345`'s production rejection logic — the soundness guard MUST treat all four as rejection channels, and attestation tests MUST enable `A4_FAMILY_RESIDUE=1`. (3) Watchlist extended with **W-15** (S1 zone classifier systematic audit, deferred to D2.D) and **W-16** (Hook 3 wiring into soundness guard — currently missing; Composer Issue #6 fix added only C2, not C3). D2.B v0.5 spec still LOCKED. Next: Composer adds Hook 3 channel to the guard + re-runs attestation, then Batch 1 commits with "Batch 1.5e" literal.
+**Status:** **DRAFT v0.11** — D2.A merged at `7b66fb9`; D2.B Batch 1 landed; **Batch 2 complete in working tree** (B.2 live, B.3 dead-arm proven). **v0.11 additions (post Batch 2 dead-arm audit):** (1) **W-17** — `set_cycle` / `exec_Reg` overwrite dead-arm class; B.3 **confirmed** dead on sha2-host user cycles; **B.6 and B.7 predicted dead** on same mechanism — Batch 3 attestation must verify or reconcile against [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md). (2) **§6c S3** extended with Layer 3b (witness persistence) gap. (3) New **§6d** Batch 3 attestation prediction table. (4) **§9b** clarifies guard `SoundnessBugSuspected` fires for both W-16 (real soundness gap) and W-17 (dead arm); investigation distinguishes them. Prior v0.10: §6c certainty stack, four-channel §9b, W-15/W-16. D2.B v0.5.3 spec patch tracks audit findings. Next: Batch 2 commit after Ivan sign-off; Batch 3 kickoff with B.6/B.7 dead-arm expectations locked.
 **Parent:** [`IV_POS_8_PRELIMINARY_PLAN.md`](./IV_POS_8_PRELIMINARY_PLAN.md) — the 4-deliverable master plan
 **Sibling specs (D1):** [`IV_POS_8_D1_A_SPEC.md`](./IV_POS_8_D1_A_SPEC.md) (locked, running on POS)
 **Sibling specs (D2):** [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) (D2.A — foundation; in review)
 
 ## Changelog
 
+- **v0.11 (2026-06-18, post D2.B Batch 2 dead-arm audit):** Batch 2 attestation confirms B.3 `CYCLE_MODE_MOD` is a **W-17 dead arm** on sha2-host user-instruction cycles (trace mutates; witness column preset from `set_cycle` overwritten by `step_Top`'s `exec_Reg(inst_result.new*, ...)`). **B.6 `CYCLE_PC_MOD` and B.7 `CYCLE_STATE_MOD` are predicted dead on the same mechanism** — Batch 3 attestation MUST treat live rejection as an audit failure requiring reconciliation with [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md). Added **W-17** to §9a; new **§6d** prediction table; §6c S3 extended with Layer 3b witness-persistence note; §9b clarifies guard fires for dead arms too (investigation distinguishes W-16 vs W-17). Full proof: [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md) + [`D2B_BATCH2_COMPOSER_REPORT.md`](./composer/D2B_BATCH2_COMPOSER_REPORT.md) §Appendix.
 - **v0.9 (2026-06-17, latest):** Catch-up after D1-chat productivity burst. D1 chat landed D1.B Batch 1 + D1.C investigation (commits `71dae77`, `3a8487c`); added NFP-7 (page_class), NFP-8 (paired-test corpus), NFP-9 (D1.E reward rewire scope), and **NFP-10 (`addr` vs `byte_addr` field-priority bug)** to `IV_POS_8_NOTES_FOR_PRO.md`. **NFP-10 has been verified independently against `compressed_global_extractor.py:216` — fix is already in cloud2; field-priority tuple is now `("byte_addr","addr","address")`.** New `IV_POS_8_D1_REVISIT_PLAN.md` introduces **D1.E sub-deliverable** (V5 reward rewire + decay re-run) which **HALTS waiting for D2.B Batch 1.5e** to merge. Pro-presentation timing changed: end-of-D2.B becomes interim Pro check-in, with D2.C/D2.D/D2.E/D2.F/D2.G proceeding after Pro greenlight. Plan changes captured:
   - **§9a watchlist extended** — added W-12 (Batch 1.5e merge signal for D1.E sync), W-13 (NFP-10 revert guard for D2.B §4.7 edits), W-14 (Pro-presentation pivot to end-of-D2.B).
   - **D2.B spec v0.5 minor edits** — §4.7 gets NFP-10 awareness paragraph + `rg` sanity-check snippet; Batch 1.5e task gets explicit "commit message must contain 'Batch 1.5e' literal" instruction for D1 chat's git-log poll signal.
@@ -421,9 +422,10 @@ The §6 table covers the **gates** but understates how certainty stacks across l
 |---|---|
 | **What it protects** | When a kind is pulled, the Rust handler actually mutates the trace field the kind claims (`<a4_kind>` evidence tag), the post-mutation trace dump confirms only that field changed (`<a4_post_mut_dump>` window), and the two views agree |
 | **Authoritative source** | Per-kind attestation tests: `test_d2b_<kind>_attestation.py` using `_test_helpers/diff_signature.py` |
-| **Current coverage (post D2.B Batch 1)** | B.1 `TXN_PREV_WORD_MOD` (both strategies) attested with `assert_trace_diff_matches_signature` (`cascade=[]`) + `check_soundness_bug_guard` |
+| **Current coverage (post D2.B Batch 2)** | B.1 both strategies; B.2 `TXN_PREV_CYCLE_MOD`; B.3 `CYCLE_MODE_MOD` (trace edit confirmed) |
 | **Critical insight from Batch 1** | Rejection is observed across **four independent channels** (see §9b updated section); the attestation guard must accept all four, not just `<constraint_fail>` |
-| **Known gap** | Does NOT prove the mutation hit a step in the **right zone** — only that it hit the right field. Cross-checking against the classifier is S1 × S3, not yet automated. |
+| **Critical insight from Batch 2 (B.3 audit)** | **Layer 3 (S3) is necessary but not sufficient.** A post-mut dump from the **trace struct** proves the Rust handler ran; it does **not** prove the mutation persisted into **witness columns** used by constraints. Fields written only via `set_cycle` preset (`cycle.pc`, `cycle.state`, `cycle.machine_mode`) are overwritten during `step_Top` by `exec_Reg(ctx, inst_result.new*, ...)` — see **W-17** and **§6d**. Future attestation for set_cycle kinds should add **Layer 3b** (witness-column persistence check) if/when a dump hook becomes available. |
+| **Known gap** | Does NOT prove the mutation hit a step in the **right zone** — only that it hit the right field. Cross-checking against the classifier is S1 × S3, not yet automated. Does NOT prove witness-level effect for set_cycle fields (Layer 3b gap above). |
 
 ### Layer S4 — Cross-kind registry consistency (`test_d2b_arm_registration.py`)
 
@@ -473,6 +475,53 @@ S6 campaign-level audit → D2.E + D2.F
 ```
 
 **Why this stack matters:** A4's whole value proposition depends on us being able to say "we mutated X in zone Y of N traces and observed M failures." If any layer silently breaks, the per-variant comparison numbers we ship to Pro become meaningless. The stack exists because cloud1 learned the hard way (R2 § 7.2.2 pull-direction flip; D54 kernel mis-bucketing).
+
+---
+
+## 6d. Batch 3 attestation predictions — set_cycle dead-arm class (added 2026-06-18, post Batch 2 audit)
+
+**Purpose:** Lock expectations **before** Batch 3 implementation so we can look back at the audit with 100% certainty. If attestation contradicts a prediction, **stop and reconcile** — do not silently relabel the outcome.
+
+**Authoritative audit:** [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md)
+
+### Mechanism (proven on B.3, extrapolated to B.6/B.7)
+
+```
+trace.cycles[N].field mutated
+  → build_injector / set_cycle presets witness column from trace
+  → hal.scatter writes preset into data buffer
+  → step_Top row N: exec_Reg(ctx, inst_result.new*, column) STORE overwrites preset
+  → constraints read execution-derived columns only (top.zir next_* chain)
+  → verifier may accept (proof attests unmutated execution) — NOT W-16
+```
+
+**Live path contrast:** txn fields (`trace.txns[]`) and some cycle fields (`diff_count`, `major`/`minor` via externs, `machine_mode` on paging cycles via `extern_nextPagingIdx`) are read directly from trace during witgen — **no set_cycle overwrite**.
+
+### Batch 3 per-kind attestation expectations (sha2-host, user-instruction cycles)
+
+| Kind | Trace field | Witness path | **Expected attestation outcome** | If outcome differs → |
+|------|-------------|--------------|----------------------------------|----------------------|
+| **B.3** `CYCLE_MODE_MOD` | `machine_mode` | set_cycle → overwritten | **CONFIRMED DEAD** (Batch 2): guard fires, verifier accepts, xfail documented | N/A — baseline |
+| **B.4** `TXN_ADDR_MOD` | `txns[].addr` | extern memory path | **LIVE** — C2 and/or C3 `memory` rejection expected | Investigate if all channels silent |
+| **B.5** `TXN_CYCLE_PHASE_MOD` | `txns[].cycle` LSB | extern memory path | **LIVE** — C2 and/or C3 rejection expected | Investigate if all channels silent |
+| **B.6** `CYCLE_PC_MOD` | `cycle.pc` | set_cycle → **predicted** same overwrite as B.3 (`steps.cpp:14739-14740`) | **PREDICTED DEAD** — same pattern as B.3: Layers 2–4 pass, guard fires, verifier accepts | **Reconcile audit** — find alternate witness path we missed |
+| **B.7** `CYCLE_STATE_MOD` | `cycle.state` | set_cycle → **predicted** same overwrite as B.3 (`steps.cpp:14743`) | **PREDICTED DEAD** — same pattern as B.3 | **Reconcile audit** — state may drive witness layout via path we didn't trace |
+| **B.8** `CYCLE_DIFF_COUNT_MOD` | `diff_count[]` | `extern_getDiffCount` reads trace directly | **PREDICTED LIVE** — rejection expected (W-3 drop only if dead arm proven) | Reconcile if dead — check extern wiring |
+
+### Attestation pattern for predicted-dead kinds (B.6, B.7)
+
+Mirror B.3 Batch 2 attestation (`test_d2b_cycle_mode_mod_attestation.py`):
+
+1. Layers 2–4 pass (trace edit confirmed)
+2. Enable `A4_FAMILY_RESIDUE=1`; pass all four channels to `check_soundness_bug_guard`
+3. **Assert** `SoundnessBugSuspected` fires (`guard_fired == True`)
+4. `pytest.xfail()` with dead-arm rationale citing W-17 + audit doc
+
+**Failure mode that triggers audit reconciliation:** Any predicted-dead kind shows C1/C2/C3 rejection **or** guard does **not** fire while verifier accepts. Either case means our set_cycle overwrite model is incomplete.
+
+### Scope qualification (do not over-claim)
+
+Predictions apply to **sha2-host user-instruction cycles** (major 0–6) unless attestation explicitly targets paging/ECALL majors. B.3 may be **live on paging cycles** via `extern_nextPagingIdx` — unproven dead globally. Batch 3 kickoff should note this when selecting attestation targets for B.6/B.7.
 
 ---
 
@@ -541,6 +590,7 @@ These are decisions we intentionally made "go with X for now, revisit at Y if Z"
 | **W-14** | Pro-presentation timing changed (was D2.G end, now end of D2.B) — interim Pro check-in becomes the gate for D2.C kickoff | **End of D2.B Batch 4** | Pro does not greenlight D2 continuation OR Pro requests scope changes that invalidate D2.C/D2.D drafts | Pause D2.C kickoff; re-spec per Pro feedback; document scope shift in `IV_POS_8_D2_PLAN.md` v0.9+ |
 | **W-15** | S1 zone classifier has only the D54 spot pin — no systematic per-(step, zone) audit (cf. §6c) | **D2.D variant filtering kickoff** | A run shows arm `(kind, zoneX)` pulling steps the classifier doesn't actually map to `zoneX` | Add sampled audit: N=100 random `(step, kind)` pulls from a D2.D run, assert zone matches classifier; if mismatches found, harden classifier before D2.E |
 | **W-16** | Soundness-bug guard's rejection channels (post D2.B Batch 1 Issue #6) — guard accepts `<constraint_fail>` OR `verify segment` OR `<a4_family_residue nonzero=true>` (Hook 3) OR `<a4_error>` as rejection; fires only on `verifier_accepted=True` after edit | **Each D2.B kind attestation** | Any new kind reaches Layer 4 with all four channels silent AND verifier accepts — re-investigate; do not relax guard | Surface as NFP candidate; consult mem.zir / lookups.zir source to find which constraint the kind should have broken; either fix kind to actually exercise that constraint, or document as known soundness gap with Pro disclosure |
+| **W-17** | **`set_cycle` overwrite dead-arm class** — `trace.cycles[N].pc / .state / .machine_mode` preset via `set_cycle` (`witgen/mod.rs:1063-1075`) but overwritten by `step_Top`'s `exec_Reg(inst_result.new*, ...)` (`steps.cpp:14739-14745` → `exec_NondetReg` STORE). B.3 **confirmed dead** on sha2-host user cycles (Batch 2). **B.6 and B.7 predicted dead** on same mechanism. B.4/B.5/B.8 use extern-read paths — predicted live. | **D2.B Batch 3 attestation** (B.4–B.8) | B.6 or B.7 attestation shows **live rejection** (C1/C2/C3 fires) OR predicted-dead kind fails guard assertion | **Stop Batch 3 merge**; re-read [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md); find missed witness path; update §6d table + W-17. If confirmed live → demote W-17 prediction for that kind; if confirmed dead → xfail + consider dropping from sha2-host arm universe |
 
 **Convention:** when one of these triggers fires, the team's first action is to **read the row's "Fallback" column** and check whether the fallback is still viable given current state. Then re-decide.
 
@@ -559,7 +609,9 @@ These are decisions we intentionally made "go with X for now, revisit at Y if Z"
 | **C3 — `<a4_family_residue>{"nonzero":true}` (Hook 3)** | `ffi.cpp:510-518` — fires when per-family permutation/lookup residue is non-zero after accum phase | Per-family diagnostic of WHICH constraint family broke (`memory`, `u16`, `u8`, `cycle`); semantically richer than `verify segment` because it tells you the family, not just "something broke" | `A4_FAMILY_RESIDUE=1` (REQUIRED — without this, Hook 3 is silent even when the memory permutation is broken) |
 | **C4 — `<a4_error>`** | A4 dispatcher in `witgen/mod.rs` | Mutation skipped or errored before/during application (e.g., strategy mismatch, txn_idx out of range) | Always emitted |
 
-**True soundness bug = (mutation applied) AND (trace changed) AND (ALL FOUR channels silent) AND (verifier_accepted=True)**.
+**True soundness bug (W-16) = (mutation applied) AND (trace changed) AND (ALL FOUR channels silent) AND (verifier_accepted=True) AND (witness columns genuinely corrupted).**
+
+**Dead arm (W-17) = same guard trigger (trace changed + verifier accepts + all channels silent) BUT witness columns were NOT corrupted** — trace preset overwritten before constraints bind. Investigation (source-level witgen path audit) distinguishes W-16 from W-17. B.3 Batch 2 is the template: call guard → assert it fires → document dead arm via xfail; **do not** treat guard fire alone as W-16.
 
 In particular, **C2 alone catches what C1 misses** — this is the Path A vs Path B asymmetry documented in `a4/docs/precloud/PHASE_III_2_5_INSTR_TYPE_MOD_INVESTIGATION.md` §0.1. C3 (Hook 3) provides redundant + family-attributable signal.
 

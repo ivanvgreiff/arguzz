@@ -69,6 +69,18 @@ from a4.standalone.mutations.txn_prev_word_mod import (
     create_config as create_txn_prev_word_config,
 )
 
+from a4.standalone.mutations.txn_prev_cycle_mod import (
+    TxnPrevCycleModTarget,
+    get_targets_at_step as get_txn_prev_cycle_targets,
+    create_config as create_txn_prev_cycle_config,
+)
+
+from a4.standalone.mutations.cycle_mode_mod import (
+    CycleModeModTarget,
+    get_targets_at_step as get_cycle_mode_targets,
+    create_config as create_cycle_mode_config,
+)
+
 __all__ = [
     # COMP_OUT_MOD
     'CompOutModTarget',
@@ -104,4 +116,12 @@ __all__ = [
     'TxnPrevWordModTarget',
     'get_txn_prev_word_targets',
     'create_txn_prev_word_config',
+    # TXN_PREV_CYCLE_MOD
+    'TxnPrevCycleModTarget',
+    'get_txn_prev_cycle_targets',
+    'create_txn_prev_cycle_config',
+    # CYCLE_MODE_MOD
+    'CycleModeModTarget',
+    'get_cycle_mode_targets',
+    'create_cycle_mode_config',
 ]

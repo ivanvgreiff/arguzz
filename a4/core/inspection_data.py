@@ -215,6 +215,14 @@ class InspectionData:
                 # Any non-bootstrap step with at least one txn
                 if cycle.step != 0 and cycle.step in self._step_to_all_txns:
                     valid_steps.add(cycle.step)
+
+            elif kind == "TXN_PREV_CYCLE_MOD":
+                if cycle.step != 0 and cycle.step in self._step_to_all_txns:
+                    valid_steps.add(cycle.step)
+
+            elif kind == "CYCLE_MODE_MOD":
+                if cycle.step != 0:
+                    valid_steps.add(cycle.step)
         
         # Return sorted list for deterministic ordering
         return sorted(valid_steps)

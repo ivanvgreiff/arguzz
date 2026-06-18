@@ -27,6 +27,7 @@ class A4CycleInfo:
     txn_idx: int
     major: int
     minor: int
+    machine_mode: int = 0
     
     @classmethod
     def parse(cls, line: str) -> Optional['A4CycleInfo']:
@@ -44,6 +45,7 @@ class A4CycleInfo:
                 txn_idx=data['txn_idx'],
                 major=data['major'],
                 minor=data['minor'],
+                machine_mode=data.get('machine_mode', 0),
             )
         except (json.JSONDecodeError, KeyError):
             return None
@@ -391,3 +393,125 @@ def parse_post_mut_dump(output: str) -> List[A4PostMutDump]:
 def parse_txn_prev_word_mod(output: str) -> List[A4TxnPrevWordMod]:
     """Parse all <a4_txn_prev_word_mod> evidence tags from output."""
     return [t for line in output.splitlines() if (t := A4TxnPrevWordMod.parse(line))]
+
+
+@dataclass
+class A4TxnPrevCycleMod:
+    """Parsed A4 <a4_txn_prev_cycle_mod> evidence tag."""
+    step: int
+    txn_idx: int
+    addr: int
+    old_prev_cycle: int
+    new_prev_cycle: int
+    cycle: int
+    word: int
+    prev_word: int
+    cycle_idx: Optional[int] = None
+    pc: Optional[int] = None
+    major: Optional[int] = None
+    minor: Optional[int] = None
+
+    @classmethod
+    def parse(cls, line: str) -> Optional["A4TxnPrevCycleMod"]:
+        match = re.search(r"<a4_txn_prev_cycle_mod>({.*?})</a4_txn_prev_cycle_mod>", line)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(1))
+            return cls(
+                step=data["step"],
+                txn_idx=data["txn_idx"],
+                addr=data["addr"],
+                old_prev_cycle=data["old_prev_cycle"],
+                new_prev_cycle=data["new_prev_cycle"],
+                cycle=data["cycle"],
+                word=data["word"],
+                prev_word=data["prev_word"],
+                cycle_idx=data.get("cycle_idx"),
+                pc=data.get("pc"),
+                major=data.get("major"),
+                minor=data.get("minor"),
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+
+
+@dataclass
+class A4CycleModeMod:
+    """Parsed A4 <a4_cycle_mode_mod> evidence tag."""
+    step: int
+    cycle_idx: int
+    pc: int
+    old_mode: int
+    new_mode: int
+    major: int
+    minor: int
+
+    @classmethod
+    def parse(cls, line: str) -> Optional["A4CycleModeMod"]:
+        match = re.search(r"<a4_cycle_mode_mod>({.*?})</a4_cycle_mode_mod>", line)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(1))
+            return cls(
+                step=data["step"],
+                cycle_idx=data["cycle_idx"],
+                pc=data["pc"],
+                old_mode=data["old_mode"],
+                new_mode=data["new_mode"],
+                major=data["major"],
+                minor=data["minor"],
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+
+
+@dataclass
+class A4PostMutCycleDump:
+    """Parsed A4 <a4_post_mut_cycle_dump> — post-mutation cycle snapshot."""
+    kind: str
+    entity: str
+    cycle_idx: int
+    step: int
+    pc: int
+    major: int
+    minor: int
+    machine_mode: int
+    txn_idx: int
+
+    @classmethod
+    def parse(cls, line: str) -> Optional["A4PostMutCycleDump"]:
+        match = re.search(r"<a4_post_mut_cycle_dump>({.*?})</a4_post_mut_cycle_dump>", line)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(1))
+            return cls(
+                kind=data["kind"],
+                entity=data["entity"],
+                cycle_idx=data["cycle_idx"],
+                step=data["step"],
+                pc=data["pc"],
+                major=data["major"],
+                minor=data["minor"],
+                machine_mode=data["machine_mode"],
+                txn_idx=data["txn_idx"],
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+
+
+def parse_txn_prev_cycle_mod(output: str) -> List[A4TxnPrevCycleMod]:
+    """Parse all <a4_txn_prev_cycle_mod> evidence tags from output."""
+    return [t for line in output.splitlines() if (t := A4TxnPrevCycleMod.parse(line))]
+
+
+def parse_cycle_mode_mod(output: str) -> List[A4CycleModeMod]:
+    """Parse all <a4_cycle_mode_mod> evidence tags from output."""
+    return [t for line in output.splitlines() if (t := A4CycleModeMod.parse(line))]
+
+
+def parse_post_mut_cycle_dump(output: str) -> List[A4PostMutCycleDump]:
+    """Parse all <a4_post_mut_cycle_dump> entries from output."""
+    return [d for line in output.splitlines() if (d := A4PostMutCycleDump.parse(line))]
