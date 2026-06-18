@@ -1,0 +1,9 @@
+metric,mean,std,n_seeds
+cat_a_pro_s5_verifier_accepted_invalid_count,0.0,0.0,5
+cat_a_pro_s5_co_failure_graph_degree_p95,31.55,0.7984359711335656,5
+cat_a_pro_s5_singleton_failure_rate,0.1693333333333333,0.0040551750201988125,5
+cat_a_pro_s5_d_loc_p95,6.0,0.0,5
+cat_a_pro_s8_unique_locs_with_d_loc_le_2,29.0,1.224744871391589,5
+cat_a_pro_s8_unique_locs_with_d_glob_le_1,33.8,0.8366600265340756,5
+cat_b_pro_s5_proof_generated_zero_residue_rejected_rate,,0.0,0
+cat_b_pro_b_wall_clock_per_normalized_discovery,,0.0,0

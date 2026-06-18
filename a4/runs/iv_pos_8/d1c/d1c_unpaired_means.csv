@@ -1,0 +1,6 @@
+seed,cat_a_pro_s5_verifier_accepted_invalid_count,cat_a_pro_s5_co_failure_graph_degree_p95,cat_a_pro_s5_singleton_failure_rate,cat_a_pro_s5_d_loc_p95,cat_a_pro_s8_unique_locs_with_d_loc_le_2,cat_a_pro_s8_unique_locs_with_d_glob_le_1,cat_b_pro_s5_proof_generated_zero_residue_rejected_rate,cat_b_pro_b_wall_clock_per_normalized_discovery
+1239,0,31.0,0.17116666666666666,6,28,34,,
+1240,0,32.75,0.16366666666666665,6,29,33,,
+1241,0,32.0,0.16983333333333334,6,31,35,,
+1242,0,31.0,0.1675,6,29,34,,
+1243,0,31.0,0.1745,6,28,33,,

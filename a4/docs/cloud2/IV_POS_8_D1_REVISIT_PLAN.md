@@ -138,6 +138,17 @@ Composer's framing is correct: this is **the** load-bearing implementation quest
 - Notebook + HTML rendered.
 - D1.B subsection drafted (will fold into final D1 report at Stage 4).
 
+#### 3.1.2 D1.B → D1.E hand-off file index (added 2026-06-17 per Composer audit)
+
+Subsection files in §3.4 Stage 4 are Pro-facing summaries. The **load-bearing inputs for the D1.E spec** are the hand-off artifacts below. D1.E spec drafting MUST start by reading these:
+
+| Artifact | Purpose | Audience |
+|---|---|---|
+| `a4/runs/iv_pos_8/d1b/d1e_handoff_CGC_saturation.md` | L0 baseline + saturation inversion findings; rationale for `production_log2_corrected` as D1.E L0 baseline | D1.E spec author |
+| `a4/runs/iv_pos_8/d1b/d1b_recommendation.md` | Variant-selection rationale + §4 L1 open-question framing (per-channel reward / weighted / scalar bandit alternatives to naive OR) | D1.E spec author + D2.G |
+| `a4/runs/iv_pos_8/d1b/D1B_SUBSECTION.md` | Pro-facing summary; folds into Stage 4 final D1 report | Pro (via Stage 4) |
+| `a4/runs/iv_pos_8/d1b/d1b_page_class_layout.md` | `user_dynamic` enhancement rationale (Batch 1.5b); informs L0 schema discussions for D1.E + D2.G | D1.E + D2.G (informational) |
+
 ### 3.2 D1.C — Bug-proximity metric stack (analysis-only, Categories A + B)
 
 **Categories per `IV_POS_8_PRELIMINARY_PLAN.md` §3 D1.C** (with row-count correction — prelim §3 line 165 has wrong numbers; D1.C spec §0 must restate):
@@ -173,6 +184,17 @@ Composer's framing is correct: this is **the** load-bearing implementation quest
 - Notebook + HTML rendered.
 - D1.C subsection drafted (folds into final D1 report at Stage 4).
 
+#### 3.2.1 D1.C → D1.E hand-off file index (added 2026-06-17 per Composer audit)
+
+Parallel to §3.1.2. The D1.E spec MUST read these in addition to the D1.B set above:
+
+| Artifact | Purpose | Audience |
+|---|---|---|
+| `a4/runs/iv_pos_8/d1c/d1e_handoff_L1_signals.md` | Top 2-3 Tier-1 signal shortlist + selection rationale (orthogonality + non-saturation) + sample L1 OR sketch + alternatives reference | D1.E spec author |
+| `a4/runs/iv_pos_8/d1c/d1c_signal_shortlist.md` | Full per-signal shortlist with recommended/deferred labels and rationale | D1.E spec author + D2.G |
+| `a4/runs/iv_pos_8/d1c/D1C_SUBSECTION.md` | Pro-facing summary; folds into Stage 4 final D1 report | Pro (via Stage 4) |
+| `a4/runs/iv_pos_8/d1c/d1c_tier2_schema.md` | Tier-2 column schema for D2.G `build_d2_artifacts.py` consumption (column names + dtypes + Pro-§ mapping) | D2.G author |
+
 ### 3.3 D1.E — V5 Reward-Rewired Re-run (NEW sub-deliverable)
 
 > **This sub-deliverable was NOT in the original prelim plan (Composer point #1).** It is justified by Finding F: D1.A only tested half of Pro §7 Stage 2. D1.E is the second half.
@@ -183,7 +205,7 @@ Composer's framing is correct: this is **the** load-bearing implementation quest
 
 | Layer | Change | Notes |
 |---|---|---|
-| L0 | Replace production `compressed_global_context` bucketing with D1.B-recommended coarsening (or keep log4 and add coarsened variant as a 2nd signal). **Coordinates with D2.B Batch 1.5e (`_TXN_ROLE_BY_KIND`) AND D1.B Batch 1.6 (`_coerce_broken_addr` field priority fix) in `compressed_global_extractor.py`.** Forward-run baseline is `production_log2_corrected` (post-byte_addr-fix) per NFP-10, NOT pre-fix production. | If D1.B picks `region_only` or `page_class`, the same `g_new` channel becomes more selective / less saturating. D1.E v1 spec assumes patched extractor is already in main. |
+| L0 | **D1.B outcome (commit `71dae77`): keep `production_log2_corrected` as L0 baseline.** D1.B Batch 3 showed that all three alternate coarsenings (`region_only`, `log4_explicit`, `page_class`) saturate 1400-1900 mut EARLIER than local saturation (3221 mean `time_to_46`) — the opposite of what the original v0.1/v0.2 of this row hypothesized; coarsening makes the post-local discriminating window WORSE, not better. `production_log2_corrected` (post-`_coerce_broken_addr` byte_addr fix per Batch 1.6 + NFP-10) is the only L0 candidate with material post-local headroom (~39 keys remaining at mut 3221, ~1.4 new keys/100 mutations — thin but non-zero). **Coordinates with D2.B Batch 1.5e (`_TXN_ROLE_BY_KIND`)** in the same file (`compressed_global_extractor.py`). D1.E v1 spec MUST cite `a4/runs/iv_pos_8/d1b/d1e_handoff_CGC_saturation.md` (§3.1.2 hand-off index) as the load-bearing input for this row. | D1.B's saturation-inversion finding means L0 schema-swap alone cannot extend the post-local discriminating window — L1 enrichment (D1.C-shortlisted signals) is the primary lever. D1.E v1 spec assumes patched extractor is already in main. |
 | L1 | Extend `compute_bandit_success` to OR-in: (a) `f_new > 0` (free — already computed but excluded from Bernoulli today; Composer point #4), and (b) one or more Tier-1 D1.C-shortlisted per-mutation signals (e.g., `recent_marginal_discovery_rate > θ`, `singleton_flag`) | Keeps the binary Bernoulli shape; lowest implementation risk. Note: adding signals MONOTONICALLY increases the fraction of successes — D1.E spec must define a stopping rule (e.g., max 3 OR'd channels) to avoid saturating the bandit reward in the opposite direction |
 | L2 | Optionally replace Beta-Bernoulli TS with a scalar-reward bandit using `compute_reward_v2` directly | **Out of scope for D1.E v1** — flag as deferred to D2 or follow-on. Pro §7 Stage 2 does not literally require this; binary suffices if the OR-of-signals is informative. |
 
@@ -353,5 +375,6 @@ POS compute: **15 jobs × 6000 mutations × ~5.5 h** = within 1 reservation bloc
 | 2026-06-17 | Opus | v0.3 — Post-spec-drafting cross-fixes (per Composer's pushback on `IV_POS_8_D1_B_SPEC.md` v0.1): (i) §3.1 page_class row updated from "region + access pattern" to **semantic memory-use class** (orthogonal to txn_role/cycle_phase/opcode_class), cross-linked to D1.B spec §0 Q-PC-1; (ii) §3.1.1 `log4_explicit` feasibility row corrected — log4 is **strictly coarser** than production log2 (which is `floor(log2(addr))` per `compressed_global_extractor.py:125-136`), NOT equivalent. K-timing language in §3.3(B) tightened in earlier v0.2 turn; further hardening (clarifying that `_local_discoveries` not CGC drives `ExponentialDecayFloor.K`) is encoded in D1.B spec v0.2 §0.1.1 and referenced from here. |
 | 2026-06-17 | Opus | v0.4 — Ivan's Pro-intent restatement (CGC + bug-proximity feed L0+L1, NOT K; K stays on local survey progress per Pro §7 verbatim formula) cleanly threaded through §3.3(B): **K target derivation moved entirely into D1.E spec** with explicit anchor on `_local_discoveries` saturation (legacy `coverage` row count, distinct from `local_coverage_v2`); D1.B's role re-stated as feeding (i) D2 default CGC reward choice and (ii) D1.E L0 — explicitly NOT K. The earlier-draft `L_floor` option (driving floor from CGC) **removed as anti-Pro** — would prevent floor from decaying on local saturation, defeating Pro's staged-exploration design. Cross-references D1.B spec v0.3 §0.1.1 and §0.4 for the Pro-intent re-derivation and the page_class folklore-vs-facts audit. |
 | 2026-06-17 | Opus | v0.5 — D1.B Batch 1 ACCEPTED; **Batch 1.6 NEW** inserted in D1.B spec §3.2.5 to land `_coerce_broken_addr` field-priority fix (production CGC memory regions had been mis-labeled across all R2 V1-V5 + D1.A runs; Hook 3 emits both `addr` (word) and `byte_addr` (byte = addr×4); extractor was preferring `addr` and feeding word-addresses into D8 `address_region()` which is defined on byte-addresses, causing 53-59% mis-classification across audited DBs). Opus verified bug independently with SQL: V5 s1234: 58.9% region mismatch, V1 s1234: 53.2%, decayexp s1234: 55.7%; stored CGC memory regions collapsed to `{user, zero_page}` only despite Hook 3 seeing 9 distinct regions. Lookup family unaffected; local channel unaffected; arm scheduler unaffected. NFP-10 added to `IV_POS_8_NOTES_FOR_PRO.md` documenting bug + impact + post-hoc replay strategy. D1.E (§3.3) updated: L0 baseline is now `production_log2_corrected` (post-fix), not pre-fix; forward D1.E runs use patched extractor natively. Re-dispatch of R2 V1-V5 explicitly NOT scheduled — `hook3_raw` preserves raw payloads for post-hoc replay (verified). Pro disclosure timing: NFP-10 lands with D1.B subsection at Batch 3 (after Batch 2's corrected-baseline analysis), not earlier. |
+| 2026-06-17 | Opus | v0.6 — Three cross-doc fixes prompted by D1.C spec v0.2/v0.3 drafting + Composer audits: **(1)** new **§3.1.2** "D1.B → D1.E hand-off file index" (4 artifacts: `d1e_handoff_CGC_saturation.md`, `d1b_recommendation.md`, `D1B_SUBSECTION.md`, `d1b_page_class_layout.md`) — D1.E spec author was at risk of reading only Stage-4 subsections and missing L0/L1 wiring detail per Composer Part 1 discoverability audit. **(2)** new **§3.2.1** "D1.C → D1.E hand-off file index" (4 artifacts: `d1e_handoff_L1_signals.md`, `d1c_signal_shortlist.md`, `D1C_SUBSECTION.md`, `d1c_tier2_schema.md`) — parallel to §3.1.2 for D1.C deliverables. **(3)** §3.3 L0 row materially updated — v0.1-v0.5 wording ("Replace production bucketing with D1.B-recommended coarsening" / "If D1.B picks region_only or page_class, the same g_new channel becomes more selective / less saturating") was a HYPOTHESIS that D1.B Batch 3 EMPIRICALLY DISPROVED: coarsenings saturate 1400-1900 mut EARLIER than local saturation (3221), making the post-local discriminating window WORSE not better. v0.6 row states D1.B's actual outcome (keep `production_log2_corrected` as L0; saturation-inversion finding means L0 schema-swap alone cannot extend the post-local window; L1 enrichment via D1.C signals is the primary lever) and cites the §3.1.2 hand-off file as the load-bearing D1.E input. No changes to D1.C scope, K decision, or W-R watchlist. |
 
-*End of `IV_POS_8_D1_REVISIT_PLAN.md` v0.5.*
+*End of `IV_POS_8_D1_REVISIT_PLAN.md` v0.6.*

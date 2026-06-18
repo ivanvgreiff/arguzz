@@ -330,7 +330,7 @@ Total D2 POS compute: **~22–32 h wall** depending on V5 archive reuse, on 8 Ti
 
 Mirrors D1.G in spirit:
 
-- `analysis/build_d2_artifacts.py` — single script that ingests 30–40 DBs, writes per-variant CSVs and the headline comparison table (V5 vs V6-uniform vs V6-cTS vs Hybrid-cTS on all D1.C Category A metrics + normalized-territory split per V6 companion §3).
+- `analysis/build_d2_artifacts.py` — single script that ingests 30–40 DBs, writes per-variant CSVs and the headline comparison table (V5 vs V6-uniform vs V6-cTS vs Hybrid-cTS on all D1.C Category A metrics + normalized-territory split per V6 companion §3). D2.G's `build_d2_artifacts.py` consumes columns prefixed `cat_a_pro_s*` from `d1c_metrics_table.csv` per `a4/runs/iv_pos_8/d1c/d1c_tier2_schema.md`.
 - `IV_POS_8_D2_REPORT_FOR_PRO.md` — Pro-facing narrative. Structure: TL;DR / methodology / per-variant numbers / answers-to-Pro's-§15-Priority-1 question / open questions for D3 design.
 - `IV_POS_8_D2_NOTEBOOK.ipynb` — companion plots / interactive exploration.
 - `IV_POS_8_D3_DESIGN_PROPOSAL.md` — what D2 ships to Pro alongside the report (mirroring the D1+D2-design pattern). Sketches bug-isolation layer scope. Track-β owns drafting this once D2.G is largely done; Track-α may pre-feed bug-proximity findings from D1.C.

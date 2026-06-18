@@ -1,0 +1,7 @@
+metric,comparison,n_paired,mean_a,mean_b,wilcoxon_stat,p_value,note
+cat_a_pro_s5_d_loc_p95,V5_decayexp vs V5,5,7.0,6.0,0.0,0.0625,
+cat_a_pro_s5_d_loc_p95,V5_decayepoch vs V5,5,6.0,6.0,,,identical values
+cat_a_pro_s5_d_loc_p95,V5_decayexp vs V5_decayepoch,5,7.0,6.0,0.0,0.0625,
+cat_a_pro_s5_verifier_accepted_invalid_count,V5_decayexp vs V5,5,0.0,0.0,,,identical values
+cat_a_pro_s5_verifier_accepted_invalid_count,V5_decayepoch vs V5,5,0.0,0.0,,,identical values
+cat_a_pro_s5_verifier_accepted_invalid_count,V5_decayexp vs V5_decayepoch,5,0.0,0.0,,,identical values

@@ -1,0 +1,25 @@
+metric,comparison,n_paired,mean_a,mean_b,mean_diff,t_stat,p_value,note
+cat_a_pro_s5_verifier_accepted_invalid_count,V5_decayexp vs V5,5,0.0,0.0,0.0,,,identical values; t-stat undefined
+cat_a_pro_s5_verifier_accepted_invalid_count,V5_decayepoch vs V5,5,0.0,0.0,0.0,,,identical values; t-stat undefined
+cat_a_pro_s5_verifier_accepted_invalid_count,V5_decayexp vs V5_decayepoch,5,0.0,0.0,0.0,,,identical values; t-stat undefined
+cat_a_pro_s5_co_failure_graph_degree_p95,V5_decayexp vs V5,5,31.0,31.339999999999996,-0.3399999999999963,-1.2910875235673116,0.2662354065466629,
+cat_a_pro_s5_co_failure_graph_degree_p95,V5_decayepoch vs V5,5,30.8,31.339999999999996,-0.5399999999999956,-1.4164010556563413,0.2296050477058176,
+cat_a_pro_s5_co_failure_graph_degree_p95,V5_decayexp vs V5_decayepoch,5,31.0,30.8,0.1999999999999993,0.5345224838248488,0.6213082950374971,
+cat_a_pro_s5_singleton_failure_rate,V5_decayexp vs V5,5,0.12926666666666667,0.16693333333333332,-0.037666666666666654,-38.93081438404996,2.6005750249311024e-06,
+cat_a_pro_s5_singleton_failure_rate,V5_decayepoch vs V5,5,0.1344,0.16693333333333332,-0.03253333333333333,-15.651600926003365,9.731702480439548e-05,
+cat_a_pro_s5_singleton_failure_rate,V5_decayexp vs V5_decayepoch,5,0.12926666666666667,0.1344,-0.005133333333333323,-2.620541191672452,0.058766002231920834,
+cat_a_pro_s5_d_loc_p95,V5_decayexp vs V5,5,7.0,6.0,1.0,,,identical values; t-stat undefined
+cat_a_pro_s5_d_loc_p95,V5_decayepoch vs V5,5,6.0,6.0,0.0,,,identical values; t-stat undefined
+cat_a_pro_s5_d_loc_p95,V5_decayexp vs V5_decayepoch,5,7.0,6.0,1.0,,,identical values; t-stat undefined
+cat_a_pro_s8_unique_locs_with_d_loc_le_2,V5_decayexp vs V5,5,29.8,27.4,2.400000000000002,2.5879865568825218,0.060812856154522504,
+cat_a_pro_s8_unique_locs_with_d_loc_le_2,V5_decayepoch vs V5,5,29.6,27.4,2.200000000000003,1.8333333333333335,0.14068226486662014,
+cat_a_pro_s8_unique_locs_with_d_loc_le_2,V5_decayexp vs V5_decayepoch,5,29.8,29.6,0.1999999999999993,0.10482848367219182,0.9215581135186721,
+cat_a_pro_s8_unique_locs_with_d_glob_le_1,V5_decayexp vs V5,5,33.6,33.4,0.20000000000000284,0.2721655269759087,0.7989658591927787,
+cat_a_pro_s8_unique_locs_with_d_glob_le_1,V5_decayepoch vs V5,5,33.2,33.4,-0.19999999999999574,-0.34299717028501775,0.7488684500235265,
+cat_a_pro_s8_unique_locs_with_d_glob_le_1,V5_decayexp vs V5_decayepoch,5,33.6,33.2,0.3999999999999986,1.0,0.37390096630005887,
+cat_b_pro_s5_proof_generated_zero_residue_rejected_rate,V5_decayexp vs V5,0,,,,,,insufficient paired non-null rows
+cat_b_pro_s5_proof_generated_zero_residue_rejected_rate,V5_decayepoch vs V5,0,,,,,,insufficient paired non-null rows
+cat_b_pro_s5_proof_generated_zero_residue_rejected_rate,V5_decayexp vs V5_decayepoch,5,0.1276,0.11983333333333332,0.007766666666666672,2.1634439436666018,0.09651598473881218,
+cat_b_pro_b_wall_clock_per_normalized_discovery,V5_decayexp vs V5,0,,,,,,insufficient paired non-null rows
+cat_b_pro_b_wall_clock_per_normalized_discovery,V5_decayepoch vs V5,0,,,,,,insufficient paired non-null rows
+cat_b_pro_b_wall_clock_per_normalized_discovery,V5_decayexp vs V5_decayepoch,5,65.98598818994758,65.71462565525749,0.2713625346900841,0.5641608282807472,0.6027757000609062,
