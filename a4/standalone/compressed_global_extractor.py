@@ -213,7 +213,7 @@ def _coerce_broken_addr(raw_addr: object) -> Optional[int]:
     if isinstance(raw_addr, int):
         return raw_addr
     if isinstance(raw_addr, dict):
-        for key in ("addr", "byte_addr", "address"):
+        for key in ("byte_addr", "addr", "address"):
             if key in raw_addr and raw_addr[key] is not None:
                 try:
                     return int(raw_addr[key])

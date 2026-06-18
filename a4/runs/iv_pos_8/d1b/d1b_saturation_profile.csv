@@ -1,0 +1,5 @@
+cgc_variant,n_paired_seeds,saturation_bin_lo,saturation_bin_hi,saturation_mutation_id,saturation_bin_avg_new_keys,saturation_cgc_d
+production_log2_corrected,5,3300,3400,3400,0.8,180
+region_only,5,1200,1300,1300,0.8,62
+log4_explicit,5,1700,1800,1800,0.6,84
+page_class,5,1200,1300,1300,0.8,67

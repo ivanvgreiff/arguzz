@@ -3,13 +3,47 @@
 **Branch:** `cloud2`
 **Date opened:** 2026-06-16
 **Author:** Ivan + Opus (planning); Composer (implementation, future batches)
-**Status:** **DRAFT v0.3** — Ivan reviewed v0.2; D2.A spec locked at v0.2 (`IV_POS_8_D2_A_SPEC.md`); v6_arguzz driver search elevated to explicit D2.C task with search leads documented
+**Status:** **DRAFT v0.8** — D2.A merged at `7b66fb9`; v6_driver_v2.py recovered; **D2.B v0.5 LOCKED** (17 §6 questions resolved); deferred-decisions watchlist (§9a) + soundness-bug guard (§9b) added; new sibling doc `IV_POS_8_NOTES_FOR_PRO.md` (NFP-1 through NFP-6) tracks vital architectural decisions Pro needs to understand. D2.C v0.1 deferred review (independent of D2.B). Next: D2.B Batch 1 Composer kickoff.
 **Parent:** [`IV_POS_8_PRELIMINARY_PLAN.md`](./IV_POS_8_PRELIMINARY_PLAN.md) — the 4-deliverable master plan
 **Sibling specs (D1):** [`IV_POS_8_D1_A_SPEC.md`](./IV_POS_8_D1_A_SPEC.md) (locked, running on POS)
 **Sibling specs (D2):** [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) (D2.A — foundation; in review)
 
 ## Changelog
 
+- **v0.8 (2026-06-17, latest):** D2.B §6 LOCKED at v0.5 after Ivan reviewed two Composer-review cycles. Key locks:
+  - **Q5: Option A** (Pro-valid `MEMORY_TXN_ROLES` only; per-kind D2.G pivots on `producer_kind`) — surfaced to Pro in new doc `IV_POS_8_NOTES_FOR_PRO.md` (NFP-4) so Pro can request schema bump in IV.POS.9 if wanted.
+  - **Q6: Variant-specific kind subsets** (V5_control = 8 kinds + D1.A archive reuse; V5_expanded/Hybrid/V6 = larger subsets) — surfaced as NFP-2.
+  - **15 secondary recommendations** accepted as Opus/Composer aligned: broad CYCLE_MODE scope, §3 value-gen heuristics, lean-ship B.8, per-batch CI gate, snake_case, 4 batches, Rust-first with 1.0a before 1.1, pause-on-build-failure, Option A bandit wiring (Q11), exclude fetch/register helpers, hardcode CycleState, shared signature helper, A1 post-mut dump.
+  - **New Batch 1.5e**: `PRE_EXEC_REG_MOD` retrofix (mirrors B.1 Option A; A4-only; does NOT touch Arguzz). Pure cleanup of a cloud1-era dead-code path where two strategies were implemented in Rust+Python but the fuzzer hardcoded `next_read`. Surfaced as NFP-6.
+  - **New §9a watchlist** (W-1 through W-11) — tracks every "decide X now, revisit at Y if Z" commitment so we don't forget.
+  - **New §9b soundness-bug guard** — clean-success outcomes must be cross-verified with `A4_DUMP_POST_MUT` dump before drop; if trace changed but no constraint failed and no error emitted → STOP and surface to Pro (potential soundness bug).
+  - **New sibling doc**: `IV_POS_8_NOTES_FOR_PRO.md` — running architectural index for Pro (6 entries today).
+- **v0.7 (2026-06-17):** Composer review of D2.B v0.3 spec incorporated. Substantive findings ALL verified against code:
+  - **`inspection_data.py::get_valid_steps_for_kind`** — was missing from spec §4 file change list; without these branches, new kinds get zero arms even with Python modules and Rust handlers. Added to spec §4.4 with explicit per-kind step rules.
+  - **B.1 two-strategy bandit wiring** — v0.3 claimed PRE_EXEC_REG_MOD's two strategies are separate bandit arms; verified false (`fuzzer.py:1639` hardcodes `strategy="next_read"`; `semantic_arm_universe.py:91` only probes `next_read`). Q11 rewritten with three options; recommend Option A (one kind string, RNG picks strategy per pull).
+  - **`_MAJOR_FILTER_KINDS` membership** — v0.3 said "add all 8"; that set is curated (line 83 comment: "MEM_VAL_MOD has no major filter"). Only B.6 added in v0.4; B.1/B.2/B.4/B.5/B.3/B.7/B.8 follow MEM_VAL_MOD's txn-presence-filter pattern.
+  - **Layer 3 dump-diff infrastructure** — v0.3 implicitly assumed `A4_INSPECT=1 + A4_MUTATION_CONFIG` would yield a post-mutation dump; in witgen/mod.rs the inspection block runs BEFORE the mutation block (verified lines 72-187 vs 189-601), so the dump is pre-mutation only. New Q17 + Batch 1.0a task: add `A4_DUMP_POST_MUT=1` witgen hook (~30 LOC).
+  - **Minor:** §3.5 citation corrected from `pre_exec_reg_mod.py:486` to `witgen/mod.rs:486` (Rust file). Q3 (B.8 fate) revised from "lean drop" to "lean ship" — `preflight.rs:227,306` actively populate diff_count. B.7 §5.3 strict-no-cascade softened to "tentatively strict; investigate state-transition witness-layout interaction in Batch 1.0b".
+  - **Plan body cleanup:** lines 110, 196, 241-258 still showed "3 kinds"; updated to 8 (3 high-priority + 5 medium-risk per Pro §8 + §15.3). Provenance framing clarified: the 5 medium-risk are *Pro's named candidates*, not pure taxonomy fills.
+  - D2.B effort estimate unchanged (10–14 d); spec is sharper, not larger.
+- **v0.6 (2026-06-17):** D2.B deep-research pass per Ivan instruction:
+  - Read `a4/docs/standalone/MUTATION_TAXONOMY.md` (the authoritative reference for A4 mutations) end-to-end + sampled existing A4 mutation modules (`comp_out_mod.py`, `pre_exec_reg_mod.py`, `instr_word_mod_sur.py`).
+  - Documented **where the mutations live in the risc0 proving pipeline**: between `Segment::preflight(rand_z)` (which produces `PreflightTrace`) and `WitnessGenerator::new(preflight_results)` (which builds witness columns). The A4 mutation dispatcher modifies `trace.cycles[]` or `trace.txns[]` IN PLACE; downstream witness generation reads the mutated trace as if genuine.
+  - Per-kind designs in spec v0.3 §3 grounded in: (a) field semantic from `RawPreflightCycle` / `RawMemoryTransaction` structs, (b) constraint surface implications, (c) parallel patterns from existing mutations.
+  - Key architectural finding: **B.1 (TXN_PREV_WORD_MOD) should ship with two strategies** mirroring PRE_EXEC_REG_MOD's `at_read`/`at_write` pattern, because mutating `prev_word` at a READ triggers IsRead failure while mutating at a WRITE triggers MemoryWrite cascade — genuinely different constraint surfaces.
+  - Corrected v0.2 inaccuracies (spec v0.3 Appendix A): `diff_count` is `[u32; 2]` not single u32; B.1 has no `prev_cycle != 0` filter; B.3 scope is "any cycle" (broad, not restrictive); B.4 explicitly HIGH RISK with fetch + register exclusions; `txn.cycle` LSB-only semantics for B.5; B.6 scope is instruction cycles only.
+  - Layer 3 testing methodology refined to risk-tiered strictness: strict-no-cascade for low-risk kinds (B.1 at_read, B.2, B.3); cascade-permissive-with-signature for high-risk kinds (B.4, B.5, B.6, B.7, B.8). Composer Batch 1 writes shared `assert_trace_diff_matches_signature` helper.
+  - Open question count grew 10 → 16 (added Q11–Q16 from deep dive): two-strategy decision for B.1; fetch/register exclusions for B.4 and B.5; CycleState enum extraction approach; B.8 fate gating on Rust-side investigation; cascade signature spec format.
+- **v0.5 (2026-06-17, late):** D2.B scope expansion + binary capability resolution:
+  - **D2.B scope expanded to all 8 of Pro's A4 wish-list kinds** per Ivan instruction. Now covers high-priority (TXN_PREV_WORD_MOD, TXN_PREV_CYCLE_MOD, CYCLE_MODE_MOD) **plus** medium-risk (TXN_ADDR_MOD, TXN_CYCLE_PHASE_MOD, CYCLE_PC_MOD, CYCLE_STATE_MOD, CYCLE_DIFF_COUNT_MOD).
+  - **Binary capability question resolved** by inspecting `workspace/risc0-modified/risc0/circuit/rv32im/src/prove/witgen/mod.rs`. State C confirmed: zero Rust handlers exist for the 8 new D2.B kinds, but the extension pattern is mechanical (~50–80 LOC per kind) following the existing 7 handlers.
+  - D2.B effort revised from 5–7 d to **10–14 d** (Rust + Python + attestation tests).
+  - D2.B spec v0.1 → v0.2 with: (a) expanded 8-kind scope, (b) clear binary-capability resolution, (c) explicit 5-layer testing methodology in plain language (Layers 1–5), with Layer 4 cross-check identified as the **100%-certainty proof** for each kind, (d) §6 open questions rewritten in plain English with explicit recommendations + justifications + counterfactuals.
+- **v0.4 (2026-06-17):** Post D2.A completion pass:
+  - D2.A merged to `cloud2` (Batch 1 `b844e8e`, Batch 2 `7b66fb9` + report-fix `4fce664`). 510 tests green, schema migration deployed, V5 byte-identity confirmed via golden trace, applied-accounting scheduler-side ready, `mutations.outcome` column live, normalize-parity verified.
+  - `v6_driver_v2.py` recovered + archived at `a4/runs/iv_pos_7/drivers/v6_driver_v2.py` (608 lines, `balanced_round_robin` + `v2.1_utf8safe`). The §2.2 driver-archaeology task in D2.C is now resolved — the driver is in tree, just not yet modernized.
+  - D2.B + D2.C specs drafted in parallel (`IV_POS_8_D2_B_SPEC.md` v0.1, `IV_POS_8_D2_C_SPEC.md` v0.1) — both pending Ivan review of §6 open questions before Composer kickoff.
+  - Branch convention dropped: single `cloud2` branch, direct commits, no feature branches, no PRs (Ivan v0.4 decision).
 - **v0.3 (2026-06-16):** Ivan-review pass v2:
   - Ivan accepted all 11 D2.A spec §6 open-question recommendations → D2.A spec locked at v0.2 (see `IV_POS_8_D2_A_SPEC.md` §8).
   - Ivan flagged that the v0.2 plan validated the new arm fields only by D2.D/D2.E. **Mitigation locked in D2.A v0.2:** new Batch 1 scheduler-level synthetic test (`test_d2a_arm_shape_arguzz_simulation.py`) exercises all 5 fields with non-trivial values; full arm-shape correctness gated at end of D2.A.
@@ -89,7 +123,7 @@ where mutation_surface ∈ {A4_trace_cell, arguzz_exec_fault}
 |---|---|---|
 | V5 cTS semantic-zone scheduler | `a4/standalone/bandit_ts.py` (`ConstrainedTSScheduler`, `FloorSchedule` family from D1.A) | Carries directly into V6-cTS and Hybrid-cTS |
 | V5 standalone fuzzer | `a4/standalone/fuzzer.py` | Refactored to dispatch by arm-shape, not hardcoded kind ifs |
-| 8 pure-A4 mutation kinds | `a4/standalone/mutations/{comp_out_mod, instr_type_mod, instr_word_mod, instr_word_mod_sur, load_val_mod, mem_val_mod, pre_exec_reg_mod, store_out_mod}.py` | Stay as-is; D2.B adds 3 new ones using the same pattern |
+| 8 pure-A4 mutation kinds | `a4/standalone/mutations/{comp_out_mod, instr_type_mod, instr_word_mod, instr_word_mod_sur, load_val_mod, mem_val_mod, pre_exec_reg_mod, store_out_mod}.py` | Stay as-is; D2.B adds 8 new ones (3 high-priority + 5 medium-risk per Pro §8 + §15.3) using the same pattern |
 | Arguzz subprocess runner | `a4/arguzz_dependent/arguzz_runner.py` (115 lines, clean) | **REUSED** in D2.C as the subprocess primitive for V6-cTS / Hybrid-cTS Arguzz-arm dispatch |
 | Arguzz `<fault>` / `<trace>` parser | `a4/arguzz_dependent/arguzz_parser.py` (180 lines, already covers `INSTR_WORD_MOD`, `COMP_OUT_MOD`, `LOAD_VAL_MOD`, `STORE_OUT_MOD`, `PRE_EXEC_REG_MOD`, `PRE_EXEC_PC_MOD`, `PRE_EXEC_MEM_MOD`, `POST_EXEC_REG_MOD`, `POST_EXEC_MEM_MOD`, and a generic `unknown` fallback for `BR_NEG_COND` / `POST_EXEC_PC_MOD`) | **REUSED** in D2.C; we may extend the parser with explicit `BR_NEG_COND` / `POST_EXEC_PC_MOD` info formats once we see what the binary emits |
 | ~~`a4/arguzz_dependent/cli.py`~~ | obsolete | Old "find a matching A4 mutation for each Arguzz fault" comparison harness. **NOT used by D2.** Stays untouched. |
@@ -175,7 +209,7 @@ D2 is split into **seven sub-deliverables**. The diagram below shows dependencie
 ```
 D2.A (foundation: arm-shape refactor + applied accounting + normalized telemetry)
        │
-       ├─────▶ D2.B (pure-A4 kind expansion — 3 kinds)
+       ├─────▶ D2.B (pure-A4 kind expansion — 8 kinds: 3 high + 5 medium)
        │
        ├─────▶ D2.C (V6 integration — Arguzz binding via arguzz_runner)
        │              │
@@ -194,11 +228,11 @@ D2.A (foundation: arm-shape refactor + applied accounting + normalized telemetry
 
 ### Summary table
 
-| ID | Title | Output (PR-side) | Output (doc-side) | Depends on | Rough effort |
+| ID | Title | Output (code-side) | Output (doc-side) | Depends on | Status / Effort |
 |---|---|---|---|---|---|
-| **D2.A** | Foundation: arm-shape + applied accounting + normalized-telemetry verification | `bandit_ts.py`, `semantic_arm_universe.py`, `fuzzer.py`, `coverage_db.py` patches | [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) | D1.A merged (we have `FloorSchedule` + new schema cols) | 4–6 d |
-| **D2.B** | Pure-A4 kind expansion (TXN_PREV_WORD_MOD, TXN_PREV_CYCLE_MOD, CYCLE_MODE_MOD) | 3 new files under `a4/standalone/mutations/` + tests | `IV_POS_8_D2_B_SPEC.md` (one section per kind) | D2.A landed (kinds register on arm-shape) | 5–7 d |
-| **D2.C** | V6 integration via `arguzz_runner` bridge | bridge module + V6 driver (Python equivalent of the `v6_arguzz` extra_driver path, see §2.1) | `IV_POS_8_D2_C_SPEC.md` | D2.A landed | 3–5 d (binary capacity confirmed — see §2.1) |
+| **D2.A** | Foundation: arm-shape + applied accounting + normalized-telemetry verification | `bandit_ts.py`, `semantic_arm_universe.py`, `fuzzer.py`, `coverage_db.py` patches | [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) v0.2 LOCKED | D1.A merged | **DONE** (Batch 1 + 2 merged at `7b66fb9`, 510 tests green) |
+| **D2.B** | Pure-A4 kind expansion — **8 kinds from Pro's bullet list** (3 priority-ordered + 5 medium-risk candidates): TXN_PREV_WORD_MOD, TXN_PREV_CYCLE_MOD, CYCLE_MODE_MOD, TXN_ADDR_MOD, TXN_CYCLE_PHASE_MOD, CYCLE_PC_MOD, CYCLE_STATE_MOD, CYCLE_DIFF_COUNT_MOD | 8 new Rust handlers in `witgen/mod.rs` + 8 new Python modules + `inspection_data.py::get_valid_steps_for_kind` branches + Layer 3 dump-post-mut hook + risk-tiered attestation tests | [`IV_POS_8_D2_B_SPEC.md`](./IV_POS_8_D2_B_SPEC.md) v0.4 DRAFT (post-Composer-review) | D2.A landed | **10–14 d** (Rust handlers needed; per-kind designs grounded in MUTATION_TAXONOMY.md + existing A4 patterns; spec §1–§3) |
+| **D2.C** | V6 integration via Arguzz subprocess primitive + bridge + modernized v6_driver | `arguzz_invoke.py` + `mutations/arguzz_bridge.py` + `v6_uniform_driver.py` (modernized v6_driver_v2.py) | [`IV_POS_8_D2_C_SPEC.md`](./IV_POS_8_D2_C_SPEC.md) v0.1 DRAFT | D2.A landed | 3–5 d (binary capacity confirmed — see §2.1 + driver recovered) |
 | **D2.D** | Variant CLI/fuzzer dispatch (4 variants) | `cli.py`, `fuzzer.py` patches; new `--selector` family extensions | `IV_POS_8_D2_D_SPEC.md` | D2.A+D2.B+D2.C landed | 2–3 d |
 | **D2.E** | Integration tests + golden traces + tiny smoke | `tests/test_d2_*.py`, optional `analysis/d2_smoke_check.py` | `IV_POS_8_D2_E_SPEC.md` | D2.D landed | 3–4 d |
 | **D2.F** | POS dispatch (30 new jobs + V5 archive reuse) | `a4/pos/manifests/iv_pos_8/d2_b{1,2,3}.json`; kickoff docs | section in master plan; Composer kickoff doc | D2.E green | 12–18 h POS wall + 1 d setup |
@@ -220,24 +254,28 @@ The single most important sub-deliverable, because everything else layers on it.
 
 **Tests:** golden-trace identity for V5 under new arm-shape, applied-vs-attempted unit test on a synthetic mock surface, normalized-loc parity test against existing Q-G output on R2 V5 DBs.
 
-### D2.B — Pure-A4 kind expansion (TXN_PREV_WORD_MOD, TXN_PREV_CYCLE_MOD, CYCLE_MODE_MOD)
+### D2.B — Pure-A4 kind expansion (8 kinds total)
 
-Three new mutation kinds in `a4/standalone/mutations/`, each modeled on the existing pattern (cf. `instr_word_mod_sur.py`). Each kind gets:
-- A `find_mutation_target(...)` (where in the trace to mutate)
-- A `create_config(...)` (parameterization)
-- A `MUTATIONS_TXN_PREV_WORD_MOD.spec.md` style design note (in the mutation file or a sibling)
-- Unit tests verifying the mutation actually changes the targeted field and only that field (dump diff: before/after JSON)
-- Integration into the `MUTATION_KINDS` registry in `fuzzer.py`
+**Per [`IV_POS_8_D2_B_SPEC.md`](./IV_POS_8_D2_B_SPEC.md) v0.3+** — eight new mutation kinds in `a4/standalone/mutations/`, each modeled on the existing pattern (cf. `instr_word_mod_sur.py`, `pre_exec_reg_mod.py`). Each kind gets a Rust handler in `witgen/mod.rs`, a Python module, registry plumbing (`semantic_arm_universe.py`, `fuzzer.py`, and **`inspection_data.py::get_valid_steps_for_kind`** — added in v0.4 per Composer review), and risk-tiered attestation tests.
 
-The kinds in scope (priority order from Pro §8 Track B):
+**Provenance of the 8 kinds:**
+- **3 priority-ordered by Pro** (ProG_Report_3.md §15.3): `TXN_PREV_WORD_MOD`, `TXN_PREV_CYCLE_MOD`, `CYCLE_MODE_MOD`
+- **5 "medium-risk candidates" Pro listed** (§8): `TXN_ADDR_MOD`, `TXN_CYCLE_PHASE_MOD`, `CYCLE_PC_MOD`, `CYCLE_STATE_MOD`, `CYCLE_DIFF_COUNT_MOD`
 
-| Kind | Targeted field | Why Pro wants it |
-|---|---|---|
-| `TXN_PREV_WORD_MOD` | `txns[i].prev_word` | Memory consistency / sequential-write ordering surface |
-| `TXN_PREV_CYCLE_MOD` | `txns[i].prev_cycle` | Temporal-ordering surface for the memory permutation argument |
-| `CYCLE_MODE_MOD` | `cycles[i].mode` (user vs kernel) | ECALL/MRET boundary surface — high-value per V5 results |
+These 8 are the union of Pro's bullet list — the second 5 are *Pro's named candidates*, not pure taxonomy fills.
 
-`TXN_CYCLE_PHASE_MOD` and `CYCLE_PC_MOD` are explicit candidates for **expansion in a follow-up** if Pro requests them in their D2-design review — pre-wired in D2.0 but not implemented in v1.
+| Priority | Kind | Targeted field | Risk |
+|---|---|---|---|
+| **High** | `TXN_PREV_WORD_MOD` | `txns[i].prev_word` (two strategies: at_read / at_write) | Low |
+| **High** | `TXN_PREV_CYCLE_MOD` | `txns[i].prev_cycle` | Low |
+| **High** | `CYCLE_MODE_MOD` | `cycles[i].machine_mode` | Low |
+| **Medium** | `TXN_ADDR_MOD` | `txns[i].addr` | HIGH (mitigated by `FAULT_INJECTION_ENABLED`) |
+| **Medium** | `TXN_CYCLE_PHASE_MOD` | `txns[i].cycle` LSB only | Medium |
+| **Medium** | `CYCLE_PC_MOD` | `cycles[i].pc` (major 0-6 only) | Medium |
+| **Medium** | `CYCLE_STATE_MOD` | `cycles[i].state` | Medium |
+| **Medium** | `CYCLE_DIFF_COUNT_MOD` | `cycles[i].diff_count[idx]` (array, one element at a time) | Medium |
+
+Pro's wider §8 catalog (`CYCLE_INDEX_MOD`, `REG_TXN_NON_INSN_MOD`, `BIGINT_DATA_MOD`, `CRYPTO_STATE_MOD`, `ECALL_BACK_MOD`, `STRUCTURAL_MOD`) is **deferred to a future IV.POS cycle** per Pro §15 last paragraph ("delay high-risk structural/accelerator-internal mutations").
 
 ### D2.C — V6 kind integration via `arguzz_runner` bridge
 
@@ -252,6 +290,8 @@ Four layers, in order:
    - An `opcode_class` derivation from the cycle's major at the fault step (via `semantic_zones.major_to_opcode_class()`)
 
 **Tests:** mock the Arguzz subprocess in unit tests (we already have parser fixtures); integration test runs one real Arguzz invocation per kind on a known input; parity test asserts D2.C's DB outputs are equivalent to a sampled R2 V6 DB (with normalized-loc + `outcome` column being the only differences).
+
+**Cross-cutting note from D2.B (added 2026-06-17):** D2.B Q11 locks an **intra-pull strategy-selection pattern** for B.1 `TXN_PREV_WORD_MOD` — single `MUTATION_KINDS` entry, RNG-picked `at_read`/`at_write` strategy per pull, strategy stored in config JSON for reproducibility. If any of D2.C's 4 Arguzz kinds turn out to have analogous "two-mode" structure (e.g. `INSTR_WORD_MOD` Arguzz fault might support both opcode-substitution and field-corruption strategies depending on Arguzz binary internals), **D2.C's spec should reuse the same Option-A pattern** rather than introducing a separate plumbing convention. To check: when D2.C's binary survey (layer 1) catalogs the `<fault>` tag's strategy field per kind, note any kind with multiple strategy values and decide per-kind whether to expose them as RNG-picked sub-strategies. **Decision deferred to D2.C spec drafting; not a D2.B blocker.**
 
 ### D2.D — Variant CLI/fuzzer dispatch (4 variants)
 
@@ -388,12 +428,54 @@ Composer-batch granularity is the same as D1.A: per-batch spec + per-batch Ivan/
 
 ---
 
+## 9a. Deferred-decisions watchlist (added 2026-06-17)
+
+These are decisions we intentionally made "go with X for now, revisit at Y if Z". This section exists so we don't forget to actually revisit. Each row tracks the original decision, the trigger that would cause us to revisit, the deliverable where we check, and the fallback.
+
+| ID | Decision (locked v0.4) | Revisit at | Trigger to flip | Fallback if triggered |
+|---|---|---|---|---|
+| **W-1** | Q1: `CYCLE_MODE_MOD` broad scope (any cycle) | **D2.G** analysis | <1% constraint-failure rate outside `pre_ecall`/`post_ecall`/`pre_mret`/`post_mret` zones | Restrict to 4 boundary zones in D3 (~3-4× arm reduction) |
+| **W-2** | Q2: §3 value-gen mix percentages (heuristic) | **D2.G** analysis | Per-kind failure-rate or distinct-residue counts skewed for any single mix-bucket | Retune via DB without spec revision (`outcome` column already supports this) |
+| **W-3** | Q3: B.8 ships, classified via 3-way bucket | **D2.B Batch 1.0b** report | All 5 sample B.8 mutations produce clean-success AND post-mut dump verifies trace changed (= dead arm, not soundness bug) | Drop B.8 from D2.B kind registry; document negative result |
+| **W-4** | Q5: Pro-valid `MEMORY_TXN_ROLES` only (Option A); per-kind via `producer_kind` | **D2.G** review with Pro | Pro signals they want a `cycle_meta` (or per-field) txn_role enum | Land schema bump in IV.POS.9 |
+| **W-5** | Q6: Variant-specific kind subsets; V5 control = 8 kinds + D1.A archive reuse | **D2.E** golden-trace smoke + **D2.F** POS dispatch | Variant subset CLI mis-filters and emits ≠8 kinds in V5_control mutation stream | Roll back to 16-kind unified registry; rerun V5 (~3 h compute) |
+| **W-6** | Q11: B.1 Option A (one kind, RNG-picked strategy per pull) | **D2.G** per-strategy outcome breakdown | One strategy dominates rewards >80% on the SAME zone | Split to Option B (two kinds) in D3 |
+| **W-7** | NFP-6: `PRE_EXEC_REG_MOD` retrofix lands in D2.B Batch 1.5e | **D2.G** analysis | Post-retrofix `PRE_EXEC_REG_MOD` failure rates show no `prev_write`-attributable signal | Revert retrofix; document as one-strategy-suffices |
+| **W-8** | Q15: `CycleState` enum hardcoded from `platform.rs` | **Any risc0 pin bump** | Pin to a new risc0 commit | Re-extract enum; bump `cycle_state_mod.py` constant |
+| **W-9** | Q17 / NFP-5: Layer 3 via `A4_DUMP_POST_MUT=1` Rust hook (Option A1) | **D2.B Batch 1.0a** smoke | Rust patch fails to build or doesn't emit expected tags | Fall back to Option B (tag-only Layer 3), explicitly downgrade "100% certainty" claim |
+| **W-10** | Q8: 4 batches (Batch 3 = B.4-B.8, 5 kinds) | **D2.B Batch 2 completion** | Batch 3 attestation churn exceeds ~1 week with one kind blocking | Isolate B.4 in its own sub-batch |
+| **W-11** | Pro's wider §8 catalog (BIGINT_DATA_MOD, CRYPTO_STATE_MOD, etc.) deferred to a future IV.POS cycle | **IV.POS.9** scoping | Pro explicitly requests in D2.G review | Add as IV.POS.9 D-series |
+
+**Convention:** when one of these triggers fires, the team's first action is to **read the row's "Fallback" column** and check whether the fallback is still viable given current state. Then re-decide.
+
+---
+
+## 9b. Soundness-bug guard (added 2026-06-17)
+
+**Rule:** any "clean success" outcome (mutation applied, no `<constraint_fail>` emitted, no `<a4_error>`) MUST be cross-checked against a post-mutation trace dump before being classified as a "dead arm".
+
+**Why:** a clean success could mean one of three things:
+1. **Dead arm** — mutation applied but no constraint observes the changed field. Drop from kind registry.
+2. **Skipped silently** — mutation didn't actually apply (config validation rejected, target missing). Treat as `outcome=SKIPPED`, not dead.
+3. **SOUNDNESS BUG** — mutation applied, trace genuinely changed, but the zirgen circuit accepted it as valid. **STOP and surface to Pro.** This is exactly the failure mode A4 was designed to discover.
+
+**Implementation:** the Layer 3 dump-diff helper (`assert_trace_diff_matches_signature`, Q16) takes a third assertion: if the dispatcher tag claims `applied` AND the post-mutation dump confirms the field changed AND no constraint failed AND no error emitted → **raise `SoundnessBugSuspected`** with the full trace excerpt for Pro review.
+
+**Affected places:**
+- `a4/standalone/tests/_test_helpers/diff_signature.py` (new helper, Q16)
+- All 8 D2.B attestation tests (`test_d2b_<kind>_attestation.py`) MUST call this helper and not silently skip clean-success outcomes
+- D2.G analysis pipeline MUST report soundness-suspect outcomes separately from dead-arm classifications
+
+This rule applies retroactively to existing kinds too — if a Batch 1 smoke shows an existing kind has a clean-success path that wasn't trace-verified, log it as an incident and re-test.
+
+---
+
 ## 10. Why this plan is right (TL;DR for Ivan)
 
 - **Faithful to Pro's Priority 1 + Priority 3** — Hybrid V7 + pure-A4 expansion, with all of Pro's normalizations (applied accounting, source-time normalized loc, semantic arm-space)
 - **Foundation-first** (D2.A before everything) — the arm-shape refactor is the load-bearing piece; everything downstream is incremental
 - **Bridge over reimplementation** (D2.C uses `arguzz_runner` instead of porting V6 to Python) — the right cost/risk tradeoff per Pro's explicit "selectively adopt" language
-- **Conservative arm-space sizing** (4+3 kinds, not 7+5) — keeps v1 turnaround fast; Pro can expand on D2.0 review
+- **Conservative arm-space sizing** (4 V6 + 8 A4 kinds = 12 total, not 7+5+more) — keeps v1 turnaround fast; Pro can expand to BIGINT_DATA_MOD / CRYPTO_STATE_MOD / etc. in a future cycle
 - **Tracks A and B parallel-safe** — Track-β doesn't block on D1 except for D1.B's CGC variant pick (and Q8 default-and-pivot covers that)
 - **Test gates at every step** — golden trace, dump diff, binary survey, applied-accounting smoke, normalize parity, end-to-end DB validator. No DB ships to Pro that hasn't passed each
 - **POS infra is unchanged** — same playbook as D1.A; the only new artifact is `validate_d2_dbs.py` and 3 manifests

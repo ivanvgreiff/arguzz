@@ -1,0 +1,2 @@
+R2-V5 pos_iv_pos_7_ts_b1_cTS_semantic_v2_seed1234_n6000.db: production=183 region_only=96 log4_explicit=110 inequality_ok=True page_class=NotImplementedError(implemented in Batch 2 (after page_class in Batch 1.5))
+D1.A-decayexp flare_pos_iv_pos_8_d1a_b1_cTS_semantic_v2_decayexp_seed1234_n6000.db: production=192 region_only=99 log4_explicit=113 inequality_ok=True page_class=NotImplementedError(implemented in Batch 2 (after page_class in Batch 1.5))

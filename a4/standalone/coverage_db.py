@@ -159,8 +159,25 @@ class CoverageDB:
         # Phase III.1: Global failures table (Hook 3 family-level residues).
         # The (family, address) pair canonicalises a global failure key the
         # same way coverage_state.GlobalContext does: ("GLOBAL", family, addr).
-        # `address` is TEXT to uniformly hold memory addresses (decimal,
-        # matching the C++ "%u" printf in ffi.cpp) and lookup indices.
+        #
+        # `address` is TEXT containing the Python repr (`str(addr)`) of the
+        # address object returned by `coverage_state.derive_global_contexts()`
+        # — NOT a numeric/decimal string. Observed stored formats per family
+        # in our corpus (verified by direct SQL inspection on iv_pos_7 +
+        # iv_pos_8 DBs, 2026-06-17 — only `memory` and `cycle` families have
+        # been observed in this table to date; lookup families u8/u16 reach
+        # `compressed_global_coverage` but not `global_failures` in any
+        # campaign we have inspected):
+        #   memory : "{'addr': N, 'byte_addr': N, 'type': 'data'|'word',
+        #              'wrote': '0xHHHHHHHH', 'expected': ...|None,
+        #              'mismatch_cycle': N}"
+        #   cycle  : "{'index': N, 'plus': N, 'minus': N}"
+        # Downstream analysis MUST parse with `ast.literal_eval()` and extract
+        # the relevant field (e.g. `d['byte_addr']` for memory-family page-class
+        # derivation — see a4/runs/iv_pos_7/analysis/cgc_variants.py
+        # ::parse_memory_byte_addr). The earlier comment claimed `%u` decimal
+        # matching ffi.cpp; that was Phase-III planning intent, never the
+        # actual stored format.
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS global_failures (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

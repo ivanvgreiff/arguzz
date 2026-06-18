@@ -495,3 +495,57 @@ def test_all_emitted_lookup_ctxs_have_valid_fields():
                     assert ctx.opcode_class in OPCODE_CLASSES
                     assert isinstance(ctx.lookup_index_bucket, int)
                     assert ctx.producer_kind == kind
+
+
+# ============================================================================
+# Batch 1.6 — _coerce_broken_addr field priority (byte_addr before addr)
+# ============================================================================
+
+from a4.standalone.compressed_global_extractor import _coerce_broken_addr
+import inspect
+
+
+def test_coerce_broken_addr_prefers_byte_addr_over_addr():
+    """Test A: register dict → user_regs via byte_addr, not user via addr."""
+    raw = {"addr": 0x3FFFC022, "byte_addr": 0xFFFF0088, "type": "register"}
+    coerced = _coerce_broken_addr(raw)
+    assert coerced == 0xFFFF0088
+    assert address_region(coerced) == "user_regs"
+    assert address_region(raw["addr"]) == "user"
+
+
+def test_coerce_broken_addr_falls_back_to_addr_without_byte_addr():
+    """Test B: legacy dict without byte_addr uses addr."""
+    raw = {"addr": 0x00020000, "type": "data"}
+    assert _coerce_broken_addr(raw) == 0x00020000
+    assert address_region(_coerce_broken_addr(raw)) == "user"
+
+
+def test_coerce_broken_addr_int_legacy_unchanged():
+    """Test C: bare int passthrough."""
+    assert _coerce_broken_addr(0x00020000) == 0x00020000
+
+
+def test_field_priority_tuple_documentation():
+    """Test E: prevent regression on coercion field order."""
+    src = inspect.getsource(_coerce_broken_addr)
+    assert '("byte_addr", "addr", "address")' in src
+
+
+def test_extract_memory_includes_non_user_regions_post_patch():
+    """Test D: replay-style integration — exotic address_region labels appear."""
+    fr = [{"family": "memory", "nonzero": True}]
+    fd = [{
+        "family": "memory",
+        "broken_addrs": [
+            {"addr": 0x3FFFC022, "byte_addr": 0xFFFF0088, "type": "register"},
+            {"addr": 0x3BD09A7F, "byte_addr": 0xEF4269FC, "type": "data"},
+        ],
+    }]
+    ctxs = extract_compressed_global_contexts(
+        fr, fd, "PRE_EXEC_REG_MOD", "core_arithmetic", 0,
+    )
+    mem_regions = {
+        c.address_region for c in ctxs if isinstance(c, GlobalMemoryCtx)
+    }
+    assert mem_regions & {"user_regs", "kernel"}
