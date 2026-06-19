@@ -1,0 +1,16 @@
+{
+  "campaign_name":  "d2b_smoke_v1",
+  "run_id":         "d2b_smoke_v1_bandit-16_seed1234_n100",
+  "node":           "flare",
+  "strategy":       "bandit-16",
+  "seed":           1234,
+  "num_requested":  100,
+  "num_recorded":   -1,
+  "b_count":        16,
+  "host_args":      "--in1 5 --in4 10",
+  "host_sha256":    "24f23a0de02b24912ea112268894f15d0d2202130f265c385a68d698b8d0453b",
+  "git_commit":     "4e5150a7a725a621c9e2a803fb79224782373122",
+  "started_at":     "2026-06-18T23:09:55Z",
+  "ended_at": "2026-06-18T23:15:00Z",
+  "exit_code": 2
+}

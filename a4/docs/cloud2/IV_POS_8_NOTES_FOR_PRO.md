@@ -358,6 +358,7 @@ D2.B Batch 1 ships a small retrofix (task 1.5e, ~10 LOC):
 
 **Mechanistic proof:**
 
+- **Self-contained narrative for Pro:** [`IV_POS_8_D2_B_MECHANISM_REPORT.md`](./IV_POS_8_D2_B_MECHANISM_REPORT.md) — full source-level explanation of W-17, W-18, the 4-channel rejection model, and an inventory of remaining un-mutated preflight fields with plausible-live candidates for the next mutation-studies batch.
 - W-17: [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md)
 - W-18: [`D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md)
 

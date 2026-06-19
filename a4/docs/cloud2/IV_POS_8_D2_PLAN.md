@@ -3,13 +3,15 @@
 **Branch:** `cloud2`
 **Date opened:** 2026-06-16
 **Author:** Ivan + Opus (planning); Composer (implementation, future batches)
-**Status:** **DRAFT v0.13** — D2.A merged at `7b66fb9`; D2.B Batch 1 landed; Batch 2 committed `f81523c`; **Batch 3 complete in working tree** (B.8 live; B.4–B.7 dead arms mechanism-proven). **v0.13 additions (post Batch 3 txn dead-arm audit):** **W-18** execution-derived witness-key dead-arm class for B.4/B.5; §6d empirical column populated; §9c postscript scope expanded to 5 dead kinds (B.3–B.7). v0.12: W-17b, §9c postscript. Next: Batch 4; then D2.B postscript §9c.
+**Status:** **DRAFT v0.14** — D2.B **FEATURE-COMPLETE (§9c postscript pending Opus)**. Batch 4 landed: cross-cutting registration test, mutation-selection smoke, real-binary bandit-16 smoke (POS N=100). Batch 3 at `4e5150a`; mechanism report + Batch 4 kickoff in tree. **§9c status: Pending — triggered by Batch 4 commit.**
 **Parent:** [`IV_POS_8_PRELIMINARY_PLAN.md`](./IV_POS_8_PRELIMINARY_PLAN.md) — the 4-deliverable master plan
 **Sibling specs (D1):** [`IV_POS_8_D1_A_SPEC.md`](./IV_POS_8_D1_A_SPEC.md) (locked, running on POS)
 **Sibling specs (D2):** [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) (D2.A — foundation; in review)
 
 ## Changelog
 
+- **v0.14 (2026-06-19, D2.B Batch 4):** D2.B marked **FEATURE-COMPLETE (postscript pending)**. Delivered `test_d2b_arm_registration.py`, `test_d2b_campaign_smoke.py`, `test_d2b_real_binary_campaign.py`, POS manifest `a4/pos/manifests/iv_pos_8/d2b_smoke.json`. §9c postscript **Status: Pending — triggered by Batch 4 commit.** W-17b ready for Opus execution. Pro-facing mechanism reference: [`IV_POS_8_D2_B_MECHANISM_REPORT.md`](./IV_POS_8_D2_B_MECHANISM_REPORT.md).
+- **v0.13 (2026-06-18, post Batch 3 txn dead-arm audit):** **W-18** execution-derived witness-key dead-arm class for B.4/B.5; §6d empirical column populated; §9c postscript scope expanded to 5 dead kinds (B.3–B.7). v0.12: W-17b, §9c postscript.
 - **v0.11 (2026-06-18, post D2.B Batch 2 dead-arm audit):** Batch 2 attestation confirms B.3 `CYCLE_MODE_MOD` is a **W-17 dead arm** on sha2-host user-instruction cycles (trace mutates; witness column preset from `set_cycle` overwritten by `step_Top`'s `exec_Reg(inst_result.new*, ...)`). **B.6 `CYCLE_PC_MOD` and B.7 `CYCLE_STATE_MOD` are predicted dead on the same mechanism** — Batch 3 attestation MUST treat live rejection as an audit failure requiring reconciliation with [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md). Added **W-17** to §9a; new **§6d** prediction table; §6c S3 extended with Layer 3b witness-persistence note; §9b clarifies guard fires for dead arms too (investigation distinguishes W-16 vs W-17). Full proof: [`D2B_BATCH2_DEAD_ARM_AUDIT.md`](./composer/D2B_BATCH2_DEAD_ARM_AUDIT.md) + [`D2B_BATCH2_COMPOSER_REPORT.md`](./composer/D2B_BATCH2_COMPOSER_REPORT.md) §Appendix.
 - **v0.9 (2026-06-17, latest):** Catch-up after D1-chat productivity burst. D1 chat landed D1.B Batch 1 + D1.C investigation (commits `71dae77`, `3a8487c`); added NFP-7 (page_class), NFP-8 (paired-test corpus), NFP-9 (D1.E reward rewire scope), and **NFP-10 (`addr` vs `byte_addr` field-priority bug)** to `IV_POS_8_NOTES_FOR_PRO.md`. **NFP-10 has been verified independently against `compressed_global_extractor.py:216` — fix is already in cloud2; field-priority tuple is now `("byte_addr","addr","address")`.** New `IV_POS_8_D1_REVISIT_PLAN.md` introduces **D1.E sub-deliverable** (V5 reward rewire + decay re-run) which **HALTS waiting for D2.B Batch 1.5e** to merge. Pro-presentation timing changed: end-of-D2.B becomes interim Pro check-in, with D2.C/D2.D/D2.E/D2.F/D2.G proceeding after Pro greenlight. Plan changes captured:
   - **§9a watchlist extended** — added W-12 (Batch 1.5e merge signal for D1.E sync), W-13 (NFP-10 revert guard for D2.B §4.7 edits), W-14 (Pro-presentation pivot to end-of-D2.B).
@@ -236,7 +238,7 @@ D2.A (foundation: arm-shape refactor + applied accounting + normalized telemetry
 | ID | Title | Output (code-side) | Output (doc-side) | Depends on | Status / Effort |
 |---|---|---|---|---|---|
 | **D2.A** | Foundation: arm-shape + applied accounting + normalized-telemetry verification | `bandit_ts.py`, `semantic_arm_universe.py`, `fuzzer.py`, `coverage_db.py` patches | [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) v0.2 LOCKED | D1.A merged | **DONE** (Batch 1 + 2 merged at `7b66fb9`, 510 tests green) |
-| **D2.B** | Pure-A4 kind expansion — **8 kinds from Pro's bullet list** (3 priority-ordered + 5 medium-risk candidates): TXN_PREV_WORD_MOD, TXN_PREV_CYCLE_MOD, CYCLE_MODE_MOD, TXN_ADDR_MOD, TXN_CYCLE_PHASE_MOD, CYCLE_PC_MOD, CYCLE_STATE_MOD, CYCLE_DIFF_COUNT_MOD | 8 new Rust handlers in `witgen/mod.rs` + 8 new Python modules + `inspection_data.py::get_valid_steps_for_kind` branches + Layer 3 dump-post-mut hook + risk-tiered attestation tests | [`IV_POS_8_D2_B_SPEC.md`](./IV_POS_8_D2_B_SPEC.md) v0.4 DRAFT (post-Composer-review) | D2.A landed | **10–14 d** (Rust handlers needed; per-kind designs grounded in MUTATION_TAXONOMY.md + existing A4 patterns; spec §1–§3) |
+| **D2.B** | Pure-A4 kind expansion — **8 kinds from Pro's bullet list** (3 priority-ordered + 5 medium-risk candidates): TXN_PREV_WORD_MOD, TXN_PREV_CYCLE_MOD, CYCLE_MODE_MOD, TXN_ADDR_MOD, TXN_CYCLE_PHASE_MOD, CYCLE_PC_MOD, CYCLE_STATE_MOD, CYCLE_DIFF_COUNT_MOD | 8 new Rust handlers in `witgen/mod.rs` + 8 new Python modules + `inspection_data.py::get_valid_steps_for_kind` branches + Layer 3 dump-post-mut hook + risk-tiered attestation tests + Batch 4 cross-cutting/smoke tests | [`IV_POS_8_D2_B_SPEC.md`](./IV_POS_8_D2_B_SPEC.md) v0.5.4 LOCKED; mechanism report [`IV_POS_8_D2_B_MECHANISM_REPORT.md`](./IV_POS_8_D2_B_MECHANISM_REPORT.md) | D2.A landed | **FEATURE-COMPLETE (§9c postscript pending Opus)** |
 | **D2.C** | V6 integration via Arguzz subprocess primitive + bridge + modernized v6_driver | `arguzz_invoke.py` + `mutations/arguzz_bridge.py` + `v6_uniform_driver.py` (modernized v6_driver_v2.py) | [`IV_POS_8_D2_C_SPEC.md`](./IV_POS_8_D2_C_SPEC.md) v0.1 DRAFT | D2.A landed | 3–5 d (binary capacity confirmed — see §2.1 + driver recovered) |
 | **D2.D** | Variant CLI/fuzzer dispatch (4 variants) | `cli.py`, `fuzzer.py` patches; new `--selector` family extensions | `IV_POS_8_D2_D_SPEC.md` | D2.A+D2.B+D2.C landed | 2–3 d |
 | **D2.E** | Integration tests + golden traces + tiny smoke | `tests/test_d2_*.py`, optional `analysis/d2_smoke_check.py` | `IV_POS_8_D2_E_SPEC.md` | D2.D landed | 3–4 d |
@@ -432,7 +434,7 @@ The §6 table covers the **gates** but understates how certainty stacks across l
 | | |
 |---|---|
 | **What it protects** | All N D2.B kinds are registered consistently across the 5 plumbing files: `MUTATION_KINDS`, `_MUTATION_MODULES`, `_cycle_matches_kind_filter`, `_step_has_real_target`, `_TXN_ROLE_BY_KIND`, `inspection_data.get_valid_steps_for_kind`, `_BANDIT_TRACE_MOD_TAGS` |
-| **Authoritative source** | Cross-cutting Layer 1 test in **D2.B Batch 4** (not yet built — pending B.4-B.8 completion) |
+| **Authoritative source** | Cross-cutting Layer 1 test in **D2.B Batch 4** — `test_d2b_arm_registration.py` |
 | **Current coverage** | None until Batch 4. Manual review of each batch's plumbing diff is the interim check. |
 
 ### Layer S5 — Variant kind dispatch (`test_d2_variant_dispatch.py`)
@@ -663,6 +665,7 @@ This rule applies retroactively to existing kinds too — if a smoke shows an ex
 **Task ID:** D2.B-PS-1 ("postscript 1") — runs **after** D2.B Batch 4 completes and **before** D2.C kickoff.
 **Owner:** Opus (single small commit).
 **Trigger:** Batch 4 commit landed on `cloud2`.
+**Status:** **Pending — triggered by Batch 4 commit.**
 **Authority:** W-17 + W-17b in §9a. Rationale audited 2026-06-18 (see Cursor chat IV.POS.8 D2 thread — "why not finish D2.B first then edit MUTATION_KINDS").
 
 ### Why this exists

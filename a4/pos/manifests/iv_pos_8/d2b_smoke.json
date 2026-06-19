@@ -1,0 +1,16 @@
+{
+  "_doc": "IV.POS.8 D2.B Batch 4 — single-job bandit-16 real-binary smoke (N=100, seed 1234, sha2-host guest via default --in1 5 --in4 10). Tier S target node e.g. flare. DB stem: d2b_smoke_v1_bandit-16_seed1234_n100.db",
+  "name": "d2b_smoke_v1",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {
+      "strategy": "bandit-16",
+      "seed": 1234,
+      "n": 100,
+      "b_count": 16,
+      "telemetry_level": "standard"
+    }
+  ]
+}
