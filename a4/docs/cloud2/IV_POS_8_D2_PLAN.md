@@ -3,13 +3,14 @@
 **Branch:** `cloud2`
 **Date opened:** 2026-06-16
 **Author:** Ivan + Opus (planning); Composer (implementation, future batches)
-**Status:** **DRAFT v0.15** — D2.B **CLOSED**. §9c postscript (D2.B-PS-1) landed: 5 W-17/W-18 dead kinds removed from `A4Fuzzer.MUTATION_KINDS`, dead-kind registration guard inverted in `test_d2b_arm_registration.py`. Batch 4 at `2e1d97b`; mechanism report + audits at HEAD. **Next:** Pro check-in materials, then D2.C kickoff.
+**Status:** **DRAFT v0.16** — D2.B **CLOSED + PS-1 + PS-2**. §9c postscript (D2.B-PS-1) landed: 5 W-17/W-18 dead kinds removed from `A4Fuzzer.MUTATION_KINDS`, dead-kind registration guard inverted in `test_d2b_arm_registration.py`. §9d postscript (D2.B-PS-2) landed: `_TXN_ROLE_BY_KIND` aligned with NFP-4 (Pro-valid roles only — fixes F8 doc-vs-code drift on `CYCLE_DIFF_COUNT_MOD`, dead-kind sentinels for `TXN_ADDR_MOD`/`TXN_CYCLE_PHASE_MOD`). Batch 4 at `2e1d97b`; mechanism report + audits at HEAD. **Next:** D2.C kickoff (Pro check-in absorbed into D2.B mechanism report).
 **Parent:** [`IV_POS_8_PRELIMINARY_PLAN.md`](./IV_POS_8_PRELIMINARY_PLAN.md) — the 4-deliverable master plan
 **Sibling specs (D1):** [`IV_POS_8_D1_A_SPEC.md`](./IV_POS_8_D1_A_SPEC.md) (locked, running on POS)
 **Sibling specs (D2):** [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) (D2.A — foundation; in review)
 
 ## Changelog
 
+- **v0.16 (2026-06-19, D2.B-PS-2 postscript):** D2.B **CLOSED + PS-1 + PS-2**. Landed §9d postscript fixing F8 (NFP-4 doc-vs-code drift surfaced by central-planning review). `_TXN_ROLE_BY_KIND` remapped to Pro-valid `MEMORY_TXN_ROLES` per NFP-4's locked decision: `CYCLE_DIFF_COUNT_MOD` (the only LIVE drifting kind) `"diff_count" → "read"`; `TXN_ADDR_MOD` (PS-1 dead) `"addr" → "read"`; `TXN_CYCLE_PHASE_MOD` (PS-1 dead) `"cycle_phase" → "read"`. Dead-kind explicit entries kept as sentinels so any residual caller gets a Pro-valid label. 5 test edits in same commit: `test_d2b_batch3_unit::test_cgc_roles` (replaced 3 drift params with `CYCLE_DIFF_COUNT_MOD → "read"`); `test_d2b_arm_registration::test_cgc_txn_role_mapping` (dropped CYCLE_DIFF_COUNT_MOD xfail); `test_d2b_campaign_smoke` (removed 3-kind allowlist bypass); `test_compressed_global_extractor::test_txn_role_for_kind_all_known_kinds` (extended parametrization with 3 D2.B-live + 3 dead-sentinel kinds); `test_compressed_global_extractor::test_all_txn_roles_used_are_valid_per_pro_spec` (enumeration extended from 8 V5 kinds to all 11 live `A4Fuzzer.MUTATION_KINDS` + 5 dead sentinels — this is the regression guard that would have caught the original drift). Test delta: affected-files **168 passed + 1 xfailed → 173 passed + 0 xfailed**; broader standalone (excl. `test_run_replicates.py` pre-existing failures) **616 passed + 17 skipped + 0 xfailed**. No fuzzer/Rust changes; no D2.C spec changes. §9d status: **Done.** Next: D2.C kickoff.
 - **v0.15 (2026-06-19, D2.B-PS-1 postscript):** D2.B **CLOSED**. Removed 5 dead kinds (`CYCLE_MODE_MOD`, `TXN_ADDR_MOD`, `TXN_CYCLE_PHASE_MOD`, `CYCLE_PC_MOD`, `CYCLE_STATE_MOD`) from `A4Fuzzer.MUTATION_KINDS` per W-17/W-18 audits. Inverted `test_dead_kinds_excluded_from_registry` guard. Added explanatory comment block above `MUTATION_KINDS` with W-17/W-18 mechanism references. Per-kind Python modules + Rust handlers + attestation/unit tests for the 5 excluded kinds remain on disk as regression sentinels (per §9c design). §9c status: **Done.** Next: Pro check-in materials, then D2.C kickoff.
 - **v0.14 (2026-06-19, D2.B Batch 4):** D2.B marked **FEATURE-COMPLETE (postscript pending)**. Delivered `test_d2b_arm_registration.py`, `test_d2b_campaign_smoke.py`, `test_d2b_real_binary_campaign.py`, POS manifest `a4/pos/manifests/iv_pos_8/d2b_smoke.json`. §9c postscript **Status: Pending — triggered by Batch 4 commit.** W-17b ready for Opus execution. Pro-facing mechanism reference: [`IV_POS_8_D2_B_MECHANISM_REPORT.md`](./IV_POS_8_D2_B_MECHANISM_REPORT.md).
 - **v0.13 (2026-06-18, post Batch 3 txn dead-arm audit):** **W-18** execution-derived witness-key dead-arm class for B.4/B.5; §6d empirical column populated; §9c postscript scope expanded to 5 dead kinds (B.3–B.7). v0.12: W-17b, §9c postscript.
@@ -240,7 +241,7 @@ D2.A (foundation: arm-shape refactor + applied accounting + normalized telemetry
 |---|---|---|---|---|---|
 | **D2.A** | Foundation: arm-shape + applied accounting + normalized-telemetry verification | `bandit_ts.py`, `semantic_arm_universe.py`, `fuzzer.py`, `coverage_db.py` patches | [`IV_POS_8_D2_A_SPEC.md`](./IV_POS_8_D2_A_SPEC.md) v0.2 LOCKED | D1.A merged | **DONE** (Batch 1 + 2 merged at `7b66fb9`, 510 tests green) |
 | **D2.B** | Pure-A4 kind expansion — **8 kinds from Pro's bullet list** (3 LIVE: B.1, B.2, B.8; 5 dead-arm excluded per W-17/W-18: B.3–B.7, sentinel tests retained) | 8 Rust handlers in `witgen/mod.rs` + 8 Python modules + `inspection_data.py::get_valid_steps_for_kind` branches + Layer 3 dump-post-mut hook + risk-tiered attestation tests + Batch 4 cross-cutting/smoke tests + §9c postscript | [`IV_POS_8_D2_B_SPEC.md`](./IV_POS_8_D2_B_SPEC.md) v0.5.4 LOCKED; mechanism report [`IV_POS_8_D2_B_MECHANISM_REPORT.md`](./IV_POS_8_D2_B_MECHANISM_REPORT.md) | D2.A landed | **CLOSED** (Batch 4 at `2e1d97b`, postscript at v0.15) |
-| **D2.C** | V6 integration via Arguzz subprocess primitive + bridge + modernized v6_driver | `arguzz_invoke.py` + `mutations/arguzz_bridge.py` + `v6_uniform_driver.py` (modernized v6_driver_v2.py) | [`IV_POS_8_D2_C_SPEC.md`](./IV_POS_8_D2_C_SPEC.md) v0.1 DRAFT | D2.A landed | 3–5 d (binary capacity confirmed — see §2.1 + driver recovered) |
+| **D2.C** | V6 integration via Arguzz subprocess primitive + bridge + modernized v6_driver | `arguzz_invoke.py` + `mutations/arguzz_bridge.py` + `v6_uniform_driver.py` (modernized v6_driver_v2.py) | [`IV_POS_8_D2_C_SPEC.md`](./IV_POS_8_D2_C_SPEC.md) v0.2 DRAFT (all 12 Qs LOCKED in proposal; awaiting Ivan endorsement + Composer pre-flight review) | D2.B closed | 4–5 d Composer wall (4 batches) (binary capacity confirmed — see §2.1; driver recovered) |
 | **D2.D** | Variant CLI/fuzzer dispatch (4 variants) | `cli.py`, `fuzzer.py` patches; new `--selector` family extensions | `IV_POS_8_D2_D_SPEC.md` | D2.A+D2.B+D2.C landed | 2–3 d |
 | **D2.E** | Integration tests + golden traces + tiny smoke | `tests/test_d2_*.py`, optional `analysis/d2_smoke_check.py` | `IV_POS_8_D2_E_SPEC.md` | D2.D landed | 3–4 d |
 | **D2.F** | POS dispatch (30 new jobs + V5 archive reuse) | `a4/pos/manifests/iv_pos_8/d2_b{1,2,3}.json`; kickoff docs | section in master plan; Composer kickoff doc | D2.E green | 12–18 h POS wall + 1 d setup |
@@ -712,16 +713,67 @@ Pre-implementation audit (2026-06-18) confirmed `MUTATION_KINDS` size variation 
 
 If Batch 3 attestation shows B.6 or B.7 actually live (rejection channel fires), the audit reconciliation rule in §6d applies BEFORE this postscript runs. The live kind stays in `MUTATION_KINDS`; only confirmed-dead kinds are removed by this postscript.
 
-### Optional follow-up: full deletion of dead-arm code (D2.B-PS-2)
+### Optional follow-up: full deletion of dead-arm code (D2.B-PS-3)
 
-After §9c (D2.B-PS-1) lands and the cleanup has been stable for at least one D2.G analysis run, we may decide to **fully delete** all code, tests, and Rust handlers for confirmed-dead kinds rather than keeping them inert in the repo. The decision criteria:
+> **Renumbering note (v0.16):** This deferred deletion task was originally reserved as PS-2. After the F8 doc-vs-code drift was discovered by central-planning review on 2026-06-19, the F8 fix shipped as a concrete PS-2 (see §9d below). The speculative deletion task is renumbered **PS-3** here so PS numbers reflect chronological execution order.
 
-- The dead-arm mechanism (W-17 / future W-18 etc.) is documented in the spec / NOTES_FOR_PRO so we don't lose the architectural lesson.
+After §9c (D2.B-PS-1) and §9d (D2.B-PS-2) land and the cleanup has been stable for at least one D2.G analysis run, we may decide to **fully delete** all code, tests, and Rust handlers for confirmed-dead kinds rather than keeping them inert in the repo. The decision criteria:
+
+- The dead-arm mechanism (W-17 / W-18) is documented in the spec / NOTES_FOR_PRO so we don't lose the architectural lesson.
 - The deletion commit references the prior implementation commit hashes so anyone can `git checkout <hash>` to recover the code if a future RISC Zero version changes the witgen pipeline and renders the dead arm live again.
-- The deletion is a single explicit commit ("D2.B-PS-2: delete W-17 dead-arm implementations") rather than a creep across multiple changes.
-- W-17b / §9c remains in this plan as historical record of the decision sequence.
+- The deletion is a single explicit commit ("D2.B-PS-3: delete W-17/W-18 dead-arm implementations") rather than a creep across multiple changes.
+- W-17b / §9c / §9d remain in this plan as historical record of the decision sequence.
 
-**Rationale for the option:** the dead-arm Python modules / Rust handlers / attestation tests carry maintenance cost (build time, test runtime, code complexity) for zero campaign signal. Git history is sufficient backup. Keeping the W-17 mechanism documentation (which IS valuable) does NOT require keeping the code. This is a deferred decision — execute only if the cost outweighs the "continuous verification of the W-17 prediction" benefit. Status: **TBD, post-D2.G**.
+**Rationale for the option:** the dead-arm Python modules / Rust handlers / attestation tests carry maintenance cost (build time, test runtime, code complexity) for zero campaign signal. Git history is sufficient backup. Keeping the W-17 / W-18 mechanism documentation (which IS valuable) does NOT require keeping the code. This is a deferred decision — execute only if the cost outweighs the "continuous verification of the W-17/W-18 prediction" benefit. Status: **TBD, post-D2.G**.
+
+---
+
+## 9d. D2.B postscript 2: NFP-4 doc-vs-code alignment (F8 fix; added 2026-06-19, landed same day)
+
+**Task ID:** D2.B-PS-2 ("postscript 2") — runs **after** §9c (D2.B-PS-1) and **before** D2.C kickoff.
+
+**Trigger:** Central-planning audit (`a4/docs/cloud2/separate-planning/central-planning-1.md`) raised **F8** — `_TXN_ROLE_BY_KIND` in `compressed_global_extractor.py:161` had **field-name labels** (`"addr"`, `"cycle_phase"`, `"diff_count"`) on three D2.B kinds, contradicting **NFP-4's Pro-valid-roles-only decision** (`IV_POS_8_NOTES_FOR_PRO.md:88-108`). Of those three, **`CYCLE_DIFF_COUNT_MOD`** is the only one still in `MUTATION_KINDS` after PS-1 (B.4 / B.5 became dead-kind drift entries). The xfail in `test_d2b_arm_registration.py::test_cgc_txn_role_mapping` was added in Batch 4 as a marker, not a fix.
+
+**Status:** **Done (v0.16, 2026-06-19).**
+
+### What landed
+
+| Change | File | Detail |
+|---|---|---|
+| **Code remap** | `a4/standalone/compressed_global_extractor.py:161` | `CYCLE_DIFF_COUNT_MOD: "diff_count" → "read"`; `TXN_ADDR_MOD: "addr" → "read"`; `TXN_CYCLE_PHASE_MOD: "cycle_phase" → "read"`. Dead-kind explicit entries kept as sentinels (not deleted) so any residual caller gets a documented Pro-valid label per NFP-4 §4. Comment block added explaining the alignment. |
+| **Test edit 1** | `a4/standalone/tests/test_d2b_batch3_unit.py` `test_cgc_roles` | Replaced 3 drift parametrizations (`TXN_ADDR_MOD → "addr"`, `TXN_CYCLE_PHASE_MOD → "cycle_phase"`, `CYCLE_DIFF_COUNT_MOD → "diff_count"`) with the single LIVE case `("CYCLE_DIFF_COUNT_MOD", "read")`. The two dead-kind cases don't need test cases (kinds aren't in `MUTATION_KINDS`). |
+| **Test edit 2** | `a4/standalone/tests/test_d2b_arm_registration.py` `test_cgc_txn_role_mapping` | Dropped the `CYCLE_DIFF_COUNT_MOD` `pytest.xfail` block; assertion `role in MEMORY_TXN_ROLES` now holds unconditionally. |
+| **Test edit 3** | `a4/standalone/tests/test_d2b_campaign_smoke.py` (lines ~143-148) | Removed the 3-kind allowlist bypass `or kind in {TXN_ADDR_MOD, TXN_CYCLE_PHASE_MOD, CYCLE_DIFF_COUNT_MOD}`. The assertion is now unconditional. |
+| **Test edit 4 (regression guard)** | `a4/standalone/tests/test_compressed_global_extractor.py::test_txn_role_for_kind_all_known_kinds` | Extended parametrization with 3 D2.B-live (`TXN_PREV_WORD_MOD → prev_word`, `TXN_PREV_CYCLE_MOD → prev_cycle`, `CYCLE_DIFF_COUNT_MOD → read`) + 3 dead sentinels (`TXN_ADDR_MOD`, `TXN_CYCLE_PHASE_MOD`, `CYCLE_MODE_MOD → read`). |
+| **Test edit 5 (regression guard)** | `a4/standalone/tests/test_compressed_global_extractor.py::test_all_txn_roles_used_are_valid_per_pro_spec` | Extended enumeration from the original 8 V5 kinds → all 11 live `A4Fuzzer.MUTATION_KINDS` (imported from `fuzzer`) + 5 dead-kind sentinels. **This is the regression guard that would have caught the original NFP-4 drift if it had existed when Batch 3 shipped.** Comment added documenting the F8 lesson. |
+| **NFP-4 footnote** | `a4/docs/cloud2/IV_POS_8_NOTES_FOR_PRO.md` | One-line "Implementation aligned via PS-2 commit `<hash>`" footnote. NFP-4's decision text itself is unchanged (it was correct; the code drifted). |
+
+### What was deliberately NOT changed
+
+- **`IV_POS_8_D2_B_SPEC.md`** — no changes. Spec §4.7 / Q5 already describes Option A (Pro-valid roles) correctly; only the code drifted.
+- **`IV_POS_8_D2_C_SPEC.md`** — no changes. D2.C doesn't pivot on `txn_role` for arm construction or dispatch.
+- **`IV_POS_8_D2_B_MECHANISM_REPORT.md`** — scanned; no `txn_role` / `MEMORY_TXN_ROLES` / `Pro-valid` / `NFP-4` references. The 4 `diff_count` hits are all Rust struct field names (`pub diff_count: [u32; 2]`) and per-kind descriptions, not role labels.
+- **Historical batch docs** (`D2B_BATCH4_COMPOSER_REPORT.md`, `D2B_BATCH4_COMPOSER_KICKOFF.md`, etc.) — left as-is. These are dated artifacts documenting state at Batch 4 time; PS-2 is what fixes it, not a rewrite.
+- **No fuzzer/Rust changes** — pure CGC labeling fix.
+
+### Test delta (verified, not estimated)
+
+- **Affected-file slice** (`test_d2b_arm_registration` + `test_d2b_batch3_unit` + `test_d2b_campaign_smoke` + `test_compressed_global_extractor`): **168 passed + 1 xfailed → 173 passed + 0 xfailed**. The 1 xfail eliminated was the `CYCLE_DIFF_COUNT_MOD` F8 marker.
+- **Broader standalone suite** (excluding `test_run_replicates.py` which has 2 pre-existing failures unrelated to PS-2): **616 passed + 17 skipped + 0 xfailed**.
+- No new failures, no new xfails, no broken sibling tests.
+
+### Production impact post-PS-2
+
+Before PS-2, CGC rows emitted by the LIVE kind `CYCLE_DIFF_COUNT_MOD` had `ctx_json.txn_role = "diff_count"` — a value NOT in `MEMORY_TXN_ROLES`. Any D2.G analytic pivoting on `txn_role ∈ MEMORY_TXN_ROLES` would either filter these rows out, throw a validation error, or misclassify them. (Note: `GlobalMemoryCtx` has **no `producer_kind`** field, so the "pivot on `producer_kind` for per-kind separation" mitigation in NFP-4 requires a SQL JOIN `compressed_global_coverage.first_hit_mutation_id → mutations.kind` — it's not in `ctx_json`.) After PS-2, all memory CGC rows from live kinds carry Pro-valid `txn_role` labels; per-kind separation continues to work via the SQL JOIN as designed.
+
+### Why we don't just delete the dead drift entries (`TXN_ADDR_MOD`, `TXN_CYCLE_PHASE_MOD`)
+
+Both kinds are PS-1 dead and absent from `MUTATION_KINDS`, so deleting their `_TXN_ROLE_BY_KIND` entries would behave identically (the `.get(..., "read")` default would fire). The explicit `"read"` entries are retained as **dead-kind sentinels**: they (1) make the dead-kind CGC contract visible in the dict rather than implicit via default, and (2) give any residual caller (e.g., a future log replay over an archive DB containing pre-PS-1 mutations of these kinds) a documented Pro-valid label instead of a bare default. The behavior is identical either way — this is purely a readability choice. Composer's preference; agreed.
+
+### What this postscript does NOT close
+
+- **PS-3 (full dead-arm code deletion)** — still deferred post-D2.G per §9c.
+- **Pro schema-bump for finer `txn_role` semantics** (NFP-4 alternative considered) — still deferred to Pro D2.G review per NFP-4 §6.
 
 ### Why we don't do this DURING Batch 3
 

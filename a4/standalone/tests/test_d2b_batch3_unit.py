@@ -36,9 +36,7 @@ class TestBatch3Registry:
     @pytest.mark.parametrize(
         "kind,expected_role",
         [
-            ("TXN_ADDR_MOD", "addr"),
-            ("TXN_CYCLE_PHASE_MOD", "cycle_phase"),
-            ("CYCLE_DIFF_COUNT_MOD", "diff_count"),
+            ("CYCLE_DIFF_COUNT_MOD", "read"),
         ],
     )
     def test_cgc_roles(self, kind, expected_role):

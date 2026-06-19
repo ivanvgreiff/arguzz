@@ -1,5 +1,7 @@
 # IV.POS.8 — Notes for Pro
 
+THIS IS NOT A DOCUMENT PRO HAS SEEN OR MADE, IT IS AN INTERNAL NOTE-TAKING DOCUMENT FOR THINGS THAT MAY OR MAY NOT BE OF INTEREST TO PRO
+
 **Purpose:** Running log of architectural decisions made during IV.POS.8 (cloud2) development that Pro needs to understand before reading the deliverable-level reports (D1.A report, D2.G report, etc.).
 
 This is **not** the final Pro-facing report — that lives at `IV_POS_8_D2_REPORT_FOR_PRO.md` (assembled at D2.G). This is a running architectural index Pro can read to grasp *why* the system is built the way it is, with no surprises at deliverable time.
@@ -107,6 +109,8 @@ This is **not** the final Pro-facing report — that lives at `IV_POS_8_D2_REPOR
 **For Pro at D2.G review:** if you want a separate `cycle_meta` (or per-field) role enum, signal in the D2.G review and we land a schema bump in IV.POS.9.
 
 **Source:** `IV_POS_8_D2_B_SPEC.md` v0.4 §4.7 + Q5.
+
+**Implementation alignment footnote (2026-06-19, D2.B-PS-2):** The code (`compressed_global_extractor.py:161` `_TXN_ROLE_BY_KIND`) initially drifted from this decision — `CYCLE_DIFF_COUNT_MOD` returned `"diff_count"`, `TXN_ADDR_MOD` returned `"addr"`, `TXN_CYCLE_PHASE_MOD` returned `"cycle_phase"` (none in `MEMORY_TXN_ROLES`). Surfaced by central-planning audit as flag F8. **Aligned via D2.B-PS-2 postscript** (see `IV_POS_8_D2_PLAN.md` §9d) — all three remapped to `"read"` per the table above; new regression guard `test_all_txn_roles_used_are_valid_per_pro_spec` extended to enumerate all 11 live `A4Fuzzer.MUTATION_KINDS` so this drift class cannot recur silently. NFP-4's decision text above is unchanged (it was correct; only the code drifted).
 
 ---
 

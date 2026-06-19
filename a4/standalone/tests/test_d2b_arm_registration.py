@@ -155,13 +155,9 @@ def test_semantic_arm_universe_kind_filter(kind: str, registration_data: Inspect
 @pytest.mark.parametrize("kind", sorted(A4Fuzzer.MUTATION_KINDS))
 def test_cgc_txn_role_mapping(kind: str):
     role = txn_role_for_kind(kind)
-    # NFP-4 drift: CYCLE_DIFF_COUNT_MOD still returns a field-name label
-    # ("diff_count") that is not in MEMORY_TXN_ROLES. Pro-valid remap is a
-    # separate follow-up; xfail here is documentation, not bypass.
-    if kind == "CYCLE_DIFF_COUNT_MOD":
-        pytest.xfail(
-            "NFP-4 drift: field-name txn_role label pending Pro-valid remap"
-        )
+    # Post-D2.B-PS-2: NFP-4 drift fixed. CYCLE_DIFF_COUNT_MOD (the only live
+    # D2.B kind that previously returned a non-Pro-valid label "diff_count")
+    # is now remapped to "read" per NFP-4's Pro-valid roles decision.
     if kind in TXN_TARGETING_KINDS:
         assert kind in _TXN_ROLE_BY_KIND
         assert role in MEMORY_TXN_ROLES, f"{kind} txn_role {role!r} not Pro-valid"

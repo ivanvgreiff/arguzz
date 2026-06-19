@@ -126,6 +126,7 @@ def test_lookup_index_bucket_basic():
 
 
 @pytest.mark.parametrize("kind, expected_role", [
+    # V5 control set (8 kinds)
     ("INSTR_WORD_MOD",      "ifetch"),
     ("INSTR_WORD_MOD_FULL", "ifetch"),
     ("INSTR_WORD_MOD_SUR",  "ifetch"),
@@ -135,21 +136,43 @@ def test_lookup_index_bucket_basic():
     ("MEM_VAL_MOD",         "read"),
     ("PRE_EXEC_REG_MOD",    "register"),
     ("COMP_OUT_MOD",        "register"),
-    ("UNKNOWN_KIND",        "read"),  # default
+    # D2.B live kinds (3) — per NFP-4
+    ("TXN_PREV_WORD_MOD",   "prev_word"),
+    ("TXN_PREV_CYCLE_MOD",  "prev_cycle"),
+    ("CYCLE_DIFF_COUNT_MOD", "read"),   # PS-2: was "diff_count" pre-remap
+    # D2.B dead kinds (post-PS-1) — sentinel entries so any residual caller
+    # gets a Pro-valid label; not in MUTATION_KINDS.
+    ("TXN_ADDR_MOD",        "read"),    # PS-2: was "addr" pre-remap
+    ("TXN_CYCLE_PHASE_MOD", "read"),    # PS-2: was "cycle_phase" pre-remap
+    ("CYCLE_MODE_MOD",      "read"),
+    # Default fallback
+    ("UNKNOWN_KIND",        "read"),
 ])
 def test_txn_role_for_kind_all_known_kinds(kind, expected_role):
     assert txn_role_for_kind(kind) == expected_role
 
 
 def test_all_txn_roles_used_are_valid_per_pro_spec():
-    """Every txn_role we produce must be in MEMORY_TXN_ROLES (Pro §5)."""
-    kinds = [
-        "INSTR_WORD_MOD", "INSTR_TYPE_MOD", "LOAD_VAL_MOD",
-        "STORE_OUT_MOD", "MEM_VAL_MOD", "PRE_EXEC_REG_MOD",
-        "COMP_OUT_MOD", "UNKNOWN_KIND",
+    """Every txn_role we produce must be in MEMORY_TXN_ROLES (Pro §5 / NFP-4).
+
+    Post-D2.B-PS-2: enumeration extended from the original 8 V5 kinds to all
+    11 live MUTATION_KINDS so this contract test catches any future drift on
+    D2.B-live kinds (the gap that allowed NFP-4 drift to ship undetected
+    until F8). Dead D2.B kinds (TXN_ADDR_MOD, TXN_CYCLE_PHASE_MOD,
+    CYCLE_MODE_MOD) are also included as sentinels: their dict entries are
+    dead code per PS-1 but must still return Pro-valid labels.
+    """
+    from a4.standalone.fuzzer import A4Fuzzer
+    live_kinds = list(A4Fuzzer.MUTATION_KINDS)  # 11 live kinds post-PS-1
+    dead_kinds = [  # D2.B dead-arm sentinels (per W-17/W-18 audits)
+        "TXN_ADDR_MOD", "TXN_CYCLE_PHASE_MOD",
+        "CYCLE_MODE_MOD", "CYCLE_PC_MOD", "CYCLE_STATE_MOD",
     ]
-    for k in kinds:
-        assert txn_role_for_kind(k) in MEMORY_TXN_ROLES
+    for k in live_kinds + dead_kinds + ["UNKNOWN_KIND"]:
+        assert txn_role_for_kind(k) in MEMORY_TXN_ROLES, (
+            f"{k} -> {txn_role_for_kind(k)!r} violates Pro-valid roles "
+            "(MEMORY_TXN_ROLES); see NFP-4 + D2.B-PS-2."
+        )
 
 
 @pytest.mark.parametrize("zone, expected_phase", [

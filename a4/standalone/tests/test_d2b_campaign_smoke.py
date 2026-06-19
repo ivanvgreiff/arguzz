@@ -141,11 +141,10 @@ def _run_selection_loop_smoke(db_path: Path) -> tuple[Set[str], Counter[str]]:
         outcomes[MutationOutcome.APPLIED.value] += 1
 
         role = txn_role_for_kind(kind)
-        assert role in MEMORY_TXN_ROLES or kind in {
-            "TXN_ADDR_MOD",
-            "TXN_CYCLE_PHASE_MOD",
-            "CYCLE_DIFF_COUNT_MOD",
-        }
+        # Post-D2.B-PS-2: all 11 live MUTATION_KINDS map to Pro-valid
+        # MEMORY_TXN_ROLES per NFP-4 (the 3-kind allowlist bypass was
+        # removed because the underlying drift was fixed).
+        assert role in MEMORY_TXN_ROLES, f"{kind} -> {role!r} not in MEMORY_TXN_ROLES"
 
     fz.db.end_campaign(fz.campaign_id)
     return kinds_seen, outcomes

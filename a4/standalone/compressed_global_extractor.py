@@ -173,10 +173,18 @@ _TXN_ROLE_BY_KIND: Dict[str, str] = {
     "COMP_OUT_MOD":        "register",
     "TXN_PREV_WORD_MOD":   "prev_word",
     "TXN_PREV_CYCLE_MOD":  "prev_cycle",
+    # D2.B cycle-meta kinds: Pro-valid roles per NFP-4 (Option A).
+    # See IV_POS_8_NOTES_FOR_PRO.md NFP-4 (text + footnote re: PS-2 alignment).
+    # D2.B-PS-2: field-name labels ("addr", "cycle_phase", "diff_count") on
+    # these three kinds were a doc-vs-code drift against NFP-4's "Pro-valid
+    # roles only" decision. Remapped to "read" (per the NFP-4 table).
+    # TXN_ADDR_MOD and TXN_CYCLE_PHASE_MOD are dead per D2.B-PS-1 (W-18); the
+    # explicit "read" entries here are dead-kind sentinels so any residual
+    # caller still gets a Pro-valid label rather than the bare default.
     "CYCLE_MODE_MOD":        "read",
-    "TXN_ADDR_MOD":          "addr",
-    "TXN_CYCLE_PHASE_MOD":   "cycle_phase",
-    "CYCLE_DIFF_COUNT_MOD":  "diff_count",
+    "TXN_ADDR_MOD":          "read",
+    "TXN_CYCLE_PHASE_MOD":   "read",
+    "CYCLE_DIFF_COUNT_MOD":  "read",
 }
 
 
