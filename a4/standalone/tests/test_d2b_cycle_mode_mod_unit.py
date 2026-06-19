@@ -74,10 +74,20 @@ class TestRegistryPlumbing:
         assert old_mode == 0 and new_mode == 1
 
     def test_mutation_kinds_registry(self):
+        """Post-D2.B-PS-1: CYCLE_MODE_MOD is excluded from MUTATION_KINDS per
+        W-17 audit (machine_mode trace preset overwritten by step_Top's
+        exec_Reg(inst_result.new_machine_mode, ...)). The Python module + Rust
+        handler + attestation test remain on disk as regression sentinels; the
+        bandit / campaign infrastructure no longer touches it.
+        """
         fuzzer = A4Fuzzer(
             host_binary="/bin/true",
             host_args=[],
             db_path=":memory:",
             selector_strategy="zoned",
         )
-        assert "CYCLE_MODE_MOD" in fuzzer.MUTATION_KINDS
+        assert "CYCLE_MODE_MOD" not in fuzzer.MUTATION_KINDS, (
+            "CYCLE_MODE_MOD re-introduced into MUTATION_KINDS; see D2.B-PS-1 "
+            "in IV_POS_8_D2_PLAN.md (v0.15) and the W-17 audit at "
+            "a4/docs/cloud2/composer/D2B_BATCH2_DEAD_ARM_AUDIT.md"
+        )

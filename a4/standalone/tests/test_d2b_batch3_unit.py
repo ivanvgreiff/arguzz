@@ -45,12 +45,20 @@ class TestBatch3Registry:
         assert txn_role_for_kind(kind) == expected_role
 
     def test_mutation_kinds_registered(self):
+        """Post-D2.B-PS-1: CYCLE_DIFF_COUNT_MOD is the only Batch-3 kind still
+        in MUTATION_KINDS. The 4 dead kinds (TXN_ADDR_MOD, TXN_CYCLE_PHASE_MOD,
+        CYCLE_PC_MOD, CYCLE_STATE_MOD) are excluded per W-17/W-18 audits; their
+        per-kind modules + Rust handlers + attestation tests remain on disk as
+        regression sentinels but are not wired into bandit dispatch.
+        """
         fuzzer = A4Fuzzer(host_binary="/bin/true", host_args=[], db_path=":memory:", selector_strategy="zoned")
-        for kind in (
-            "TXN_ADDR_MOD", "TXN_CYCLE_PHASE_MOD", "CYCLE_PC_MOD",
-            "CYCLE_STATE_MOD", "CYCLE_DIFF_COUNT_MOD",
+        assert "CYCLE_DIFF_COUNT_MOD" in fuzzer.MUTATION_KINDS
+        for dead_kind in (
+            "TXN_ADDR_MOD", "TXN_CYCLE_PHASE_MOD", "CYCLE_PC_MOD", "CYCLE_STATE_MOD",
         ):
-            assert kind in fuzzer.MUTATION_KINDS
+            assert dead_kind not in fuzzer.MUTATION_KINDS, (
+                f"{dead_kind} re-introduced; see D2.B-PS-1 in IV_POS_8_D2_PLAN.md"
+            )
 
 
 class TestTxnAddrMod:

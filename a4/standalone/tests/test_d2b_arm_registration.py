@@ -155,22 +155,32 @@ def test_semantic_arm_universe_kind_filter(kind: str, registration_data: Inspect
 @pytest.mark.parametrize("kind", sorted(A4Fuzzer.MUTATION_KINDS))
 def test_cgc_txn_role_mapping(kind: str):
     role = txn_role_for_kind(kind)
-    if kind in {"TXN_ADDR_MOD", "TXN_CYCLE_PHASE_MOD", "CYCLE_DIFF_COUNT_MOD"}:
+    # NFP-4 drift: CYCLE_DIFF_COUNT_MOD still returns a field-name label
+    # ("diff_count") that is not in MEMORY_TXN_ROLES. Pro-valid remap is a
+    # separate follow-up; xfail here is documentation, not bypass.
+    if kind == "CYCLE_DIFF_COUNT_MOD":
         pytest.xfail(
-            "NFP-4 drift: field-name txn_role labels pending Pro-valid remap (see batch3 unit test)"
+            "NFP-4 drift: field-name txn_role label pending Pro-valid remap"
         )
     if kind in TXN_TARGETING_KINDS:
         assert kind in _TXN_ROLE_BY_KIND
         assert role in MEMORY_TXN_ROLES, f"{kind} txn_role {role!r} not Pro-valid"
-    elif kind in {"CYCLE_PC_MOD", "CYCLE_STATE_MOD"}:
-        assert role == "read"
     else:
         assert role in MEMORY_TXN_ROLES, f"{kind} txn_role {role!r} not Pro-valid"
 
 
-def test_dead_kinds_still_in_registry_pre_postscript():
-    """Guardrail: §9c postscript must not land inside Batch 4."""
-    assert DEAD_KINDS.issubset(A4Fuzzer.MUTATION_KINDS), (
-        "Dead kinds removed prematurely. The §9c postscript is Opus's task "
-        "post-Batch-4; do not remove these in Batch 4."
+def test_dead_kinds_excluded_from_registry():
+    """Post-§9c postscript: all 5 W-17/W-18 dead kinds are excluded from
+    A4Fuzzer.MUTATION_KINDS. Re-introducing any of them would be a regression
+    against the audited dead-arm mechanism — see
+    a4/docs/cloud2/IV_POS_8_D2_B_MECHANISM_REPORT.md §5–§8 and the audits at
+    a4/docs/cloud2/composer/D2B_BATCH2_DEAD_ARM_AUDIT.md (W-17) and
+    a4/docs/cloud2/composer/D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md (W-18).
+    """
+    assert DEAD_KINDS.isdisjoint(A4Fuzzer.MUTATION_KINDS), (
+        f"Dead kinds re-introduced into MUTATION_KINDS: "
+        f"{sorted(DEAD_KINDS & set(A4Fuzzer.MUTATION_KINDS))}. "
+        "These are W-17/W-18 dead arms; their per-kind attestation tests "
+        "remain on disk as regression sentinels but they must not be wired "
+        "into bandit/campaign dispatch."
     )

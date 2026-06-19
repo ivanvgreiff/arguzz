@@ -226,10 +226,33 @@ class A4Fuzzer:
     5. Records results and checks verifier acceptance
     """
     
-    # Supported mutation kinds
+    # Supported mutation kinds.
+    #
+    # Excluded by D2.B-PS-1 (post-Batch-4 postscript, plan v0.15):
+    #
+    #   CYCLE_MODE_MOD  (B.3)  -- W-17 dead: trace cycle.machine_mode preset is
+    #                             overwritten in the witness by step_Top's
+    #                             exec_Reg(inst_result.new_machine_mode, ...).
+    #   CYCLE_PC_MOD    (B.6)  -- W-17 dead (same mechanism: new_pc_low/high).
+    #   CYCLE_STATE_MOD (B.7)  -- W-17 dead (same mechanism: new_state_0).
+    #   TXN_ADDR_MOD    (B.4)  -- W-18 dead: extern_getMemoryTxn does NOT return
+    #                             addr; the witness addrElem is bound to the
+    #                             execution argument, not the trace field.
+    #   TXN_CYCLE_PHASE_MOD (B.5) -- W-18 dead (same mechanism for cycle field;
+    #                                memCycle witness column is bound to the
+    #                                execution argument).
+    #
+    # Proofs:
+    #   a4/docs/cloud2/IV_POS_8_D2_B_MECHANISM_REPORT.md  (Pro-facing summary)
+    #   a4/docs/cloud2/composer/D2B_BATCH2_DEAD_ARM_AUDIT.md       (W-17)
+    #   a4/docs/cloud2/composer/D2B_BATCH3_TXN_DEAD_ARM_AUDIT.md   (W-18)
+    #
+    # Per-kind Python modules, Rust handlers, attestation tests, and unit
+    # tests for the 5 excluded kinds remain on disk as regression sentinels;
+    # the bandit / fuzzer / campaign infrastructure no longer touches them.
     MUTATION_KINDS = [
         "COMP_OUT_MOD",
-        "LOAD_VAL_MOD", 
+        "LOAD_VAL_MOD",
         "STORE_OUT_MOD",
         "PRE_EXEC_REG_MOD",
         "INSTR_TYPE_MOD",
@@ -238,11 +261,6 @@ class A4Fuzzer:
         "INSTR_WORD_MOD_SUR",   # Surgical field-level mutation
         "TXN_PREV_WORD_MOD",
         "TXN_PREV_CYCLE_MOD",
-        "CYCLE_MODE_MOD",
-        "TXN_ADDR_MOD",
-        "TXN_CYCLE_PHASE_MOD",
-        "CYCLE_PC_MOD",
-        "CYCLE_STATE_MOD",
         "CYCLE_DIFF_COUNT_MOD",
     ]
     
