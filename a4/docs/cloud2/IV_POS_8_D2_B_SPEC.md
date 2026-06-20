@@ -1053,6 +1053,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
 
 **LOCKED (Ivan 2026-06-17 via AskQuestion): Variant-specific kind subsets.** Global `MUTATION_KINDS` = union of 20 kinds. D2.D CLI defines: `V5_control={8 existing}` (D1.A archive reuse intact), `V5_expanded={16 A4}`, `Hybrid_cTS={16 A4 + 4 V6}`, `V6_uniform/cTS={4 V6}`. **Surfaced as NFP-2.** Watchlist W-5.
 
+> **Superseded for forward variant kind sets (2026-06-19):** per `New_Master.md` §1 + ProG_Report_4 + D2.C v0.5 LOCK — `V6_uniform`/`V6_cTS` = **11 Arguzz kinds**; `Hybrid_cTS` = **11 live A4 + 4 selected Arguzz**; `V5_expanded` = **11 live A4** (post-D2.B-PS-1). This Q6 lock governs D2.B's registry-union *pattern* only; per-variant subsets above are authoritative for D2.D+.
+
 **Plain question:** When D2.D wires up the variant CLI, do D2.B kinds appear only in pure-A4 variants (V5), or also in Hybrid-cTS (A4 + Arguzz arms)?
 
 **Plan v0.7 line 100 says V5 (control) = "current 8 kinds" with "D1.A static archive reuse".** Adding 8 kinds to global `MUTATION_KINDS` would change V5 arm-space and **break archive reuse** (paired V5 baseline vs D2 variants becomes apples-to-oranges).
@@ -1064,6 +1066,8 @@ Batch 1.0b reports a 3-way classification table over 5 mutations per (zone, valu
   - `V5_expanded` = `{16 A4 kinds}` — D2.B optional companion run
   - `Hybrid_cTS` = `{16 A4 kinds + 4 V6 kinds}` — Pro's target
   - `V6_uniform` / `V6_cTS` = `{4 V6 kinds}` — Arguzz-only
+
+*(Forward per-variant subsets superseded 2026-06-19 — see supersession note above; authoritative table: `New_Master.md` §1.)*
 
 **My recommendation:** **D2.B kinds added to global `MUTATION_KINDS`** (so they're available); **D2.D defines variant-specific subsets** (so V5 archive reuse still works).
 
@@ -1335,7 +1339,7 @@ All 17 §6 questions resolved by Ivan on 2026-06-17. Each Q section in §6 now c
 | # | Question | **LOCKED resolution** | Why |
 |---|---|---|---|
 | **Q5** | CGC `txn_role` mappings | **Option A — Pro-valid `MEMORY_TXN_ROLES` only; per-kind D2.G via `producer_kind`.** Schema bump to add `cycle_meta` deferred to IV.POS.9 if Pro requests. | Tests at `test_compressed_global_extractor.py:152, 480` enforce `role ∈ MEMORY_TXN_ROLES`. Field-name labels would break them. `producer_kind` is the correct separation axis. **Surfaced as NFP-4 in `IV_POS_8_NOTES_FOR_PRO.md` so Pro sees it explicitly.** |
-| **Q6** | D2.B kinds: V5-only or also Hybrid? | **Variant-specific kind subsets.** Global `MUTATION_KINDS` = union of 20. D2.D CLI filters: `V5_control={8 existing}` (D1.A archive reuse intact), `V5_expanded={16 A4}`, `Hybrid_cTS={16 A4 + 4 V6}`, `V6_uniform/cTS={4 V6}`. | Plan v0.7+ line 100 defines V5 control as "8 kinds + D1.A static archive reuse" — global expansion would break that. **Surfaced as NFP-2.** |
+| **Q6** | D2.B kinds: V5-only or also Hybrid? | **Variant-specific kind subsets.** Global `MUTATION_KINDS` = union of 20. D2.D CLI filters: `V5_control={8 existing}` (D1.A archive reuse intact), `V5_expanded={16 A4}`, `Hybrid_cTS={16 A4 + 4 V6}`, `V6_uniform/cTS={4 V6}`. *(Forward subsets superseded — see Q6 section supersession note; authoritative: `New_Master.md` §1.)* | Plan v0.7+ line 100 defines V5 control as "8 kinds + D1.A static archive reuse" — global expansion would break that. **Surfaced as NFP-2.** |
 
 ### Secondary decisions (Q1, Q2, Q3, Q4, Q7, Q8, Q9, Q10, Q11, Q12–Q14, Q15, Q16, Q17 — 15 questions, Ivan accepted as written via AskQuestion option_a)
 

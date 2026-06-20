@@ -58,15 +58,15 @@ This is **not** the final Pro-facing report — that lives at `IV_POS_8_D2_REPOR
 | Variant | Kind subset | Archive |
 |---|---|---|
 | `V5_control` | 8 existing kinds only | **D1.A archive reuse** |
-| `V5_expanded` (optional) | 16 A4 kinds | Fresh run |
-| `Hybrid_cTS` | 16 A4 + 4 V6 kinds | Fresh run |
-| `V6_uniform` / `V6_cTS` | 4 V6 kinds | Fresh run |
+| `V5_expanded` (optional) | 11 live A4 kinds (8 V5 + 3 D2.B-live) | Fresh run |
+| `Hybrid_cTS` | 11 live A4 + 4 selected Arguzz kinds | Fresh run |
+| `V6_uniform` / `V6_cTS` | 11 Arguzz kinds (FULL set) | Fresh run (`V6_uniform` = round-robin; `V6_cTS` = cTS over Arguzz-only arm space) |
 
 **Why this matters:** Without variant filtering, naive registry expansion would silently break D1.A archive comparability (paired V5 baseline ↔ D2 variants becomes apples-to-oranges).
 
 **Pro's §8 wider catalog** (`CYCLE_INDEX_MOD`, `REG_TXN_NON_INSN_MOD`, `BIGINT_DATA_MOD`, `CRYPTO_STATE_MOD`, `ECALL_BACK_MOD`, `STRUCTURAL_MOD`) is **deferred to a future IV.POS cycle** per Pro §15 last paragraph.
 
-**Source:** `IV_POS_8_D2_B_SPEC.md` v0.4 §1.0 + Q6.
+**Source:** `New_Master.md` §1 + `IV_POS_8_D2_C_SPEC.md` v0.5 LOCK (supersedes D2.B Q6 locked table for forward variant subsets).
 
 ---
 

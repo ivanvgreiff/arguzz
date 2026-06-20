@@ -1,5 +1,7 @@
 # IV.POS.8 D2 (Hybrid V7) — Implementation Plan
 
+> **⚠ SUPERSEDED FOR FORWARD PLANNING (2026-06-19) by [`New_Master.md`](./New_Master.md) + [`pro_checkin_attachments/ProG_Report_4.md`](./pro_checkin_attachments/ProG_Report_4.md).** This plan predates ProG_Report_4. Use `New_Master.md` for sequencing; this doc is retained for D2.A/B history + sub-deliverable scope context. **Specific points here that are now SUPERSEDED:** (1) **Q4** "reuse R2 V6 archive" → **V6-uniform is a FRESH re-run** with the modernized `v6_uniform_driver.py` (schema/outcome parity for D2.G). (2) **V6-cTS = all 11 Arguzz kinds** (not 4); Hybrid-cTS = 4 selected — see D2.C v0.4. (3) **Hybrid A4-side = 11 live kinds** (not "16 A4" — 5 dead removed at PS-1). (4) **D2.C Arguzz primitive = `arguzz_invoke.py`** (the new layered primitive), NOT `arguzz_runner.py` (deprecated) — §2/§D2.C references to `arguzz_runner` reuse are superseded.
+
 **Branch:** `cloud2`
 **Date opened:** 2026-06-16
 **Author:** Ivan + Opus (planning); Composer (implementation, future batches)
@@ -443,7 +445,7 @@ The §6 table covers the **gates** but understates how certainty stacks across l
 
 | | |
 |---|---|
-| **What it protects** | Variant gating: V5_control may only emit the 8 V5 kinds; Hybrid_cTS may emit 16 A4 + 4 V6 kinds; etc. No variant pulls outside its declared kind subset |
+| **What it protects** | Variant gating: V5_control may only emit the 8 V5 kinds; Hybrid_cTS may emit 11 live A4 + 4 selected Arguzz kinds; V6_cTS may emit 11 Arguzz kinds; etc. No variant pulls outside its declared kind subset (authoritative table: `New_Master.md` §1) |
 | **Authoritative source** | **D2.D** spec (not yet drafted as a Composer kickoff); plan §6 row "Variant arm coverage" |
 | **Current coverage** | None — D2.D is downstream. The phantom test's `V5_CONTROL_KINDS_8` pinning is a *defensive* measure that anticipates this layer. |
 

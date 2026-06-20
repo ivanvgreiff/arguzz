@@ -5,31 +5,23 @@
 **This is NOT the final D1 report.** That deliverable (`IV_POS_8_D1_REPORT_FOR_PRO.md`) folds D1.A + D1.B + D1.C + D1.E together at Stage 4 (after D1.E completes). This briefing exists earlier in the pipeline so Pro can confirm or correct the architectural framing while the choices are still cheap to revise.
 **Branch:** `cloud2`
 **Author:** Opus
-**Status:** **DRAFT v0.2 — covers completed work through 2026-06-17.** D1.C extension landed (§4); D2.B (§5) and D1.E preview (§6) sections will grow as those deliverables land.
+**Status:** **DRAFT v0.3 — covers completed work through 2026-06-18.** D1.C extension landed (§4); D2.B is now DONE (§5 updated); D1.E spec drafted (§6 updated); briefing now reflects the post-1.5e world where `PRE_EXEC_REG_MOD` strategy is RNG-picked, breaking strict byte-identity of the D1.A V5 archive for fresh runs.
 
 ---
 
 ## 0. TL;DR — Where we are right now
 
-We have completed **three load-bearing deliverables** since IV.POS.8 began:
+We have completed **five load-bearing deliverables** since IV.POS.8 began:
 
 | # | Deliverable | Commit | Status | What it produced |
 |---|---|---|---|---|
 | 1 | **D1.A** — V5 decaying floor variants (analysis on existing scheduler + binary reward) | `1db0e88` then `4fce664` | **FROZEN** with 6 Findings (A–F) and 8 Limitations | Diagnosis: floor-decay alone is insufficient; reward signal saturation is the binding constraint |
-| 2 | **D2.A** — 5-tuple ArmKey refactor + `mutations.outcome` column + applied accounting | `b844e8e` then `7b66fb9` | **DONE** | Scheduler shape that D1.E, D2.B, D2.C, D2.D all build on; V5 byte-identity preserved → D1.A archive remains a valid paired baseline |
+| 2 | **D2.A** — 5-tuple ArmKey refactor + `mutations.outcome` column + applied accounting | `b844e8e` then `7b66fb9` | **DONE** | Scheduler shape that D1.E, D2.B, D2.C, D2.D all build on. V5 byte-identity preserved **for the ArmKey refactor itself** (D2.A exit criterion); see post-1.5e caveat in §2.4 — the D1.A V5 archive remains a paired baseline for D2.A regression purposes, but is **not** a fresh-run substitute for D1.E V5-static post-`78d036c` |
 | 3 | **D1.B** — CGC coarsening variants (3 alternates evaluated; corrected baseline) | `71dae77` | **DONE** | Recommendation: keep corrected `production_log2_corrected` as L0; coarsenings saturate EARLIER than local; L1 enrichment via D1.C is the primary remaining lever |
-
-One more deliverable is **DONE** and one is **IN PROGRESS**:
-
-| # | Deliverable | Commit | Status | What it produced |
-|---|---|---|---|---|
 | 4 | **D1.C** — bug-proximity metric stack (Tier-1 per-mutation signals + Tier-2 per-campaign metrics) | `3a8487c` | **DONE** | 3 L1 OR-channel candidates pass D1.E pre-screening; singleton-failure rate is the only Tier-2 decay discriminator (p=2.6e-06); `f_new` L1 channel dead on V5 |
+| 5 | **D2.B** — eight new pure-A4 mutation kinds + attestation hook + `PRE_EXEC_REG_MOD` retrofix (NFP-6 Batch 1.5e) + dead-arm cleanup | `78d036c` → `f81523c` → `4e5150a` → `2e1d97b` → `e2c2256` | **DONE** | The narrow D1.E sync dependency (NFP-6 `PRE_EXEC_REG_MOD` RNG retrofix) landed at `78d036c`. D2.B's other batches (new kinds, attestation hook, PS-1 dead-arm cleanup) feed D2 variants (V6, Hybrid-cTS), NOT D1.E. **D1.E sync gate is satisfied.** |
 
-| # | Deliverable | Owner | Status |
-|---|---|---|---|
-| 5 | **D2.B** — eight new pure-A4 mutation kinds + attestation hook + `PRE_EXEC_REG_MOD` retrofix | D2 chat (parallel) | Spec v0.5 LOCKED; Composer Batch 1 in flight |
-
-D1.E (the V5 + decay re-run under enriched reward path) is the **integration point** for D1.A + D1.B + D1.C + D2.A + the specific `PRE_EXEC_REG_MOD` retrofix portion of D2.B. The other D2.B work (eight new kinds, attestation hook, `txn_role` mappings) feeds the D2 variants (V6, Hybrid-cTS), NOT D1.E.
+D1.E (the V5 + decay re-run under enriched reward path) is the **integration point** for D1.A + D1.B + D1.C + D2.A + the specific `PRE_EXEC_REG_MOD` retrofix portion of D2.B. The other D2.B work happens in parallel and does NOT enter D1.E.
 
 **This briefing chronologically narrates each completed deliverable so Pro can see the decision provenance.** Pro disclosure asks are surfaced inline (look for **❓ Pro ask**). The full Notes-for-Pro index (NFP-1 through NFP-10) is at `a4/docs/cloud2/IV_POS_8_NOTES_FOR_PRO.md` for deeper reading.
 
@@ -45,7 +37,7 @@ We ran two V5 floor-decay variants alongside the R2 V5-static baseline on the V5
 |---|---|---:|
 | V5-static (R2 baseline) | `ConstantFloor(0.55)` | 1234–1243 (n=10) |
 | V5-decayexp | `ExponentialDecayFloor(0.55, 0.20, K=50)` — discovery-triggered | 1234–1238 (n=5 paired) |
-| V5-decayepoch | `EpochStaircase([(0, 0.55), (2000, 0.35), (4000, 0.20)])` | 1234–1238 (n=5 paired) |
+| V5-decayepoch | `EpochStageFloor([(0, 0.55), (2000, 0.35), (4000, 0.20)])` | 1234–1238 (n=5 paired) |
 
 Original spec asked for n=10 paired triplets; a POS daemon failure capped us at n=5 paired (5 V5-static unpaired added for variance estimation).
 
@@ -97,7 +89,7 @@ D2.A is the **scheduler-shape foundation** for everything downstream. Two Compos
 
 ### 2.2 What we found
 
-- **V5 byte-identity is preserved** under the 5-field ArmKey via the back-compat overload. The D1.A V5 archive (10 sealed DBs, ~3 hours POS compute) remains a valid baseline for paired D2 comparisons — no need to re-dispatch V5.
+- **V5 byte-identity is preserved by the ArmKey refactor itself** (D2.A exit criterion: under the 5-field ArmKey + back-compat overload, fresh V5 reproduced the R2 archive byte-for-byte). This was the goal of NFP-1 — make the schema change cost-free for V5. **Caveat (added post-1.5e):** strict byte-identity to the D1.A V5 archive no longer holds for a *fresh* V5 run AFTER D2.B Batch 1.5e (commit `78d036c`), because `PRE_EXEC_REG_MOD` is now RNG-picked per pull instead of hardcoded `next_read` (see §5.3). The D1.A archive remains a valid paired baseline for D2.A's ArmKey-refactor regression purposes; for D1.E's V5-static control we use a fresh run under the post-1.5e codebase (D1.E spec §0.2 Q-E-RETROFIX-ABLATION Option B).
 - **The 5-tuple is needed for Hybrid V7's Arguzz-shape arms** (`surface="arguzz_exec_fault"`, distinct `opcode_class` per fault) and for finer A4-side learning if Pro ever wants it (e.g., per-opcode-class reward profiles).
 - **`mutations.outcome` resolves D1.A Finding B partially.** While `bandit_decisions.extra_json` remains NULL (Finding B), the new `outcome` column provides per-pull outcome classification that the bandit's `update_with_outcome()` consumes; D1.E's reward-rewire builds on top of this column.
 
@@ -105,15 +97,15 @@ D2.A is the **scheduler-shape foundation** for everything downstream. Two Compos
 
 | Decision | Rationale | Disclosure |
 |---|---|---|
-| Keep 2-tuple back-compat overload (`ArmKey.v5(...)`) | ~5 lines of code; preserves V5 RNG byte-identity → ~3h compute saved per cycle; D1.A archive reusable | `NFP-1` |
+| Keep 2-tuple back-compat overload (`ArmKey.v5(...)`) | ~5 lines of code; preserves V5 RNG byte-identity **across the D2.A refactor itself** (D1.A archive reusable for D2.A regression baseline). Note: a separate post-1.5e change to `PRE_EXEC_REG_MOD` strategy selection breaks strict byte-identity for fresh V5 runs vs the D1.A archive — see §2.4 caveat | `NFP-1` |
 | `surface` axis distinguishes A4 vs Arguzz; A4 arms always `surface="a4_witness_mut"` | Required for D2.D's `Hybrid_cTS` to mix A4 and Arguzz kinds without arm-key collisions | `NFP-1` |
 | Tests verify `is_v5_shape()` for archive-reuse-eligible arms | Guards against silent V5-shape drift | `NFP-1` |
 
 ### 2.4 What this informs in D1.E
 
-- **D1.E uses V5-shape ArmKeys throughout** (D1.E does NOT touch surface / opcode_class / pre_post axes — those are for D2 variants). V5 byte-identity holds.
+- **D1.E uses V5-shape ArmKeys throughout** (D1.E does NOT touch surface / opcode_class / pre_post axes — those are for D2 variants). V5-shape ArmKey behavior is preserved under D2.A's refactor.
 - **D1.E's reward rewire writes to `reward_counterfactuals` + `mutations.outcome`**, both of which are already in production schema thanks to D2.A.
-- **D1.E paired-test baseline is the D1.A archive** (10 V5-static R2 DBs) — D2.A confirmed this is byte-identical to fresh runs under the new ArmKey, so the n=5 paired triplets can compare D1.E rewired V5 against D1.A archived V5 without re-running V5-static.
+- **D1.E paired-test baseline is a fresh V5-static run, NOT the D1.A archive** — because post-1.5e (commit `78d036c`) `PRE_EXEC_REG_MOD` is RNG-picked per pull, breaking strict byte-identity with the D1.A archive. Per D1.E spec §0.2 Q-E-RETROFIX-ABLATION we adopted **Option B (15 jobs: 5 V5-static + 5 decayexp + 5 decayepoch all post-rewire post-retrofix)**. The D1.A archive is supplementary context, not the primary paired baseline. See §5.3 + §6.4 for the confound disclosure.
 
 ### 2.5 ❓ Pro asks
 
@@ -397,13 +389,21 @@ Composer's systematic audit verified `git grep` over `bug_proximity.py` shows ze
 
 ---
 
-## 5. D2.B — Eight new pure-A4 kinds + attestation hook + `PRE_EXEC_REG_MOD` retrofix (IN PROGRESS)
+## 5. D2.B — Eight new pure-A4 kinds + attestation hook + `PRE_EXEC_REG_MOD` retrofix (DONE)
 
-### 5.1 Status as of 2026-06-17
+### 5.1 Status as of 2026-06-18
 
-**Spec locked at v0.5** (`a4/docs/cloud2/IV_POS_8_D2_B_SPEC.md`). Composer Batch 1 kickoff pending in the parallel D2 chat.
+**DONE.** Spec was locked at v0.5 (`a4/docs/cloud2/IV_POS_8_D2_B_SPEC.md`). Composer shipped the full batch sequence in the parallel D2 chat:
 
-### 5.2 What D2.B will deliver
+| Batch | Commit | Content |
+|---|---|---|
+| Batch 1.5e (NFP-6) | `78d036c` | `PRE_EXEC_REG_MOD` retrofix — fuzzer RNG-picks `next_read`/`prev_write` per pull; arm universe ORs both. **This is the only D2.B batch in the D1.E critical path.** |
+| Batch 2 | `f81523c` | (D2 chat narrative) |
+| Batch 3 | `4e5150a` | (D2 chat narrative) |
+| Batch 4 | `2e1d97b` | Cross-cutting + smoke; D2.B feature-complete |
+| Post-Batch cleanup | `e2c2256` | PS-1: remove 5 dead arms from MUTATION_KINDS |
+
+### 5.2 What D2.B delivered
 
 | Component | Purpose | Relevance to D1.E |
 |---|---|---|
@@ -411,9 +411,10 @@ Composer's systematic audit verified `git grep` over `bug_proximity.py` shows ze
 | **NFP-3: `TXN_PREV_WORD_MOD` single registry kind, RNG-picked strategy** | Bandit treats `at_read` and `at_write` as one arm; fuzzer RNG-picks per pull | NOT in D1.E critical path — V5 catalog only uses existing 8 kinds |
 | **NFP-4: `txn_role` mappings for 8 new kinds** | All map to Pro-valid `MEMORY_TXN_ROLES`; per-kind D2.G pivots on `producer_kind` | NOT in D1.E critical path — D1.E doesn't introduce new kinds |
 | **NFP-5: Layer 3 attestation hook (`A4_DUMP_POST_MUT=1`)** | New ~30 LOC Rust hook in `workspace/risc0-modified/.../witgen/mod.rs` — emits post-mutation state dumps for cross-check | NOT in D1.E critical path — V5 mutations are already well-tested; D1.E doesn't need new attestation |
-| **NFP-6: `PRE_EXEC_REG_MOD` retrofix (Batch 1.5e)** | Existing kind had two Rust strategies (`next_read`/`prev_write`) but fuzzer hardcoded `next_read` and arm universe only probed it. Half the designed surface was dead. Retrofix: fuzzer RNG-picks per pull + arm universe ORs both. | **YES — D1.E SYNC POINT.** This alters V5 mutation behavior. D1.E's V5 baseline must run AFTER this fix lands so the new baseline matches the post-D2.B-Batch-1 codebase. |
+| **NFP-6: `PRE_EXEC_REG_MOD` retrofix (Batch 1.5e, commit `78d036c`)** | Existing kind had two Rust strategies (`next_read`/`prev_write`) but fuzzer hardcoded `next_read` and arm universe only probed it. Half the designed surface was dead. Retrofix: fuzzer RNG-picks per pull (`fuzzer.py:1685-1686`) + arm universe ORs both. | **YES — D1.E SYNC POINT (NOW SATISFIED).** This alters V5 mutation behavior. D1.E's V5 baseline runs AFTER this fix landed, so the new baseline matches the post-D2.B codebase. |
+| **PS-1: dead-arm cleanup (commit `e2c2256`)** | Removed 5 obsolete mutation kinds from `MUTATION_KINDS` registry to match D2.B's actual final kind set | NOT in D1.E critical path — D1.E uses the existing 8 V5 kinds; PS-1 dropped only obsolete dead-code kinds |
 
-**The D1.E ↔ D2.B sync point is narrow.** Only `PRE_EXEC_REG_MOD` retrofix (Batch 1.5e, ~10 LOC) is in the D1.E critical path. The other D2.B work happens in parallel and feeds D2.D / D2.G — NOT D1.E.
+**The D1.E ↔ D2.B sync gate is satisfied.** Only `PRE_EXEC_REG_MOD` retrofix (Batch 1.5e, ~10 LOC at `fuzzer.py:1685-1686`) is in the D1.E critical path, and it's landed. The other D2.B work feeds D2.D / D2.G — NOT D1.E.
 
 ### 5.3 Why the PRE_EXEC_REG_MOD retrofix matters for Pro
 
@@ -426,13 +427,11 @@ Composer's systematic audit verified `git grep` over `bug_proximity.py` shows ze
 
 We will explicitly call this confound out in the D1.E subsection (and ideally re-run D1.A's V5-static under the new code as a control if POS reservation allows — see §6.4 below).
 
-### 5.4 ❓ Pro asks (to be surfaced when D2.B Batch 1.5e completes)
+### 5.4 ❓ Pro asks (D2.B is DONE; these are the live disclosures)
 
-> _**[IVAN TO FILL after D2.B Batch 1.5e completes]**_
->
-> Likely asks:
-> 1. Whether Pro wants the D1.A V5-static archive re-run under the new `PRE_EXEC_REG_MOD` strategy mix (Pro-visible delta if comparing R2 PRE_EXEC_REG_MOD failure rates against post-D2.B numbers)
-> 2. Acknowledgment of NFP-4 `txn_role` mapping decisions (we mapped 8 new kinds to Pro-valid roles; Pro can request a `cycle_meta` schema bump in IV.POS.9 if finer separation is wanted)
+1. **`PRE_EXEC_REG_MOD` retrofix confound for D1.E V5-static.** Per D1.E spec §0.2 Q-E-RETROFIX-ABLATION we adopted **Option B** (15 jobs, fresh V5 post-rewire post-retrofix; NOT comparing against the D1.A archive directly). The D1.A V5 archive remains as supplementary context. If Pro prefers Option C (Option B + 10 extra pre-retrofix decay jobs to isolate the retrofix from the rewire), we can add that as a +1 reservation block (~3.5 h compute) — but the D1.E v1 plan does NOT include it.
+2. **Acknowledgment of NFP-4 `txn_role` mapping decisions.** We mapped the 8 new D2.B kinds to Pro-valid `MEMORY_TXN_ROLES`; Pro can request a `cycle_meta` schema bump in IV.POS.9 if finer per-kind separation is wanted.
+3. **PS-1 dead-arm cleanup.** D2.B post-batch cleanup dropped 5 obsolete kinds from `MUTATION_KINDS` (commit `e2c2256`). This is internal hygiene — Pro just needs to know the final kind catalog is what shipped, not the pre-cleanup union.
 
 ---
 
@@ -440,26 +439,26 @@ We will explicitly call this confound out in the D1.E subsection (and ideally re
 
 ### 6.1 D1.E's three components
 
-Per `IV_POS_8_D1_REVISIT_PLAN.md` v0.6 §3.3 + `NFP-9`:
+Per `IV_POS_8_D1_REVISIT_PLAN.md` v0.6 §3.3 + `NFP-9` (with the 2026-06-17 update) + D1.E spec v0.1 (`IV_POS_8_D1_E_SPEC.md`):
 
 **(A) Reward rewire** in `a4/standalone/reward_v2.py` + `a4/standalone/fuzzer.py`:
 
 | Layer | Change | Source |
 |---|---|---|
 | **L0** | Keep production `compressed_global_context` log2 bucketing (D1.B Batch 1.6 corrected). NOT a swap — keep what we have, because D1.B Finding (1) showed coarsenings make the post-local window WORSE. | D1.B `d1b_recommendation.md` + `d1e_handoff_CGC_saturation.md` |
-| **L1** | Extend `compute_bandit_success` to OR-in (a) `f_new > 0` (free per NFP-9 — already computed in `reward_v2.py:compute_reward_v2_components` but excluded from today's Bernoulli) + (b) one or more Tier-1 D1.C-shortlisted per-mutation signals (top 2–3 from D1.C Bucket A) | D1.C `d1e_handoff_L1_signals.md` |
-| **L2** | **OUT OF SCOPE for D1.E v1.** Replacing Beta-Bernoulli TS with scalar-reward bandit (so we can use continuous-valued signals like `recent_marginal_discovery_rate` directly) is a Layer-2 architectural change deferred to D2 or follow-on. Bucket-C D1.C signals are flagged for this future work. | NFP-9 |
+| **L1** | Extend `compute_bandit_success` to OR-in the **top 3 D1.C Bucket-A signals**: `mutation_substrategy_uniqueness`, `d_loc_le_2_flag` (with opposite-saturation guard), `singleton_failure_flag`. **`f_new > 0` is NOT wired into L1 for V5** per the NFP-9 update — D1.C empirically found `f_new_flag` fires on ~0.17% of pulls full-campaign and ~0% post-local on the V5 corpus (Bucket B — non-saturation failure). Engineering hook for `f_new` remains in place for future Hybrid V7 re-evaluation where V6-only kinds may re-activate the channel. | D1.C `d1e_handoff_L1_signals.md` + NFP-9 update |
+| **L2** | **OUT OF SCOPE for D1.E v1.** Replacing Beta-Bernoulli TS with scalar-reward bandit (so we can use continuous-valued signals like `recent_marginal_discovery_rate` directly) is a Layer-2 architectural change deferred to D2 or follow-on. The 4th-alternate D1.C signal (`recent_marginal_discovery_rate`) is flagged for this future work. | NFP-9 |
 
 **(B) K + epoch retune** per D1.A Finding A + Finding D:
 
 | Parameter | D1.A value | D1.E value |
 |---|---|---|
-| Decayexp K | 50 (saturated by d=7) | **200–300** (transition lands in saturation tail at d≈27–41) |
-| Epoch boundaries | `[(0, 0.55), (2000, 0.35), (4000, 0.20)]` (third tier is no-op per Finding D) | **`[(0, 0.55), (1000, 0.35)]`** (drop the no-op third tier; move boundary earlier so staircase fires inside discovery window) |
+| Decayexp K | 50 (saturated by d=7) | **200–300** (transition lands in saturation tail at d≈27–41); final value locked after D1.E Batch 0 legacy-`coverage` SQL pass |
+| Epoch boundaries | `[(0, 0.55), (2000, 0.35), (4000, 0.20)]` (third tier is no-op per Finding D; class is `EpochStageFloor`) | **`[(0, 0.55), (1000, 0.35)]`** (drop the no-op third tier; move boundary earlier so staircase fires inside discovery window) |
 
-K target derivation will use `_local_discoveries` saturation (cumulative legacy `coverage` row count, per Pro §7 verbatim formula `floor_fraction(t) = max(0.20, 0.55 × exp(-local_coverage_seen / K))`). NOT changed by D1.B/D1.C — K stays anchored to local survey progress per Pro's intent.
+K target derivation uses `_local_discoveries` saturation (cumulative legacy `coverage.first_hit_mutation_id` count per `fuzzer.py:691-699`, per Pro §7 verbatim formula `floor_fraction(t) = max(0.20, 0.55 × exp(-local_coverage_seen / K))`). NOT changed by D1.B/D1.C — K stays anchored to local survey progress per Pro's intent.
 
-**(C) POS re-run** — 5 paired triplets × 3 variants (V5-static, V5-decayexp, V5-decayepoch) = **15 jobs** under the rewired reward path. Same paired-seed structure as D1.A (seeds 1234–1238) for direct comparability.
+**(C) POS re-run** — 5 paired triplets × 3 variants (V5-static, V5-decayexp, V5-decayepoch) = **15 jobs (Option B)** under the rewired reward path AND the post-1.5e codebase. Same paired-seed structure as D1.A (seeds 1234–1238) for direct comparability, though strict byte-identity to the D1.A V5 archive no longer holds (see §2.4 + §6.4). The V5-static run is FRESH, not a re-use of the D1.A archive.
 
 ### 6.2 What Pro will see after D1.E
 
@@ -468,24 +467,34 @@ A **direct paired comparison** of three V5 floor schedules under the **rewired r
 - If decay variants now show statistically significant gains on at least one of (a) `local_context_final`, (b) corrected `compressed_global_context_final`, (c) any of the D1.C Tier-2 bug-proximity metrics — then Pro §7 Stage 2 is partially validated and decay variants survive into D2.
 - If decay variants STILL show no significant difference — then either (a) Pro's Stage 2 hypothesis is empirically wrong for the V5 catalog (decay-alone-isn't-enough), or (b) there's a Layer-2 (scalar bandit) requirement we haven't met. D1.E result will distinguish (a) vs (b) by examining whether the rewired binary OR `bandit_success` actually has more post-local discrimination than the original.
 
-### 6.3 D1.E sync requirements (must land BEFORE D1.E dispatches)
+### 6.3 D1.E sync requirements (all DONE; spec is greenlight-pending)
 
 | Requirement | Owner | Status |
 |---|---|---|
 | D1.B `production_log2_corrected` baseline | D1.B (Composer + Opus, commit `71dae77`) | **DONE** |
-| D1.C Tier-1 shortlist + `d1e_handoff_L1_signals.md` | D1.C Batch 3 | IN PROGRESS |
-| D2.B Batch 1.5e `PRE_EXEC_REG_MOD` retrofix | D2.B Composer (parallel chat) | IN PROGRESS |
-| Ivan greenlight on D1.E spec | Ivan | Pending D1.C + D2.B Batch 1.5e completion |
+| D1.C Tier-1 shortlist + `d1e_handoff_L1_signals.md` | D1.C Batch 3 (commit `3a8487c`) | **DONE** |
+| D2.B Batch 1.5e `PRE_EXEC_REG_MOD` retrofix | D2.B Composer (commit `78d036c`); full D2.B done at `e2c2256` | **DONE** |
+| D1.E spec draft (Q-E-* defaults proposed) | Opus (`a4/docs/cloud2/IV_POS_8_D1_E_SPEC.md` v0.2 — Composer audit issues fixed: schema-correct persistence in `reward_counterfactuals`, post-1.5e regression golden trace, post-local opposite-saturation pre-flight, `EpochStageFloor` naming, `l1_signals.py` extractor wiring, in-memory `diag["d_loc"]`) | **DRAFT v0.2** |
+| Ivan greenlight on D1.E spec Q-E-* defaults | Ivan | **PENDING** |
+| D1.E Batch 0 (legacy `coverage` SQL pass to lock K + epoch boundaries) | Composer (after Ivan greenlight) | NOT STARTED |
 
-### 6.4 Open Decision for Pro at D1.E dispatch time
+### 6.4 Pro-visible decision: D1.E V5-static baseline resolution
 
-**❓ Pro ask (likely surfaced at D1.E spec-lock):** D1.A's V5-static baseline was run under the hardcoded `PRE_EXEC_REG_MOD next_read` strategy. D1.E's V5-static will run under the new dual-strategy mix (NFP-6). Do you want:
+**Decision made (D1.E spec §0.2 Q-E-RETROFIX-ABLATION):** Adopted **Option B** — D1.E uses a fresh V5-static run under post-1.5e + post-rewire codebase as the paired-test baseline (5 V5-static + 5 decayexp + 5 decayepoch = 15 jobs total). The D1.A V5 archive is supplementary context, not the primary paired baseline.
 
-- **(a) Compare D1.E rewired V5 against D1.A archived V5 directly** (cleanest test of reward-rewire effect; confounded by the dual-strategy `PRE_EXEC_REG_MOD` change), OR
-- **(b) Re-run D1.A V5-static under the new code as a control** (5 extra POS jobs; clean separation of reward-rewire effect from mutation-coverage effect; ~3 extra hours POS compute), OR
-- **(c) Skip the V5-static re-run in D1.E and only test decayexp + decayepoch under rewired reward** (saves 5 POS jobs but loses the V5-baseline anchor; not recommended)
+**Rationale:**
+- Post-1.5e `PRE_EXEC_REG_MOD` is RNG-picked per pull (`fuzzer.py:1685-1686`) — strict byte-identity with D1.A archive is gone.
+- The L1 rewire changes the bandit's pull pattern, so even the same kind catalog produces different trajectories. Reusing D1.A V5 archive would conflate "did rewire help?" with "did retrofix change V5 baseline?".
+- Option B costs ~5.5h compute (within one reservation block); fresh V5 is justifiable per revisit plan §3.3 Composer-point-5 rationale.
 
-Our default if Pro doesn't specify: **(a)** with the confound explicitly disclaimed in the subsection. **(b)** is cleaner and we can absorb the 5 extra jobs if Pro wants the cleaner statistical separation.
+**Pro-facing confound disclosure:** D1.E V5-static vs D1.A V5 archive comparison confounds two changes — (i) the L1 reward rewire (D1.E's hypothesis test) and (ii) the `PRE_EXEC_REG_MOD` strategy mix change (D2.B Batch 1.5e side-effect). D1.E v1 subsection will explicitly call this out. **If Pro prefers** clean separation of (i) from (ii), we can add **Option C** (+10 pre-retrofix decay-variant jobs, one extra reservation block ~3.5h) — but the D1.E v1 default is Option B.
+
+### 6.5 ❓ Pro asks at the D1.E preview stage
+
+1. **Endorsement of L1 wiring** — 3 D1.C signals naively OR'd into `compute_bandit_success` per spec Q-E-L1-COMPOSITION / Q-E-L1-SIGNALS. Pro may want a non-naive composition (per-channel reward, weighted, multi-objective) per `d1b_recommendation.md` §4 — that is an open question deferred from D1.B and explicitly out-of-scope for D1.E v1; if Pro wants it pulled in, we re-spec.
+2. **Endorsement of K + epoch retune targets** — K ≈ 200-300 anchored to legacy `coverage` saturation; epoch boundaries `[(0, 0.55), (1000, 0.35)]`. D1.E Batch 0 pins exact K from the SQL pass.
+3. **Option B vs Option C decision** (§6.4) — do we add the +10-job pre-retrofix decay-variant ablation to isolate the rewire from the retrofix?
+4. **Hybrid V7 re-audit timing** — should D1.E gate on a Hybrid V7 sanity pass first, or is V5-only D1.E sufficient as the architectural test of L0+L1 rewire? (Per D1.C scope disclaimers — all D1.C signal gates were measured on V5 only.)
 
 ---
 
@@ -498,9 +507,14 @@ Our default if Pro doesn't specify: **(a)** with the confound explicitly disclai
 | D1.B → D1.E hand-off (L0 baseline rationale) | `a4/runs/iv_pos_8/d1b/d1e_handoff_CGC_saturation.md` |
 | D1.B `page_class` ELF layout | `a4/runs/iv_pos_8/d1b/d1b_page_class_layout.md` |
 | D1.B variant recommendation | `a4/runs/iv_pos_8/d1b/d1b_recommendation.md` |
-| D1.C spec (IN PROGRESS) | `a4/docs/cloud2/IV_POS_8_D1_C_SPEC.md` v0.3 |
+| D1.C spec (DONE at `3a8487c`) | `a4/docs/cloud2/IV_POS_8_D1_C_SPEC.md` v0.3 |
+| D1.C Pro-facing subsection | `a4/runs/iv_pos_8/d1c/D1C_SUBSECTION.md` |
+| D1.C full signal reference (self-contained explainer) | `a4/runs/iv_pos_8/d1c/d1c_signal_shortlist.md` |
+| D1.C D1.E hand-off | `a4/runs/iv_pos_8/d1c/d1e_handoff_L1_signals.md` |
+| D1.C systematic audit report | `a4/docs/cloud2/composer/D1C_AUDIT_REPORT.md` |
 | D2.A spec (DONE at `7b66fb9`) | `a4/docs/cloud2/IV_POS_8_D2_A_SPEC.md` v0.2 |
-| D2.B spec (IN PROGRESS) | `a4/docs/cloud2/IV_POS_8_D2_B_SPEC.md` v0.5 |
+| D2.B spec (DONE — final commit `e2c2256`) | `a4/docs/cloud2/IV_POS_8_D2_B_SPEC.md` v0.5 |
+| D1.E spec (DRAFT v0.2; Ivan greenlight on Q-E-* pending before Batch 0 kickoff) | `a4/docs/cloud2/IV_POS_8_D1_E_SPEC.md` |
 | D1 revisit plan (the master plan that spawned this briefing) | `a4/docs/cloud2/IV_POS_8_D1_REVISIT_PLAN.md` v0.6 |
 | Notes for Pro index (NFP-1 through NFP-10) | `a4/docs/cloud2/IV_POS_8_NOTES_FOR_PRO.md` |
 
@@ -510,6 +524,8 @@ Our default if Pro doesn't specify: **(a)** with the confound explicitly disclai
 
 | Date | Author | Change |
 |---|---|---|
-| 2026-06-17 | Opus | Initial draft v0.1 — covers completed work through 2026-06-17: D1.A (frozen), D2.A (done at `7b66fb9`), D1.B (done at `71dae77`). Placeholder structures for D1.C (in progress), D2.B (in progress), D1.E preview. Embeds Pro disclosure asks NFP-7 Q-PC-4, NFP-10 byte_addr fix + post-hoc replay acceptability, NFP-9 D1.E L0+L1 framing, NFP-6 D1.A V5-static re-run decision. Briefing is intentionally NOT the final D1 report (that comes at Stage 4 after D1.E); this is the pre-D1.E checkpoint so Pro can validate the reasoning chain while the choices are still cheap to revise. |
+| 2026-06-17 | Opus | Initial draft v0.1 — covers completed work through 2026-06-17: D1.A (frozen), D2.A (done at `7b66fb9`), D1.B (done at `71dae77`). Placeholder structures for D1.C (in progress), D2.B (in progress), D1.E preview. Embeds Pro disclosure asks NFP-7 Q-PC-4, NFP-10 byte_addr fix + post-hoc replay acceptability, NFP-9 D1.E L0+L1 framing, NFP-6 D1.A V5-static re-run decision. |
+| 2026-06-17 | Opus | v0.2 — extended §4 with D1.C completed status, 5 headline findings, scope disclaimer, 5 Pro asks (after D1.C commit `3a8487c`). |
+| 2026-06-18 | Opus | **v0.3 — post-Composer-audit refresh.** Updated TL;DR table to reflect D2.B DONE (commits `78d036c` → `e2c2256`). Refined D2.A "V5 byte-identity" claims to clarify the byte-identity is for the ArmKey refactor itself; post-1.5e `PRE_EXEC_REG_MOD` RNG change breaks strict byte-identity for fresh runs (§2.4 + §6.4). Updated §5 to DONE status with all D2.B commits + live Pro asks. Fixed §6.1 L1 row to remove `f_new > 0` per NFP-9 update + D1.C empirical finding (was previously listed as a "free" L1 channel — but D1.C found ~0% post-local fire on V5). Refreshed §6.3 sync requirements table (all DONE; spec greenlight-pending). Reframed §6.4 as "decision made: Option B" with Option C still available if Pro prefers cleaner separation. Added §6.5 with 4 live Pro asks at the D1.E preview stage. Updated §7 file index with D1.C subsection/shortlist/handoff/audit + D2.B DONE + D1.E spec draft. |
 
-*End of `IV_POS_8_PRE_D1E_BRIEFING_FOR_PRO.md` v0.1.*
+*End of `IV_POS_8_PRE_D1E_BRIEFING_FOR_PRO.md` v0.3.*
