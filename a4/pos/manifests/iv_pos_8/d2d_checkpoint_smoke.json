@@ -1,0 +1,32 @@
+{
+  "_doc": "IV.POS.8 D2.D — 4-variant checkpoint smoke stubs for D2.F POS dispatch. V5_control fresh-equivalent uses cTS_semantic_v2; production checkpoint reuses R2 archive.",
+  "name": "d2d_checkpoint_smoke_v1",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {
+      "strategy": "cTS_semantic_v2",
+      "seed": 42,
+      "n": 10,
+      "telemetry_level": "full"
+    },
+    {
+      "strategy": "v6_uniform",
+      "seed": 42,
+      "n": 10
+    },
+    {
+      "strategy": "v6_cTS",
+      "seed": 42,
+      "n": 10,
+      "telemetry_level": "full"
+    },
+    {
+      "strategy": "hybrid_cTS",
+      "seed": 42,
+      "n": 10,
+      "telemetry_level": "full"
+    }
+  ]
+}

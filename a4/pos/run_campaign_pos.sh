@@ -214,11 +214,31 @@ cat > "$META" <<EOF
 }
 EOF
 
-# ----- 7. build + run cli fuzz ------------------------------------------
-# Run from $REPO_DIR so `python3 -m a4.standalone.cli` finds the a4 package
+# ----- 7. build + run campaign ------------------------------------------
+# Run from $REPO_DIR so `python3 -m a4.standalone.*` finds the a4 package
 # (no install needed; package is in cwd). All other paths are absolute.
 cd "$REPO_DIR"
 
+if [[ "$A4_STRATEGY" = "v6_uniform" ]]; then
+    declare -a CMD=(
+        "$PY" -m a4.standalone.v6_uniform_driver
+        --host "$HOST_BIN"
+        --db "$DB"
+        --seed "$A4_SEED"
+        --num "$A4_NUM"
+        --progress-every 10
+        --label "${A4_CAMPAIGN_NAME}"
+    )
+    CMD+=(--)
+    # shellcheck disable=SC2206
+    HOST_ARR=($A4_HOST_ARGS); CMD+=("${HOST_ARR[@]}")
+    echo "[run_campaign_pos] v6_uniform driver command: ${CMD[*]}" | tee -a "$LOG"
+    export A4_COVERAGE_TOUCH=1
+    export A4_FAMILY_RESIDUE=1
+    export CONSTRAINT_CONTINUE=1
+    "${CMD[@]}" 2>&1 | tee -a "$LOG"
+    CAMP_RC=${PIPESTATUS[0]}
+else
 # Map A4_STRATEGY (manifest label, may be e.g. "bandit-16" or "bandit-32")
 # onto the CLI's --selector choices, which are strictly: uniform | zoned | bandit | guided.
 # Trailing "-NN" is treated as a b_count hint (already pushed separately as A4_B_COUNT)
@@ -288,6 +308,7 @@ export CONSTRAINT_CONTINUE=1
 
 "${CMD[@]}" 2>&1 | tee -a "$LOG"
 CAMP_RC=${PIPESTATUS[0]}
+fi
 
 # ----- 8. record final mutation count -----------------------------------
 if [[ -f "$DB" ]]; then

@@ -171,6 +171,11 @@ def record_full_telemetry(
     seen_compressed_global: Set[str],
     seen_structural: Set[StructuralCell],
     components: Optional[RewardComponents] = None,
+    l1_logging: bool = False,
+    bandit_success_l1: Optional[int] = None,
+    l1_substrategy_uniqueness: Optional[int] = None,
+    l1_d_loc_le_2: Optional[int] = None,
+    l1_singleton_failure: Optional[int] = None,
 ) -> RewardComponents:
     """Write all Phase 6 v2 tables for one mutation. Returns reward components."""
     mutation_zone = step_to_zone.get(step, "core_other")
@@ -195,6 +200,14 @@ def record_full_telemetry(
         )
 
     counterfactuals = compute_counterfactuals(components, legacy_reward_diag)
+    l1_kwargs = {}
+    if l1_logging:
+        l1_kwargs = {
+            "bandit_success_l1": bandit_success_l1,
+            "l1_substrategy_uniqueness": l1_substrategy_uniqueness,
+            "l1_d_loc_le_2": l1_d_loc_le_2,
+            "l1_singleton_failure": l1_singleton_failure,
+        }
     db.record_reward_counterfactuals(
         mutation_id,
         current_reward=_sanitize_reward(float(counterfactuals["current_reward"])),
@@ -204,6 +217,7 @@ def record_full_telemetry(
         compressed_global_reward=_sanitize_reward(
             float(counterfactuals["compressed_global_reward"])
         ),
+        **l1_kwargs,
     )
 
     sub = extract_mutation_substrategy(kind, config, original_value, mutated_value)

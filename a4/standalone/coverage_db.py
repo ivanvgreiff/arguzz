@@ -347,6 +347,19 @@ class CoverageDB:
                 FOREIGN KEY (mutation_id) REFERENCES mutations(id) ON DELETE CASCADE
             )
         """)
+        rc_cols = {
+            row[1] for row in cursor.execute("PRAGMA table_info(reward_counterfactuals)")
+        }
+        for col in (
+            "bandit_success_l1",
+            "l1_substrategy_uniqueness",
+            "l1_d_loc_le_2",
+            "l1_singleton_failure",
+        ):
+            if col not in rc_cols:
+                cursor.execute(
+                    f"ALTER TABLE reward_counterfactuals ADD COLUMN {col} INTEGER"
+                )
 
         # 4. mutation_substrategy — kind-specific decomposition of what
         #    exactly was mutated. For INSTR_WORD_MOD_SUR this captures
@@ -529,6 +542,11 @@ class CoverageDB:
         fnew_only_reward: float,
         discovery_binary_reward: int,
         compressed_global_reward: float,
+        *,
+        bandit_success_l1: Optional[int] = None,
+        l1_substrategy_uniqueness: Optional[int] = None,
+        l1_d_loc_le_2: Optional[int] = None,
+        l1_singleton_failure: Optional[int] = None,
     ) -> None:
         """Insert one row into `reward_counterfactuals` (Pro §12)."""
         cursor = self.conn.cursor()
@@ -536,11 +554,15 @@ class CoverageDB:
             INSERT OR REPLACE INTO reward_counterfactuals
                 (mutation_id, current_reward, no_qloc_reward,
                  fnew_only_reward, discovery_binary_reward,
-                 compressed_global_reward)
-            VALUES (?, ?, ?, ?, ?, ?)
+                 compressed_global_reward,
+                 bandit_success_l1, l1_substrategy_uniqueness,
+                 l1_d_loc_le_2, l1_singleton_failure)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (mutation_id, current_reward, no_qloc_reward,
               fnew_only_reward, int(discovery_binary_reward),
-              compressed_global_reward))
+              compressed_global_reward,
+              bandit_success_l1, l1_substrategy_uniqueness,
+              l1_d_loc_le_2, l1_singleton_failure))
         self.conn.commit()
 
     def record_mutation_substrategy(

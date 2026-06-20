@@ -13,6 +13,7 @@ the result to the verifier to check if it accepts or rejects the proof.
 """
 
 import json
+import logging
 import os
 import random
 import re
@@ -52,7 +53,21 @@ from a4.standalone.bandit_ts import (
     MutationOutcome,
 )
 from a4.standalone.arm_universe import ArmUniverse
-from a4.standalone.semantic_arm_universe import SemanticArmUniverse
+from a4.standalone.semantic_arm_universe import (
+    ARGUZZ_EXEC_FAULT,
+    ArmKey,
+    SemanticArmUniverse,
+)
+from a4.standalone.mutations.arguzz_bridge import (
+    MUTATION_KINDS_ARGUZZ_FULL,
+    MUTATION_KINDS_ARGUZZ_SELECTED,
+    create_mutation_for_arm,
+)
+from a4.arguzz_dependent.arguzz_parser import parse_all_traces
+from a4.standalone.compressed_global_extractor import (
+    extract_compressed_global_contexts,
+    to_storage_rows,
+)
 from a4.standalone.step_selector import SemanticZoneStepSelector
 from a4.standalone.zone_classifier import classify_zones
 from a4.standalone.reward_v2 import (
@@ -63,7 +78,12 @@ from a4.standalone.reward_v2 import (
 from a4.standalone.telemetry_v2 import (
     TELEMETRY_LEVELS,
     default_telemetry_level,
+    extract_mutation_substrategy,
     record_full_telemetry,
+)
+from a4.standalone.l1_signals import (
+    bandit_success_l1_counterfactual,
+    compute_l1_flags,
 )
 from a4.standalone.structural_cells import StructuralCell
 from a4.standalone.pilot_calibration import (
@@ -121,13 +141,19 @@ V2_BANDIT_STRATEGIES = frozenset({
     "cTS_semantic_v2",
     "cTS_semantic_v2_decayexp",
     "cTS_semantic_v2_decayepoch",
+    "v6_cTS",
+    "hybrid_cTS",
 })
+
+ARGUZZ_CTS_STRATEGIES = frozenset({"v6_cTS", "hybrid_cTS"})
 
 CTS_SEMANTIC_V2_FAMILY = frozenset({
     "cTS_semantic_v2",
     "cTS_semantic_v2_decayexp",
     "cTS_semantic_v2_decayepoch",
 })
+
+ALL_SEMANTIC_CTS_STRATEGIES = CTS_SEMANTIC_V2_FAMILY | ARGUZZ_CTS_STRATEGIES
 
 
 @dataclass
@@ -201,6 +227,8 @@ STRATEGY_DISPLAY_NAMES = {
     "cTS_semantic_v2":      "cTS_semantic_v2",       # Variant 5 (main candidate)
     "cTS_semantic_v2_decayexp": "cTS_semantic_v2_decayexp",
     "cTS_semantic_v2_decayepoch": "cTS_semantic_v2_decayepoch",
+    "v6_cTS": "v6_cTS",
+    "hybrid_cTS": "hybrid_cTS",
 }
 
 
@@ -350,6 +378,10 @@ class A4Fuzzer:
         self._seen_structural: Set[StructuralCell] = set()
         self._v2_mutation_count: int = 0
         self._local_loc_discoveries: int = 0
+        self.arguzz_timeout: float = 90.0
+        self._baseline_trace: Optional[Dict[int, str]] = None
+        self.l1_logging: bool = True
+        self._l1_substrategy_seen: Set[Tuple[str, tuple]] = set()
         
         # Temp directory for config files
         self.temp_dir = Path(tempfile.mkdtemp(prefix="a4_fuzz_"))
@@ -604,6 +636,7 @@ class A4Fuzzer:
         self._seen_local_v2 = set()
         self._seen_compressed_global = set()
         self._seen_structural = set()
+        self._l1_substrategy_seen = set()
 
     def _record_full_telemetry(
         self,
@@ -617,6 +650,7 @@ class A4Fuzzer:
         mutated_value: int,
         legacy_reward_diag: Optional[dict],
         components: Optional[dict] = None,
+        l1_payload: Optional[dict] = None,
     ) -> None:
         """Phase 6: populate v2 telemetry tables when telemetry_level is full."""
         if self.telemetry_level != "full":
@@ -626,6 +660,12 @@ class A4Fuzzer:
         cycle = self.data.get_cycle(step) if self.data is not None else None
         mutation_major = cycle.major if cycle is not None else 0
         setattr(exec_result, "_mutation_major", mutation_major)
+        l1_kwargs = {}
+        if l1_payload:
+            l1_kwargs = {
+                "l1_logging": True,
+                **l1_payload,
+            }
         record_full_telemetry(
             self.db,
             self.campaign_id,
@@ -642,7 +682,46 @@ class A4Fuzzer:
             seen_compressed_global=self._seen_compressed_global,
             seen_structural=self._seen_structural,
             components=components,
+            **l1_kwargs,
         )
+
+    def _l1_active_for_campaign(self) -> bool:
+        return (
+            self.l1_logging
+            and self.selector_strategy in ALL_SEMANTIC_CTS_STRATEGIES
+        )
+
+    def _compute_l1_payload(
+        self,
+        *,
+        bandit_success: int,
+        legacy_reward_diag: dict,
+        failures: list,
+        kind: str,
+        config: dict,
+        original_value: int,
+        mutated_value: int,
+    ) -> Optional[dict]:
+        """Observe-only L1 flags + counterfactual enriched bit (does not touch bandit)."""
+        if not self._l1_active_for_campaign():
+            return None
+        d_loc = int(legacy_reward_diag.get("d_loc", 999))
+        sub = extract_mutation_substrategy(
+            kind, config, original_value, mutated_value,
+        )
+        flags = compute_l1_flags(
+            d_loc=d_loc,
+            failures=failures,
+            kind=kind,
+            substrategy=sub,
+            seen=self._l1_substrategy_seen,
+        )
+        return {
+            "bandit_success_l1": bandit_success_l1_counterfactual(
+                bandit_success, flags,
+            ),
+            **flags,
+        }
 
     def _active_mutation_kinds(self) -> List[str]:
         """Kinds for this campaign (all 8 or a single kind)."""
@@ -659,6 +738,8 @@ class A4Fuzzer:
             return ExponentialDecayFloor(initial=0.55, floor_min=0.20, K=50)
         if selector_strategy == "cTS_semantic_v2_decayepoch":
             return EpochStageFloor([(0, 0.55), (2000, 0.35), (4000, 0.20)])
+        if selector_strategy in ARGUZZ_CTS_STRATEGIES:
+            return ConstantFloor(0.55)
         raise ValueError(f"no floor schedule for strategy: {selector_strategy}")
 
     @staticmethod
@@ -688,12 +769,42 @@ class A4Fuzzer:
             }
         raise TypeError(f"unknown FloorSchedule type: {type(schedule)!r}")
 
+    def _arguzz_strategy_config(
+        self,
+    ) -> tuple[Optional[list[str]], list[str], bool]:
+        """Return (arguzz_kinds, a4_mutation_kinds, applied_accounting_mode)."""
+        if self.selector_strategy == "v6_cTS":
+            return (list(MUTATION_KINDS_ARGUZZ_FULL), [], True)
+        if self.selector_strategy == "hybrid_cTS":
+            return (
+                list(MUTATION_KINDS_ARGUZZ_SELECTED),
+                self._active_mutation_kinds(),
+                True,
+            )
+        return (None, self._active_mutation_kinds(), False)
+
+    def _capture_baseline_trace(self) -> Dict[int, str]:
+        """ISS-7: step→instruction map from host --trace (Arguzz strategies only)."""
+        cmd = [self.host_binary, "--trace", *self.host_args]
+        proc = subprocess.run(cmd, capture_output=True, timeout=120)
+        stdout = (proc.stdout or b"").decode("utf-8", errors="replace") + (
+            proc.stderr or b""
+        ).decode("utf-8", errors="replace")
+        if proc.returncode != 0:
+            raise RuntimeError(
+                f"baseline --trace failed rc={proc.returncode}"
+            )
+        traces = parse_all_traces(stdout)
+        if not traces:
+            raise RuntimeError("no <trace> tags parsed from baseline --trace")
+        return {tr.step: tr.instruction for tr in traces}
+
     def _sync_local_coverage_after_failures(self, new_coverage: int) -> None:
         """Push cumulative legacy loc discoveries to cTS scheduler (Option B)."""
         self._local_loc_discoveries += new_coverage
         if (
             self.v2_scheduler is not None
-            and self.selector_strategy in CTS_SEMANTIC_V2_FAMILY
+            and self.selector_strategy in ALL_SEMANTIC_CTS_STRATEGIES
             and isinstance(self.v2_scheduler, ConstrainedTSScheduler)
         ):
             self.v2_scheduler.update_local_coverage(self._local_loc_discoveries)
@@ -740,15 +851,28 @@ class A4Fuzzer:
         self._v2_mutation_count = 0
         self._local_loc_discoveries = 0
 
-        kinds = self._active_mutation_kinds()
+        arguzz_kinds, a4_kinds, applied_accounting = self._arguzz_strategy_config()
+        baseline_trace = None
+        if arguzz_kinds is not None:
+            baseline_trace = self._capture_baseline_trace()
+            self._baseline_trace = baseline_trace
+        else:
+            self._baseline_trace = None
 
-        if self.selector_strategy in CTS_SEMANTIC_V2_FAMILY:
+        if self.selector_strategy in ALL_SEMANTIC_CTS_STRATEGIES:
             floor_schedule = self._floor_schedule_for_strategy(self.selector_strategy)
-            self.semantic_arm_universe = SemanticArmUniverse.build(self.data, kinds)
+            self.semantic_arm_universe = SemanticArmUniverse.build(
+                self.data,
+                a4_kinds,
+                arguzz_kinds=arguzz_kinds,
+                baseline_trace=baseline_trace,
+            )
             self.v2_scheduler = ConstrainedTSScheduler(
                 self.semantic_arm_universe,
                 seed=self.seed,
                 floor_schedule=floor_schedule,
+                applied_accounting_mode=applied_accounting,
+                bernoulli_floor=(self.selector_strategy in ARGUZZ_CTS_STRATEGIES),
             )
             self.semantic_zone_selector = SemanticZoneStepSelector(
                 self.semantic_arm_universe, seed=self.seed + 1,
@@ -756,11 +880,13 @@ class A4Fuzzer:
             if self.verbose:
                 print(self.semantic_arm_universe.summary())
         elif self.selector_strategy in ("kindUCB_zoned_v1", "kindUCB_zoned_v2_noQ"):
+            kinds = self._active_mutation_kinds()
             self.v2_scheduler = KindLevelUCBScheduler(
                 kinds, c_explore=params.c_explore, seed=self.seed,
             )
             self.selector = ZonedStepSelector(seed=self.seed + 1)
         elif self.selector_strategy == "kindTS_zoned_v2":
+            kinds = self._active_mutation_kinds()
             self.v2_scheduler = KindLevelTSScheduler(kinds, seed=self.seed)
             self.selector = ZonedStepSelector(seed=self.seed + 1)
         else:
@@ -770,7 +896,7 @@ class A4Fuzzer:
             n_arms = (
                 self.semantic_arm_universe.num_arms
                 if self.semantic_arm_universe is not None
-                else len(kinds)
+                else len(self._active_mutation_kinds())
             )
             print(f"--- V2 BANDIT READY ({n_arms} arms, budget {num_mutations}) ---\n")
 
@@ -791,9 +917,11 @@ class A4Fuzzer:
         extra: Optional[dict] = None
         if self.arm_universe is not None:
             extra = {"num_arms": int(self.arm_universe.num_arms)}
-        elif self.selector_strategy in CTS_SEMANTIC_V2_FAMILY:
+        elif self.selector_strategy in ALL_SEMANTIC_CTS_STRATEGIES:
             schedule = self._floor_schedule_for_strategy(self.selector_strategy)
             extra = self._floor_schedule_extra(schedule)
+            if self.selector_strategy in ARGUZZ_CTS_STRATEGIES:
+                extra["bernoulli_floor"] = True
             if self.semantic_arm_universe is not None:
                 extra["num_arms"] = int(self.semantic_arm_universe.num_arms)
         elif self.v2_scheduler is not None:
@@ -976,6 +1104,246 @@ class A4Fuzzer:
 
         return result
 
+    def _global_contexts_from_arguzz_family_details(
+        self, family_details: Optional[list],
+    ) -> list:
+        if not family_details:
+            return []
+        out = []
+        seen: set[tuple[str, str]] = set()
+        for fdi in family_details:
+            fam = fdi.get("family", "?")
+            items = fdi.get("broken_addrs", []) or fdi.get("broken_indices", []) or []
+            for raw in items:
+                try:
+                    if isinstance(raw, dict):
+                        addr = int(
+                            raw.get("addr")
+                            or raw.get("byte_addr")
+                            or raw.get("address")
+                            or raw.get("index")
+                            or raw.get("idx")
+                            or raw.get("lookup_index")
+                            or 0
+                        )
+                    else:
+                        addr = int(raw)
+                except (TypeError, ValueError):
+                    continue
+                key = (fam, str(addr))
+                if key in seen:
+                    continue
+                seen.add(key)
+                out.append(("GLOBAL", fam, str(addr)))
+        return out
+
+    def _record_arguzz_mutation(
+        self,
+        arm: ArmKey,
+        step: int,
+        inv_result,
+        config: dict,
+    ) -> int:
+        """Persist Arguzz row via CoverageDB (D2.A outcome column + CGC)."""
+        if inv_result.soundness_signal:
+            logging.getLogger("a4.arguzz_bridge").warning(
+                "prove_success while applied at step=%d kind=%s zone=%s opcode_class=%s "
+                "— possible soundness signal or fault-no-op",
+                step, arm.kind, arm.zone, arm.opcode_class,
+            )
+        mutation_id = self.db.record_mutation(
+            self.campaign_id,
+            arm.kind,
+            step,
+            0,
+            config,
+            txn_idx=None,
+            verifier_accepted=(inv_result.prover_status == "success"),
+            original_value=0,
+            proof_generated=(inv_result.prover_status != "none"),
+            proof_verify_failed=(
+                inv_result.prover_status == "error"
+                and len(inv_result.failures) > 0
+            ),
+            elapsed_ms=int(inv_result.wall_s * 1000),
+            outcome=inv_result.outcome.value,
+        )
+        _, new_coverage = self.db.record_failures(mutation_id, inv_result.failures)
+        self._sync_local_coverage_after_failures(new_coverage)
+        global_ctxs = self._global_contexts_from_arguzz_family_details(
+            inv_result.family_details,
+        )
+        if global_ctxs:
+            self.db.record_global_failures(mutation_id, global_ctxs)
+
+        mutation_zone = self._step_to_zone.get(step, "core_other")
+        cycle = self.data.get_cycle(step)
+        mutation_major = cycle.major if cycle is not None else 0
+        ctxs = extract_compressed_global_contexts(
+            family_residues=inv_result.family_residues,
+            family_details=inv_result.family_details,
+            mutation_kind=arm.kind,
+            mutation_zone=mutation_zone,
+            mutation_major=mutation_major,
+        )
+        for ctx_key, fam, ctx_json in to_storage_rows(ctxs):
+            self.db.record_compressed_global_first_hit(
+                self.campaign_id, mutation_id, ctx_key, fam, ctx_json,
+            )
+        return mutation_id
+
+    def _run_arguzz_cts_mutation(
+        self,
+        mutation_num: int,
+        total: int,
+        stats: "CampaignStats",
+        decision: BanditDecision,
+        arm: ArmKey,
+    ) -> Optional["MutationResult"]:
+        """Arguzz dispatch path for v6_cTS / hybrid_cTS (ISS-6)."""
+        step = decision.step
+        iter_seed = self.seed * 1_000_000 + mutation_num
+        _outcome, inv_result, config = create_mutation_for_arm(
+            arm,
+            step,
+            self.host_binary,
+            self.host_args,
+            iter_seed,
+            self.data,
+            timeout=self.arguzz_timeout,
+        )
+
+        mutation_zone = self._step_to_zone.get(step, "core_other")
+        cycle = self.data.get_cycle(step)
+        mutation_major = cycle.major if cycle is not None else 0
+
+        exec_stub = MutationExecutionResult(
+            stdout=inv_result.raw_stdout,
+            stderr="",
+            combined_output=inv_result.raw_stdout,
+            exit_code=inv_result.rc,
+            failures=inv_result.failures,
+            touch_bitmap=None,
+            family_residues=inv_result.family_residues,
+            family_details=inv_result.family_details,
+        )
+        setattr(exec_stub, "config", config)
+
+        outcome_str = self._classify_outcome(
+            MutationResult(
+                kind=arm.kind,
+                step=step,
+                original_value=0,
+                mutated_value=0,
+                config=config,
+                failures=inv_result.failures,
+                verifier_accepted=(inv_result.prover_status == "success"),
+                execution_time_ms=inv_result.wall_s * 1000,
+                exit_code=inv_result.rc,
+                crashed=(inv_result.outcome == MutationOutcome.ERROR),
+                proof_generated=(inv_result.prover_status != "none"),
+                proof_verify_failed=(
+                    inv_result.prover_status == "error"
+                    and len(inv_result.failures) > 0
+                ),
+            )
+        )
+        proof_generated = inv_result.prover_status != "none"
+        reward, diag = compute_reward(
+            None,
+            inv_result.failures,
+            inv_result.rc,
+            outcome_str,
+            proof_generated,
+            self.coverage_state,
+            global_contexts=set(),
+        )
+
+        components = compute_reward_v2_components(
+            exec_stub,
+            self._seen_local_v2,
+            self._seen_compressed_global,
+            self._seen_structural,
+            arm.kind,
+            mutation_zone,
+            mutation_major,
+        )
+        reward_v2 = compute_reward_v2(
+            components["l_new"], components["f_new"], components["g_new"],
+            components["s_new"], components["crash"], components["repeat"],
+        )
+        bandit_success = compute_bandit_success(
+            components["l_new"], components["g_new"], components["s_new"],
+        )
+        l1_payload = self._compute_l1_payload(
+            bandit_success=bandit_success,
+            legacy_reward_diag=diag,
+            failures=inv_result.failures,
+            kind=arm.kind,
+            config=config,
+            original_value=0,
+            mutated_value=0,
+        )
+
+        self.v2_scheduler.update_with_outcome(
+            arm, inv_result.outcome, success=bandit_success,
+        )
+
+        update_state(
+            None, inv_result.failures, inv_result.rc, self.coverage_state,
+            global_contexts=set(),
+        )
+
+        mutation_id = self._record_arguzz_mutation(arm, step, inv_result, config)
+
+        if self.telemetry_level != "none":
+            self.db.record_reward_diag(mutation_id, diag)
+
+        if self.telemetry_level == "full":
+            self._record_full_telemetry(
+                mutation_id,
+                kind=arm.kind,
+                step=step,
+                exec_result=exec_stub,
+                config=config,
+                original_value=0,
+                mutated_value=0,
+                legacy_reward_diag=diag,
+                components=components,
+                l1_payload=l1_payload,
+            )
+            self.db.record_bandit_decision(
+                mutation_id,
+                selected_arm=decision.arm_id,
+                mode=decision.mode,
+                score=decision.score,
+                runnerup_arm=decision.runnerup_arm,
+                runnerup_score=decision.runnerup_score,
+                exploration=decision.exploration,
+            )
+
+        result = MutationResult(
+            kind=arm.kind,
+            step=step,
+            original_value=0,
+            mutated_value=0,
+            config=config,
+            failures=inv_result.failures,
+            verifier_accepted=(inv_result.prover_status == "success"),
+            execution_time_ms=inv_result.wall_s * 1000,
+            exit_code=inv_result.rc,
+            crashed=(inv_result.outcome == MutationOutcome.ERROR),
+            proof_generated=proof_generated,
+            proof_verify_failed=(
+                inv_result.prover_status == "error"
+                and len(inv_result.failures) > 0
+            ),
+            reward=reward_v2,
+            reward_diag=diag,
+            family_details=inv_result.family_details,
+        )
+        return result
+
     def _run_v2_bandit_mutation(
         self,
         mutation_num: int,
@@ -984,8 +1352,13 @@ class A4Fuzzer:
     ) -> Optional['MutationResult']:
         """Run one mutation under IV.POS.7 v2 bandit schedulers (Phase 5)."""
         decision: BanditDecision
-        if self.selector_strategy in CTS_SEMANTIC_V2_FAMILY:
+        if self.selector_strategy in ALL_SEMANTIC_CTS_STRATEGIES:
             decision = self.v2_scheduler.select()
+            arm = ArmKey.parse(decision.arm_id)
+            if arm.surface == ARGUZZ_EXEC_FAULT:
+                return self._run_arguzz_cts_mutation(
+                    mutation_num, total, stats, decision, arm,
+                )
             kind, zone, step = decision.kind, decision.zone, decision.step
         else:
             decision = self.v2_scheduler.select()
@@ -1001,7 +1374,7 @@ class A4Fuzzer:
                 return None
 
         bandit_kind = kind
-        bandit_zone = zone if self.selector_strategy in CTS_SEMANTIC_V2_FAMILY else None
+        bandit_zone = zone if self.selector_strategy in ALL_SEMANTIC_CTS_STRATEGIES else None
         bandit_step_at_select = step
 
         config = None
@@ -1016,7 +1389,7 @@ class A4Fuzzer:
                 config = None
             if config is not None:
                 break
-            if self.selector_strategy in CTS_SEMANTIC_V2_FAMILY and zone is not None:
+            if self.selector_strategy in ALL_SEMANTIC_CTS_STRATEGIES and zone is not None:
                 alt = self.semantic_zone_selector.pick_step_in_zone(kind, zone)
                 if alt is not None:
                     step = alt
@@ -1027,7 +1400,7 @@ class A4Fuzzer:
 
         if config is None:
             stats.skipped_mutations += 1
-            if self.selector_strategy in CTS_SEMANTIC_V2_FAMILY and zone is not None:
+            if self.selector_strategy in ALL_SEMANTIC_CTS_STRATEGIES and zone is not None:
                 self.v2_scheduler.update(kind, zone, 0)
             elif self.selector_strategy in ("kindUCB_zoned_v1", "kindUCB_zoned_v2_noQ"):
                 self.v2_scheduler.update(kind, 0.0)
@@ -1113,6 +1486,15 @@ class A4Fuzzer:
         bandit_success = compute_bandit_success(
             components["l_new"], components["g_new"], components["s_new"],
         )
+        l1_payload = self._compute_l1_payload(
+            bandit_success=bandit_success,
+            legacy_reward_diag=diag,
+            failures=failures,
+            kind=kind,
+            config=config,
+            original_value=original_value,
+            mutated_value=mutated_value,
+        )
 
         if self.debug_coverage_delta_path:
             touch_delta = (
@@ -1160,7 +1542,7 @@ class A4Fuzzer:
             self.v2_scheduler.update(kind, reward_v2)
         elif self.selector_strategy == "kindTS_zoned_v2":
             self.v2_scheduler.update(kind, bandit_success)
-        elif self.selector_strategy in CTS_SEMANTIC_V2_FAMILY:
+        elif self.selector_strategy in ALL_SEMANTIC_CTS_STRATEGIES:
             self.v2_scheduler.update(kind, zone, bandit_success)
 
         update_state(
@@ -1193,6 +1575,7 @@ class A4Fuzzer:
                 mutated_value=mutated_value,
                 legacy_reward_diag=diag,
                 components=components,
+                l1_payload=l1_payload,
             )
             self.db.record_bandit_decision(
                 mutation_id,

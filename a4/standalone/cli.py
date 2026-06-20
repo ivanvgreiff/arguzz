@@ -209,13 +209,16 @@ Examples:
                                 "kindTS_zoned_v2", "cTS_semantic_v2",
                                 "cTS_semantic_v2_decayexp",
                                 "cTS_semantic_v2_decayepoch",
+                                "v6_cTS", "hybrid_cTS",
                             ],
                             help="Step/selection strategy (default: zoned). "
                                  "IV.POS.7 variants: kindUCB_zoned_v1, "
                                  "kindUCB_zoned_v2_noQ, kindTS_zoned_v2, "
                                  "cTS_semantic_v2 (cloud1 Phase 5). "
                                  "IV.POS.8 D1.A: cTS_semantic_v2_decayexp, "
-                                 "cTS_semantic_v2_decayepoch.")
+                                 "cTS_semantic_v2_decayepoch. "
+                                 "IV.POS.8 D2.C/D2.D: v6_cTS (Arguzz cTS), "
+                                 "hybrid_cTS (Hybrid cTS).")
     fuzz_parser.add_argument("--b-count", type=int, default=None,
                             help="Override bucket count for bandit arm universe (default: auto)")
     fuzz_parser.add_argument("--values", default="mixed",

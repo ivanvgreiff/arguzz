@@ -185,6 +185,13 @@ _TXN_ROLE_BY_KIND: Dict[str, str] = {
     "TXN_ADDR_MOD":          "read",
     "TXN_CYCLE_PHASE_MOD":   "read",
     "CYCLE_DIFF_COUNT_MOD":  "read",
+    # D2.C Arguzz exec-fault kinds (per v6_driver_v2.py:74-84; IV_POS_8_D2_C_SPEC §4.6):
+    "PRE_EXEC_PC_MOD":       "ifetch",
+    "POST_EXEC_PC_MOD":      "ifetch",
+    "BR_NEG_COND":           "ifetch",
+    "POST_EXEC_REG_MOD":     "register",
+    "PRE_EXEC_MEM_MOD":      "read",
+    "POST_EXEC_MEM_MOD":     "write",
 }
 
 

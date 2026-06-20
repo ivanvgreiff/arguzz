@@ -144,6 +144,7 @@ class ConstrainedTSScheduler:
         seed: Optional[int] = None,
         floor_schedule: Optional[FloorSchedule] = None,
         applied_accounting_mode: bool = False,
+        bernoulli_floor: bool = False,
     ):
         self.universe = universe
         self.prior_alpha = prior_alpha
@@ -154,6 +155,7 @@ class ConstrainedTSScheduler:
         self.epoch_size = epoch_size
         self.rng = random.Random(seed)
         self.applied_accounting_mode = applied_accounting_mode
+        self.bernoulli_floor = bernoulli_floor
         self.floor_schedule = (
             floor_schedule
             if floor_schedule is not None
@@ -230,26 +232,51 @@ class ConstrainedTSScheduler:
                 mode = "singleton"
                 exploration = True
             else:
-                # 3. Per-epoch coverage floor (D9, D30)
-                target = self._floor_target()
-                under = [
-                    a for a in self.arms
-                    if self.epoch_pulls[a] < target - _EPSILON
-                ]
-                if under:
-                    chosen = min(under, key=lambda a: self.epoch_pulls[a])
-                    mode = "floor"
-                    exploration = True
+                # 3. Floor vs adaptive split
+                if self.bernoulli_floor:
+                    frac = self.floor_schedule.current(
+                        total_mutations=self._total_mutations,
+                        local_discoveries=self._local_discoveries,
+                    )
+                    frac = min(1.0, max(0.0, frac))
+                    if self.rng.random() < frac:
+                        chosen = min(self.arms, key=lambda a: self.epoch_pulls[a])
+                        mode = "floor"
+                        exploration = True
+                    else:
+                        thetas = self._sample_thetas()
+                        sorted_arms = sorted(
+                            self.arms, key=lambda a: thetas[a], reverse=True,
+                        )
+                        chosen = sorted_arms[0]
+                        score = thetas[chosen]
+                        mode = "adaptive"
+                        if len(sorted_arms) > 1:
+                            runnerup_arm = arm_id_for_decision(sorted_arms[1])
+                            runnerup_score = thetas[sorted_arms[1]]
                 else:
-                    # 4. Adaptive TS (D4, D-I)
-                    thetas = self._sample_thetas()
-                    sorted_arms = sorted(self.arms, key=lambda a: thetas[a], reverse=True)
-                    chosen = sorted_arms[0]
-                    score = thetas[chosen]
-                    mode = "adaptive"
-                    if len(sorted_arms) > 1:
-                        runnerup_arm = arm_id_for_decision(sorted_arms[1])
-                        runnerup_score = thetas[sorted_arms[1]]
+                    # Legacy integer per-epoch quota floor (V5 — unchanged).
+                    target = self._floor_target()
+                    under = [
+                        a for a in self.arms
+                        if self.epoch_pulls[a] < target - _EPSILON
+                    ]
+                    if under:
+                        chosen = min(under, key=lambda a: self.epoch_pulls[a])
+                        mode = "floor"
+                        exploration = True
+                    else:
+                        # 4. Adaptive TS (D4, D-I)
+                        thetas = self._sample_thetas()
+                        sorted_arms = sorted(
+                            self.arms, key=lambda a: thetas[a], reverse=True,
+                        )
+                        chosen = sorted_arms[0]
+                        score = thetas[chosen]
+                        mode = "adaptive"
+                        if len(sorted_arms) > 1:
+                            runnerup_arm = arm_id_for_decision(sorted_arms[1])
+                            runnerup_score = thetas[sorted_arms[1]]
 
         kind, zone = chosen.kind, chosen.zone
         steps = self.universe.steps_for_arm(chosen)

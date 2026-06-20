@@ -27,7 +27,7 @@ from typing import Dict, List, Optional, Tuple, TYPE_CHECKING, Union
 from a4.standalone.semantic_zones import (
     SEMANTIC_ZONES, SINGLETON_ZONES, BOUNDARY_ZONES,
 )
-from a4.standalone.zone_classifier import zone_to_steps
+from a4.standalone.zone_classifier import classify_zones, zone_to_steps
 from a4.standalone.mutations import comp_out_mod, load_val_mod, store_out_mod
 from a4.standalone.mutations import pre_exec_reg_mod, instr_type_mod, mem_val_mod
 from a4.standalone.mutations import instr_word_mod, instr_word_mod_sur
@@ -249,8 +249,14 @@ class SemanticArmUniverse:
         cls,
         data: "InspectionData",
         mutation_kinds: List[str],
+        *,
+        arguzz_kinds: Optional[List[str]] = None,
+        baseline_trace: Optional[Dict[int, str]] = None,
     ) -> "SemanticArmUniverse":
         """Build the semantic arm universe from inspection data."""
+        if arguzz_kinds is not None and baseline_trace is None:
+            raise ValueError("baseline_trace required when arguzz_kinds is set")
+
         z2s = zone_to_steps(data)
 
         valid_by_kind: Dict[str, List[int]] = {}
@@ -270,6 +276,33 @@ class SemanticArmUniverse:
                 if not real_steps:
                     continue
                 arms[ArmKey.v5(kind, zone)] = real_steps
+
+        if arguzz_kinds is not None:
+            from a4.standalone.mutations import arguzz_bridge
+
+            step_to_zone = classify_zones(data)
+            for kind in arguzz_kinds:
+                kind_steps = arguzz_bridge.get_valid_steps(
+                    data, kind, baseline_trace=baseline_trace,
+                )
+                valid_by_kind[kind] = kind_steps
+                for step in kind_steps:
+                    zone = step_to_zone.get(step, "core_other")
+                    opcode_class = arguzz_bridge.opcode_class_for_step(
+                        step, data, baseline_trace,
+                    )
+                    pre_post = arguzz_bridge._PRE_POST_BY_KIND[kind]
+                    arm = ArmKey(
+                        ARGUZZ_EXEC_FAULT,
+                        kind,
+                        zone,
+                        opcode_class,
+                        pre_post,
+                    )
+                    arms.setdefault(arm, []).append(step)
+            for arm, steps in list(arms.items()):
+                if arm.surface == ARGUZZ_EXEC_FAULT:
+                    arms[arm] = sorted(set(steps))
 
         return cls(
             mutation_kinds=list(mutation_kinds),

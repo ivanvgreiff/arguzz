@@ -1,0 +1,14 @@
+{
+  "_doc": "IV.POS.8 D2.C Batch 4 — V6-uniform driver scale validation (N=50, seed 1243). Validates F13 Hook-3 co-trigger at POS scale.",
+  "name": "d2c_v6_uniform_smoke_v1",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {
+      "strategy": "v6_uniform",
+      "seed": 1243,
+      "n": 50
+    }
+  ]
+}

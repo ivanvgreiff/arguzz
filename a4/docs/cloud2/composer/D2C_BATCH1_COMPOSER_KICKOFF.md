@@ -53,11 +53,14 @@ Composer MUST run each and paste output into the Batch 1 report:
 git rev-parse HEAD                      # → dfd0ebe... (or note the current commit)
 git status --short                      # record pre-existing doc edits; do not revert them
 
-# 2. Establish the REAL green baseline at your starting commit (do NOT trust a hardcoded number)
-python -m pytest a4/standalone/tests/ -q 2>&1 | tail -3
-# Record the exact "N passed, M skipped, K xfailed" line. The spec cites
-# "609 passed, 19 skipped, 1 xfailed" (post-D2.B), but 649 tests now collect —
-# capture YOUR actual baseline and require new tests to not regress it.
+# 2. Establish the green baseline at your starting commit (D2-regression path = ignore replicates)
+python -m pytest a4/standalone/tests/ -q --ignore=a4/standalone/tests/test_run_replicates.py 2>&1 | tail -3
+# Verified at HEAD dfd0ebe (2026-06-20): 616 passed, 17 skipped (633 collected, ~154s).
+# This is the standard D2 regression path (matches how the spec baseline was measured).
+# Full suite WITH replicates = 632 passed, 17 skipped (649 collected, ~16 min) — only run
+# if you suspect a replicate-path regression. (The spec's old "609 passed/19 skipped/
+# 1 xfailed" figure was e2c2256, pre-PS-2 — superseded; do not require it.)
+# New Batch-1 tests must not drop the green count below 616 passed / 17 skipped.
 
 # 3. NFP-10 byte_addr fix present — DO NOT revert during task 1.2
 grep -n 'byte_addr' a4/standalone/compressed_global_extractor.py
@@ -207,8 +210,8 @@ Mirror `test_d2a_back_compat_golden_trace.py` exactly: instantiate `ConstrainedT
 
 From a baseline `host --trace` of sha2-host, count applicable steps per kind and estimate the arm count for **FULL (11 kinds)** and **SELECTED (4 kinds)** using `kind × zone × opcode_class × pre_post` with applicability filtering (BR_NEG_COND→branch only, COMP_OUT_MOD→arithmetic only, LOAD_VAL_MOD→load only, STORE_OUT_MOD→store only; the other 7 unrestricted). Compare against §1.2 estimates: **V6-cTS ~200–350**, **Hybrid-cTS ~110–160**. Pure calculation; the precise measurement is Batch 2 task 2.5. Document in the report; flag if either looks likely to exceed 300 (Suggestion 2 trigger).
 
-### Task 1.9 — full pytest sweep
-`python -m pytest a4/standalone/tests/ -q` — all previously-green tests still green + new tests pass; no regression below the baseline captured in pre-flight step 2.
+### Task 1.9 — pytest sweep
+`python -m pytest a4/standalone/tests/ -q --ignore=a4/standalone/tests/test_run_replicates.py` — must show **≥616 passed, 17 skipped** (the verified HEAD `dfd0ebe` baseline) plus the new Batch-1 tests, with no pre-existing test regressed. Optionally run the full suite (incl. replicates, ~16 min) once before committing to confirm 632/17.
 
 ### Task 1.10 — write `D2C_BATCH1_COMPOSER_REPORT.md`
 See [Report deliverable](#report-deliverable).
@@ -238,7 +241,7 @@ Layers 3/4 (bridge + arm-construction) are Batch 2; Layer 5 (driver smoke) Batch
 - [ ] `_TXN_ROLE_BY_KIND` has the 6 new Arguzz entries; **NFP-10 byte_addr lines unchanged** (grep before & after, both pasted in report).
 - [ ] `arguzz_runner.py` carries the deprecation docstring; no code change.
 - [ ] Arm-space calc reported (FULL + SELECTED), compared to §1.2.
-- [ ] Full pytest sweep at or above the pre-flight baseline (no regressions).
+- [ ] Pytest sweep (ignore-replicates path) shows **≥616 passed, 17 skipped** + the new Batch-1 tests; no pre-existing test regressed (HEAD `dfd0ebe` baseline, verified 2026-06-20).
 - [ ] `v6_driver_v2.py`, `arguzz_parser.py`, `bandit_ts.py`, `coverage_db.py`, `workspace/risc0-modified/` all unchanged.
 - [ ] `D2C_BATCH1_COMPOSER_REPORT.md` submitted.
 

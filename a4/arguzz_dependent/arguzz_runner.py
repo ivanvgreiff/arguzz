@@ -1,4 +1,13 @@
 """
+Legacy / R2-compat only.
+
+D2.C onward, Arguzz invocation lives in `a4/standalone/arguzz_invoke.py`
+(UTF-8-safe subprocess, `MutationOutcome` mapping, `ConstraintFailure`
+parsing via `short_loc`, soundness-signal flagging). Do not import this
+module in new code. This file remains in tree for R2-era scripts that still
+reference it (`a4/arguzz_dependent/*` analyses); deletion deferred to
+IV.POS.9 cleanup.
+
 Arguzz Mutation Runner
 
 Functions for running Arguzz mutations and capturing results.
