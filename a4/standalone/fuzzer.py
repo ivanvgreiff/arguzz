@@ -2754,7 +2754,7 @@ class A4Fuzzer:
         """Print detailed result of a single mutation"""
         # Status indicator
         if result.verifier_accepted:
-            status = "🐛"  # BUG - verifier accepted invalid proof
+            status = "⚠"  # ACCEPTED — verifier accepted; triage separately (often no-op)
         elif result.crashed:
             status = "💥"  # Process crashed
         elif result.failures or result.proof_verify_failed or result.broken_families:
@@ -2763,7 +2763,7 @@ class A4Fuzzer:
             status = "○"  # No effect detected
         
         outcome = self._classify_outcome(result)
-        bug_marker = " BUG!" if result.verifier_accepted else ""
+        bug_marker = " ACCEPTED" if result.verifier_accepted else ""
         new_cov = f" [+{result.new_coverage} new]" if result.new_coverage > 0 else ""
         new_touch_str = f" [+{result.new_touch} touch]" if result.new_touch > 0 else ""
         
@@ -3017,7 +3017,7 @@ class A4Fuzzer:
         # Outcome summary (mutually exclusive categories)
         # - successful_mutations: REJECTED (constraint failures detected, proof invalid)
         # - crashes: CRASH (process crashed, segfault, etc.)
-        # - verifier_accepts: ACCEPTED (BUG!)
+        # - verifier_accepts: ACCEPTED (prover success — triage separately)
         # - no_effect: NO_EFFECT (no failures)
         # - skipped: No valid target found after retries
         rejected = stats.successful_mutations  # Mutation detected, proof rejected
@@ -3028,11 +3028,11 @@ class A4Fuzzer:
         print(f"  REJECTED (mutation detected): {rejected}")
         print(f"  CRASH (segfault, etc.):       {crashes}")
         print(f"  NO_EFFECT:                    {no_effect}")
-        print(f"  ACCEPTED (BUG!):              {stats.verifier_accepts} {'🐛' if stats.verifier_accepts > 0 else ''}")
+        print(f"  ACCEPTED (prover success):    {stats.verifier_accepts}")
         print(f"  SKIPPED:                      {stats.skipped_mutations}")
         
         if stats.verifier_accepts > 0:
-            print(f"\n🐛 BUGS FOUND: {stats.verifier_accepts} mutations accepted by verifier!")
+            print(f"\n⚠ ACCEPTED: {stats.verifier_accepts} mutations accepted by verifier (triage separately)")
         
         print(f"\nMutations by kind:")
         for kind, count in sorted(stats.mutations_by_kind.items()):
