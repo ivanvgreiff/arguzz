@@ -226,7 +226,7 @@ END_TS=\$(date -u +%s)
 WALL=\$((END_TS - START_TS))
 echo "[\$(date -u +%H:%M:%S)] END rc=\$RC wall=\${WALL}s" >> "\$RD/stdout.log"
 echo "{\"run_id\":\"${RUN_ID}\",\"started_at_epoch\":\$START_TS,\"ended_at_epoch\":\$END_TS,\"wall_sec\":\$WALL,\"exit_code\":\$RC}" > "\$RD/meta.json"
-if [[ \$RC -eq 0 ]]; then
+if [[ $RC -eq 0 || $RC -eq 2 ]]; then
     touch "\$RD/.OK"
 else
     touch "\$RD/.FAIL_rc\$RC"

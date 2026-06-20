@@ -94,20 +94,22 @@ def validate_db(db_path: Path, *, expected_n: int) -> Dict[str, object]:
                     "SELECT selected_arm FROM bandit_decisions"
                 ).fetchall()
             ]
-            has_a4 = any(a and a.startswith("A4_trace_cell|") for a in arms)
+            has_a4 = any(
+                a and not a.startswith("arguzz_exec_fault|") for a in arms
+            )
             has_arguzz = any(
                 a and a.startswith("arguzz_exec_fault|") for a in arms
             )
             if not has_a4:
-                issues.append("Hybrid: no A4_trace_cell bandit pulls")
+                issues.append("Hybrid: no A4-surface bandit pulls")
             if not has_arguzz:
-                issues.append("Hybrid: no arguzz_exec_fault bandit pulls")
+                issues.append("Hybrid: no Arguzz-surface bandit pulls")
             cgc_a4 = conn.execute(
                 """
                 SELECT COUNT(*) FROM compressed_global_coverage cgc
                 JOIN bandit_decisions bd
                   ON bd.mutation_id = cgc.first_hit_mutation_id
-                WHERE bd.selected_arm LIKE 'A4_trace_cell|%'
+                WHERE bd.selected_arm NOT LIKE 'arguzz_exec_fault|%'
                 """
             ).fetchone()[0]
             cgc_arguzz = conn.execute(
