@@ -131,6 +131,15 @@ def validate_db(db_path: Path, *, expected_n: int) -> Dict[str, object]:
             ).fetchall()
         ) if "outcome" in cols else {}
 
+        if variant == "V6_cTS" and expected_n >= 1000 and "outcome" in cols:
+            applied = int(outcome_dist.get("applied", 0))
+            rate = applied / n_mut if n_mut else 0.0
+            if rate < 0.75 or rate > 0.92:
+                issues.append(
+                    f"V6_cTS applied rate {rate:.3f} outside [0.75, 0.92] "
+                    f"(expect ~0.87 at N=10000 cold-start tax)"
+                )
+
     return {
         "variant": variant,
         "seed": seed,
@@ -155,7 +164,16 @@ def main() -> int:
     parser.add_argument(
         "--expected-n", type=int, default=100,
     )
+    parser.add_argument(
+        "--min-runs",
+        type=int,
+        default=None,
+        help="minimum run dirs required (default: 8 if N=100 else 12)",
+    )
     args = parser.parse_args()
+    min_runs = args.min_runs if args.min_runs is not None else (
+        8 if args.expected_n <= 100 else 12
+    )
 
     rows: List[Dict[str, object]] = []
     for run_dir in sorted(args.results_base.rglob("*")):
@@ -187,7 +205,7 @@ def main() -> int:
                 print(f"  - {issue}")
 
     print(f"\nSUMMARY: {sum(1 for r in rows if r['ok'])}/{len(rows)} passed")
-    return 0 if ok_all and len(rows) >= 8 else 1
+    return 0 if ok_all and len(rows) >= min_runs else 1
 
 
 if __name__ == "__main__":
