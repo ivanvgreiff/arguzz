@@ -1,0 +1,17 @@
+{
+  "_doc": "D2.F Phase A — boot 8 nodes + extract bundle (N=1 sanity per node before chain F.1).",
+  "name": "d2f_phase_a_boot",
+  "image": "debian-trixie",
+  "no_internet": false,
+  "guest_args": ["--in1", "5", "--in4", "10"],
+  "jobs": [
+    {"strategy": "cTS_semantic_v2", "seed": 1234, "n": 1, "telemetry_level": "full"},
+    {"strategy": "v6_uniform", "seed": 1234, "n": 1},
+    {"strategy": "v6_cTS", "seed": 1234, "n": 1, "telemetry_level": "full"},
+    {"strategy": "hybrid_cTS", "seed": 1234, "n": 1, "telemetry_level": "full"},
+    {"strategy": "cTS_semantic_v2", "seed": 1235, "n": 1, "telemetry_level": "full"},
+    {"strategy": "v6_uniform", "seed": 1235, "n": 1},
+    {"strategy": "v6_cTS", "seed": 1235, "n": 1, "telemetry_level": "full"},
+    {"strategy": "hybrid_cTS", "seed": 1235, "n": 1, "telemetry_level": "full"}
+  ]
+}
