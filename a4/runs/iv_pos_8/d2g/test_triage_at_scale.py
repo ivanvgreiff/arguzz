@@ -63,3 +63,26 @@ class TestRunOneSmoke:
             "identity", "cf_inert",
         }
         assert set(df["evidence"].unique()).issubset(allowed)
+
+
+def test_dedupe_collected_triage_prefers_canonical_run_id():
+    import pandas as pd
+    from a4.runs.iv_pos_8.d2g.triage_at_scale import dedupe_collected_triage, triage_run_id
+
+    canonical = triage_run_id("V6_cTS", 1234, "POST_EXEC_PC_MOD", 0, 1234000929)
+    df = pd.DataFrame([
+        {
+            "variant": "V6_cTS", "seed": 1234, "kind": "POST_EXEC_PC_MOD",
+            "step": 0, "iter_seed": 1234000929, "run_id": "test_fixed",
+            "class": "accepted_noop", "evidence": "cf_inert",
+        },
+        {
+            "variant": "V6_cTS", "seed": 1234, "kind": "POST_EXEC_PC_MOD",
+            "step": 0, "iter_seed": 1234000929, "run_id": canonical,
+            "class": "accepted_noop", "evidence": "cf_inert",
+        },
+    ])
+    out, n_removed = dedupe_collected_triage(df)
+    assert n_removed == 1
+    assert len(out) == 1
+    assert out.iloc[0]["run_id"] == canonical

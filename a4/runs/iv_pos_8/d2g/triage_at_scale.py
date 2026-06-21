@@ -8,9 +8,10 @@ import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 
-import pandas as pd
+if TYPE_CHECKING:
+    import pandas as pd
 
 from .discover import flat_db_list, parse_d2f_run_dir
 from .propagation_triage import (
@@ -61,9 +62,39 @@ TRIAGE_ROW_COLUMNS = [
     "post_inject_trace_changed", "inject_disasm_changed", "unaligned_access",
     "fault_word_change", "global_residue", "run_id",
 ]
+TRIAGE_COLLECT_KEY = ["variant", "seed", "kind", "step", "iter_seed"]
 
 
-def accept_rows_to_frame(accepts: List[AcceptRow]) -> pd.DataFrame:
+def dedupe_collected_triage(df: "pd.DataFrame") -> Tuple["pd.DataFrame", int]:
+    """Collapse duplicate collect rows (stale debug JSON on nodes).
+
+    Prefer the canonical ``triage_*`` run_id for each (variant, seed, kind, step,
+    iter_seed) key — e.g. ``test_fixed`` / ``manual_wave`` leftovers from pre-chain
+    debugging must not inflate headline counts (F29).
+    """
+    import pandas as pd
+    if df.empty:
+        return df, 0
+    before = len(df)
+    work = df.copy()
+    work["_canonical"] = work.apply(
+        lambda r: str(r.get("run_id", ""))
+        == triage_run_id(
+            str(r["variant"]), int(r["seed"]), str(r["kind"]),
+            int(r["step"]), int(r["iter_seed"]),
+        ),
+        axis=1,
+    )
+    work = (
+        work.sort_values("_canonical", ascending=False)
+        .drop_duplicates(subset=TRIAGE_COLLECT_KEY, keep="first")
+        .drop(columns=["_canonical"])
+    )
+    return work.reset_index(drop=True), before - len(work)
+
+
+def accept_rows_to_frame(accepts: List[AcceptRow]) -> "pd.DataFrame":
+    import pandas as pd
     rows = [
         {
             "variant": a.variant,
@@ -80,7 +111,8 @@ def accept_rows_to_frame(accepts: List[AcceptRow]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def tier1_pass(collection_root: Path) -> pd.DataFrame:
+def tier1_pass(collection_root: Path) -> "pd.DataFrame":
+    import pandas as pd
     """Cheap DB-only pass: flag hidden global rejects; mark others pending tier-2."""
     rows: List[dict] = []
     for db in flat_db_list(collection_root):
@@ -107,13 +139,14 @@ def _resolve_variant_filter(tier2_variant: Optional[str]) -> Optional[str]:
 
 
 def build_rerun_manifest(
-    accepts_df: pd.DataFrame,
+    accepts_df: "pd.DataFrame",
     out_path: Path,
     *,
     variant_filter: Optional[str] = None,
     dedupe: bool = True,
-) -> pd.DataFrame:
+) -> "pd.DataFrame":
     """Write kind-aware deduped tier-2 rerun manifest (ISS-4)."""
+    import pandas as pd
     df = accepts_df.copy()
     if variant_filter:
         df = df[df["variant"] == variant_filter]
@@ -198,8 +231,9 @@ def run_one(
     return row
 
 
-def order_manifest_for_dispatch(manifest_df: pd.DataFrame) -> pd.DataFrame:
+def order_manifest_for_dispatch(manifest_df: "pd.DataFrame") -> "pd.DataFrame":
     """PEPC first (soundness lead), then IWM; stable within kind."""
+    import pandas as pd
     kind_rank = {"POST_EXEC_PC_MOD": 0, "INSTR_WORD_MOD": 1}
     df = manifest_df.copy()
     df["_kind_rank"] = df["kind"].map(kind_rank).fillna(9)
@@ -211,7 +245,7 @@ def order_manifest_for_dispatch(manifest_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def write_chain_manifest(
-    manifest_df: pd.DataFrame,
+    manifest_df: "pd.DataFrame",
     out_path: Path,
     *,
     host: Optional[str] = None,
@@ -270,15 +304,16 @@ def write_chain_manifest(
 
 
 def run_tier2_local(
-    manifest_df: pd.DataFrame,
+    manifest_df: "pd.DataFrame",
     *,
     host: str,
     host_args: Optional[List[str]] = None,
     env: Optional[dict] = None,
     limit: Optional[int] = None,
     results_dir: Optional[Path] = None,
-) -> pd.DataFrame:
+) -> "pd.DataFrame":
     """Run tier-2 classification for manifest rows locally."""
+    import pandas as pd
     host_args = host_args or default_host_args()
     cache: Dict[str, list] = {}
     baseline = baseline_traces(host, host_args, env=env, cache=cache)
@@ -310,6 +345,7 @@ def run_tier2_local(
 
 def expected_run_ids_from_manifest(manifest_csv: Path) -> set:
     """Reconstruct the full set of run_ids the manifest should produce (ISS-5)."""
+    import pandas as pd
     m = pd.read_csv(manifest_csv)
     return {
         triage_run_id(
@@ -326,12 +362,13 @@ def collect_results(
     *,
     report_json: Optional[Path] = None,
     manifest_csv: Optional[Path] = None,
-) -> pd.DataFrame:
+) -> "pd.DataFrame":
     """Merge per-job run_one JSON outputs into one CSV + aggregated report.
 
     If ``manifest_csv`` is given, asserts completeness (every expected run_id has a
     result) so the soundness re-read never runs on a silent subset (ISS-5).
     """
+    import pandas as pd
     rows: List[dict] = []
     for path in sorted(results_dir.glob("*.json")):
         try:
@@ -344,11 +381,15 @@ def collect_results(
             if col not in df.columns:
                 df[col] = ""
         df = df[TRIAGE_ROW_COLUMNS]
+    n_raw = len(df)
+    df, n_duplicates_removed = dedupe_collected_triage(df)
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_csv, index=False)
 
     summary = {
         "n_results": len(df),
+        "n_raw_results": n_raw,
+        "n_duplicates_removed": n_duplicates_removed,
         "results_dir": str(results_dir),
         "out_csv": str(out_csv),
     }
@@ -358,8 +399,10 @@ def collect_results(
         missing = sorted(expected - got)
         summary["n_expected"] = len(expected)
         summary["n_missing"] = len(missing)
-        summary["complete"] = not missing
+        summary["complete"] = not missing and n_duplicates_removed == 0
         summary["missing_run_ids"] = missing[:50]
+        if n_duplicates_removed:
+            summary["complete"] = not missing and len(df) == len(expected)
     if not df.empty:
         summary["class_counts"] = df["class"].value_counts().to_dict()
         summary["evidence_counts"] = df["evidence"].value_counts().to_dict()
@@ -417,7 +460,7 @@ def _run_manifest_row(
 
 
 def run_manifest(
-    manifest_df: pd.DataFrame,
+    manifest_df: "pd.DataFrame",
     *,
     host: str,
     host_args: Optional[List[str]] = None,
@@ -579,6 +622,7 @@ def triage_at_scale_pipeline(
     results_dir: Optional[Path] = None,
 ) -> dict:
     """Full pipeline: tier1 all accepts, manifest, optional tier2 sample."""
+    import pandas as pd
     out_dir.mkdir(parents=True, exist_ok=True)
     variant_filter = _resolve_variant_filter(tier2_variant)
     all_accepts = []
@@ -763,6 +807,7 @@ def main() -> int:
         return 0
 
     if args.cmd == "smoke":
+        import pandas as pd
         manifest = pd.read_csv(args.manifest_csv)
         subset = manifest.head(args.limit)
         args.results_dir.mkdir(parents=True, exist_ok=True)
@@ -796,6 +841,7 @@ def main() -> int:
         return 0
 
     if args.cmd == "run_manifest":
+        import pandas as pd
         manifest = pd.read_csv(args.manifest_csv)
         stats = run_manifest(
             manifest,
@@ -824,6 +870,7 @@ def main() -> int:
         return 0 if report["all_ok"] else 1
 
     if args.cmd == "write-chain":
+        import pandas as pd
         manifest = pd.read_csv(args.manifest_csv)
         path = write_chain_manifest(
             manifest,

@@ -63,7 +63,11 @@ def soundness_tables(triage_df: pd.DataFrame) -> dict:
 
 
 def write_soundness_report(triage_csv: Path, out_json: Path, out_md: Optional[Path] = None) -> dict:
+    import pandas as pd
+    from .triage_at_scale import dedupe_collected_triage
+
     df = pd.read_csv(triage_csv)
+    df, n_dropped = dedupe_collected_triage(df)
     report = soundness_tables(df)
     out_json.parent.mkdir(parents=True, exist_ok=True)
     out_json.write_text(json.dumps(report, indent=2))

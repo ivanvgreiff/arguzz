@@ -521,6 +521,9 @@ def dedupe_accepts_for_rerun(df: "pd.DataFrame") -> "pd.DataFrame":
 
     INSTR_WORD_MOD: one rerun per (variant, kind, step) — within each group every
     accept shares the same fault word (prod DB verified; classification is invariant).
+    Assumption (F29 / INV1): IWM accepts cannot be ``strong`` — a committed trace
+    divergence would reject at prove time, so rerunning any sibling accept at the
+    same step yields the same tier-2 class/evidence.
     POST_EXEC_PC_MOD: keep every (variant, kind, step, iter_seed) — DB orig/mut are
     degenerate and random_pc is iter_seed-dependent, so same-step siblings must not
     collapse.

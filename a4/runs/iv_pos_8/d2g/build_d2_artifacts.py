@@ -141,6 +141,7 @@ def run_b3(
     tier2_variant: str,
     tier2_limit: int | None,
     run_local_tier2: bool,
+    triage_csv: Path | None = None,
 ) -> dict:
     print(f"=== D2.G B3 — scores + Case on {collection_root} ===")
     metrics = compute_d2g_metrics_frame(collection_root)
@@ -162,7 +163,18 @@ def run_b3(
           f"{scale_summary.get('deduped_rerun_jobs')} deduped rerun jobs")
 
     triage_sample_path = triage_out / "d2g_accept_triage_tier2_sample.csv"
-    triage_df = pd.read_csv(triage_sample_path) if triage_sample_path.is_file() else None
+    if triage_csv is not None and triage_csv.is_file():
+        from a4.runs.iv_pos_8.d2g.triage_at_scale import dedupe_collected_triage
+
+        triage_df = pd.read_csv(triage_csv)
+        triage_df, n_dropped = dedupe_collected_triage(triage_df)
+        if n_dropped:
+            print(f"  triage CSV: dropped {n_dropped} duplicate row(s) from {triage_csv}")
+        print(f"  triage CSV: {len(triage_df)} classified rows from {triage_csv}")
+    elif triage_sample_path.is_file():
+        triage_df = pd.read_csv(triage_sample_path)
+    else:
+        triage_df = None
 
     scores = compute_scores_frame(collection_root, metrics, channels, triage_df=triage_df)
     _write(scores, out_dir / "d2g_scores.csv")
@@ -238,6 +250,12 @@ def main() -> int:
         help="B3: tier-1 + manifest only, no local trace reruns",
     )
     parser.add_argument(
+        "--triage-csv",
+        type=Path,
+        default=None,
+        help="B3: full post-POS triage CSV for soundness columns (overrides tier-2 sample)",
+    )
+    parser.add_argument(
         "--tier2",
         action="store_true",
         help="run Tier-2 trace reruns (requires real binary)",
@@ -275,6 +293,7 @@ def main() -> int:
             tier2_variant=args.tier2_variant,
             tier2_limit=args.tier2_limit,
             run_local_tier2=not args.skip_local_tier2,
+            triage_csv=args.triage_csv.resolve() if args.triage_csv else None,
         )
     print("=== DONE ===")
     return exit_code

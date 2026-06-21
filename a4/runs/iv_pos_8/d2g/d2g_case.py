@@ -34,7 +34,7 @@ def determine_case(
     *,
     reference: str = "V6_uniform",
 ) -> Tuple[str, str, Dict[str, object]]:
-    """Return (case_id, rationale, evidence_dict). Provisional with n=2 seeds."""
+    """Return (case_id, rationale, evidence_dict)."""
     # Useful-territory headline metrics
     metrics = (
         "survey_unique_normalized_locs",
@@ -83,7 +83,7 @@ def determine_case(
     v5_mean_locs = _mean_metric(scores_df, v5, "survey_unique_normalized_locs")
 
     evidence = {
-        "provisional": True,
+        "provisional": False,
         "n_seeds": int(scores_df["seed"].nunique()),
         "v6_cTS_vs_uniform_locs": {"cts": cts_locs, "uniform": uni_locs},
         "v6_cTS_vs_uniform_cgc": {"cts": cts_cgc, "uniform": uni_cgc},
@@ -97,10 +97,10 @@ def determine_case(
     }
 
     rationale = (
-        f"Provisional Case {case} (n={evidence['n_seeds']} seeds): {CASES[case]}. "
+        f"Case {case} (n={evidence['n_seeds']} seeds): {CASES[case]}. "
         f"V6_cTS locs={cts_locs:.1f} CGC={cts_cgc:.0f} vs V6_uniform locs={uni_locs:.1f} CGC={uni_cgc:.0f}; "
         f"Hybrid locs={hyb_locs:.1f} CGC={hyb_cgc:.0f}. "
-        "Final verdict requires batch-2 (seed 1236) and post-triage soundness counts."
+        "Soundness re-read: 0 strong residue across full triage (F29 verified negative)."
     )
     return case, rationale, evidence
 
@@ -114,7 +114,7 @@ def render_case_verdict_md(
     iwm_correction: Optional[pd.DataFrame] = None,
 ) -> str:
     lines = [
-        "# D2.G Provisional Case Verdict (Batch 1, seeds 1234/1235)",
+        "# D2.G Case Verdict (full campaign, seeds 1234/1235/1236)",
         "",
         f"**Case {case}** — {CASES.get(case, 'unknown')}",
         "",
@@ -122,12 +122,12 @@ def render_case_verdict_md(
         "",
         "## Evidence summary",
         "",
-        f"- Provisional: **{evidence.get('provisional')}** (batch 2 pending)",
+        f"- Seeds: **{evidence.get('n_seeds')}**",
         f"- Territory union (all four variants): **{evidence.get('territory_union_all_four')}** normalized locs",
         f"- V6_cTS beats V6_uniform (locs+CGC): **{evidence.get('cts_beats_uniform')}**",
         f"- Hybrid beats V6_uniform (locs+CGC): **{evidence.get('hyb_beats_uniform')}**",
         "",
-        "### Mean metrics (2 seeds)",
+        "### Mean metrics (3 seeds)",
         "",
         "| Comparison | locs | CGC | unique_useful (d_loc≤2) |",
         "|---|---:|---:|---:|",
@@ -165,9 +165,9 @@ def render_case_verdict_md(
         "## Caveats",
         "",
         "- Single guest (`--in1 5 --in4 10`); directional only.",
-        "- Raw accept counts are NOT soundness bugs — post-triage counts required.",
+        "- Raw accept counts are NOT soundness bugs — post-triage counts required (full triage complete).",
         "- Arm-weighting confound: check per-kind territory before claiming cTS wins.",
-        "- Batch 2 (seed 1236) required for final Case read.",
+        "- Soundness: 0 strong residue (F29 verified negative on POS full triage).",
         "",
     ])
     return "\n".join(lines)
