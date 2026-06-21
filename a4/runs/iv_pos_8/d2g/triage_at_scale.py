@@ -260,8 +260,8 @@ def write_chain_manifest(
                 f"--step {int(row['step'])} --kind {row['kind']} "
                 f"--iter-seed {int(row['iter_seed'])} "
                 f"--mutation-id {int(row.get('mutation_id', 0))} "
-                f"--host-args {args_str} "
-                f"--run-id {run_id} --results-dir {results_dir}"
+                f"--run-id {run_id} --results-dir {results_dir} "
+                f"--host-args {args_str}"
             )
             lines.append(f"{batch_name}|{node}|{run_id}|{cmd}")
     out_path.write_text("\n".join(lines) + "\n")
