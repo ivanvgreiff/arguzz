@@ -229,6 +229,7 @@ def write_chain_manifest(
     args_str = " ".join(host_args)
     nodes = list(nodes or TRIAGE_POS_NODES)
     ordered = order_manifest_for_dispatch(manifest_df)
+    baseline_cache = f"{results_dir}/baseline_cache"
     records = ordered.to_dict("records")
     n_waves = (len(records) + len(nodes) - 1) // len(nodes) if records else 0
     lines = [
@@ -252,8 +253,8 @@ def write_chain_manifest(
             )
             cmd = (
                 f"export A4_COVERAGE_TOUCH=1 A4_FAMILY_RESIDUE=1 CONSTRAINT_CONTINUE=1 "
-                f"D2G_BASELINE_CACHE={results_dir}/baseline_cache; "
-                f"mkdir -p {results_dir} $D2G_BASELINE_CACHE && cd {DEFAULT_POS_REPO} && "
+                f"D2G_BASELINE_CACHE={baseline_cache}; "
+                f"mkdir -p {results_dir} {baseline_cache} && cd {DEFAULT_POS_REPO} && "
                 f"PYTHONPATH={DEFAULT_POS_REPO} "
                 f"python3 -m a4.runs.iv_pos_8.d2g.run_one_pos "
                 f"--host {pos_host} --variant {row['variant']} --seed {int(row['seed'])} "
