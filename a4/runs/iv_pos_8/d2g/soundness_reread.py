@@ -95,3 +95,24 @@ def write_soundness_report(triage_csv: Path, out_json: Path, out_md: Optional[Pa
             lines.append(pd.DataFrame(report["summary"]).to_markdown(index=False))
         out_md.write_text("\n".join(lines))
     return report
+
+
+def main() -> int:
+    import argparse as _ap
+
+    parser = _ap.ArgumentParser(description="D2.G provisional soundness re-read")
+    parser.add_argument("triage_csv", type=Path)
+    parser.add_argument("--out-json", type=Path, required=True)
+    parser.add_argument("--out-md", type=Path, default=None)
+    args = parser.parse_args()
+    report = write_soundness_report(args.triage_csv, args.out_json, args.out_md)
+    print(json.dumps({
+        "divergent_residue_count": report["divergent_residue_count"],
+        "out_json": str(args.out_json),
+        "out_md": str(args.out_md) if args.out_md else None,
+    }, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

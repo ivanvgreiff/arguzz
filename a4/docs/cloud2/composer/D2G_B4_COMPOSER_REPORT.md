@@ -9,7 +9,7 @@
 
 ## Executive summary
 
-I agree with Opus/D2-opus on the classification settlement (F25/F27 scoped, 3939→`word_truncated`, POST_EXEC_PC_MOD→`cf_inert`, stale Hybrid triage invalid). **Item 0 is complete.** **Item 1 manifest is ready (742 jobs)** but **POS dispatch is blocked** from this environment (no SSH to test nodes). **Item 2 is provisional only** (10-job smoke sample, not full campaign). **Item 3 STOP** as directed (batch-2 seed 1236 not available).
+I agree with Opus/D2-opus on the classification settlement (F25/F27 scoped, 3939→`word_truncated`, POST_EXEC_PC_MOD→`cf_inert`, stale Hybrid triage invalid). **Item 0 is complete.** **Item 1 manifest regenerated (1022 jobs, ISS-4 dedup fix)** but **POS dispatch is blocked** from this environment (no SSH to test nodes). **Item 2 is provisional only** (smoke sample, not full campaign). **Item 3 STOP** as directed (batch-2 seed 1236 not available).
 
 **Do not use** the prior `d2g_accept_triage_tier2_sample.csv` (132 Hybrid rows, pre-F22/F24 evidence set).
 
@@ -25,9 +25,12 @@ I agree with Opus/D2-opus on the classification settlement (F25/F27 scoped, 3939
 | Prior Hybrid 132-row triage stale | **Agree** — evidence set was `{",weak,cosmetic}` only |
 | 484 POST_EXEC_PC_MOD mostly no-op | **Agree** — smoke: 6/6 sampled = `cf_inert`, fault `pc:N=>N+4` |
 | `run_one` chain gap | **Agree** — was a real blocker; now fixed |
+| ISS-4 dedup `(kind,step)` only | **Agree** — cross-variant + PEPC iter_seed collapse; fixed to 1022 jobs |
 | F27 scope pushback (exclude BR_NEG_COND) | **Agree** — no dissent |
 
-**Minor fix applied during this work:** chain manifest initially used local `workspace/.../risc0-host`; corrected to `/root/a4_campaign/bin/risc0-host` via `default_pos_host()`.
+**Minor fixes applied during this work:**
+- Chain manifest initially used local `workspace/.../risc0-host`; corrected to `/root/a4_campaign/bin/risc0-host` via `default_pos_host()`.
+- **ISS-4 (2026-06-20):** kind-aware dedup + `triage_run_id(..., iter_seed)` so same-step PEPC jobs do not overwrite JSON on POS.
 
 ---
 
@@ -40,8 +43,9 @@ I agree with Opus/D2-opus on the classification settlement (F25/F27 scoped, 3939
 | **`run_one`** | Single accept → live `tier2_classify` → `classify_semantics`; JSON to `--results-dir/{run_id}.json` + stdout |
 | **`collect`** | Merge `*.json` → CSV + aggregated report JSON |
 | **`smoke`** | ≤10 local `run_one` jobs + collect (POS rule compliant) |
-| **`--tier2-variant all`** | All variants; 742 deduped jobs (was Hybrid-only 132) |
+| **`--tier2-variant all`** | All variants; 1022 deduped jobs (538 IWM + 484 PEPC; ISS-4) |
 | **`default_pos_host()`** | Chain uses `/root/a4_campaign/bin/risc0-host` |
+| **`triage_run_id()`** | Includes `iter_seed` for unique per-job JSON on POS |
 
 ### ≤10-job local smoke (Item 0.4)
 
@@ -86,29 +90,32 @@ python3 -m a4.runs.iv_pos_8.d2g.triage_at_scale pipeline \
 | INSTR_WORD_MOD | 1391 |
 | POST_EXEC_PC_MOD | 484 |
 | Tier-1 hidden | 0 |
-| **Deduped jobs** | **742** |
+| **Deduped jobs** | **1022** (538 INSTR_WORD_MOD + 484 POST_EXEC_PC_MOD) |
 
-Deduped breakdown:
+Deduped breakdown (ISS-4: IWM per `(variant,step)`; PEPC per `(variant,step,iter_seed)`):
 
 | variant | INSTR_WORD_MOD | POST_EXEC_PC_MOD |
 |---------|---------------:|-----------------:|
-| V6_cTS | 194 | 101 |
-| V6_uniform | 149 | 257 |
+| V6_cTS | 194 | 143 |
+| V6_uniform | 303 | 341 |
 | Hybrid_cTS | 41 | 0 |
 
 Artifacts:
 - `triage_at_scale_b4/d2g_triage_rerun_manifest.csv`
-- `triage_at_scale_b4/d2g_triage_rerun.chain` (742 jobs)
+- `triage_at_scale_b4/d2g_triage_rerun.chain` (1022 jobs, 1022 unique run_ids)
 - `triage_at_scale_b4/d2g_triage_at_scale_report.json`
+
+Post-fix smoke (3 jobs on regenerated manifest): cosmetic / weak / noop — live classifier confirmed.
 
 ### 1.2 Repo-sync + POS dispatch ❌ NOT RUN FROM HERE
 
 - SSH to `flare` (and other nodes) **times out** from this environment.
 - **Operator action required:**
-  1. Sync `/root/a4_campaign/repo` on all 8 nodes to commit containing F22–F27 + `run_one`
-  2. Verify hash of `propagation_triage.py` on each node
+  1. Sync `/root/a4_campaign/repo` on all 8 nodes to commit containing F22–F27 + `run_one` + ISS-4 dedup
+  2. Verify `/root/a4_campaign/bin/risc0-host` exists on each node; verify hash of `propagation_triage.py`
   3. Dispatch: `chain_dispatcher.sh triage_at_scale_b4/d2g_triage_rerun.chain`
-  4. Collect: `python3 -m a4.runs.iv_pos_8.d2g.triage_at_scale collect /tmp/d2g_triage_results --out d2g_accept_triage_all_variants.csv`
+  4. **Gather** all 8 nodes' `/tmp/d2g_triage_results/*.json` into one directory, then:
+     `python3 -m a4.runs.iv_pos_8.d2g.triage_at_scale collect <merged_dir> --out d2g_accept_triage_all_variants.csv`
 
 **Confirmed:** chain jobs call live `run_one` → `tier2_classify` → `classify_semantics` (no cache).
 
@@ -177,7 +184,7 @@ Batch-2 (seed 1236) campaign jobs not finished / not pulled. No fabricated n≥3
 ## Next steps (operator)
 
 1. **Commit + push** this branch; sync repo on all POS nodes
-2. **Dispatch** `d2g_triage_rerun.chain` (742 jobs)
+2. **Dispatch** `d2g_triage_rerun.chain` (1022 jobs)
 3. **Collect** → `d2g_accept_triage_all_variants.csv`
 4. Run `soundness_reread.py` on full CSV → update Case on **soundness counts**
 5. When batch-2 lands → final Case at n≥3

@@ -32,7 +32,13 @@ class TestRunOneSmoke:
         results_dir = tmp_path / "results"
         results_dir.mkdir()
         for _, row in manifest.iterrows():
-            run_id = f"triage_{row['variant']}_s{row['seed']}_{row['kind']}_step{row['step']}"
+            run_id = triage_run_id(
+                str(row["variant"]),
+                int(row["seed"]),
+                str(row["kind"]),
+                int(row["step"]),
+                int(row["iter_seed"]),
+            )
             row_out = run_one(
                 variant=str(row["variant"]),
                 seed=int(row["seed"]),

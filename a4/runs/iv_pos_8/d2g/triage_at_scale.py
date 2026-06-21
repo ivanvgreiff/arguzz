@@ -4,9 +4,11 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -24,6 +26,24 @@ from .propagation_triage import (
 )
 
 GUEST_KEY = "--in1 5 --in4 10"
+
+POS_NODES = [
+    "flare", "polynize", "octorand", "opulous", "algofi", "zone", "gard", "goracle",
+]
+DEFAULT_POS_RESULTS_DIR = "/tmp/d2g_triage_results"
+DEFAULT_POS_HOST_PATH = "/root/a4_campaign/bin/risc0-host"
+DEFAULT_POS_REPO = "/root/a4_campaign/repo"
+
+
+def triage_run_id(
+    variant: str,
+    seed: int,
+    kind: str,
+    step: int,
+    iter_seed: int,
+) -> str:
+    """Unique run_one / chain run_id (iter_seed disambiguates same-step PEPC jobs)."""
+    return f"triage_{variant}_s{seed}_{kind}_step{step}_is{iter_seed}"
 
 
 def default_pos_host() -> str:
@@ -88,7 +108,7 @@ def build_rerun_manifest(
     variant_filter: Optional[str] = None,
     dedupe: bool = True,
 ) -> pd.DataFrame:
-    """Write deduped tier-2 rerun manifest (one row per kind×step globally)."""
+    """Write kind-aware deduped tier-2 rerun manifest (ISS-4)."""
     df = accepts_df.copy()
     if variant_filter:
         df = df[df["variant"] == variant_filter]
@@ -167,7 +187,7 @@ def run_one(
     )
     if results_dir is not None:
         results_dir.mkdir(parents=True, exist_ok=True)
-        out_name = run_id or f"triage_{variant}_s{seed}_{kind}_step{step}"
+        out_name = run_id or triage_run_id(variant, seed, kind, step, iter_seed)
         out_path = results_dir / f"{out_name}.json"
         out_path.write_text(json.dumps(row, sort_keys=True))
     return row
@@ -178,37 +198,51 @@ def write_chain_manifest(
     out_path: Path,
     *,
     host: Optional[str] = None,
-    batch_name: str = "d2g_triage_rerun",
-    results_dir: str = "/tmp/d2g_triage_results",
+    batch_prefix: str = "d2g_triage_rerun",
+    results_dir: str = DEFAULT_POS_RESULTS_DIR,
 ) -> Path:
-    """Emit chain_dispatcher-compatible manifest for POS tier-2 reruns."""
+    """Emit chain_dispatcher-compatible manifest for POS tier-2 reruns.
+
+    Jobs are grouped into waves of len(POS_NODES): one job per node per batch so
+    chain_dispatcher never stacks multiple concurrent writers on the same node.
+    """
     pos_host = host or default_pos_host()
     host_args = default_host_args()
     args_str = " ".join(host_args)
+    nodes = POS_NODES
+    records = manifest_df.to_dict("records")
+    n_waves = (len(records) + len(nodes) - 1) // len(nodes) if records else 0
     lines = [
-        f"# D2.G tier-2 triage reruns — {len(manifest_df)} deduped jobs",
+        f"# D2.G tier-2 triage reruns — {len(records)} deduped jobs in {n_waves} batches",
         "# format: batch|node|run_id|remote_cmd",
+        "# One job per node per batch (chain_dispatcher 1-per-node concurrency rule).",
         "",
     ]
-    nodes = ["flare", "polynize", "octorand", "opulous", "algofi", "zone", "gard", "goracle"]
-    for i, row in manifest_df.iterrows():
-        run_id = (
-            f"triage_{row['variant']}_s{row['seed']}_{row['kind']}_step{row['step']}"
-        )
-        cmd = (
-            f"export A4_COVERAGE_TOUCH=1 A4_FAMILY_RESIDUE=1 CONSTRAINT_CONTINUE=1; "
-            f"mkdir -p {results_dir} && cd /root/a4_campaign/repo && "
-            f"PYTHONPATH=/root/a4_campaign/repo "
-            f"python3 -m a4.runs.iv_pos_8.d2g.triage_at_scale run_one "
-            f"--host {pos_host} --variant {row['variant']} --seed {int(row['seed'])} "
-            f"--step {int(row['step'])} --kind {row['kind']} "
-            f"--iter-seed {int(row['iter_seed'])} "
-            f"--mutation-id {int(row.get('mutation_id', 0))} "
-            f"--host-args {args_str} "
-            f"--run-id {run_id} --results-dir {results_dir}"
-        )
-        node = nodes[i % len(nodes)]
-        lines.append(f"{batch_name}|{node}|{run_id}|{cmd}")
+    for wave_idx in range(0, len(records), len(nodes)):
+        batch_name = f"{batch_prefix}_w{(wave_idx // len(nodes)) + 1:04d}"
+        chunk = records[wave_idx: wave_idx + len(nodes)]
+        for node_idx, row in enumerate(chunk):
+            node = nodes[node_idx]
+            run_id = triage_run_id(
+                str(row["variant"]),
+                int(row["seed"]),
+                str(row["kind"]),
+                int(row["step"]),
+                int(row["iter_seed"]),
+            )
+            cmd = (
+                f"export A4_COVERAGE_TOUCH=1 A4_FAMILY_RESIDUE=1 CONSTRAINT_CONTINUE=1; "
+                f"mkdir -p {results_dir} && cd {DEFAULT_POS_REPO} && "
+                f"PYTHONPATH={DEFAULT_POS_REPO} "
+                f"python3 -m a4.runs.iv_pos_8.d2g.triage_at_scale run_one "
+                f"--host {pos_host} --variant {row['variant']} --seed {int(row['seed'])} "
+                f"--step {int(row['step'])} --kind {row['kind']} "
+                f"--iter-seed {int(row['iter_seed'])} "
+                f"--mutation-id {int(row.get('mutation_id', 0))} "
+                f"--host-args {args_str} "
+                f"--run-id {run_id} --results-dir {results_dir}"
+            )
+            lines.append(f"{batch_name}|{node}|{run_id}|{cmd}")
     out_path.write_text("\n".join(lines) + "\n")
     return out_path
 
@@ -239,7 +273,9 @@ def run_tier2_local(
             local_failures=int(row.get("local_failures", 0)),
             global_failures=int(row.get("global_failures", 0)),
         )
-        run_id = f"triage_{acc.variant}_s{acc.seed}_{acc.kind}_step{acc.step}"
+        run_id = triage_run_id(
+            acc.variant, acc.seed, acc.kind, acc.step, acc.iter_seed,
+        )
         row_dict = tier2_row_from_accept(
             acc, host=host, host_args=host_args, baseline=baseline, env=env, run_id=run_id,
         )
@@ -289,6 +325,199 @@ def collect_results(
     if report_json is not None:
         report_json.write_text(json.dumps(summary, indent=2))
     return df
+
+
+def _manifest_row_to_accept(row: dict) -> AcceptRow:
+    return AcceptRow(
+        variant=str(row["variant"]),
+        seed=int(row["seed"]),
+        mutation_id=int(row.get("mutation_id", 0)),
+        kind=str(row["kind"]),
+        step=int(row["step"]),
+        iter_seed=int(row["iter_seed"]),
+        local_failures=int(row.get("local_failures", 0)),
+        global_failures=int(row.get("global_failures", 0)),
+    )
+
+
+def _run_manifest_row(
+    row: dict,
+    *,
+    host: str,
+    host_args: List[str],
+    baseline,
+    results_dir: Path,
+    resume: bool,
+) -> dict:
+    acc = _manifest_row_to_accept(row)
+    run_id = triage_run_id(
+        acc.variant, acc.seed, acc.kind, acc.step, acc.iter_seed,
+    )
+    out_path = results_dir / f"{run_id}.json"
+    if resume and out_path.is_file():
+        return {"run_id": run_id, "status": "skipped"}
+    row_dict = tier2_row_from_accept(
+        acc,
+        host=host,
+        host_args=host_args,
+        baseline=baseline,
+        env=None,
+        run_id=run_id,
+    )
+    results_dir.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(row_dict, sort_keys=True))
+    return {"run_id": run_id, "status": "ok", "class": row_dict.get("class")}
+
+
+def run_manifest(
+    manifest_df: pd.DataFrame,
+    *,
+    host: str,
+    host_args: Optional[List[str]] = None,
+    results_dir: Path,
+    workers: int = 1,
+    resume: bool = True,
+    limit: Optional[int] = None,
+) -> dict:
+    """Run tier-2 for every manifest row (resumable local/POS substitute)."""
+    host_args = host_args or default_host_args()
+    cache: Dict[str, list] = {}
+    baseline = baseline_traces(host, host_args, env=None, cache=cache)
+    subset = manifest_df.head(limit) if limit else manifest_df
+    records = subset.to_dict("records")
+    results_dir.mkdir(parents=True, exist_ok=True)
+    stats = {"total": len(records), "ok": 0, "skipped": 0, "error": 0}
+
+    if workers <= 1:
+        for row in records:
+            try:
+                result = _run_manifest_row(
+                    row,
+                    host=host,
+                    host_args=host_args,
+                    baseline=baseline,
+                    results_dir=results_dir,
+                    resume=resume,
+                )
+                stats[result["status"]] += 1
+            except Exception as exc:  # noqa: BLE001 — aggregate runner must continue
+                stats["error"] += 1
+                print(f"ERROR {row.get('variant')} step={row.get('step')}: {exc}", file=sys.stderr)
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {
+                pool.submit(
+                    _run_manifest_row,
+                    row,
+                    host=host,
+                    host_args=host_args,
+                    baseline=baseline,
+                    results_dir=results_dir,
+                    resume=resume,
+                ): row
+                for row in records
+            }
+            for fut in as_completed(futures):
+                try:
+                    result = fut.result()
+                    stats[result["status"]] += 1
+                except Exception as exc:  # noqa: BLE001
+                    stats["error"] += 1
+                    row = futures[fut]
+                    print(
+                        f"ERROR {row.get('variant')} step={row.get('step')}: {exc}",
+                        file=sys.stderr,
+                    )
+    stats["json_count"] = len(list(results_dir.glob("*.json")))
+    return stats
+
+
+def _ssh_cmd(node: str, remote_cmd: str, *, timeout: int = 30) -> Tuple[int, str]:
+    proc = subprocess.run(
+        ["ssh", "-o", "ConnectTimeout=8", "-o", "StrictHostKeyChecking=no", node, remote_cmd],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
+    out = (proc.stdout or "").strip()
+    if proc.stderr:
+        out = f"{out}\n{proc.stderr.strip()}".strip()
+    return proc.returncode, out
+
+
+def preflight_pos(
+    nodes: Optional[List[str]] = None,
+    *,
+    pos_host: str = DEFAULT_POS_HOST_PATH,
+    repo_path: str = DEFAULT_POS_REPO,
+) -> dict:
+    """Verify POS nodes have host binary + current triage module."""
+    nodes = nodes or POS_NODES
+    rows: List[dict] = []
+    for node in nodes:
+        rc, out = _ssh_cmd(
+            node,
+            f"test -x {pos_host} && test -f {repo_path}/a4/runs/iv_pos_8/d2g/propagation_triage.py "
+            f"&& cd {repo_path} && PYTHONPATH={repo_path} python3 -c "
+            f"\"from a4.runs.iv_pos_8.d2g.propagation_triage import dedupe_accepts_for_rerun\" "
+            f"&& echo OK",
+            timeout=20,
+        )
+        rows.append({
+            "node": node,
+            "ok": rc == 0 and "OK" in out,
+            "detail": out or f"exit={rc}",
+        })
+    return {
+        "nodes_checked": len(rows),
+        "nodes_ok": sum(1 for r in rows if r["ok"]),
+        "all_ok": all(r["ok"] for r in rows),
+        "checks": rows,
+    }
+
+
+def gather_pos_results(
+    local_dir: Path,
+    *,
+    nodes: Optional[List[str]] = None,
+    remote_dir: str = DEFAULT_POS_RESULTS_DIR,
+) -> dict:
+    """SCP triage JSON from each POS node into local_dir/<node>/."""
+    nodes = nodes or POS_NODES
+    local_dir.mkdir(parents=True, exist_ok=True)
+    merged = local_dir / "merged"
+    merged.mkdir(parents=True, exist_ok=True)
+    per_node: List[dict] = []
+    total = 0
+    for node in nodes:
+        node_dir = local_dir / node
+        node_dir.mkdir(parents=True, exist_ok=True)
+        proc = subprocess.run(
+            [
+                "scp", "-o", "ConnectTimeout=15", "-o", "StrictHostKeyChecking=no",
+                f"{node}:{remote_dir}/*.json", f"{node_dir}/",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        n_json = len(list(node_dir.glob("*.json")))
+        total += n_json
+        per_node.append({
+            "node": node,
+            "json_count": n_json,
+            "scp_rc": proc.returncode,
+            "scp_err": (proc.stderr or "").strip()[:200],
+        })
+        for path in node_dir.glob("*.json"):
+            link = merged / path.name
+            if not link.exists():
+                link.write_bytes(path.read_bytes())
+    return {
+        "nodes": per_node,
+        "total_json": total,
+        "merged_unique": len(list(merged.glob("*.json"))),
+        "merged_dir": str(merged),
+    }
 
 
 def triage_at_scale_pipeline(
@@ -403,6 +632,23 @@ def main() -> int:
     p_smoke.add_argument("--limit", type=int, default=10)
     p_smoke.add_argument("--host-args", nargs=argparse.REMAINDER, default=None)
 
+    p_run = sub.add_parser("run_manifest", help="Run full manifest locally (resumable)")
+    p_run.add_argument("manifest_csv", type=Path)
+    p_run.add_argument("--results-dir", type=Path, required=True)
+    p_run.add_argument("--host", default=default_host())
+    p_run.add_argument("--workers", type=int, default=1)
+    p_run.add_argument("--no-resume", action="store_true")
+    p_run.add_argument("--limit", type=int, default=None)
+    p_run.add_argument("--host-args", nargs=argparse.REMAINDER, default=None)
+
+    p_gather = sub.add_parser("gather", help="SCP triage JSON from POS nodes")
+    p_gather.add_argument("--out", type=Path, required=True)
+    p_gather.add_argument("--remote-dir", default=DEFAULT_POS_RESULTS_DIR)
+    p_gather.add_argument("--nodes", nargs="*", default=None)
+
+    p_preflight = sub.add_parser("preflight", help="Verify POS nodes ready for triage")
+    p_preflight.add_argument("--nodes", nargs="*", default=None)
+
     args = parser.parse_args()
     if args.cmd == "pipeline":
         summary = triage_at_scale_pipeline(
@@ -447,7 +693,13 @@ def main() -> int:
         args.results_dir.mkdir(parents=True, exist_ok=True)
         host_args = _parse_host_args(args.host_args)
         for _, row in subset.iterrows():
-            run_id = f"triage_{row['variant']}_s{row['seed']}_{row['kind']}_step{row['step']}"
+            run_id = triage_run_id(
+                str(row["variant"]),
+                int(row["seed"]),
+                str(row["kind"]),
+                int(row["step"]),
+                int(row["iter_seed"]),
+            )
             run_one(
                 variant=str(row["variant"]),
                 seed=int(row["seed"]),
@@ -467,6 +719,34 @@ def main() -> int:
         )
         print(json.dumps({"smoke_jobs": len(subset), "out": str(args.out)}, indent=2))
         return 0
+
+    if args.cmd == "run_manifest":
+        manifest = pd.read_csv(args.manifest_csv)
+        stats = run_manifest(
+            manifest,
+            host=args.host,
+            host_args=_parse_host_args(args.host_args),
+            results_dir=args.results_dir.resolve(),
+            workers=max(1, args.workers),
+            resume=not args.no_resume,
+            limit=args.limit,
+        )
+        print(json.dumps(stats, indent=2))
+        return 0 if stats.get("error", 0) == 0 else 1
+
+    if args.cmd == "gather":
+        report = gather_pos_results(
+            args.out.resolve(),
+            nodes=args.nodes or None,
+            remote_dir=args.remote_dir,
+        )
+        print(json.dumps(report, indent=2))
+        return 0
+
+    if args.cmd == "preflight":
+        report = preflight_pos(nodes=args.nodes or None)
+        print(json.dumps(report, indent=2))
+        return 0 if report["all_ok"] else 1
 
     parser.print_help()
     return 1

@@ -493,9 +493,28 @@ def triage_summary(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def dedupe_accepts_for_rerun(df: pd.DataFrame) -> pd.DataFrame:
+    """Kind-aware dedup for tier-2 rerun manifests (ISS-4).
+
+    INSTR_WORD_MOD: one rerun per (variant, kind, step) — within each group every
+    accept shares the same fault word (prod DB verified; classification is invariant).
+    POST_EXEC_PC_MOD: keep every (variant, kind, step, iter_seed) — DB orig/mut are
+    degenerate and random_pc is iter_seed-dependent, so same-step siblings must not
+    collapse.
+    """
     if df.empty:
         return df
-    return df.drop_duplicates(subset=["kind", "step"], keep="first").reset_index(drop=True)
+    iwm = df[df["kind"] == "INSTR_WORD_MOD"].drop_duplicates(
+        subset=["variant", "kind", "step"], keep="first",
+    )
+    pepc = df[df["kind"] == "POST_EXEC_PC_MOD"].drop_duplicates(
+        subset=["variant", "kind", "step", "iter_seed"], keep="first",
+    )
+    other = df[~df["kind"].isin({"INSTR_WORD_MOD", "POST_EXEC_PC_MOD"})]
+    if not other.empty:
+        other = other.drop_duplicates(
+            subset=["variant", "kind", "step", "iter_seed"], keep="first",
+        )
+    return pd.concat([iwm, pepc, other], ignore_index=True).reset_index(drop=True)
 
 
 def validate_smoke_oracle(df: pd.DataFrame) -> Tuple[bool, str]:
