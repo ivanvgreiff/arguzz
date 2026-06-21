@@ -7,11 +7,14 @@ import os
 import re
 import sqlite3
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
-import pandas as pd
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 from a4.arguzz_dependent.arguzz_parser import ArguzzTrace, parse_all_traces
 from a4.standalone.arguzz_invoke import _decode_safe, run as arguzz_run
@@ -174,6 +177,16 @@ def post_inject_pc_sequence(traces: Iterable[ArguzzTrace], after_step: int) -> L
     return [(t.step, t.pc) for t in sorted(traces, key=lambda x: x.step) if t.step > after_step]
 
 
+def _baseline_disk_path(key: str) -> Optional[Path]:
+    root = os.environ.get("D2G_BASELINE_CACHE", "").strip()
+    if not root:
+        return None
+    cache_dir = Path(root)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    digest = hashlib.sha256(key.encode()).hexdigest()[:16]
+    return cache_dir / f"baseline_{digest}.json"
+
+
 def baseline_traces(
     host: str,
     host_args: List[str],
@@ -184,6 +197,13 @@ def baseline_traces(
     key = f"{host}|{' '.join(host_args)}"
     if cache is not None and key in cache:
         return cache[key]
+    disk_path = _baseline_disk_path(key)
+    if disk_path is not None and disk_path.is_file():
+        payload = json.loads(disk_path.read_text())
+        traces = [ArguzzTrace(**row) for row in payload]
+        if cache is not None:
+            cache[key] = traces
+        return traces
     subprocess_env = {**os.environ, "CONSTRAINT_CONTINUE": "1"}
     subprocess_env.update(DEFAULT_ARGUZZ_SUBPROCESS_ENV)
     if env:
@@ -200,6 +220,8 @@ def baseline_traces(
     traces = parse_all_traces(stdout)
     if not traces:
         raise RuntimeError("baseline --trace produced no trace records")
+    if disk_path is not None:
+        disk_path.write_text(json.dumps([asdict(t) for t in traces]))
     if cache is not None:
         cache[key] = traces
     return traces
@@ -398,8 +420,9 @@ def triage_accepts(
     host_args: List[str],
     run_tier2: bool = True,
     env: Optional[dict] = None,
-) -> pd.DataFrame:
+) -> "pd.DataFrame":
     """Run triage; oracle 7/1/0 is a filter-contract (surfaces 1 weak candidate)."""
+    import pandas as pd
     cache: Dict[str, List[ArguzzTrace]] = {}
     baseline = baseline_traces(host, host_args, env=env, cache=cache) if run_tier2 else []
     base_digest = trace_digest(baseline) if baseline else ""
@@ -482,7 +505,8 @@ def triage_accepts(
     return pd.DataFrame(rows)
 
 
-def triage_summary(df: pd.DataFrame) -> pd.DataFrame:
+def triage_summary(df: "pd.DataFrame") -> "pd.DataFrame":
+    import pandas as pd
     if df.empty:
         return pd.DataFrame()
     return (
@@ -492,7 +516,7 @@ def triage_summary(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def dedupe_accepts_for_rerun(df: pd.DataFrame) -> pd.DataFrame:
+def dedupe_accepts_for_rerun(df: "pd.DataFrame") -> "pd.DataFrame":
     """Kind-aware dedup for tier-2 rerun manifests (ISS-4).
 
     INSTR_WORD_MOD: one rerun per (variant, kind, step) — within each group every
@@ -501,6 +525,7 @@ def dedupe_accepts_for_rerun(df: pd.DataFrame) -> pd.DataFrame:
     degenerate and random_pc is iter_seed-dependent, so same-step siblings must not
     collapse.
     """
+    import pandas as pd
     if df.empty:
         return df
     iwm = df[df["kind"] == "INSTR_WORD_MOD"].drop_duplicates(
@@ -517,8 +542,9 @@ def dedupe_accepts_for_rerun(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([iwm, pepc, other], ignore_index=True).reset_index(drop=True)
 
 
-def validate_smoke_oracle(df: pd.DataFrame) -> Tuple[bool, str]:
+def validate_smoke_oracle(df: "pd.DataFrame") -> Tuple[bool, str]:
     """Filter-contract gate (F22/F24): V6_cTS seed1234 → 8 noop / 0 propagated / 0 hidden."""
+    import pandas as pd
     sub = df[(df["variant"] == "V6_cTS") & (df["seed"] == 1234)]
     if len(sub) != 8:
         return False, f"expected 8 accepts, got {len(sub)}"

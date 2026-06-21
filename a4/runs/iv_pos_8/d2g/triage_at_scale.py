@@ -27,6 +27,11 @@ from .propagation_triage import (
 
 GUEST_KEY = "--in1 5 --in4 10"
 
+TRIAGE_POS_NODES = [
+    # Tier B (fastest available besides D2.F EPYC pool) then Tier C.
+    "pact", "stoi", "idex", "meld", "tinyman",
+]
+# Legacy D2.F campaign nodes — do not use for triage while fuzz jobs run.
 POS_NODES = [
     "flare", "polynize", "octorand", "opulous", "algofi", "zone", "gard", "goracle",
 ]
@@ -193,6 +198,18 @@ def run_one(
     return row
 
 
+def order_manifest_for_dispatch(manifest_df: pd.DataFrame) -> pd.DataFrame:
+    """PEPC first (soundness lead), then IWM; stable within kind."""
+    kind_rank = {"POST_EXEC_PC_MOD": 0, "INSTR_WORD_MOD": 1}
+    df = manifest_df.copy()
+    df["_kind_rank"] = df["kind"].map(kind_rank).fillna(9)
+    df = df.sort_values(
+        ["_kind_rank", "variant", "seed", "step", "iter_seed"],
+        kind="mergesort",
+    ).drop(columns=["_kind_rank"])
+    return df.reset_index(drop=True)
+
+
 def write_chain_manifest(
     manifest_df: pd.DataFrame,
     out_path: Path,
@@ -200,20 +217,23 @@ def write_chain_manifest(
     host: Optional[str] = None,
     batch_prefix: str = "d2g_triage_rerun",
     results_dir: str = DEFAULT_POS_RESULTS_DIR,
+    nodes: Optional[List[str]] = None,
 ) -> Path:
     """Emit chain_dispatcher-compatible manifest for POS tier-2 reruns.
 
-    Jobs are grouped into waves of len(POS_NODES): one job per node per batch so
+    Jobs are grouped into waves of len(nodes): one job per node per batch so
     chain_dispatcher never stacks multiple concurrent writers on the same node.
     """
     pos_host = host or default_pos_host()
     host_args = default_host_args()
     args_str = " ".join(host_args)
-    nodes = POS_NODES
-    records = manifest_df.to_dict("records")
+    nodes = list(nodes or TRIAGE_POS_NODES)
+    ordered = order_manifest_for_dispatch(manifest_df)
+    records = ordered.to_dict("records")
     n_waves = (len(records) + len(nodes) - 1) // len(nodes) if records else 0
     lines = [
-        f"# D2.G tier-2 triage reruns — {len(records)} deduped jobs in {n_waves} batches",
+        f"# D2.G tier-2 triage reruns — {len(records)} jobs, {n_waves} batches, {len(nodes)} nodes",
+        f"# nodes: {' '.join(nodes)}",
         "# format: batch|node|run_id|remote_cmd",
         "# One job per node per batch (chain_dispatcher 1-per-node concurrency rule).",
         "",
@@ -231,10 +251,11 @@ def write_chain_manifest(
                 int(row["iter_seed"]),
             )
             cmd = (
-                f"export A4_COVERAGE_TOUCH=1 A4_FAMILY_RESIDUE=1 CONSTRAINT_CONTINUE=1; "
-                f"mkdir -p {results_dir} && cd {DEFAULT_POS_REPO} && "
+                f"export A4_COVERAGE_TOUCH=1 A4_FAMILY_RESIDUE=1 CONSTRAINT_CONTINUE=1 "
+                f"D2G_BASELINE_CACHE={results_dir}/baseline_cache; "
+                f"mkdir -p {results_dir} $D2G_BASELINE_CACHE && cd {DEFAULT_POS_REPO} && "
                 f"PYTHONPATH={DEFAULT_POS_REPO} "
-                f"python3 -m a4.runs.iv_pos_8.d2g.triage_at_scale run_one "
+                f"python3 -m a4.runs.iv_pos_8.d2g.run_one_pos "
                 f"--host {pos_host} --variant {row['variant']} --seed {int(row['seed'])} "
                 f"--step {int(row['step'])} --kind {row['kind']} "
                 f"--iter-seed {int(row['iter_seed'])} "
@@ -286,13 +307,30 @@ def run_tier2_local(
     return pd.DataFrame(rows)
 
 
+def expected_run_ids_from_manifest(manifest_csv: Path) -> set:
+    """Reconstruct the full set of run_ids the manifest should produce (ISS-5)."""
+    m = pd.read_csv(manifest_csv)
+    return {
+        triage_run_id(
+            str(r["variant"]), int(r["seed"]), str(r["kind"]),
+            int(r["step"]), int(r["iter_seed"]),
+        )
+        for _, r in m.iterrows()
+    }
+
+
 def collect_results(
     results_dir: Path,
     out_csv: Path,
     *,
     report_json: Optional[Path] = None,
+    manifest_csv: Optional[Path] = None,
 ) -> pd.DataFrame:
-    """Merge per-job run_one JSON outputs into one CSV + aggregated report."""
+    """Merge per-job run_one JSON outputs into one CSV + aggregated report.
+
+    If ``manifest_csv`` is given, asserts completeness (every expected run_id has a
+    result) so the soundness re-read never runs on a silent subset (ISS-5).
+    """
     rows: List[dict] = []
     for path in sorted(results_dir.glob("*.json")):
         try:
@@ -313,6 +351,14 @@ def collect_results(
         "results_dir": str(results_dir),
         "out_csv": str(out_csv),
     }
+    if manifest_csv is not None:
+        expected = expected_run_ids_from_manifest(manifest_csv)
+        got = set(df["run_id"]) if (not df.empty and "run_id" in df) else set()
+        missing = sorted(expected - got)
+        summary["n_expected"] = len(expected)
+        summary["n_missing"] = len(missing)
+        summary["complete"] = not missing
+        summary["missing_run_ids"] = missing[:50]
     if not df.empty:
         summary["class_counts"] = df["class"].value_counts().to_dict()
         summary["evidence_counts"] = df["evidence"].value_counts().to_dict()
@@ -452,14 +498,14 @@ def preflight_pos(
     repo_path: str = DEFAULT_POS_REPO,
 ) -> dict:
     """Verify POS nodes have host binary + current triage module."""
-    nodes = nodes or POS_NODES
+    nodes = nodes or TRIAGE_POS_NODES
     rows: List[dict] = []
     for node in nodes:
         rc, out = _ssh_cmd(
             node,
-            f"test -x {pos_host} && test -f {repo_path}/a4/runs/iv_pos_8/d2g/propagation_triage.py "
+            f"test -x {pos_host} && test -f {repo_path}/a4/runs/iv_pos_8/d2g/run_one_pos.py "
             f"&& cd {repo_path} && PYTHONPATH={repo_path} python3 -c "
-            f"\"from a4.runs.iv_pos_8.d2g.propagation_triage import dedupe_accepts_for_rerun\" "
+            f"\"import a4.runs.iv_pos_8.d2g.run_one_pos\" "
             f"&& echo OK",
             timeout=20,
         )
@@ -483,7 +529,7 @@ def gather_pos_results(
     remote_dir: str = DEFAULT_POS_RESULTS_DIR,
 ) -> dict:
     """SCP triage JSON from each POS node into local_dir/<node>/."""
-    nodes = nodes or POS_NODES
+    nodes = nodes or TRIAGE_POS_NODES
     local_dir.mkdir(parents=True, exist_ok=True)
     merged = local_dir / "merged"
     merged.mkdir(parents=True, exist_ok=True)
@@ -551,6 +597,7 @@ def triage_at_scale_pipeline(
     )
     chain_path = write_chain_manifest(
         manifest, out_dir / "d2g_triage_rerun.chain",
+        nodes=os.environ.get("A4_TRIAGE_NODES", "").split() or None,
     )
 
     triage_df = pd.DataFrame()
@@ -623,6 +670,8 @@ def main() -> int:
     p_collect.add_argument("results_dir", type=Path)
     p_collect.add_argument("--out", type=Path, required=True)
     p_collect.add_argument("--report", type=Path, default=None)
+    p_collect.add_argument("--manifest", type=Path, default=None,
+                           help="Manifest CSV to assert result completeness (ISS-5)")
 
     p_smoke = sub.add_parser("smoke", help="Run ≤10 local run_one jobs + collect")
     p_smoke.add_argument("manifest_csv", type=Path)
@@ -648,6 +697,11 @@ def main() -> int:
 
     p_preflight = sub.add_parser("preflight", help="Verify POS nodes ready for triage")
     p_preflight.add_argument("--nodes", nargs="*", default=None)
+
+    p_chain = sub.add_parser("write-chain", help="Write chain manifest from CSV")
+    p_chain.add_argument("manifest_csv", type=Path)
+    p_chain.add_argument("--out", type=Path, required=True)
+    p_chain.add_argument("--nodes", nargs="+", default=None)
 
     args = parser.parse_args()
     if args.cmd == "pipeline":
@@ -679,12 +733,32 @@ def main() -> int:
         return 0
 
     if args.cmd == "collect":
+        manifest_csv = args.manifest.resolve() if args.manifest else None
         df = collect_results(
             args.results_dir.resolve(),
             args.out.resolve(),
             report_json=args.report.resolve() if args.report else None,
+            manifest_csv=manifest_csv,
         )
-        print(json.dumps({"n_rows": len(df), "out": str(args.out)}, indent=2))
+        out = {"n_rows": len(df), "out": str(args.out)}
+        if manifest_csv is not None:
+            expected = expected_run_ids_from_manifest(manifest_csv)
+            got = set(df["run_id"]) if (not df.empty and "run_id" in df) else set()
+            missing = sorted(expected - got)
+            out["n_expected"] = len(expected)
+            out["n_missing"] = len(missing)
+            if missing:
+                out["complete"] = False
+                out["missing_sample"] = missing[:20]
+                print(json.dumps(out, indent=2))
+                print(
+                    f"INCOMPLETE: {len(missing)}/{len(expected)} results missing — "
+                    f"re-dispatch the missing run_ids before the soundness re-read.",
+                    file=sys.stderr,
+                )
+                return 3
+            out["complete"] = True
+        print(json.dumps(out, indent=2))
         return 0
 
     if args.cmd == "smoke":
@@ -747,6 +821,23 @@ def main() -> int:
         report = preflight_pos(nodes=args.nodes or None)
         print(json.dumps(report, indent=2))
         return 0 if report["all_ok"] else 1
+
+    if args.cmd == "write-chain":
+        manifest = pd.read_csv(args.manifest_csv)
+        path = write_chain_manifest(
+            manifest,
+            args.out.resolve(),
+            nodes=args.nodes,
+        )
+        n_batches = len({l.split("|")[0] for l in path.read_text().splitlines()
+                         if l and not l.startswith("#") and "|" in l})
+        print(json.dumps({
+            "chain": str(path),
+            "jobs": len(manifest),
+            "batches": n_batches,
+            "nodes": args.nodes or TRIAGE_POS_NODES,
+        }, indent=2))
+        return 0
 
     parser.print_help()
     return 1

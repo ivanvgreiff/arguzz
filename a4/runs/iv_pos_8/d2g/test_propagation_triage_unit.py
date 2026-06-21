@@ -223,7 +223,7 @@ def test_dedupe_accepts_pepc_keeps_distinct_iter_seed():
 
 def test_chain_manifest_batches_one_job_per_node():
     import pandas as pd
-    from a4.runs.iv_pos_8.d2g.triage_at_scale import POS_NODES, write_chain_manifest
+    from a4.runs.iv_pos_8.d2g.triage_at_scale import TRIAGE_POS_NODES, write_chain_manifest
 
     df = pd.DataFrame([
         {"variant": "V6_cTS", "seed": 1234, "kind": "INSTR_WORD_MOD", "step": i,
@@ -231,7 +231,7 @@ def test_chain_manifest_batches_one_job_per_node():
         for i in range(20)
     ])
     path = __import__("pathlib").Path("/tmp/test_d2g_chain.manifest")
-    write_chain_manifest(df, path)
+    write_chain_manifest(df, path, nodes=TRIAGE_POS_NODES)
     lines = [l for l in path.read_text().splitlines() if l and not l.startswith("#")]
     batches = {}
     nodes_per_batch = {}
@@ -239,7 +239,7 @@ def test_chain_manifest_batches_one_job_per_node():
         batch, node, run_id, _cmd = line.split("|", 3)
         batches.setdefault(batch, []).append(node)
         nodes_per_batch.setdefault(batch, set()).add(node)
-    assert len(batches) == 3  # 20 jobs / 8 nodes = 3 waves
+    assert len(batches) == 4  # 20 jobs / 5 nodes = 4 waves
     for batch, nodes in nodes_per_batch.items():
         assert len(nodes) == len(batches[batch])
-        assert len(nodes) <= len(POS_NODES)
+        assert len(nodes) <= len(TRIAGE_POS_NODES)
