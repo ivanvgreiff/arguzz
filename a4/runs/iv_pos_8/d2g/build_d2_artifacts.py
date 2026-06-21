@@ -186,7 +186,10 @@ def run_b3(
     if not iwm.empty:
         _write(iwm, out_dir / "d2g_instr_word_mod_correction.csv")
 
-    case_id, rationale, evidence = determine_case(scores, territory, metrics)
+    case_id, rationale, evidence = determine_case(
+        scores, territory, metrics,
+        apples_df=apples_to_apples_row(collection_root),
+    )
     paired = paired_tests(
         scores,
         reference="V6_uniform",

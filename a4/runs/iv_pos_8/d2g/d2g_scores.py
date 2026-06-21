@@ -9,6 +9,7 @@ import pandas as pd
 
 from a4.runs.iv_pos_7.analysis.bug_proximity import compute_tier2_metrics_row
 
+from .d2g_metrics import failures_derived_unique_locs_d_loc_le_2
 from .discover import flat_db_list, parse_d2f_run_dir
 from .propagation_triage import TRIAGE_HIDDEN, TRIAGE_PROPAGATED
 
@@ -93,6 +94,15 @@ def compute_scores_frame(
         c5 = int((ch["channel"] == "C5").sum()) if not ch.empty else 0
         accepted = int((ch["channel"] == "accepted").sum()) if not ch.empty else 0
 
+        uuf = _unique_useful_from_tier2(t2)
+        if variant == "V6_uniform" and bool(m.get("telemetry_sparse", False)):
+            reward_uuf = uuf["unique_locs_d_loc_le_2"]
+            if reward_uuf == 0:
+                with sqlite3.connect(db) as conn:
+                    uuf["unique_locs_d_loc_le_2"] = float(
+                        failures_derived_unique_locs_d_loc_le_2(conn)
+                    )
+
         row = {
             "variant": variant,
             "seed": seed,
@@ -102,7 +112,7 @@ def compute_scores_frame(
             "global_failure_recording_gap_rate": c2 / max(c1 + c2 + accepted, 1),
             ** _survey_from_metrics(m),
             ** _proximity_from_tier2(t2),
-            ** _unique_useful_from_tier2(t2),
+            ** uuf,
             ** _soundness_from_triage(triage_df, variant, seed),
             "repairability_singleton_rate": float(t2.get("cat_a_pro_s5_singleton_failure_rate") or 0),
             "repairability_d_loc_p95": float(t2.get("cat_a_pro_s5_d_loc_p95") or 0),

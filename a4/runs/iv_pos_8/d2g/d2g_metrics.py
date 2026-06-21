@@ -35,6 +35,23 @@ def _outcome_counts(conn: sqlite3.Connection) -> Dict[str, int]:
     return {str(o or "NULL"): int(c) for o, c in rows}
 
 
+def failures_derived_unique_locs_d_loc_le_2(conn: sqlite3.Connection) -> int:
+    """F18 — distinct locs from mutations with d_loc<=2 when rewards path is empty."""
+    row = conn.execute(
+        """
+        SELECT COUNT(DISTINCT f.constraint_loc)
+        FROM failures f
+        INNER JOIN (
+            SELECT mutation_id
+            FROM failures
+            GROUP BY mutation_id
+            HAVING COUNT(DISTINCT constraint_loc) <= 2
+        ) q ON q.mutation_id = f.mutation_id
+        """
+    ).fetchone()
+    return int(row[0] if row else 0)
+
+
 def _v6_uniform_failures_proximity(conn: sqlite3.Connection) -> Dict[str, float]:
     """F18 — derive d_loc/singleton signals from failures when rewards empty."""
     try:
@@ -112,6 +129,10 @@ def compute_d2g_metrics_for_db(db_path: Path) -> Dict[str, object]:
                 rewards_nonempty = False
 
         f18 = _v6_uniform_failures_proximity(conn) if variant == UNIFORM_VARIANT else {}
+        if variant == UNIFORM_VARIANT:
+            f18["failures_derived_unique_locs_d_loc_le_2"] = (
+                failures_derived_unique_locs_d_loc_le_2(conn)
+            )
 
         has_bandit = bool(conn.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='bandit_decisions'"
