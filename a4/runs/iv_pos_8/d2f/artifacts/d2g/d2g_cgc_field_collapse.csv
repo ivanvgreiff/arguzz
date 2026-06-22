@@ -1,0 +1,9 @@
+variant,seed,expected_n,cgc_rows,distinct_family,distinct_address_region,distinct_txn_role,distinct_cycle_phase,collapsed_fields,has_collapse
+V5_control,1234,100,73,2,7,6,3,,False
+V5_control,1235,100,77,2,7,6,3,,False
+V6_uniform,1234,100,113,2,7,4,1,cycle_phase,True
+V6_uniform,1235,100,132,2,9,4,2,,False
+V6_cTS,1234,100,51,2,6,2,2,,False
+V6_cTS,1235,100,53,2,6,2,3,,False
+Hybrid_cTS,1234,100,71,2,8,6,3,,False
+Hybrid_cTS,1235,100,80,2,7,6,3,,False

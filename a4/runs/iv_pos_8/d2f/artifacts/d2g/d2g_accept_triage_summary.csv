@@ -1,0 +1,12 @@
+variant,seed,class,evidence,count
+Hybrid_cTS,1234,accepted_noop,,1
+Hybrid_cTS,1235,accepted_noop,,1
+Hybrid_cTS,1235,accepted_propagated_candidate,weak,2
+V6_cTS,1234,accepted_noop,,5
+V6_cTS,1234,accepted_noop,cosmetic,2
+V6_cTS,1234,accepted_propagated_candidate,weak,1
+V6_cTS,1235,accepted_noop,,7
+V6_cTS,1235,accepted_noop,cosmetic,2
+V6_uniform,1234,accepted_noop,,1
+V6_uniform,1234,accepted_propagated_candidate,weak,1
+V6_uniform,1235,accepted_noop,,2

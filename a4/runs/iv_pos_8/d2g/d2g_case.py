@@ -9,7 +9,7 @@ from a4.runs.iv_pos_7.analysis.stats import paired_tests
 
 CASES = {
     "A": "V6-cTS beats V6-uniform — core feedback hypothesis validated",
-    "B": "V6-cTS loses, Hybrid wins — hybrid surface + A4 witness terrain",
+    "B": "V6-cTS ties V6-uniform on territory (doesn't beat); Hybrid wins — hybrid surface + A4 terrain",
     "C": "V6-cTS wins, Hybrid loses — A4 arms dilute Arguzz scheduler",
     "D": "Both lose to V6-uniform — cTS arm space too fragmented",
     "E": "Hybrid preserves V5 terrain but doesn't beat V6 raw — union territory claim",

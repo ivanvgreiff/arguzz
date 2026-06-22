@@ -1,0 +1,8 @@
+bucket,count,sample_locs
+common_all_four,34,AddrDecompose:u32.zir:67;AddrDecomposeBits:u32.zir:87;ControlMRET:inst_control.zir:89;ControlMRET:inst_control.zir:91;ControlMRET:inst_control.zir:92
+a4_only,2,ControlLoadRootAndNonce:inst_control.zir:35;ControlLoadRootAndNonce:inst_control.zir:36
+arguzz_only,1,Poseidon0:inst_p2.zir:470
+hybrid_only,0,
+v6_exclusive,1,Poseidon0:inst_p2.zir:470
+v5_ecall_mret_signature,2,ControlLoadRootAndNonce:inst_control.zir:35;ControlMRET:inst_control.zir:93
+union_all_four,52,

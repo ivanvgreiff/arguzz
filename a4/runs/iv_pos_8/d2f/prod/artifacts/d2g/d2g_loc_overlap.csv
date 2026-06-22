@@ -1,0 +1,7 @@
+variant_a,variant_b,intersection,union,jaccard
+V5_control,V6_uniform,34,52,0.6538461538461539
+V5_control,V6_cTS,34,51,0.6666666666666666
+V5_control,Hybrid_cTS,47,51,0.9215686274509803
+V6_uniform,V6_cTS,36,37,0.972972972972973
+V6_uniform,Hybrid_cTS,36,50,0.72
+V6_cTS,Hybrid_cTS,36,49,0.7346938775510204

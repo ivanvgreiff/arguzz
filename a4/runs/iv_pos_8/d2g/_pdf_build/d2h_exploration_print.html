@@ -1,0 +1,91 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>D2.H</title></head><body>
+<h1>D2.H — Constraint-space exploration of the four-variant campaign</h1>
+<p><strong>What this is.</strong> A measurement of <em>how broadly and deeply each fuzzing architecture probes the RISC Zero zkVM's constraint system</em>, on the complete IV.POS.8 four-variant campaign (<strong>all 3 seeds</strong>, N=10000 each — 12 runs total). It is the companion to D2.G's verdict/triage analysis: <strong>D2.G asks "did we find a soundness bug?"; this asks "how effectively does each architecture explore the space where soundness bugs would live?"</strong></p>
+<p><strong>Why it matters.</strong> A soundness bug is an <em>underconstraint</em> — a place the circuit accepts a witness it should reject. To find one, a fuzzer must (1) <em>reach</em> that constraint and (2) <em>probe</em> it with a mutation it should reject. So <strong>broader, deeper constraint-space exploration is the leading indicator of bug-discovery potential</strong> — it is the closest measurable proxy we have for "how much of the attack surface did this architecture actually exercise." This notebook quantifies that proxy.</p>
+<blockquote>
+<p><strong>One caveat, up front: exploration ≠ bugs.</strong> D2.G's triage found <strong>0 confirmed soundness candidates</strong> across the full campaign. "Reaches more territory" means "more chances to find a bug," not "found one." This notebook is about <em>coverage of the search space</em>, which is exactly the quantity you want to compare when no bug has yet been triggered.</p>
+</blockquote>
+<p><strong>The four variants</strong> (each N=10000, sha2-host, seeds 1234/1235/1236):
+| variant | mutation surface | scheduler |
+|---|---|---|
+| <strong>V5_control</strong> | <strong>A4</strong> — post-<em>execution</em> witness/trace-cell mutation | cTS, constant floor |
+| <strong>V6_uniform</strong> | <strong>Arguzz</strong> — during-<em>execution</em> fault injection | round-robin (uniform) |
+| <strong>V6_cTS</strong> | <strong>Arguzz</strong> — same 11 kinds | constrained Thompson sampling |
+| <strong>Hybrid_cTS</strong> | <strong>A4 trace-cell + Arguzz execution-fault</strong> (15 kinds) | constrained Thompson sampling |</p>
+<p><em>A4 edits the witness/trace </em><em>after</em><em> execution; Arguzz injects faults </em><em>during</em><em> execution. The hypothesis under test is that combining them (Hybrid) explores strictly more of the constraint space than either alone.</em></p>
+<pre>{
+  &quot;local&quot;: {
+    &quot;totals&quot;: {
+      &quot;V5_control&quot;: 49,
+      &quot;V6_uniform&quot;: 37,
+      &quot;V6_cTS&quot;: 36,
+      &quot;Hybrid_cTS&quot;: 49
+    },
+    &quot;union&quot;: 52,
+    &quot;common4&quot;: 34,
+    &quot;exclusive&quot;: {
+      &quot;V5_control&quot;: 2,
+      &quot;V6_uniform&quot;: 1,
+      &quot;V6_cTS&quot;: 0,
+      &quot;Hybrid_cTS&quot;: 0
+    }
+  },
+  &quot;cgc&quot;: {
+    &quot;totals&quot;: {
+      &quot;V5_control&quot;: 449,
+      &quot;V6_uniform&quot;: 565,
+      &quot;V6_cTS&quot;: 670,
+      &quot;Hybrid_cTS&quot;: 591
+    },
+    &quot;union&quot;: 1025,
+    &quot;common4&quot;: 110,
+    &quot;exclusive&quot;: {
+      &quot;V5_control&quot;: 46,
+      &quot;V6_uniform&quot;: 2,
+      &quot;V6_cTS&quot;: 54,
+      &quot;Hybrid_cTS&quot;: 33
+    }
+  }
+}</pre>
+<h2>1. The headline: constraint-space coverage curves</h2>
+<p>We track <strong>two</strong> coverage curves because a zkVM constraint system has <strong>two structurally different kinds of constraint</strong>, and an underconstraint can hide in either:</p>
+<ul>
+<li><strong>Local coverage</strong> — the <strong>per-row / per-cycle</strong> constraints (the <code>.zir</code> <code>EQZ</code> equalities, identified by <code>constraint_loc</code>). A local-loc is "reached" when some mutation makes <em>that specific constraint</em> fail. <em>Intuition: which individual algebraic constraints did the fuzzer manage to trip?</em></li>
+<li><strong>CGC coverage</strong> — the <strong>global, cross-row</strong> arguments: the memory + lookup <strong>permutation</strong> residues (<code>compressed_global_coverage</code>) that bind the whole execution trace together. <em>Intuition: which global, witness-internal structures did the fuzzer manage to perturb?</em></li>
+</ul>
+<p>They are <strong>not interchangeable</strong> — a mutation can move a CGC residue without adding any local loc, and vice versa — so together they span the surface a soundness bug could occupy. These two are the right primary curves precisely <em>because</em> they are the two orthogonal axes of the constraint space; anything else (e.g. a rarity-weighted variant) is a re-weighting of one of them, not a new dimension.</p>
+<p>Each curve is the cumulative count of <em>distinct</em> locs / CGC contexts discovered as the campaign runs. The <strong>bold line pools all 3 seeds</strong> (a constraint counts once it is reached in <em>any</em> seed), so its endpoint is the campaign's <strong>total</strong> distinct reach — the exact number repeated in the territory bars below. The <strong>faint lines are the three individual seeds</strong>, showing run-to-run reproducibility (and why pooling reaches a bit more than any single run). <strong>Read three things:</strong> the <em>endpoint</em> (total territory), the <em>slope</em> (discovery rate), and the <em>tail</em> (flat = saturated; still-rising = headroom remaining).</p>
+<figure><img src="fig_0.png" alt="Figure 1"/></figure>
+<p><strong>What the curves say — the single clearest result in this notebook:</strong></p>
+<ul>
+<li><strong>On the <em>local</em> curve, A4 leads.</strong> V5_control and Hybrid_cTS each reach <strong>49</strong> distinct per-row constraints; the pure-Arguzz variants reach <strong>36–37</strong>. A4's single-cell witness mutations broadly trip local algebraic constraints that during-execution faults often don't.</li>
+<li><strong>On the <em>CGC</em> curve, Arguzz leads — and by a lot.</strong> V6_cTS reaches <strong>670</strong> distinct global/permutation contexts; V5_control (pure A4) reaches the <strong>fewest, 449</strong>. During-execution faults perturb the global permutation arguments far more than single-cell trace edits do.</li>
+<li><strong>Both curves saturate early then crawl.</strong> Local coverage is essentially flat by ~2–3k pulls (the ~50 reachable local locs on this guest are nearly exhausted); CGC keeps climbing slowly to the end — there is still global-context headroom at N=10000, especially for the Arguzz/Hybrid variants.</li>
+</ul>
+<p>So the architectures explore <strong>complementary</strong> parts of the constraint system: <strong>A4 ↔ local, Arguzz ↔ global, Hybrid ↔ both.</strong></p>
+<h2>2. How much of each variant's territory is <em>unique</em>?</h2>
+<p>The curves show <em>how much</em> territory each reaches. The next question is <em>how much of it is theirs alone</em> — the <strong>exclusive</strong> territory (locs / CGC contexts no other variant reached, pooled over all 3 seeds). Exclusive territory is the cleanest measure of a surface's <strong>unique contribution</strong>: shared territory means the others would have found it anyway, so it doesn't justify running that architecture.</p>
+<p>Below: per variant, the <strong>total</strong> (faded bar) and its <strong>exclusive</strong> subset (solid bar), for local and CGC. This one view replaces the Venn/UpSet diagrams — it answers "how much is unique?" directly and, unlike a Venn, scales cleanly to all four variants.</p>
+<figure><img src="fig_1.png" alt="Figure 2"/></figure>
+<p><strong>What the bars say:</strong></p>
+<ul>
+<li><strong>Local territory is almost entirely <em>shared</em>.</strong> Of the <strong>52</strong>-loc union, <strong>34</strong> are reached by all four variants, and exclusive counts are tiny: <strong>V5 owns 2</strong> (<code>ControlLoadRootAndNonce@inst_control.zir:35</code> and <code>:36</code>), <strong>V6_uniform owns 1</strong> (<code>Poseidon0@inst_p2.zir:470</code>), and V6_cTS / Hybrid own <strong>0</strong>. Notably, <strong>even Hybrid misses all 3 of those exclusive locs</strong> — so Hybrid reaches <strong>49 of 52</strong>. A plausible mechanism: splitting the bandit's budget across 15 kinds (A4 + Arguzz) instead of 11 slightly <em>dilutes</em> A4's per-kind sampling, so Hybrid doesn't always trip the rarest A4-only local constraints that pure-A4 V5 does. <em>Takeaway: on the local surface the architectures are near-interchangeable — they all reach the same shared core; the differences are at the margins.</em></li>
+<li><strong>CGC territory is genuinely <em>differentiated</em>.</strong> Here exclusivity is large and meaningful: <strong>V6_cTS contributes the most exclusive global contexts (54)</strong>, <strong>V5/A4 contributes 46</strong>, <strong>Hybrid 33</strong>, and <strong>V6_uniform only 2</strong>. <em>Two takeaways:</em> (a) the global/permutation surface is where the architectures actually diverge, and (b) Hybrid's <em>exclusive</em> CGC is lower than either V6_cTS or V5 — not because it reaches less (it reaches 591, second-most) but because most of its territory overlaps its two parents. Hybrid is a <strong>broad unifier</strong>, not a generator of brand-new regions.</li>
+</ul>
+<h2>3. Where in the circuit does each architecture look?</h2>
+<p>Totals don't say <em>which parts</em> of the circuit get probed. Grouping the local locs by <strong>circuit family</strong> (the <code>.zir</code> component — <code>mem</code>, instruction-decode <code>inst</code>, <code>u32</code>/arithmetic, <code>inst_control</code>, <code>inst_ecall</code>, <code>inst_mul</code>/<code>div</code>, <code>inst_p2</code> Poseidon, <code>inst_sha</code>, <code>one_hot</code>, …) shows each architecture's <strong>reach</strong> and, importantly, its <strong>blind spots</strong> — a family no variant probes is exactly where an underconstraint could sit undetected.</p>
+<figure><img src="fig_2.png" alt="Figure 3"/></figure>
+<p><strong>Reading the heatmap.</strong> Each cell = distinct local locs that variant reached in that circuit family (brighter = more). Two things to look for:
+- <strong>The shared core vs the divergences.</strong> Most families (<code>inst</code>, <code>mem</code>, <code>u32</code>, <code>one_hot</code>, <code>inst_sha</code>) are covered near-identically by all four — the interchangeable local core. The divergences are concentrated in a few decode/control families (<code>inst_control</code>, <code>inst_div</code>, <code>inst_mul</code>, <code>inst_misc</code>): there the <strong>A4 variants (V5/Hybrid) reach more than the pure-Arguzz variants</strong>, which is the mechanistic "why" behind A4's local lead.
+- <strong>Blind spots.</strong> No family is fully empty across all four on this guest, but the sparsely-covered ones (e.g. <code>inst_p2</code> Poseidon, <code>inst_div</code>) are the natural targets for a future guest or new mutation kind — that is where coverage is thinnest and an underconstraint would be least likely to be tripped.</p>
+<h2>4. Discussion — what the full campaign tells us</h2>
+<p><strong>The exploration story (now firm across all 3 seeds):</strong>
+- The four architectures explore <strong>complementary</strong> regions: <strong>A4 owns the local per-row surface</strong> (49 locs vs Arguzz's 36–37), <strong>Arguzz owns the global permutation surface</strong> (V6_cTS 670 CGC vs A4's 449), and <strong>Hybrid is the only variant strong on both</strong> (49 local + 591 CGC).
+- <strong>This inverts the pre-campaign framing.</strong> The prior assumption (carried into ProG) was that <em>A4's</em> witness-internal mutations are what reach the <em>global</em> witness structures. The data says the opposite: measured as <strong>CGC contexts reached per local loc</strong>, the Arguzz variants reach <strong>~2× more global structure than A4</strong> — V6_cTS ≈ <strong>18.6</strong> (670/36) vs V5 ≈ <strong>9.2</strong> (449/49). So it is <strong>Arguzz, not A4, that is the global-reaching architecture</strong>, while A4 is the broad <em>local</em> explorer. The complementarity is real; the axis is <strong>local-vs-global</strong>, and the labels were backwards. (This is the empirical basis for flag F26.)
+- <strong>On exploration grounds this supports the Hybrid hypothesis.</strong> Hybrid is the broadest combined explorer — it matches A4's local breadth (49/52) and inherits most of Arguzz's global reach (591, second-highest CGC). It is the right precondition for the soundness hunt: maximal surface coverage. The one cost is that splitting the bandit budget across 15 kinds slightly dilutes A4's local <em>depth</em> (it misses the 3 rarest exclusive local locs), and its <em>exclusive</em> CGC (33) is modest because it mostly re-covers its parents' territory rather than opening new regions.</p>
+<p><strong>What this means for the campaign:</strong> with <strong>0 confirmed soundness candidates</strong> found, the most useful comparison is exactly this coverage one — and it says the architectures are <em>not</em> redundant. Running A4 <em>and</em> Arguzz (i.e. Hybrid, or both separately) covers strictly more of the constraint space than either alone, which is the correct hedge when hunting for an unknown underconstraint.</p>
+<p><strong>Caveats (don't over-read):</strong>
+1. <strong>Exploration ≠ bugs.</strong> 0 confirmed candidates so far; everything here is <em>potential</em>, not realized, bug-finding.
+2. <strong>Sampling confound on CGC counts.</strong> V6_cTS's bandit over-samples high-arm-count kinds (e.g. <code>INSTR_WORD_MOD</code>), which inflates its raw CGC count somewhat. The per-family view and the local curve (where arm-count matters less) temper this; the gap is large enough (~1.5×–2×) that it is not purely an artifact, but treat exact CGC magnitudes as upper-ish estimates.
+3. <strong>Single guest.</strong> All runs are sha2-host. Guest-specific families (<code>inst_p2</code> Poseidon, BigInt) would change the family picture on another guest, and currently-dead A4 paging/cycle kinds may activate on a Poseidon-paging guest (IV.POS.9). The local-vs-global complementarity is expected to hold, but the absolute family coverage is guest-specific.</p>
+</body></html>

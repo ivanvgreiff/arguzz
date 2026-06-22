@@ -1,0 +1,10 @@
+variant,seed,early,late,iwm_share_delta_late_minus_early,adaptive_reduced_iwm
+Hybrid_cTS,1234,0.117,0.1092,-0.007800000000000001,True
+Hybrid_cTS,1235,0.1212,0.1122,-0.009000000000000008,True
+Hybrid_cTS,1236,0.1132,0.1128,-0.0003999999999999976,True
+V5_control,1234,0.0,0.0,0.0,False
+V5_control,1235,0.0,0.0,0.0,False
+V5_control,1236,0.0,0.0,0.0,False
+V6_cTS,1234,0.288,0.354,0.066,False
+V6_cTS,1235,0.2902,0.3538,0.06359999999999999,False
+V6_cTS,1236,0.2908,0.3478,0.056999999999999995,False

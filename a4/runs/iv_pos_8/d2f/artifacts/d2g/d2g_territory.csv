@@ -1,0 +1,8 @@
+bucket,count,sample_locs
+common_all_four,15,AddrDecomposeBits:u32.zir:87;DecodeInst:inst.zir:29;IsRead:mem.zir:79;IsRead:mem.zir:80;MemoryWrite:mem.zir:100
+a4_only,2,OneHot:one_hot.zir:11;OneHot:one_hot.zir:9
+arguzz_only,6,ControlMRET:inst_control.zir:89;ControlMRET:inst_control.zir:91;ControlMRET:inst_control.zir:92;ECall0:inst_ecall.zir:203;OpSW:inst_mem.zir:160
+hybrid_only,0,
+v6_exclusive,6,ControlMRET:inst_control.zir:89;ControlMRET:inst_control.zir:91;ControlMRET:inst_control.zir:92;ECall0:inst_ecall.zir:203;OpSW:inst_mem.zir:160
+v5_ecall_mret_signature,0,
+union_all_four,31,
