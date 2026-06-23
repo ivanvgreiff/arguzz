@@ -1,0 +1,6 @@
+{
+  "track": "AP_seamb", "role": "bench-verifyopcode",
+  "risc0_head_sha": "93bda33b4f95f29acc9ddce1e225cdf949c83874", "load_rs2_present": 1,
+  "planted_bug": "verifyopcode", "instrumentation_hash": "b6d5992827a06e0755ee018e05d1a9a8794770c0ad906420a7c6ab8ad7ce0003",
+  "guest_src_sha256": "1f5b937271d1a0f1798cf513fe412cfe66e2463e4f0f36d4f8d718577148dbe3", "host_sha256": "53ee6663533f52d378df22df6e69a67b13cd0588638041cc4c9064ffa98f3490", "built": "2026-06-23"
+}

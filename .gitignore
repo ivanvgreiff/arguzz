@@ -364,3 +364,5 @@ workspace/output/Cargo.lock
 workspace/output/host/Cargo.lock
 workspace/output/methods/Cargo.lock
 workspace/output/methods/guest/Cargo.lock
+# Seam-B host binaries (100MB+, reproducible via ap_verifyopcode_patch.py; archived read-only)
+a4/builds/ap_seamb/*/risc0-host
