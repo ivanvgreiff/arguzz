@@ -1,10 +1,12 @@
 # IV.POS.9 — Spec A3 (first instance): the A4-findable-bug RACE on POS (Seam-B / VerifyOpcode)
 
-**Version:** v0.2 — second pass (incorporates Ivan + separate-Opus review of v0.1) · **Date:** 2026-06-23 · **Author:** Opus (OCP).
+**Version:** v0.3 — third pass (incorporates the second separate-Opus review of v0.2) · **Date:** 2026-06-23 · **Author:** Opus (OCP).
 **Track:** A (known-bug detection race — the security claim). **Governing:** `ProG_Report_5.md` §3; `New_Master.md` (cloud3) §L4/L9/L11/L13/L14, gates G10–G13.
 **Establishes the reusable race harness** and runs its **first campaign**: the four variants racing to find the certified A4-findable VerifyOpcode underconstraint (`AP_SEAMB_RESULT.md`). The `rs1==rs2` CVE race (A1+A2) reuses this harness later.
 
 > **v0.2 changes:** (1) **reuse the D2.H soundness machinery** (`soundness_signal`, `extract_accepts`, the DB schema, the propagation triage) — v0.1 reinvented the oracle; (2) **reconcile the D2.H propagation triage** — it would call the Seam-B finds *no-ops* (they're result-preserving by construction), so the planted-bug oracle is control-reject@VerifyOpcode, with the triage used as a *secondary severity characterizer*; (3) **N=5000** on the fast 8-node pool (Ivan); (4) guard the **control** binary too + pin `head_sha`/`guest_image_id`; (5) **conditional density** marker; (6) Arguzz=0 framed as **structural surface complementarity** (true by construction) with a falsifier; (7) a **facts-vs-assumptions audit** (§0.2).
+>
+> **v0.3 changes (2nd Opus review):** (a) **budget reconciliation** — S2's N is **data-driven from S1's measured fast-node timing + ITM-rate**, N=5000 as the target/cap, wall-clock surfaced to Ivan and gated before A3.3 (the ≈9-day estimate at 30s/mut is a dev-box upper bound; fast nodes unknown until S1) (§5); (b) **4% find-rate is n=1** (CI ≈0.1–21%) — treated as "low single-digit," S1 measures the real rate (F5); (c) A5 fallback is **raise N or a SEPARATE forced micro-campaign — never bias the main scheduler** (would contaminate the cTS-ITM-rate signal); (d) the oracle **parses the control failure LOCUS** (`VerifyOpcode*` via `CONSTRAINT_CONTINUE=1`), not just "control rejected" (§2.3). All 4 are non-blocking for A3.1.
 
 ---
 
@@ -27,7 +29,7 @@
 | F2 | per-mutation cost ≈ **30 s** (full prove+verify, `ProverOpts::fast`, `CONSTRAINT_CONTINUE=1`) **on this dev box** — an UPPER bound; the fast 8-node POS pool is faster | timed N=12 (6:20 incl. setup) |
 | F3 | raw `verifier_accepted` is **noisy** — benign kinds accept on BOTH binaries (`CYCLE_DIFF_COUNT_MOD` 8/8 accepted, and a sampled one **verifies on control**) ⇒ control-reject discriminator is **mandatory** | live replay on control |
 | F4 | the campaign's **own** `INSTR_TYPE_MOD` path produces a genuine find (`AddI→OrI` @ step 267: holed-accept, **control reject @ VerifyOpcodeF3**) | forced N=24 + control replay |
-| F5 | **find rate ≈ 4 %** per applied `INSTR_TYPE_MOD` (1/24 forced) — only result-coincident (mv-like) cycles accept; the rest reject at `MemoryWrite` | forced N=24 |
+| F5 | find rate is **single-digit %** per applied `INSTR_TYPE_MOD` (only result-coincident mv-like cycles accept; the rest reject at `MemoryWrite`) — **observed 1/24, which is n=1: 95% CI ≈ 0.1–21%, too wide to size N. Treat as "low, single-digit"; S1 measures the real rate.** | forced N=24 (indicative only) |
 | F6 | the `verifyopcode` profile **matches the holed binary, fails the control** (planted_bug is the sole discriminator; identical head/guest_id/instr_hash) | separate-Opus live fingerprint |
 | F7 | `INSTR_TYPE_MOD` ∈ A4 arm universe, **ABSENT from `MUTATION_KINDS_ARGUZZ_FULL/_SELECTED`** ⇒ Arguzz CANNOT apply it (complementarity is structural) | separate-Opus on disk |
 | F8 | the 12 certified Stage-0 finds (holed-accept; control reject @ VerifyOpcodeF3; 44 result-changers reject @ MemoryWrite) | `ap_seamb_verify.json` |
@@ -41,7 +43,7 @@
 | A2 | the race manifest generator (clone of `generate_d2f_manifests.py`) emits correct jobs (holed host, guard prefix) | unit test + dry-run (§6) |
 | A3 | the POS bundle + dispatch + guard wiring works for the race | A3.2 smoke + G-FP/G-BUNDLE |
 | A4 | control-confirmation re-run cost is bounded | only `INSTR_TYPE_MOD` accepts re-run (~4 % × ITM-applied; Arguzz ≈ 0) |
-| A5 | N=5000 yields a robust find count for A4 variants (≥~10) | depends on cTS's ITM-application rate — measured in A3.1/S1; if too low, raise N or bias toward ITM |
+| A5 | N=5000 yields a robust find count for A4 variants (≥~10) | depends on cTS's ITM-application rate AND the real find-per-ITM rate — **both measured in S1**; if finds are too few, **raise N or run a SEPARATE forced-ITM micro-campaign** for the bug-intrinsic rate — **NEVER bias the main scheduler** (that would contaminate the "how often does cTS naturally pick ITM" signal we are measuring) |
 | A6 | paired-seed RNG is comparable across cli vs driver launchers | not load-bearing (we compare kind-reachability, not RNG luck); noted in analysis |
 
 ---
@@ -80,8 +82,10 @@ A mutation is a **confirmed planted find** iff all hold:
 ### 2.2 Secondary characterization (reuse `propagation_triage`)
 Run `propagation_triage.classify_semantics()` on each confirmed find ⇒ expected `accepted_noop`/cosmetic (result-preserving). Report the distribution; it is the honest severity statement and a reuse cross-check. *(If any find triages as `accepted_propagated_candidate`, that's a surprise worth surfacing — a result-changing decode substitution that slipped past MemoryWrite.)*
 
-### 2.3 Cost-bounded confirmation
-Hot loop runs only on the **bug binary**. Post-hoc, re-run on control: **all `INSTR_TYPE_MOD` accepts** (the planted-find candidates — bounded: ≈4 % × ITM-applied, F5) **+ a sample of non-ITM accepts** (to catch any surprise soundness signal the holed binary admits that control rejects). Fast-path: an ITM accept with `mutated≠original` is a planted find by construction (control reject @ VerifyOpcode guaranteed — F8) → control re-run is a **spot-check**, not per-find.
+### 2.3 Cost-bounded confirmation + LOCUS parsing (implementation requirement)
+Hot loop runs only on the **bug binary**. Post-hoc, re-run on control: **all `INSTR_TYPE_MOD` accepts** (the planted-find candidates — bounded: low-single-digit % × ITM-applied, F5) **+ a sample of non-ITM accepts** (to catch any surprise soundness signal the holed binary admits that control rejects). Fast-path: an ITM accept with `mutated≠original` is a planted find by construction (control reject @ VerifyOpcode guaranteed — F8) → control re-run is a **spot-check**, not per-find.
+
+**LOCUS parsing is mandatory (Opus #4).** The control re-run runs with **`CONSTRAINT_CONTINUE=1`** and the oracle **parses the `<constraint_fail>` locus** — a confirmed find requires the control to fail specifically at `VerifyOpcode*` (`inst.zir:102/103/104`), NOT merely "control rejected." Rationale/defense-in-depth: although result-changers are already excluded at condition 1 (they reject on the *holed* binary at `MemoryWrite` ⇒ `verifier_accepted=0` ⇒ never a candidate), parsing the locus prevents miscrediting any future mutation kind whose control-reject is at a *different* constraint. (Reuse the `<constraint_fail>` parser from `a4/core/constraint_parser.py`.)
 
 ---
 
@@ -128,9 +132,13 @@ Aggregated per **variant** over ≥10 paired seeds (same seed set across all 4):
 |---|---|---|---|
 | **A3.S0 — deterministic ground truth** | the 12 finds + a no-op + a result-changer, through `oracle.py`; **negative control** = short control-binary campaign → 0 finds | local | 12 `planted_bug_find`; no-op excluded; result-changer not-an-accept; control → 0 |
 | **A3.S1 — smoke** | 4 var × 3 paired seeds × **N=2000** | POS | DBs complete + `verifyopcode` fingerprint recorded; markers extract; A4 finds, Arguzz ITM-applied = 0; **measure cTS's ITM rate to confirm N=5000 yields ≥~10 finds (A5)** |
-| **A3.S2 — thesis** | 4 var × **≥10 paired seeds** × **N=5000** | POS (fast 8-node pool) | full markers + discovery CDFs; per-job fingerprint recorded |
+| **A3.S2 — thesis** | 4 var × **≥10 paired seeds** × **N = min(5000, S1-data-driven)** | POS (fast 8-node pool) | full markers + discovery CDFs; per-job fingerprint recorded; **wall-clock surfaced to Ivan before dispatch** |
 
-**Cost (CONSTRAINT_CONTINUE=1 hot loop, Opus #2).** ≈30 s/mut is an **upper bound** measured on this dev box (F2); the fast POS nodes are faster, and **Arguzz jobs are all-reject** so likely cheaper than accept-heavy A4 jobs. **N=5000 is the default (Ivan).** Why 5000 is justified, not arbitrary: at ≈4 % find-per-ITM (F5), a robust `n_finds` (≥~10) needs ≥~250 applied ITM; at N=5000 with cTS picking ITM a fraction of the time, that is comfortably met for A4 variants — and large enough to state Arguzz=0 with confidence (Arguzz applies **zero** ITM, so even small N settles it). **Asymmetric-N option (Opus #7, Ivan's call):** Arguzz arms could run smaller N (they apply no ITM), halving their POS hours, at the cost of clean equal-N pairing — default to **equal N=5000** for clean pairing unless node-time is tight.
+**Cost + the budget reconciliation (Opus #1, BLOCKING before A3.2→A3.3, NOT before A3.1).** The only honest cost number we have is ≈30 s/mut on **this dev box** (F2, CONSTRAINT_CONTINUE=1 hot loop) — at which N=5000 × 40 jobs / 8 nodes ≈ **~9 days > the 1-week window**. We do NOT yet know the **real per-mut time on the fast 8-node pool** (Ivan: "way faster") nor the **real cTS ITM-rate / find-per-ITM** (F5 is n=1). So:
+- **N=5000 is the target/cap (Ivan).** It is **NOT silently dropped.**
+- **S2's actual N is set data-driven from S1's measurements** — S1 (small, POS) yields the *real* fast-node per-mut seconds, the cTS ITM-application rate, and the find-per-ITM rate. From those: `wall ≈ ceil(jobs/nodes) × N × t_mut`, and the **min N for a robust A4 find count** (≥~10 finds ⇒ ≥~`10 / (ITM_rate × find_per_ITM)` mutations). Choose S2 N = min(5000, N that fits the window) and surface the wall-clock to Ivan **before A3.3 dispatch**.
+- If the fast nodes make N=5000 fit (e.g. ~10 s/mut ⇒ ~3 days), do 5000. If not, Ivan decides (more nodes / accept longer / lower N) — an explicit decision, gated, never a silent change.
+- **Asymmetric-N option (Opus #7, Ivan's call):** Arguzz arms apply **zero** ITM (F7) ⇒ 0 finds by construction at any N; they could run a smaller N to halve their POS hours. Default **equal N** for a cleaner falsifier (Arguzz genuinely searches the full N and still finds nothing) unless node-time is tight.
 
 ---
 

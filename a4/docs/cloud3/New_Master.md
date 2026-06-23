@@ -27,6 +27,14 @@ ProG_Report_5.md   →   New_Master.md   →   per-step SPECS   →   per-spec B
 
 Everything else (V6-cTS-lite, D1.E, the mega-guest, repair/Mode-B) is mentioned only briefly in §6 and is **explicitly out of scope** for detailed planning until the two tracks are designed.
 
+> ## 🧭 PLAN OF RECORD (2026-06-23 — current sequencing; OCP/Track A)
+> The complementarity table has **two halves**; we build/run them as a pair, A4-side first:
+> 1. **A4-side bug — DONE & certified.** `AP/Seam-B`: a planted `VerifyOpcode` decode underconstraint that A4's `INSTR_TYPE_MOD` finds and that is *off Arguzz's surface* (`AP_SEAMB_RESULT.md`; the value-changing A4 bug is impossible — `AP_SEAMB_OPTION_B_ANALYSIS.md`). Binaries archived read-only (`a4/builds/ap_seamb/{control,bench-verifyopcode}`).
+> 2. **A4-side RACE — NEXT, the first POS campaign.** Spec [`IV_POS_9_A3_SEAMB_RACE_SPEC.md`]: 4 variants race on the Seam-B binary, **no stop-on-first-bug**, markers = find-prob / first-find-idx (KM CDF) / find-density / conditional-density. Order: **A3.1 (local, zero-POS: oracle+markers+manifest+13 unit tests+Stage-0 ground truth) → A3.2 (S1 smoke, measures real fast-node timing + cTS ITM-rate) → A3.3 (S2 thesis, N≤5000 data-driven)**. Validates the reusable race harness on a known-answer bug.
+> 3. **Arguzz-side bug (`rs1==rs2` CVE) — built IN PARALLEL while A3 runs on POS.** A1 (vuln build `98387806` + MODE-2 re-find + deterministic coherent repro) → A2 (race guests) → reuse the A3 harness for the CVE race (there the propagation triage IS the primary oracle).
+> 4. **Headline = the complementarity PAIR** (A4 finds decode/local; Arguzz finds value/global), never either half alone.
+> Track B (multi-guest sweep) is owned by a **separate OCP**; this OCP owns Track A + binary-provenance/contamination guarding (L14).
+
 **Pro's top-level sequencing call (`ProG_Report_5` §0/§3/§7 — the north star):**
 > *Run the known-bug race **first**, then the multi-guest sweep. Treat them as **two different claims** (bug-finding effectiveness vs coverage generalization) — do not collapse them into one giant experiment. The race comes first because it directly tests whether the coverage proxy has predictive value for real soundness discovery.*
 
@@ -175,6 +183,8 @@ Each gate is a **hard pass/fail** that blocks the next step. These exist so the 
 
 **Three specs. B1 (harness) and B2 (guests + classifier) can pipeline; B3 (campaign) needs both.**
 
+> **⚙️ EXECUTION UPDATE (2026-06-23) — Steps B1 + B2 are DONE; the spec files were CONSOLIDATED.** During execution, Step B1 (harness/dispatch) + Step B2 (guest suite) were delivered in ONE spec — **`IV_POS_9_B1_MULTIGUEST_FOUNDATION_SPEC.md`** (foundation: isolation + dispatch param + all 4 guests built & family-verified). The planned per-step spec files (`B1_GUEST_HARNESS`, `B2_GUEST_SUITE`) were NOT written separately. **Step B3 (sweep campaign)** is **`IV_POS_9_B3_SWEEP_CAMPAIGN_SPEC.md`** — spec written, execution NEXT. Two residuals carried forward (below): cross-guest aggregation (planned B1.B3) → folded into B3.4 analysis; the zone-classifier MRET/halt extension (B2.B1) → NOT done (non-blocking; needed for fine zone attribution in B3.4).
+
 ### Step B1 — Guest-aware harness: dispatch + analysis parameterization + cross-guest aggregation
 **Spec (to write):** `IV_POS_9_B1_GUEST_HARNESS_SPEC.md`
 **Accomplishes:** turn the single-guest pipeline into a **multi-guest** one. Deliverables: a **guest-id concept** threaded through build/bundle, manifest generation, run-id naming, and DB discovery; analysis (`build_d2_artifacts.py`, `d2h_lib.py`, `territory.py`) parameterized by guest (paths, host, host_args, signature loc-sets); and a **cross-guest aggregation layer** producing the per-guest tables + the cross-guest rank/coverage heatmap + rank-stability table (L7).
@@ -182,7 +192,7 @@ Each gate is a **hard pass/fail** that blocks the next step. These exist so the 
 - **B1.B1** — Dispatch parameterization: `generate_*_manifests` driven by a per-guest descriptor (host bundle, guest_args, slug); run-id/dir convention includes `guest_id`; `discover.py` updated. **Every dispatched run asserts the PATCHED build fingerprint and that the bug does NOT reproduce (G12), plus the intended guest image ID (G13), recorded in its DB; a vulnerable-build binary in a sweep run is a hard failure.**
 - **B1.B2** — Analysis parameterization: de-hardcode prod dirs/run names/host_args; make `V5_ECALL_MRET_SIGNATURE` and single-guest narrative constants guest-parameterized.
 - **B1.B3** — Cross-guest aggregation: per-guest two-panel curves + summary table (Pro §2.3 metric list), cross-guest heatmap (guests × variants, local + CGC panels), rank-stability table.
-**Status:** SPEC TODO.
+**Status:** ✅ **DONE (consolidated into `IV_POS_9_B1_MULTIGUEST_FOUNDATION_SPEC.md`).** B1.B1 dispatch param = the Track-B `generate_sweep_manifests.py` (guest descriptor, guest-slug run-ids, per-job fingerprint guard G11 + audit sidecar); plus the physical **isolation** layer (worktree + read-only archives + the `a4/` code-isolation rule) — not in the original plan but required. B1.B2 analysis param + **B1.B3 cross-guest aggregation → folded into B3.4** (the sweep spec) since they consume sweep output.
 
 ### Step B2 — Guest suite authoring + zone/inspector extension
 **Spec (to write):** `IV_POS_9_B2_GUEST_SUITE_SPEC.md`
@@ -193,7 +203,7 @@ Each gate is a **hard pass/fail** that blocks the next step. These exist so the 
 - **B2.B3** — Guest-2 (memory-stress+branch).
 - **B2.B4** — Guest-3 (accelerator/Poseidon/BigInt); confirm previously-dead families/zones activate.
 - *(B2.B5 — optional mega-guest for the §6 appendix; not a thesis pillar.)*
-**Status:** SPEC TODO. **Sequencing:** B2.B1 (classifier) should land before drawing zone/territory conclusions on Guest-1.
+**Status:** ✅ **GUESTS DONE (consolidated into the foundation spec, batch B1.4) + family-verified:** Guest-1 `g1_ecall_control` (control-dominated: 25k steps, 3572 branches + 2262 JalR), Guest-2 `g2_mem_stress` (3528 load/store + data-dep addressing), Guest-3 `g3_accelerator` (accelerated SHA = +34 `sys_sha` Eany + 128 div/rem). All built read-only, fingerprinted, distinct guest_image_ids. ⚠️ **RESIDUAL — B2.B1 zone-classifier MRET/halt extension NOT done** (non-blocking: MRET/halt cycles currently fall into default zones; the guests run + their families activate; the extension is needed only for *fine zone-level* territory attribution in B3.4 — do it before drawing zone-level conclusions). *(Self-review caught + fixed a Guest-1 dud — v1 ≈ baseline because risc0 batches env I/O; redesigned control-dominated.)*
 
 ### Step B3 — Staged sweep campaign + per/cross-guest analysis
 **Spec (to write):** `IV_POS_9_B3_SWEEP_CAMPAIGN_SPEC.md`
@@ -202,7 +212,7 @@ Each gate is a **hard pass/fail** that blocks the next step. These exist so the 
 - **B3.B1** — Stage-1 screening dispatch (all guests/variants/seeds) + per-guest artifact build.
 - **B3.B2** — Screening analysis + guest down-selection (which 2 guests are most diagnostic).
 - **B3.B3** — Stage-2 thesis runs on the 2 selected guests + final cross-guest report (stability verdict).
-**Status:** SPEC TODO. **Blocks on B1+B2.**
+**Status:** ✍️ **SPEC WRITTEN** (`IV_POS_9_B3_SWEEP_CAMPAIGN_SPEC.md`, batches B3.1–B3.4). **B1+B2 prerequisites DONE → execution UNBLOCKED.** **G0-reuse optimization (Ivan, adopted):** the screening reuses the D2.H N=10000 G0 campaign truncated to N=5000 (valid: G0 circuit/guest unchanged + N-independent ConstantFloor scheduling) → only the **3 new guests** run at screening (**36 jobs, ~135 run-hrs**, not 48/~180). Gated on the B1.3 G0 reuse-validation cross-check. **Folds in B1.B3 cross-guest aggregation (B3.4) + needs the B2.B1 zone-ext residual for zone-level analysis.** Compute coordinated with Track A (single shared box).
 
 ---
 
@@ -251,10 +261,9 @@ These are acknowledged but **not** designed in this master; they are contingent 
 | **A** | A1 | [`IV_POS_9_A1_VULN_BUILD_SPEC.md`](./IV_POS_9_A1_VULN_BUILD_SPEC.md) ✍️ written | Vulnerable build + commit validation + deterministic repro (resolves §2.3) | B1 MODE-2 existence proof + canonical trigger · B2 back-port + rebuild + fingerprint · B3 deterministic coherent repro + variant propagation — **all 3 kickoffs drafted** | ✍️ SPEC+BATCHES DRAFTED (gate) |
 | **A** | A2 | `IV_POS_9_A2_RACE_HARNESS_SPEC.md` | Bug guests + targeted mutation + dual oracle + variant wiring | B1 guest A (S) · B2 guest B (M/L) · B3 targeted mutation + arm registration · B4 strong+internal oracles | ⛔ TODO (blocks on A1) |
 | **A** | A3 | `IV_POS_9_A3_RACE_CAMPAIGN_SPEC.md` | Staged race + bug-finding metrics + report | B1 dispatch + MODE-2 baseline · B2 staged race (smoke→thesis→opt) · B3 KM/find-rate/decomposition + report | ⛔ TODO (blocks on A2) |
-| **B** | B1 | `IV_POS_9_B1_GUEST_HARNESS_SPEC.md` | Guest-aware dispatch + analysis + cross-guest aggregation | B1 dispatch params · B2 analysis params · B3 cross-guest aggregation | ⛔ TODO |
-| **B** | B2 | `IV_POS_9_B2_GUEST_SUITE_SPEC.md` | Focused guest suite + ECALL/MRET/paging classifier extension | B1 classifier/inspector ext · B2 ECALL/control guest · B3 memory-stress guest · B4 accel/Poseidon/BigInt guest · (B5 opt mega-guest) | ⛔ TODO |
-| **B** | B3 | `IV_POS_9_B3_SWEEP_CAMPAIGN_SPEC.md` | Staged screening → thesis rerun + per/cross-guest analysis | B1 Stage-1 screening · B2 down-select · B3 Stage-2 thesis + report | ⛔ TODO (blocks on B1+B2) |
-| **A** | AP | [`IV_POS_9_AP_PLANTED_ISREAD_SPEC.md`](./IV_POS_9_AP_PLANTED_ISREAD_SPEC.md) ✍️ written | **Planted A4-findable bug** (remove `IsRead` on ReadReg) + certainty harness — gives the race a bug A4 *and* Arguzz can find; independent of A1 (no back-port) | B1 build `bench-isread`+fingerprint · B2 (0,1,0) corpus + bracket + genuine-soundness · B3 live A4+Arguzz+neg-controls — **all 3 kickoffs drafted** | ✍️ SPEC+BATCHES DRAFTED |
+| **B** | B1+B2 | [`IV_POS_9_B1_MULTIGUEST_FOUNDATION_SPEC.md`](./IV_POS_9_B1_MULTIGUEST_FOUNDATION_SPEC.md) ✅ | **CONSOLIDATED** harness/dispatch (Step B1) + guest suite (Step B2) + isolation | B1.1 isolation+guard · B1.2 guest-aware generator · B1.3 G0 equiv smoke · B1.4 **4 guests built+verified** | ✅ **DONE** (zone-ext residual; cross-guest aggregation → B3.4) |
+| **B** | B3 | [`IV_POS_9_B3_SWEEP_CAMPAIGN_SPEC.md`](./IV_POS_9_B3_SWEEP_CAMPAIGN_SPEC.md) ✍️ | Staged screening → thesis + per/cross-guest analysis | B3.1 screening (**3 new guests; G0 reused-truncated**) · B3.2 down-select · B3.3 thesis · B3.4 cross-guest analysis | ✍️ **SPEC WRITTEN — execution NEXT** (unblocked) |
+| **A** | AP | [`IV_POS_9_AP_PLANTED_ISREAD_SPEC.md`](./IV_POS_9_AP_PLANTED_ISREAD_SPEC.md) | **Planted A4-findable bug** (remove `IsRead` on ReadReg). **B1/B2 attempted via zirgen-regen → FAILED (plumbing path-doubling + df6fb9d drift, ~2 days circling, science untested). Pivoting to the surgical patch of the committed circuit (spec §2.2 PRIMARY).** See spec CURRENT STATUS block. | B1 build `bench-isread` (surgical) + hardened GP1 + mutated-V0 · B2 (0,1,0) corpus + bracket · B3 live A4+Arguzz | 🔧 BLOCKED→PIVOTING (surgical patch) |
 | — | (cond.) | `IV_POS_9_V6CTS_LITE_SPEC.md` | Arm-space ablation | TBD | 💤 conditional/after race |
 | — | (defer) | `../cloud2/IV_POS_8_D1_E_SPEC.md` | V5 reward-rewire causal test | B0–B4 (existing draft) | 💤 deferred |
 
