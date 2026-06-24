@@ -1,0 +1,5 @@
+variant,n_seeds,P_found,n_found,n_censored,first_find_idx_median_when_found,mean_find_density,mean_conditional_find_density,mean_n_instr_type_mod_applied
+Hybrid_cTS,3,0.6666666666666666,2,1,18.5,0.005625979205241418,0.07407407407407407,9.0
+V5_control,3,0.6666666666666666,2,1,18.5,0.00557889822595705,0.037037037037037035,18.0
+V6_cTS,3,0.0,0,3,None,0.0,None,0.0
+V6_uniform,3,0.0,0,3,None,0.0,None,0.0

@@ -140,6 +140,12 @@ def test_manifest_generator():
         # control BINARY (not the V5_control variant name) is never a race target:
         assert "ap_seamb/control" not in cmd and "/control/risc0-host" not in cmd
         assert "exit 87" in cmd  # guard aborts on mismatch
+        # REGRESSION (smoke death 2026-06-24): the guard MUST run from the repo, NOT
+        # the chain launcher's run-dir CWD. Otherwise `python -m a4.pos.fingerprint_guard`
+        # dies with ModuleNotFoundError: No module named 'a4', and its inline
+        # `|| { ...; exit 87; }` silently kills the launcher before it writes a marker.
+        assert cmd.startswith(f"cd {grm.REPO_DIR} &&")
+        assert cmd.index(f"cd {grm.REPO_DIR}") < cmd.index("fingerprint_guard")
 
 
 # --- 10: variant launch commands ------------------------------------------

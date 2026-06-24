@@ -64,6 +64,8 @@ collection_report.json
 pos-examples/
 postfix_bandit_16_1000.*
 *.db
+# A3 race: raw pulled per-job run-dirs (DBs/logs regenerable from the campaign); keep markers + oracle JSONs
+a4/runs/iv_pos_9/race/smoke_results/pulled/
 .cursor
 
 ### C++ ###

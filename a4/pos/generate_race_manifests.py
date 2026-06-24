@@ -86,7 +86,13 @@ def remote_cmd(variant: str, seed: int, n: int, rid: str) -> str:
     guard = _guard_prefix()
     env = _env_exports(variant)
     cmd = " ".join(shlex.quote(a) for a in _argv(variant, seed, n, rid))
-    return f"{guard}; {env}; cd {REPO_DIR} && {cmd}"
+    # cd into the repo FIRST — BEFORE the guard — so `python -m a4.*` resolves `a4`.
+    # The chain launcher does `cd "$RD"` (the run-dir) at the top; if the guard runs
+    # from there it dies with `ModuleNotFoundError: No module named 'a4'`, and its
+    # inline `|| { ...; exit 87; }` then silently kills the launcher (no marker, no
+    # stderr). `(cd REPO && guard) || exit 87` also aborts cleanly if the repo is
+    # missing. The cli cmd inherits CWD=REPO, so it no longer needs its own `cd`.
+    return f"cd {REPO_DIR} && {guard}; {env}; {cmd}"
 
 
 def batch_rows(seeds: Sequence[int], n: int, batch_prefix: str,

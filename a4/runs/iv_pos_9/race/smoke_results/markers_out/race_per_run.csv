@@ -1,0 +1,13 @@
+variant,seed,found,first_find_idx,n_finds,n_applied,n_instr_type_mod_applied,find_density,conditional_find_density
+Hybrid_cTS,1234,True,19,1,118,9,0.00847457627118644,0.1111111111111111
+Hybrid_cTS,1235,False,121,0,117,9,0.0,0.0
+V5_control,1234,True,19,1,119,18,0.008403361344537815,0.05555555555555555
+V5_control,1235,False,121,0,120,18,0.0,0.0
+V6_cTS,1234,False,121,0,114,0,0.0,None
+V6_cTS,1235,False,121,0,114,0,0.0,None
+V6_uniform,1234,False,121,0,115,0,0.0,None
+V6_uniform,1235,False,121,0,113,0,0.0,None
+Hybrid_cTS,1236,True,18,1,119,9,0.008403361344537815,0.1111111111111111
+V5_control,1236,True,18,1,120,18,0.008333333333333333,0.05555555555555555
+V6_cTS,1236,False,121,0,111,0,0.0,None
+V6_uniform,1236,False,121,0,113,0,0.0,None
