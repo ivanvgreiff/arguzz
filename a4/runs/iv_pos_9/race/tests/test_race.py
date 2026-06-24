@@ -69,11 +69,19 @@ def test_oracle_confirmed_find(tmp_path):
     assert res == [{"id": 19, "kind": "INSTR_TYPE_MOD", "verdict": oracle.FIND}]
 
 
-# --- 3: no-op (benign) excluded -------------------------------------------
+# --- 3: no-op (benign) excluded — control-checked, does NOT reject @ VerifyOpcode --
 def test_oracle_noop_excluded(tmp_path):
     db = _mk_db(tmp_path, [(5, "CYCLE_DIFF_COUNT_MOD", 1, "applied", {"mutation_type": "CYCLE_DIFF_COUNT_MOD"})])
-    res = oracle.classify_run(db, control_check_fn=lambda cfg: pytest.fail("control must not be called for non-ITM"))
+    res = oracle.classify_run(db, control_check_fn=lambda cfg: False)  # control accepts (not @ VerifyOpcode)
     assert res[0]["verdict"] == oracle.NON_PLANTED  # not the planted decode bug
+
+
+# --- 3b: FALSIFIER — a non-ITM accept that DOES reject @ VerifyOpcode on control is a FIND
+def test_oracle_falsifier_non_itm_find(tmp_path):
+    # e.g. a hypothetical Arguzz fault that produced an accepted decode-divergent trace
+    db = _mk_db(tmp_path, [(8, "CYCLE_PC_MOD", 1, "applied", {"mutation_type": "CYCLE_PC_MOD"})])
+    res = oracle.classify_run(db, control_check_fn=lambda cfg: True)  # control rejects @ VerifyOpcode
+    assert res[0]["verdict"] == oracle.FIND  # the experiment CAN detect an off-surface find
 
 
 # --- 4: result-changer never an accept (verifier_accepted=0) --------------
@@ -121,8 +129,10 @@ def test_conditional_density(tmp_path):
 
 # --- 9: manifest generator -------------------------------------------------
 def test_manifest_generator():
-    rows = grm.batch_rows(seeds=[1234, 1235], n=2000, batch_prefix="t")
+    rows = grm.batch_rows(seeds=[1234, 1235], n=2000, batch_prefix="t",
+                          nodes=["flare", "zone", "goracle", "algofi"])
     assert len(rows) == 2 * len(grm.VARIANT_ORDER)  # variants x seeds
+    assert all(n in ("flare", "zone", "goracle", "algofi") for _, n, _, _ in rows)
     for batch, node, rid, cmd in rows:
         assert "fingerprint_guard" in cmd and "--profile verifyopcode" in cmd
         assert grm.EXPECT_HEAD_SHA in cmd and grm.HOST_BIN in cmd

@@ -28,9 +28,10 @@ WORK = "/root/a4_campaign"
 HOST_BIN = f"{WORK}/bin/risc0-host"   # bundle ships the HOLED binary here
 REPO_DIR = f"{WORK}/repo"
 REMOTE_BASE = "/tmp/chainjob"
-DEFAULT_NODES: Tuple[str, ...] = (
-    "epyc1", "epyc2", "epyc3", "epyc4", "epyc5", "epyc6", "epyc7", "epyc8",
-)
+# Node names are NOT hardcoded — the operator passes the REAL reserved nodes via --nodes
+# (e.g. the fast pool: flare/octorand/opulous/polynize [Tier-S EPYC 9354] +
+# algofi/gard/goracle/zone [Tier-A EPYC 7543]). The user assigns which of these go to
+# Track A vs the concurrent Track-B (sweep) OCP.
 
 # Provenance to assert on every node (the holed binary's fingerprint).
 EXPECT_HEAD_SHA = "93bda33b4f95f29acc9ddce1e225cdf949c83874"
@@ -88,13 +89,17 @@ def remote_cmd(variant: str, seed: int, n: int, rid: str) -> str:
     return f"{guard}; {env}; cd {REPO_DIR} && {cmd}"
 
 
-def batch_rows(seeds: Sequence[int], n: int, batch_prefix: str) -> List[Tuple[str, str, str, str]]:
-    """(batch, node, run_id, remote_cmd) rows; one job per node per batch (round-robin)."""
+def batch_rows(seeds: Sequence[int], n: int, batch_prefix: str,
+               nodes: Sequence[str]) -> List[Tuple[str, str, str, str]]:
+    """(batch, node, run_id, remote_cmd) rows; one job per node per batch (round-robin
+    over the REAL reserved nodes the operator passes — never hardcoded placeholders)."""
+    if not nodes:
+        raise ValueError("nodes required — pass the actual reserved node names")
     pairs = [(v, s) for s in seeds for v in VARIANT_ORDER]
     rows: List[Tuple[str, str, str, str]] = []
     for i, (variant, seed) in enumerate(pairs):
-        node = DEFAULT_NODES[i % len(DEFAULT_NODES)]
-        batch = f"{batch_prefix}_b{i // len(DEFAULT_NODES) + 1}"
+        node = nodes[i % len(nodes)]
+        batch = f"{batch_prefix}_b{i // len(nodes) + 1}"
         rid = run_id(variant, seed, n)
         rows.append((batch, node, rid, remote_cmd(variant, seed, n, rid)))
     return rows
@@ -109,6 +114,7 @@ def format_chain(rows: Iterable[Tuple[str, str, str, str]], *, doc: str) -> str:
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--stage", choices=["smoke", "thesis"], required=True)
+    p.add_argument("--nodes", nargs="+", required=True, help="REAL reserved node names (e.g. flare zone goracle ...)")
     p.add_argument("--seeds", type=int, nargs="+", default=None)
     p.add_argument("--n", type=int, default=None, help="mutations per job (S2 N is data-driven; pass explicitly)")
     p.add_argument("--out", default=None)
@@ -121,8 +127,8 @@ def main() -> int:
         seeds = a.seeds or list(range(1234, 1244))  # 10 paired seeds
         n = a.n or 5000  # CAP; real S2 N is set data-driven from S1 (spec §5)
         prefix = "a3seamb_thesis"
-    rows = batch_rows(seeds, n, prefix)
-    chain = format_chain(rows, doc=f"IV.POS.9 A3 Seam-B race ({a.stage}): {len(rows)} jobs, N={n}, guard=verifyopcode")
+    rows = batch_rows(seeds, n, prefix, a.nodes)
+    chain = format_chain(rows, doc=f"IV.POS.9 A3 Seam-B race ({a.stage}): {len(rows)} jobs, N={n}, nodes={','.join(a.nodes)}, guard=verifyopcode")
     if a.out:
         Path(a.out).write_text(chain)
         print(f"wrote {len(rows)} jobs -> {a.out}")

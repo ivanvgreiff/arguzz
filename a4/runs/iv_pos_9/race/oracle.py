@@ -140,21 +140,31 @@ def classify_run(
 ) -> List[Dict]:
     """Classify every accept. Returns [{id, kind, verdict}, ...] ordered by mutation id.
 
-    - ITM decode-divergent accept -> control-confirm @ VerifyOpcode (FIND) else UNEXPECTED.
-      (Fast-path: control-reject is guaranteed for these by construction — F8 — so
-       confirm_itm=False trusts the construction and skips the re-run for speed.)
-    - any other accept -> NON_PLANTED (benign/no-op; a sample SHOULD be spot-checked
-      separately to catch surprise soundness signals, but it is not a planted find).
+    A find = the bug binary ACCEPTS the mutation AND the control REJECTS it specifically
+    @ VerifyOpcode (the planted decode hole was triggered — ANY kind). So **every accept is
+    control-checked**, including non-ITM ones — this is what makes the Arguzz=0 result a
+    genuine FALSIFIER (a hypothetical Arguzz fault that produced an accepted decode-divergent
+    trace WOULD be detected), not an assumption (Opus flag #1). Arguzz accepts are rare, so
+    the extra control re-runs are cheap.
+
+    - ITM decode-divergent accept: control-reject @ VerifyOpcode is guaranteed by construction
+      (F8). With confirm_itm=True (default) we still re-run as a spot-check; confirm_itm=False
+      trusts F8 and skips the re-run for speed (non-ITM accepts are ALWAYS control-checked).
+    - any accept (ITM or not) whose control rejects @ VerifyOpcode -> FIND (record `kind`; a
+      non-ITM FIND is the falsifier surprise, surfaced via markers.find_kinds).
+    - otherwise -> NON_PLANTED (benign/no-op: control did not reject @ VerifyOpcode).
     """
     results = []
     for a in extract_accepts(db_path):
-        if is_decode_divergent_itm(a):
-            if confirm_itm:
-                verdict = FIND if control_check_fn(a["config"]) else UNEXPECTED
-            else:
-                verdict = FIND  # by construction (F8)
+        itm = is_decode_divergent_itm(a)
+        if itm and not confirm_itm:
+            verdict = FIND  # trust F8 (construction); non-ITM still checked below
+        elif control_check_fn(a["config"]):
+            verdict = FIND  # control rejects @ VerifyOpcode (planted bug triggered, any kind)
+        elif itm:
+            verdict = UNEXPECTED  # ITM decode-divergent that did NOT reject @ VerifyOpcode — surprise (F8 violated)
         else:
-            verdict = NON_PLANTED
+            verdict = NON_PLANTED  # benign/no-op: control did not reject @ VerifyOpcode
         results.append({"id": a["id"], "kind": a["kind"], "verdict": verdict})
     return results
 

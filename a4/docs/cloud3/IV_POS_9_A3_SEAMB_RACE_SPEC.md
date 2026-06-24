@@ -1,6 +1,7 @@
 # IV.POS.9 — Spec A3 (first instance): the A4-findable-bug RACE on POS (Seam-B / VerifyOpcode)
 
-**Version:** v0.3 — third pass (incorporates the second separate-Opus review of v0.2) · **Date:** 2026-06-23 · **Author:** Opus (OCP).
+**Version:** v0.4 — A3.1 built+green; folds the 3rd Opus review + POS-playbook facts · **Date:** 2026-06-23 · **Author:** Opus (OCP).
+> **v0.4 changes:** (i) **falsifier fix (Opus flag #1)** — the oracle now control-checks **every** accept (not just ITM), so a non-ITM/Arguzz accept that rejects @ VerifyOpcode IS detected ⇒ Arguzz=0 is genuinely *tested*, not assumed (`oracle.classify_run`; `test_oracle_falsifier_non_itm_find`). (ii) **Budget RESOLVED** — POS playbook §3.1 + D2.F F16: the fast pool (Tier-S EPYC 9354 + Tier-A EPYC 7543) is **~2.5–3 s/mut**, so **N=5000 ≈ ~1 day** for the 40-job S2 (not ~9 days); the 30 s/mut was a dev-box upper bound. S1 still measures the real number. (iii) **Dispatch = SSH-bypass `chain_dispatcher.sh` in tmux** (POS playbook ★/§12.53); nodes boot **debian-trixie** (GLIBC 2.39, §12.30); guard-prefixed jobs (G-FP). (iv) A3.1 harness built, 13 unit tests + Stage-0 **GREEN** (`A3_1_REPORT.md`).
 **Track:** A (known-bug detection race — the security claim). **Governing:** `ProG_Report_5.md` §3; `New_Master.md` (cloud3) §L4/L9/L11/L13/L14, gates G10–G13.
 **Establishes the reusable race harness** and runs its **first campaign**: the four variants racing to find the certified A4-findable VerifyOpcode underconstraint (`AP_SEAMB_RESULT.md`). The `rs1==rs2` CVE race (A1+A2) reuses this harness later.
 
