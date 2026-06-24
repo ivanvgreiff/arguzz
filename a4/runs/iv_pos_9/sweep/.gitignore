@@ -1,0 +1,4 @@
+# Track-B sweep: keep code + notebooks (with rendered outputs); exclude heavy, regenerable inputs.
+data/            # pulled run.dbs (~15MB each) — regenerable from POS results
+*.db
+__pycache__/
