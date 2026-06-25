@@ -1,9 +1,36 @@
 # IV.POS.9 — Spec A1: Vulnerable build + commit validation + deterministic repro
 
-**Version:** v0.1 — DRAFT FOR IVAN+OPUS REVIEW · **Date:** 2026-06-21 · **Author:** Opus (D2-Opus).
-**Governing plan:** [`New_Master.md`](./New_Master.md) Track A, Step A1. **Mechanism authority:** [`BUG_MECHANISM_VERIFIED.md`](./BUG_MECHANISM_VERIFIED.md).
+**Version:** v0.3 — **B2 COMPLETE · CVE thesis race LIVE on POS** · **Date:** 2026-06-25 (orig 2026-06-21) · **Author:** Opus (OCP).
+**Governing plan:** [`New_Master.md`](./New_Master.md) Track A, Step A1. **Mechanism authority:** [`BUG_MECHANISM_VERIFIED.md`](./BUG_MECHANISM_VERIFIED.md). **Trigger contract:** [`../../runs/iv_pos_9/a1/a1_canonical_trigger.md`](../../runs/iv_pos_9/a1/a1_canonical_trigger.md). **Build+dispatch report:** [`../../runs/iv_pos_9/a1/B2_FORWARD_PORT_AND_DISPATCH_REPORT.md`](../../runs/iv_pos_9/a1/B2_FORWARD_PORT_AND_DISPATCH_REPORT.md).
 **Requirements traced:** ProG_Report_5 §3/§3.5/§5 Step 1; locked decisions **L3, L4, L5, L13, L14**; gates **G1, G2, G4, G5, G9, G10**.
-**Status:** SPEC TODO → this document. **Role:** **A1 is the universal hard gate** — nothing in A2/A3 (or any race run) starts until A1's gates pass.
+**Status:** **A1 GATES PASSED → CVE RACE DISPATCHED.** **Role:** **A1 is the universal hard gate** — nothing in A2/A3 (or any CVE race run) starts until A1's gates pass.
+
+### Live progress (2026-06-25) — B2 DONE, race LIVE
+- **B2 (instrumented vulnerable MODE-1 host) BUILT + VERIFIED + DISPATCHED.** `a4/builds/a1_cve/risc0-host`
+  (sha256 `dbe89d23…`), built from `workspace/risc0-a1-vuln` @ `98387806`. The A4 instrumentation was
+  **forward-ported** from the ebd64e43 API onto `98387806`'s monolithic `prove`/`WitnessGenerator::new`
+  (codegen left byte-identical to `98387806`; fix #3181 reverted in `witgen/preflight.rs`). Full method:
+  the B2 report (linked above).
+- **Gates:** G1/G2 (load_rs2_present=0, planted_bug=none, codegen 0-diff vs 98387806) ✅; G10 (fingerprint
+  self-emit + guard `--profile race` PASS on all 8 nodes) ✅; **honest prove → `output=9000027`, Verifier
+  success** ✅; exploit candidate on B2 (`v6_uniform` `INSTR_WORD_MOD` accept in core_arithmetic) ✅.
+- **CVE thesis race LIVE on POS** (tmux `chain_cve_thesis`, 8 fast nodes, 40 jobs = 4 variants × 10 seeds
+  × N=5000, RUN_PREFIX=cve, guard race). Batch 1 verified recording on all 8 nodes after cold-start.
+  ~23 h ETA. Analysis (strong journal oracle, mirror-complementarity) is the remaining step (A1.B3 / race).
+- **A2 guest:** `remu a0,a1`+`divu a2,a3` (rs1≠rs2, 1-bit-apart), guest_image_id
+  `2819774008,269738887,…,829874012`. A single `INSTR_WORD_MOD` flip aliases rs2→rs1 (Framing B = G4 path).
+
+### Live progress (2026-06-24)
+- **G1/G2 source gate — PASSED (verified live).** `98387806`: `fn load_rs2` count **0** (two separate `load_register(rs1)` @326 / `(rs2)` @327); fix `67f2d81` + base `ebd64e43` have it. In-tree vulnerable generated circuit (`steps.cpp` 30k, `poly_ext.rs` 20k, `info.rs`) **committed at `98387806`** ⇒ build needs **no zirgen regen** (this is what blocked the *separate* AP planted-IsRead track; it does NOT block A1).
+- **Trigger contract written** (`a1_canonical_trigger.md`) — the deterministic target B1 confirms / B3 reproduces.
+- **B1 (MODE-2 existence proof) RUNNING.** MODE-2 is wired for `98387806` (frozen vuln source, `0xDEADBEEF` oracle, public fork reachable). The turnkey `refind.sh`/`helper.sh` flow is **podman**-based and we have only **docker**, so B1 runs the fuzzer in its **canonical Dockerfile env** (drift-free) instead — building the image now.
+
+### ⚠️ Track isolation (HARD — do NOT contaminate the concurrent work)
+A1 runs **while the A3 Seam-B race is live on POS** and the Track-B sweep + AP track exist. A1 MUST stay isolated:
+- **MODE-2 (B1)** clones a **fresh** risc0 (the DanielHoffmann91 fork) **inside the docker container** to its own dir — it touches none of the local clones. Build context is the minimal `/tmp/r0fuzz-ctx` (libs + the fuzzer only), never the repo root.
+- **MODE-1 (B2)** will use a **dedicated fresh worktree** for `98387806` (e.g. `workspace/risc0-a1-vuln`) with its **own cargo `--target-dir`** — **never** `workspace/risc0-modified` (AP, dirty @ 6556e8d7), `workspace/risc0-seamb` (the A3 race binary's tree), or `workspace/risc0-clean-28e53771` (Track-B). Never run a broad `pkill cargo` (kills other tracks' builds).
+- **POS:** A1 does **NOT** dispatch any POS jobs (it is local-only). The CVE POS batch is A3-for-the-CVE, gated on A1 passing — and on **different** nodes than Track-B, assigned by Ivan.
+- **Binaries:** A1's vulnerable build is fingerprinted `load_rs2_present=0` and lives under `a4/builds/` in its **own** dir; it is never bundled for a sweep (G12/L13).
 
 ---
 
