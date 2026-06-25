@@ -37,10 +37,13 @@ REMOTE_BASE = "/tmp/chainjob"
 EXPECT_HEAD_SHA = "93bda33b4f95f29acc9ddce1e225cdf949c83874"
 EXPECT_GUEST_ID = "1145334646,2159102285,1953889312,304928682,3764427408,3452386835,1931880701,971553701"
 GUARD_PROFILE = "verifyopcode"
+# Run-id / batch / label tag. CVE race overrides this (and the provenance constants
+# above) via CLI so the same generator drives both bug-races without forking the file.
+RUN_PREFIX = "a3seamb"
 
 
 def run_id(variant: str, seed: int, n: int) -> str:
-    return f"pos_iv_pos_9_a3seamb_{variant}_seed{seed}_n{n}"
+    return f"pos_iv_pos_9_{RUN_PREFIX}_{variant}_seed{seed}_n{n}"
 
 
 def _db_path(rid: str) -> str:
@@ -78,7 +81,7 @@ def _argv(variant: str, seed: int, n: int, rid: str) -> List[str]:
             argv.extend(["--telemetry-level", "full"])
     if spec.launcher == "driver":
         insert_at = argv.index("--") if "--" in argv else len(argv)
-        argv[insert_at:insert_at] = ["--progress-every", str(max(10, min(n, 100))), "--label", "a3seamb"]
+        argv[insert_at:insert_at] = ["--progress-every", str(max(10, min(n, 100))), "--label", RUN_PREFIX]
     return argv
 
 
@@ -124,17 +127,31 @@ def main() -> int:
     p.add_argument("--seeds", type=int, nargs="+", default=None)
     p.add_argument("--n", type=int, default=None, help="mutations per job (S2 N is data-driven; pass explicitly)")
     p.add_argument("--out", default=None)
+    # CVE-race overrides (default = Seam-B/verifyopcode provenance). All four must be
+    # supplied together for the CVE race so the guard asserts the right vulnerable binary.
+    p.add_argument("--profile", default=None, help="guard profile (verifyopcode|race|...); default verifyopcode")
+    p.add_argument("--head-sha", default=None, help="EXPECT_HEAD_SHA override (e.g. 98387806… for the CVE vuln commit)")
+    p.add_argument("--guest-id", default=None, help="EXPECT_GUEST_ID override (comma-sep image-id words of the A2 guest)")
+    p.add_argument("--host-bin", default=None, help="remote HOST_BIN path override (where the bundle ships the binary)")
+    p.add_argument("--run-prefix", default=None, help="run_id/batch/label tag (default a3seamb; use 'cve' for the CVE race)")
     a = p.parse_args()
+    # Apply provenance/tag overrides onto the module globals the helpers read.
+    global GUARD_PROFILE, EXPECT_HEAD_SHA, EXPECT_GUEST_ID, HOST_BIN, RUN_PREFIX
+    if a.profile:    GUARD_PROFILE = a.profile
+    if a.head_sha:   EXPECT_HEAD_SHA = a.head_sha
+    if a.guest_id:   EXPECT_GUEST_ID = a.guest_id
+    if a.host_bin:   HOST_BIN = a.host_bin
+    if a.run_prefix: RUN_PREFIX = a.run_prefix
     if a.stage == "smoke":
         seeds = a.seeds or [1234, 1235, 1236]
         n = a.n or 2000
-        prefix = "a3seamb_smoke"
+        prefix = f"{RUN_PREFIX}_smoke"
     else:
         seeds = a.seeds or list(range(1234, 1244))  # 10 paired seeds
         n = a.n or 5000  # CAP; real S2 N is set data-driven from S1 (spec §5)
-        prefix = "a3seamb_thesis"
+        prefix = f"{RUN_PREFIX}_thesis"
     rows = batch_rows(seeds, n, prefix, a.nodes)
-    chain = format_chain(rows, doc=f"IV.POS.9 A3 Seam-B race ({a.stage}): {len(rows)} jobs, N={n}, nodes={','.join(a.nodes)}, guard=verifyopcode")
+    chain = format_chain(rows, doc=f"IV.POS.9 race ({RUN_PREFIX}/{a.stage}): {len(rows)} jobs, N={n}, nodes={','.join(a.nodes)}, guard={GUARD_PROFILE}")
     if a.out:
         Path(a.out).write_text(chain)
         print(f"wrote {len(rows)} jobs -> {a.out}")

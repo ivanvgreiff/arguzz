@@ -116,12 +116,29 @@ fast structural pass first (trusts F8 construction; finds = INSTR_TYPE_MOD accep
 control-confirm for the candidate finds only. A read-only per-variant `accepts-by-kind` query (§9) gives
 the complementarity signal *immediately*, with no control re-runs at all.
 
-## 7. The REAL race (rs1==rs2 CVE) — what changes vs this smoke
-- **Binary:** the A1 vulnerable build (`98387806`), guard `--profile race` (load_rs2_present=0).
-- **Guest:** the A2 `rs1==rs2` race guests (not the minimal ALU guest).
-- **Oracle:** the strong journal oracle (accept + wrong committed output) is PRIMARY; the propagation
-  triage applies (CVE is value-changing). Everything else (SSH-bypass, chain_dispatcher, tmux
-  isolation, /tmp+/srv staging, cold-start expectation, markers) is IDENTICAL — reuse this runbook.
+## 7. The REAL race (rs1==rs2 CVE) — what changes vs this smoke  **[WIRED 2026-06-25]**
+- **Binary:** the A1 vulnerable build `B2` (`a4/builds/a1_cve/risc0-host`, head `98387806`,
+  fingerprint `load_rs2_present=0, planted_bug=none`, sha256 `dbe89d23…`). Guard `--profile race`.
+  Built from `workspace/risc0-a1-vuln` (98387806 vulnerable codegen byte-identical; A4 hooks
+  forward-ported onto the monolithic `prove`/`WitnessGenerator::new`; fix #3181 reverted in
+  `execute/rv32im.rs`+`r0vm.rs`+`witgen/preflight.rs`). **Locally verified before dispatch:** honest
+  prove → `output=9000027, Verifier success`; guard race PASS.
+- **Guest:** the A2 `rs1==rs2` guest (`workspace/output-a1vuln/methods/guest`: `remu a0,a1`+`divu a2,a3`,
+  source regs 1-bit-apart so a single `INSTR_WORD_MOD` flip aliases rs2→rs1). guest_image_id
+  `2819774008,269738887,492358372,594138501,3395406058,845810525,2646011585,829874012`.
+- **Oracle:** strong journal oracle (accept + wrong committed output) PRIMARY; the find = an
+  `INSTR_WORD_MOD` accept whose mutated op is a same-register `remu`/`divu` (rs2==rs1) with
+  output ≠ 9000027. Arguzz/Hybrid expected to find (during-exec recompute = coherent); V5/A4 not
+  (post-exec edit leaves result incoherent ⇒ C_local fires). Everything else IDENTICAL — reuse §2–§6.
+- **The generator + wrapper are now CVE-parameterized** (defaults stay Seam-B). Launch (on coinbase):
+  ```bash
+  REPO=/tmp/ivg_race/repo BUNDLE=/tmp/ivg_race/a4_campaign_cve_<sha>.tar.gz \
+  RESULTS_BASE=/srv/testbed/results/ivgreiff/a4/cve_race_thesis \
+  GUARD_PROFILE=race HEAD_SHA=98387806fe8348d87e32974468c6f35853356ad5 RUN_PREFIX=cve \
+  GUEST_ID=2819774008,269738887,492358372,594138501,3395406058,845810525,2646011585,829874012 \
+  STAGE=thesis N=5000 \
+    bash a4/pos/race/dispatch_race.sh flare octorand opulous polynize algofi gard goracle zone
+  ```
 
 ## 8. Gotchas log (each cost time the first time — DO NOT repeat)
 | # | symptom | cause | fix |

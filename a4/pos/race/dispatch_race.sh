@@ -26,7 +26,15 @@ N="${N:-2000}"
 BUNDLE="${BUNDLE:?set BUNDLE=~/a4_campaign_<sha>.tar.gz (the HOLED bundle)}"
 REPO="${REPO:-$HOME/arguzz}"
 SEEDS="${SEEDS:-}"
-CHAIN_NAME="race_${STAGE}"
+# Provenance / namespacing. Defaults = Seam-B verifyopcode race; the CVE (rs1==rs2) race
+# overrides these via env so the SAME wrapper drives both (runbook §7). Empty head/guest =>
+# generator keeps its own (Seam-B) provenance constants.
+GUARD_PROFILE="${GUARD_PROFILE:-verifyopcode}"        # fingerprint_guard profile (verifyopcode | race)
+HEAD_SHA="${HEAD_SHA:-}"                               # EXPECT_HEAD_SHA override (CVE: 98387806…)
+GUEST_ID="${GUEST_ID:-}"                               # EXPECT_GUEST_ID override (CVE: A2 guest image-id)
+RUN_PREFIX="${RUN_PREFIX:-}"                            # run_id/batch/tmux tag (CVE: cve); empty => 'race'
+HOST_BIN_REMOTE="/root/a4_campaign/bin/risc0-host"     # bundle always ships the holed binary here
+CHAIN_NAME="${CHAIN_NAME:-${RUN_PREFIX:-race}_${STAGE}}"
 RESULTS_BASE="${RESULTS_BASE:-$HOME/race_results/${CHAIN_NAME}}"
 POLL_SEC="${POLL_SEC:-30}"
 BASENAME="$(basename "$BUNDLE")"
@@ -47,17 +55,24 @@ done
 
 # 2. CONTAMINATION GUARD (G-FP): every node's binary MUST be the verifyopcode-holed build.
 #    (The manifest also guard-prefixes each job; this is the earlier, fail-fast check.)
+GUARD_EXTRA=""
+[ -n "$HEAD_SHA" ] && GUARD_EXTRA="$GUARD_EXTRA --head-sha $HEAD_SHA"
+[ -n "$GUEST_ID" ] && GUARD_EXTRA="$GUARD_EXTRA --guest-id $GUEST_ID"
 for n in "${NODES[@]}"; do
   ssh "${SSH_OPTS[@]}" "$n" \
-    "cd /root/a4_campaign/repo && python3 -m a4.pos.fingerprint_guard /root/a4_campaign/bin/risc0-host --profile verifyopcode" \
-    || { echo "[race] ABORT: $n binary is NOT the verifyopcode-holed build" >&2; exit 87; }
+    "cd /root/a4_campaign/repo && python3 -m a4.pos.fingerprint_guard $HOST_BIN_REMOTE --profile $GUARD_PROFILE$GUARD_EXTRA" \
+    || { echo "[race] ABORT: $n binary fails the '$GUARD_PROFILE' fingerprint guard" >&2; exit 87; }
 done
 
 # 3. generate the race manifest with the REAL assigned nodes
 cd "$REPO"
 MAN="/tmp/${CHAIN_NAME}.manifest"
 SEED_ARG=(); [ -n "$SEEDS" ] && SEED_ARG=(--seeds $SEEDS)
-python3 -m a4.pos.generate_race_manifests --stage "$STAGE" --n "$N" --nodes "${NODES[@]}" "${SEED_ARG[@]}" --out "$MAN"
+GEN_EXTRA=(--profile "$GUARD_PROFILE" --host-bin "$HOST_BIN_REMOTE")
+[ -n "$HEAD_SHA" ]   && GEN_EXTRA+=(--head-sha "$HEAD_SHA")
+[ -n "$GUEST_ID" ]   && GEN_EXTRA+=(--guest-id "$GUEST_ID")
+[ -n "$RUN_PREFIX" ] && GEN_EXTRA+=(--run-prefix "$RUN_PREFIX")
+python3 -m a4.pos.generate_race_manifests --stage "$STAGE" --n "$N" --nodes "${NODES[@]}" "${SEED_ARG[@]}" "${GEN_EXTRA[@]}" --out "$MAN"
 echo "[race] manifest: $MAN ($(grep -cvE '^#|^$' "$MAN") jobs)"
 
 # 4. launch the shared chain_dispatcher in a race-NAMESPACED tmux session (isolated env)
