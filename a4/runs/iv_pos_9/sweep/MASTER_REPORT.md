@@ -11,10 +11,20 @@ Every claim is grounded in the run DBs, not in design intent. Update this as the
 
 ---
 
+> ## ⚠️ CORRECTION (2026-06-25) — 3-kind binary-mismatch contamination
+> The sweep guest binaries (g1/g2/g3) were built from a clean tree (`28e53771`) **missing the witgen
+> handlers** for `TXN_PREV_WORD_MOD / TXN_PREV_CYCLE_MOD / CYCLE_DIFF_COUNT_MOD` (added in `6556e8d7`),
+> while the reused g0 baseline had them. On the sweep binaries those 3 kinds were **silently skipped**
+> (no-op recorded as `applied`/`accept`). **Affected: all V5_control + Hybrid_cTS sweep jobs (18 of 36).**
+> V6_uniform/V6_cTS (18) are unaffected. **F2 is retracted; Q3's "1534 benign accepts" framing is dropped.**
+> Headline Arguzz-global / A4-local / Case-B **still holds** on the clean data (correct-binary g0 + all V6).
+> Fix applied (cherry-pick `6556e8d7` → Track-B HEAD `53c21894`, rebuild all 4 binaries) and 24 jobs
+> (V5+Hybrid × 4 guests × 3 seeds) re-running. Full record: **`CONTAMINATION_AND_FIX_3KIND.md`**.
+
 ## 1. Headline findings (as of batch 1: g0 + g1, seed 1234)
 
 - **F1 — Local constraint-loc territory is guest-INVARIANT.** g1 (control-heavy) and g0 (sha2) cover ~95% the *same* local locs (±0–2 of ~33–48 per variant; see §A4). The circuit's local-loc set is small and saturated by the runtime + the A4 mutation surface, so a control guest does **not** add local territory. → **Local-loc coverage is not a discriminating axis between guests**; the down-select (B3.2) should lean on CGC + candidate distribution.
-- **F2 — CGC breadth and the benign-candidate surface ARE strongly guest-dependent.** g1·V5 produced **1534 accepted (benign) mutations vs g0·V5's 0** — dominated by cycle/memory-permutation metadata kinds (`TXN_PREV_WORD/CYCLE_DIFF/PREV_CYCLE`). The control guest exposes a huge don't-care surface that sha2 lacks.
+- **F2 — ⚠️ RETRACTED (binary-mismatch artifact, see CORRECTION banner).** The claimed "1534 accepted mutations on g1·V5 vs g0·V5's 0" were **silent skips** of the 3 unhandled kinds (`TXN_PREV_WORD/CYCLE_DIFF/PREV_CYCLE`) on the clean binary, not a guest-dependent benign surface. The 0-vs-1534 gap is a binary mismatch. Re-evaluate after the corrected re-run.
 - **F3 — The A4-local / Arguzz-global orthogonality holds and is mechanistically grounded.** A4 (V5/Hybrid) reaches more *local* locs (46–48 vs 33–35); Arguzz (V6) reaches far more *global* CGC contexts (440–598 vs 184). The cause is the fault timing — see Q2/Q3.
 - **F4 — Zero real soundness violations** on any variant/guest: every accepted mutation has `num_failures=0` (no constraint actually broke). Correct for clean binaries (load_rs2=1, planted_bug=none). Bug-finding is Track A's job; this is a coverage-generalization run.
 - **F5 — Per-mutation proving cost ~3.2–4.1 s** on the Intel sweep nodes (these run faster than the playbook's old Tier-C estimate). Local coverage saturates by ~mut 2000; CGC still climbing at 5000 (last new context @4873) → N=10000 would add ~0 local, ~15–25% more CGC (diminishing).
