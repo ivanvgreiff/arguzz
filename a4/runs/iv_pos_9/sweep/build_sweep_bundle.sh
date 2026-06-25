@@ -15,7 +15,9 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-GUESTS=(g1_ecall_control g2_mem_stress g3_accelerator)
+# g0_baseline INCLUDED as of the 3-kind fix (CONTAMINATION_AND_FIX_3KIND.md): g0 is now re-run
+# fresh on the same patched binary (53c21894) — the cross-binary d2f reuse is retired.
+GUESTS=(g0_baseline g1_ecall_control g2_mem_stress g3_accelerator)
 SHORT=$(git rev-parse --short=12 HEAD)
 OUT="bundles"; mkdir -p "$OUT"
 STAGE=$(mktemp -d -t sweepbundle.XXXXXX); trap 'rm -rf "$STAGE"' EXIT

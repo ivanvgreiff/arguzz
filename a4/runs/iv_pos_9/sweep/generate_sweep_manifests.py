@@ -130,7 +130,8 @@ def remote_cmd(guest: str, variant: str, seed: int, n: int, rid: str) -> str:
 
 
 def make_rows(guests: Sequence[str], seeds: Sequence[int], n: int,
-              nodes: Sequence[str] = DEFAULT_NODES) -> List[Tuple[str, str, str, str]]:
+              nodes: Sequence[str] = DEFAULT_NODES,
+              variants: Sequence[str] = VARIANT_ORDER) -> List[Tuple[str, str, str, str]]:
     """One-job-per-node-per-batch layout over the live node pool, across guests × variants × seeds.
 
     `nodes` is the live, owned-by-ivgreiff + ssh-reachable subset at dispatch time. run_ids
@@ -141,7 +142,7 @@ def make_rows(guests: Sequence[str], seeds: Sequence[int], n: int,
     flat: List[Tuple[str, str, int]] = []
     for seed in seeds:
         for guest in guests:
-            for variant in VARIANT_ORDER:
+            for variant in variants:
                 flat.append((guest, variant, seed))
     per_batch = len(nodes)
     for bi in range(0, len(flat), per_batch):
@@ -169,8 +170,13 @@ def main() -> None:
     p.add_argument("--seeds", type=int, nargs="+", default=list(DEFAULT_SEEDS))
     p.add_argument("--nodes", nargs="+", default=list(DEFAULT_NODES),
                    help="live node pool (owned-by-ivgreiff + ssh-reachable). Default: the 6 reserved.")
+    p.add_argument("--variants", nargs="+", default=list(VARIANT_ORDER),
+                   help="subset of variants (e.g. re-run only V5_control Hybrid_cTS). Default: all 4.")
     p.add_argument("--out", type=Path, required=True)
     args = p.parse_args()
+    for v in args.variants:
+        if v not in VARIANT_ORDER:
+            p.error(f"unknown variant {v!r}; known: {list(VARIANT_ORDER)}")
 
     for g in args.guests:
         if g not in GUEST_SPECS:
@@ -178,9 +184,9 @@ def main() -> None:
     if not args.nodes:
         p.error("--nodes must list at least one live node")
     n = STAGE_N[args.stage]
-    rows = make_rows(args.guests, tuple(args.seeds), n, tuple(args.nodes))
+    rows = make_rows(args.guests, tuple(args.seeds), n, tuple(args.nodes), tuple(args.variants))
     doc = (f"IV.POS.9 Track-B {args.stage} sweep — {len(rows)} jobs, N={n}, "
-           f"guests={list(args.guests)}, variants={list(VARIANT_ORDER)}, seeds={list(args.seeds)}, "
+           f"guests={list(args.guests)}, variants={list(args.variants)}, seeds={list(args.seeds)}, "
            f"nodes={list(args.nodes)}")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(format_chain(rows, doc=doc))
