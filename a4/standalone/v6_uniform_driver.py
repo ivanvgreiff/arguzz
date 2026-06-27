@@ -124,6 +124,34 @@ def main() -> None:
     step_to_zone = classify_zones(insp)
     print(f"  classified={len(step_to_zone)} steps")
 
+    # Step-domain fix (a4/docs/cloud3/arguzz_step_domain_fix; added 2026-06-27).
+    # WHAT: the scheduler picks EXECUTOR `current_step`s (from `host --trace`), but
+    #   `step_to_zone` / `insp.get_cycle` are keyed by witgen `user_cycle`. The two
+    #   counters drift by the running host-ecall count, so indexing the witgen-keyed
+    #   tables with an executor step mislabels the recorded `zone`/`major`.
+    # WHY (here): this uniform driver's scheduler is balanced round-robin and never reads
+    #   `zone`, and its CVE finds are output-based — so uniform's RESULTS were always
+    #   valid; this fix only corrects the PERSISTED zone/major labels for analysis.
+    # HOW: translate executor step -> witgen `user_cycle` (`to_user`) before the lookup,
+    #   via the same map the bandit uses. Recording-only ⇒ on any map-build failure we
+    #   fall back to the old (mislabeled) lookup rather than abort a valid run.
+    exec_step_to_zone = None
+    _step_map = None
+    try:
+        from a4.arguzz_dependent.arguzz_parser import parse_all_traces
+        from a4.standalone.step_domain_map import build_step_domain_map
+        _step_map = build_step_domain_map(
+            parse_all_traces(out),
+            insp.total_steps,
+            compute_user_cycles={c.step for c in insp.cycles if c.major <= 6},
+        )
+        exec_step_to_zone = _step_map.exec_step_zone_map(step_to_zone)
+        print(f"  step-domain map: {len(_step_map.to_user)} real instrs, "
+              f"{_step_map.n_host_ecalls} host ecalls skipped (recorded zone/major corrected)")
+    except Exception as e:  # recording-only: never kill a (valid) uniform run over labels
+        print(f"  WARNING: step-domain map unavailable ({e}); recorded zone/major fall "
+              f"back to the mislabeled witgen lookup")
+
     rng = Random(args.seed)
     sched = ArguzzScheduler(instr_to_steps, rng)
     print(f"\n  scheduler ready: {len(sched._candidate_instrs)} candidate instr kinds")
@@ -154,7 +182,7 @@ def main() -> None:
         instr, step, kind = sched.pick()
         iter_seed = args.seed * 1_000_000 + i
 
-        zone = step_to_zone.get(step, "core_other")
+        zone = (exec_step_to_zone or step_to_zone).get(step, "core_other")  # step-domain fix
         norm_instr = normalize_instr(instr)
         opcode_class = MAPPING_INSTR_TO_OPCODE_CLASS.get(norm_instr, "system")
         arm = ArmKey(
@@ -174,7 +202,9 @@ def main() -> None:
             timeout=90.0,
         )
 
-        cycle = insp.get_cycle(step)
+        # step-domain fix: translate executor step -> witgen user_cycle for the major
+        _u = _step_map.user_cycle_of(step) if _step_map is not None else step
+        cycle = insp.get_cycle(_u) if _u is not None else None
         major = cycle.major if cycle is not None else 0
 
         config = {

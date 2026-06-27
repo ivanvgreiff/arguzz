@@ -380,6 +380,11 @@ class A4Fuzzer:
         self._local_loc_discoveries: int = 0
         self.arguzz_timeout: float = 90.0
         self._baseline_trace: Optional[Dict[int, str]] = None
+        self._baseline_traces_full: Optional[list] = None
+        # Step-domain fix (a4/docs/cloud3/arguzz_step_domain_fix): translate Arguzz
+        # executor steps -> witgen user_cycle for correct zone/major lookups.
+        self._arguzz_step_map = None          # StepDomainMap | None
+        self._exec_step_to_zone: Optional[Dict[int, str]] = None  # executor step -> correct zone
         self.l1_logging: bool = True
         self._l1_substrategy_seen: Set[Tuple[str, tuple]] = set()
         
@@ -651,14 +656,22 @@ class A4Fuzzer:
         legacy_reward_diag: Optional[dict],
         components: Optional[dict] = None,
         l1_payload: Optional[dict] = None,
+        zone_map: Optional[Dict[int, str]] = None,
+        major_override: Optional[int] = None,
     ) -> None:
         """Phase 6: populate v2 telemetry tables when telemetry_level is full."""
         if self.telemetry_level != "full":
             return
         if self.data is not None and not self._step_to_zone:
             self._step_to_zone = classify_zones(self.data)
-        cycle = self.data.get_cycle(step) if self.data is not None else None
-        mutation_major = cycle.major if cycle is not None else 0
+        # Step-domain fix: Arguzz callers pass an executor-keyed zone_map + corrected
+        # major (the step is an executor current_step); A4 callers use witgen defaults.
+        zmap = zone_map if zone_map is not None else self._step_to_zone
+        if major_override is not None:
+            mutation_major = major_override
+        else:
+            cycle = self.data.get_cycle(step) if self.data is not None else None
+            mutation_major = cycle.major if cycle is not None else 0
         setattr(exec_result, "_mutation_major", mutation_major)
         l1_kwargs = {}
         if l1_payload:
@@ -677,7 +690,7 @@ class A4Fuzzer:
             original_value=original_value,
             mutated_value=mutated_value,
             legacy_reward_diag=legacy_reward_diag or {},
-            step_to_zone=self._step_to_zone,
+            step_to_zone=zmap,
             seen_local_v2=self._seen_local_v2,
             seen_compressed_global=self._seen_compressed_global,
             seen_structural=self._seen_structural,
@@ -797,6 +810,9 @@ class A4Fuzzer:
         traces = parse_all_traces(stdout)
         if not traces:
             raise RuntimeError("no <trace> tags parsed from baseline --trace")
+        # Retain the full parsed traces (with pc) so the witgen↔executor step-domain
+        # map can be built without a second --trace run (step_domain_map.py).
+        self._baseline_traces_full = traces
         return {tr.step: tr.instruction for tr in traces}
 
     def _sync_local_coverage_after_failures(self, new_coverage: int) -> None:
@@ -856,8 +872,30 @@ class A4Fuzzer:
         if arguzz_kinds is not None:
             baseline_trace = self._capture_baseline_trace()
             self._baseline_trace = baseline_trace
+            # Build the witgen↔executor step-domain map so Arguzz zone/major lookups
+            # translate the executor step to its user_cycle before indexing the
+            # witgen-keyed step_to_zone (the step-domain fix). Rebuild-free: reuses the
+            # --trace just captured. self-validates (raises) on bad host-ecall accounting.
+            # Real runs always populate _baseline_traces_full; only mocked tests that
+            # stub _capture_baseline_trace skip the map (and fall back to legacy zones).
+            if self._baseline_traces_full:
+                from a4.standalone.step_domain_map import build_step_domain_map
+                compute_uc = {c.step for c in self.data.cycles if c.major <= 6}
+                self._arguzz_step_map = build_step_domain_map(
+                    self._baseline_traces_full,
+                    self.data.total_steps,
+                    compute_user_cycles=compute_uc,
+                )
+                self._exec_step_to_zone = self._arguzz_step_map.exec_step_zone_map(
+                    self._step_to_zone
+                )
+            else:
+                self._arguzz_step_map = None
+                self._exec_step_to_zone = None
         else:
             self._baseline_trace = None
+            self._arguzz_step_map = None
+            self._exec_step_to_zone = None
 
         if self.selector_strategy in ALL_SEMANTIC_CTS_STRATEGIES:
             floor_schedule = self._floor_schedule_for_strategy(self.selector_strategy)
@@ -866,6 +904,7 @@ class A4Fuzzer:
                 a4_kinds,
                 arguzz_kinds=arguzz_kinds,
                 baseline_trace=baseline_trace,
+                arguzz_step_to_zone=self._exec_step_to_zone,
             )
             self.v2_scheduler = ConstrainedTSScheduler(
                 self.semantic_arm_universe,
@@ -1176,9 +1215,7 @@ class A4Fuzzer:
         if global_ctxs:
             self.db.record_global_failures(mutation_id, global_ctxs)
 
-        mutation_zone = self._step_to_zone.get(step, "core_other")
-        cycle = self.data.get_cycle(step)
-        mutation_major = cycle.major if cycle is not None else 0
+        mutation_zone, mutation_major = self._arguzz_zone_major(step)
         ctxs = extract_compressed_global_contexts(
             family_residues=inv_result.family_residues,
             family_details=inv_result.family_details,
@@ -1192,6 +1229,63 @@ class A4Fuzzer:
             )
         return mutation_id
 
+    def _arguzz_zone_major(self, exec_step: int) -> Tuple[str, int]:
+        """Step-domain fix: the CORRECT (zone, major) for an Arguzz EXECUTOR `current_step`.
+
+        The arm step is an executor step, but `step_to_zone`/`get_cycle` are keyed by
+        witgen `user_cycle`. We translate executor→user_cycle (`to_user`) before indexing.
+        Falls back to the (historical mis-indexed) witgen lookup only if the map is absent
+        (non-Arguzz / legacy)."""
+        if self._arguzz_step_map is None or self._exec_step_to_zone is None:
+            cyc = self.data.get_cycle(exec_step) if self.data is not None else None
+            return self._step_to_zone.get(exec_step, "core_other"), (
+                cyc.major if cyc is not None else 0
+            )
+        zone = self._exec_step_to_zone.get(exec_step, "core_other")
+        u = self._arguzz_step_map.user_cycle_of(exec_step)
+        cyc = self.data.get_cycle(u) if (u is not None and self.data is not None) else None
+        return zone, (cyc.major if cyc is not None else 0)
+
+    def _assert_arguzz_target(self, arm: ArmKey, exec_step: int) -> None:
+        """Per-pull Layer-1 guard: the instruction actually mutated at `exec_step` MUST
+        belong to the arm's declared `zone` (and `opcode_class`). Abort the run on any
+        mismatch — never silently inject under a wrong semantic label (step-domain fix)."""
+        if self._arguzz_step_map is None or self._exec_step_to_zone is None:
+            return
+        true_zone = self._exec_step_to_zone.get(exec_step, "core_other")
+        if arm.zone != true_zone:
+            u = self._arguzz_step_map.user_cycle_of(exec_step)
+            raise RuntimeError(
+                f"[step-domain guard] arm zone {arm.zone!r} != true zone {true_zone!r} at "
+                f"executor step {exec_step} (user_cycle={u}); aborting to avoid "
+                f"mis-attributed bandit learning."
+            )
+        if self._baseline_trace is not None:
+            from a4.standalone.mutations import arguzz_bridge
+            true_class = arguzz_bridge.opcode_class_for_step(
+                exec_step, self.data, self._baseline_trace
+            )
+            if arm.opcode_class != true_class:
+                raise RuntimeError(
+                    f"[step-domain guard] arm opcode_class {arm.opcode_class!r} != true "
+                    f"{true_class!r} at executor step {exec_step}; aborting."
+                )
+
+    def _assert_arguzz_injected_pc(self, inv_result, exec_step: int) -> None:
+        """Per-pull Layer-2 guard: cross-check the pc the binary REPORTS mutating against
+        the pc the arm targeted (`exec_pc[exec_step]`). Abort on mismatch."""
+        if self._arguzz_step_map is None:
+            return
+        expected_pc = self._arguzz_step_map.exec_pc.get(exec_step)
+        faults = getattr(inv_result, "faults", None) or []
+        for f in faults:
+            fpc = getattr(f, "pc", None)
+            if fpc is not None and expected_pc is not None and fpc != expected_pc:
+                raise RuntimeError(
+                    f"[step-domain guard] binary mutated pc={fpc} but arm targeted "
+                    f"pc={expected_pc} at executor step {exec_step}; aborting."
+                )
+
     def _run_arguzz_cts_mutation(
         self,
         mutation_num: int,
@@ -1202,6 +1296,7 @@ class A4Fuzzer:
     ) -> Optional["MutationResult"]:
         """Arguzz dispatch path for v6_cTS / hybrid_cTS (ISS-6)."""
         step = decision.step
+        self._assert_arguzz_target(arm, step)  # step-domain Layer-1 guard (abort on mismatch)
         iter_seed = self.seed * 1_000_000 + mutation_num
         _outcome, inv_result, config = create_mutation_for_arm(
             arm,
@@ -1212,10 +1307,9 @@ class A4Fuzzer:
             self.data,
             timeout=self.arguzz_timeout,
         )
+        self._assert_arguzz_injected_pc(inv_result, step)  # step-domain Layer-2 guard
 
-        mutation_zone = self._step_to_zone.get(step, "core_other")
-        cycle = self.data.get_cycle(step)
-        mutation_major = cycle.major if cycle is not None else 0
+        mutation_zone, mutation_major = self._arguzz_zone_major(step)
 
         exec_stub = MutationExecutionResult(
             stdout=inv_result.raw_stdout,
@@ -1311,6 +1405,8 @@ class A4Fuzzer:
                 legacy_reward_diag=diag,
                 components=components,
                 l1_payload=l1_payload,
+                zone_map=self._exec_step_to_zone,   # step-domain fix (executor-keyed)
+                major_override=mutation_major,
             )
             self.db.record_bandit_decision(
                 mutation_id,

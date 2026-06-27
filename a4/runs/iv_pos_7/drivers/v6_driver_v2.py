@@ -423,6 +423,27 @@ def main():
     step_to_zone = classify_zones(insp)
     t_ze = time.time()
     print(f"  wall={t_ze-t_z:.2f}s  classified={len(step_to_zone)} steps")
+
+    # Step-domain fix (a4/docs/cloud3/arguzz_step_domain_fix; added 2026-06-27).
+    # LEGACY driver (superseded by a4/standalone/v6_uniform_driver.py). Same issue as
+    # there: the scheduler picks EXECUTOR `current_step`s but `step_to_zone`/`get_cycle`
+    # are keyed by witgen `user_cycle`, so the RECORDED zone/major were mislabeled by the
+    # host-ecall drift. Round-robin selection never reads zone, so results were valid;
+    # this corrects only the persisted labels. Recording-only ⇒ fall back on map failure.
+    exec_step_to_zone = None
+    _step_map = None
+    try:
+        from a4.arguzz_dependent.arguzz_parser import parse_all_traces
+        from a4.standalone.step_domain_map import build_step_domain_map
+        _step_map = build_step_domain_map(
+            parse_all_traces(out),
+            insp.total_steps,
+            compute_user_cycles={c.step for c in insp.cycles if c.major <= 6},
+        )
+        exec_step_to_zone = _step_map.exec_step_zone_map(step_to_zone)
+        print(f"  step-domain map: {_step_map.n_host_ecalls} host ecalls skipped (labels corrected)")
+    except Exception as e:
+        print(f"  WARNING: step-domain map unavailable ({e}); recorded zone/major mislabeled")
     # Quick zone histogram
     from collections import Counter
     zhist = Counter(step_to_zone.values())
@@ -489,9 +510,10 @@ def main():
             outcome = "other"
         outcomes[outcome] += 1
 
-        # Zone + major for this mutation
-        zone = step_to_zone.get(step, "core_other")
-        cycle = insp.get_cycle(step)
+        # Zone + major for this mutation (step-domain fix: executor step -> user_cycle)
+        zone = (exec_step_to_zone or step_to_zone).get(step, "core_other")
+        _u = _step_map.user_cycle_of(step) if _step_map is not None else step
+        cycle = insp.get_cycle(_u) if _u is not None else None
         major = cycle.major if cycle is not None else 0
 
         config = {

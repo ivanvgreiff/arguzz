@@ -252,8 +252,17 @@ class SemanticArmUniverse:
         *,
         arguzz_kinds: Optional[List[str]] = None,
         baseline_trace: Optional[Dict[int, str]] = None,
+        arguzz_step_to_zone: Optional[Dict[int, str]] = None,
     ) -> "SemanticArmUniverse":
-        """Build the semantic arm universe from inspection data."""
+        """Build the semantic arm universe from inspection data.
+
+        ``arguzz_step_to_zone`` (step-domain fix): an EXECUTOR-`current_step`-keyed zone
+        map for the Arguzz surface. Arguzz arm steps are executor steps, but the witgen
+        `step_to_zone` table is keyed by `user_cycle`; indexing it directly with an
+        executor step mislabels the zone. The fuzzer passes the corrected map (built via
+        `StepDomainMap.exec_step_zone_map`). If None (legacy/test callers), falls back to
+        the witgen-keyed `classify_zones(data)` — correct only when the two counters do
+        not drift (no host ecalls)."""
         if arguzz_kinds is not None and baseline_trace is None:
             raise ValueError("baseline_trace required when arguzz_kinds is set")
 
@@ -280,14 +289,22 @@ class SemanticArmUniverse:
         if arguzz_kinds is not None:
             from a4.standalone.mutations import arguzz_bridge
 
-            step_to_zone = classify_zones(data)
+            # Step-domain fix: Arguzz `step` is an EXECUTOR current_step, so its zone must
+            # come from the executor-keyed `arguzz_step_to_zone`. Falling back to the
+            # witgen-keyed `classify_zones` (indexed by an executor step) is the historical
+            # mis-index — kept only for legacy/test callers that pass no map.
+            arguzz_zone_lookup = (
+                arguzz_step_to_zone
+                if arguzz_step_to_zone is not None
+                else classify_zones(data)
+            )
             for kind in arguzz_kinds:
                 kind_steps = arguzz_bridge.get_valid_steps(
                     data, kind, baseline_trace=baseline_trace,
                 )
                 valid_by_kind[kind] = kind_steps
                 for step in kind_steps:
-                    zone = step_to_zone.get(step, "core_other")
+                    zone = arguzz_zone_lookup.get(step, "core_other")
                     opcode_class = arguzz_bridge.opcode_class_for_step(
                         step, data, baseline_trace,
                     )
