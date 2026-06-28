@@ -1,0 +1,8 @@
+{
+  "track": "AP_seamb_fix", "role": "bench-verifyopcode",
+  "risc0_head_sha": "f3c659a8dcbcbf357208fcf6fea6c0a91515640f", "base_head_sha": "93bda33b4f95f29acc9ddce1e225cdf949c83874", "cherry_pick": "6556e8d7",
+  "load_rs2_present": 1, "planted_bug": "verifyopcode",
+  "instrumentation_hash": "2992bc2a500179bd658dbe7815d7e42baa25bff3f04bec52d1fabc98664b8c07", "guest_src_sha256": "1f5b937271d1a0f1798cf513fe412cfe66e2463e4f0f36d4f8d718577148dbe3",
+  "guest_image_id": "1145334646,2159102285,1953889312,304928682,3764427408,3452386835,1931880701,971553701", "host_sha256": "6935ac1d259ddde5c44d0e2321b6f9c88c3f70cc965a5f8246ec8635144101c6", "three_kinds_live": true,
+  "built_from": "a4/scripts/build_seamb_fix.sh"
+}

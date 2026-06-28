@@ -33,18 +33,19 @@ Order: build + locally smoke V0 and V8 **before** any registry/POS work (the `te
 **Automatic (NO edit — derive from `CANONICAL_VARIANTS`):**
 - `generate_race_manifests.py:23` `VARIANT_ORDER = tuple(CANONICAL_VARIANTS.keys())` + job-gen (`batch_rows:107`) — picks up new variants. **Side effect: default manifest jumps to 6×10=60 jobs** — restrict via `--variants` (§D).
 - `generate_race_manifests.py` `_env_exports`/`_argv` — branch on `spec.launcher` (generic; cli variants get `A4_GLOBAL_RESIDUE=1` + `--telemetry-level full`).
-- `race_lib.py:53` `_RID` regex — matches `V0_uniform`/`V8_arguzz_sched` (verified). `discover_runs` auto-finds new DBs.
-- `markers.py`, `oracle.py` — fully variant-agnostic. The oracle find predicate `is_decode_divergent_itm` (`oracle.py:71`) handles V0/V8 ITM finds with zero change.
+- `markers.py`, `oracle.py` — fully variant-agnostic. The oracle find predicate `is_decode_divergent_itm` (`oracle.py:71`) handles V0/V8 ITM finds with zero change. The separate ablation lib (§E) imports them **read-only**.
 - `fingerprint_guard.py` — keys off the *binary* (`planted_bug`/`load_rs2`), never the variant. No change.
 - `dispatch_race.sh`, `chain_dispatcher.sh`, `prepare_race_bundle.sh` — manifest-row-blind plumbing. No change. (The repo-`cd`-before-guard fix applies to V0/V8 automatically.)
-- `tests/test_race.py:134` `assert len(rows)==2*len(VARIANT_ORDER)` — auto-correct.
+- `tests/test_race.py:134` `assert len(rows)==2*len(VARIANT_ORDER)` — auto-correct. `tests/test_race.py:154` `test_variant_launch_cmds` iterates `CANONICAL_VARIANTS` — gates that the V0/V8 launchers produce runnable argv.
 
-**Must-edit (analysis layer — or V0/V8 silently dropped / KeyError):**
-- `race_lib.py:37` `VARIANTS` list — add both (this list also *filters* `load_data` `variants_present`, so a missing name is silently dropped). Reorder for the ablation: `["V0_uniform","V5_control","V8_arguzz_sched","Hybrid_cTS","V6_cTS","V6_uniform"]` (A4 scheduler trio adjacent).
-- `race_lib.py` `COLORS` / `LABEL` / `SURFACE` dicts (and any `DISPLAY`) — add both keys (A4 trio = one hue family; `SURFACE["V0_uniform"]="A4"`, `SURFACE["V8_arguzz_sched"]="A4"`). `per_variant_table` indexes `SURFACE[v]` → KeyError if missed.
-- `build_race_artifact.py:53-56` `ON`/`OFF`/`SUB` — V0/V8 are A4 ⇒ both in `ON`; add `SUB` entries. (The "surface boundary" hero stays; the on-surface column gains V0/V8 cards.)
-- `build_race_notebook.py:63-68` intro variant table (+2 rows); `:217` `assert imgs==5` → bump if adding the ablation figure (§E).
-- `tests/test_race.py:154` `test_variant_launch_cmds` iterates `CANONICAL_VARIANTS` — keep; it gates that the V0/V8 launchers actually produce runnable argv.
+**Must-edit (manifest/registry — shared infra, ALREADY landed):**
+- `variants.py` `CANONICAL_VARIANTS` — `V0_uniform` / `V8_arguzz_sched` added (done).
+- `generate_race_manifests.py` `--variants` filter — restricts the 6-variant default to the ablation set so it doesn't silently balloon to 60 jobs (done).
+
+**Analysis = SEPARATE, self-contained harness (Ivan's separation directive — do NOT touch the published artifacts):**
+- The published `race_lib.py` / `race_exploration.ipynb|.html` / `build_race_notebook.py` / `build_race_artifact.py` are the **LOCKED** 4-variant cross-surface-complementarity story on the **contaminated** `93bda33b` binary. They are **NOT edited** for the ablation.
+- The scheduler ablation gets its **own folder** `a4/runs/iv_pos_9/race/sched_ablation/` with its own `sched_ablation_lib.py` (VARIANTS / COLORS / LABEL / SURFACE / a generalized `_RID` for the `a3seambfix` slug / `fig_scheduler_ablation`) + `build_sched_ablation_notebook.py` + its own `.ipynb`/`.html`.
+- It **READS** the fixed-run DBs in `race/fix_thesis_results/` **in place** (never moves/modifies them) and **REUSES** `oracle.py` + `markers.py` (variant-agnostic) read-only by import. No cross-contamination of the published dataset.
 
 ## C. The BINARY decision (the consequential one — refines the harness agent)
 V0/V8 are A4-surface ⇒ they hit the same 3 dead kinds (`TXN_PREV_WORD_MOD`/`TXN_PREV_CYCLE_MOD`/`CYCLE_DIFF_COUNT_MOD`) as V5/Hybrid on the head-`93bda33b` binary (`../../runs/iv_pos_9/race/CONTAMINATION_IMPACT_VERIFICATION.md`).
@@ -62,18 +63,23 @@ V0/V8 are A4-surface ⇒ they hit the same 3 dead kinds (`TXN_PREV_WORD_MOD`/`TX
 **Recommendation: (B).** The whole point of the ablation is to attribute differences to the *scheduler*; option (A) leaves a known scheduler-correlated artifact in the most important comparison.
 
 ## D. POS run plan
-- **Restrict the manifest to the intended variants.** Add a `--variants` flag to `generate_race_manifests.py` (filter `VARIANT_ORDER`; the CVE re-run already added this pattern — verify/reuse `--variants`). Then `--variants V0_uniform V5_control V8_arguzz_sched` (option B) or `V0_uniform V8_arguzz_sched` (option A).
-- **Same everything else:** seeds 1234–1243, N=5000, guest `--ctrl 7 --gseed 12345 --rounds 5`, 8-node EPYC pool, SSH-bypass + `chain_dispatcher` in tmux, `verifyopcode` guard profile. Drop new DBs into the **same `thesis_results/` dir** → `race_lib.discover_runs` auto-merges to a 6-variant dataset.
-- **Job/batch/ETA:** option A = 20 jobs → 3 batches on 8 nodes; option B = 30 jobs → 4 batches (40 → 5). Per-mut ~2.2–3.3 s ⇒ ~4.6 h/job worst case ⇒ ~14 h (3 batches) / ~18–23 h (4–5 batches). Fits an overnight / gapless reservation (resume-safe chain).
-- **Binary provenance:** option A keeps `EXPECT_HEAD_SHA=93bda33b…`; option B updates it to the rebuilt fixed HEAD (+ re-read `EXPECT_GUEST_ID`; host-side handler shouldn't change the guest image, but confirm) and rebuilds the bundle.
+- **DECISION = option B (fixed binary, 4 variants).** `--variants V0_uniform V5_control V8_arguzz_sched Hybrid_cTS` (40 jobs at ×10). The `--variants` filter is landed; default (no flag) = all 6 = 60 jobs, so the flag is **required**.
+- **Same everything else:** seeds 1234–1243, N=5000, guest `--ctrl 7 --gseed 12345 --rounds 5`, 8-node EPYC pool, SSH-bypass + `chain_dispatcher` in tmux, `verifyopcode` guard profile.
+- **SEPARATE results dir (separation directive):** pull the new DBs into `race/fix_thesis_results/` (smoke → `race/fix_smoke_results/pulled/`) — **never** the published `thesis_results/`. The separate ablation harness (§E) reads them there; the contaminated `thesis_results/` 4-variant dataset stays immutable.
+- **Job/batch/ETA:** 4×10 = 40 jobs → 5 batches on 8 nodes. Per-mut ~2.2–3.3 s ⇒ ~4.6 h/job worst case ⇒ ~18–23 h. Fits an overnight / gapless reservation (resume-safe chain). Smoke 4×3 = 12 jobs → 2 batches.
+- **Binary provenance (option B):** `EXPECT_HEAD_SHA` = the rebuilt fixed HEAD (the `6556e8d7` cherry-pick commit, distinct from `93bda33b`); `EXPECT_GUEST_ID` = re-read from the fixed binary (host-side handler shouldn't change the guest image — `build_seamb_fix.sh` asserts control==holed and reports it). Pass both via the manifest CLI (`--head-sha`/`--guest-id`); rebuild the bundle from `cloud2-sched-ablation`.
 - **Bundle = `git archive HEAD`** (`prepare_race_bundle.sh:24`) ⇒ **commit the V0/V8 code (+ any `--variants` flag) BEFORE building the bundle** (same class as the dispatch_race.sh gotcha). Rebuild bundle after committing.
 - **SMOKE FIRST (gate G-SMOKE):** V0+V8 (+V5 if option B) × 3 seeds × N=2000 → (i) prove the V8 launcher runs on POS, (ii) measure real V0/V8 per-mut timing for the thesis ETA, (iii) sanity: A4 surface ⇒ ITM-applied > 0 for both. Then dispatch the thesis N=5000.
 
-## E. Analysis / notebook updates
-- **New figure `fig_scheduler_ablation(data)`** restricted to the A4 trio (V0/V5/V8): a 3-bar **`P(apply ITM)`** comparison (the scheduler-attributable factor) annotated with each variant's `P(found)` (Wilson CI), with `conditional_find_density` shown as ~constant (bug-intrinsic) to make the point "the scheduler moves *how often ITM is applied*, not the per-ITM hit rate." Reuse the `fig_decomposition` machinery (`race_lib.py:266`) subset to the trio. Add to the `__main__` figure loop + the artifact `FIGS` list; bump the notebook `assert imgs`.
-- **Notebook narrative:** add a "§2.5 Does the scheduler matter? — within-A4 ablation" section; keep the existing cross-surface complementarity story; update the intro variant table to 6 rows (mark V0/V5/V8 same-surface / different-scheduler).
-- **Artifact hero:** keep the surface-boundary map (V0/V5/V8 on the on-surface side, the 2 Arguzz off) and add the 3-up scheduler-ablation panel.
-- **Oracle perf:** V0/V8 produce real ITM accepts to control-confirm (unlike zero-accept Arguzz) — run the oracle on a fast node or `--no-confirm` structural pass + a control-confirm sample (G-REPRO). V0 (uniform) may apply ITM at a different rate than V5 (cTS) ⇒ a different number of accepts to confirm.
+## E. Analysis — a SEPARATE self-contained harness (NOT a patch to the published notebook)
+Per Ivan's separation directive, the ablation analysis lives entirely in its **own folder** and never touches the published `race_lib.py`/`race_exploration.*`/`build_race_*`.
+
+- **Folder:** `a4/runs/iv_pos_9/race/sched_ablation/`
+  - `sched_ablation_lib.py` — its own `VARIANTS` (ladder order V8→V0→V5→Hybrid), `COLORS`/`LABEL`/`SURFACE`, a generalized `_RID` that matches the `a3seambfix` slug, `discover_runs` over `../fix_thesis_results/`, and `fig_scheduler_ablation`. Imports `oracle.py` + `markers.py` from the parent `race/` **read-only**.
+  - `build_sched_ablation_notebook.py` + `sched_ablation_exploration.ipynb`/`.html` — the ablation's own notebook/artifact.
+- **`fig_scheduler_ablation`** — the V8→V0→V5 ladder: a per-variant **`P(apply ITM)`** bar (the scheduler-attributable factor) annotated with `P(found)` (Wilson CI), and `conditional_find_density` shown ~constant (bug-intrinsic) → "the scheduler moves *how often ITM is applied*, not the per-ITM hit rate." Hybrid as a 4th bar (surface-mix reference).
+- **Reads DBs in place:** `../fix_thesis_results/` (fixed run) — never the contaminated `thesis_results/`. No mixing of contaminated + fixed DBs in one dataset.
+- **Oracle perf:** V0/V8 produce real ITM accepts to control-confirm (unlike zero-accept Arguzz) — run the oracle on a fast node or `--no-confirm` structural pass + a control-confirm sample (G-REPRO). V0 (uniform) may apply ITM at a different rate than V5 (cTS) ⇒ a different number of accepts to confirm. Control = `a4/builds/ap_seamb_fix/control/risc0-host` (the FIXED control).
 
 ## F. Caveats to record in the writeup
 - Paired-seed RNG comparability across cli launchers is spec item A6 (`IV_POS_9_A3_SEAMB_RACE_SPEC §0.2`) — declared not load-bearing (we compare scheduler reachability, not RNG luck). V0/V5/V8 are all `cli` launchers ⇒ even closer than the V6_uniform-driver caveat.

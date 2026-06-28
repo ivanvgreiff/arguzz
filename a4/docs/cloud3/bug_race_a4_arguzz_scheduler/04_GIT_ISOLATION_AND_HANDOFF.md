@@ -36,5 +36,6 @@ A feature branch costs ~nothing and gives a clean merge-when-ready. Even as the 
 - `a4/standalone/fuzzer.py` — V0 + V8 wiring (defer + `_setup_a4_uniform_semantic`/`_setup_v8_arguzz_sched` + the `is_uniform` run-dispatch; NOT in `V2_BANDIT_STRATEGIES`).
 - `a4/pos/generate_race_manifests.py` — `--variants` filter (so the registry add doesn't balloon the default manifest to 6×seeds).
 - (No new driver file — V8 is a cli selector reusing `_run_single_mutation`.)
-- `a4/runs/iv_pos_9/race/{race_lib,build_race_notebook,build_race_artifact}.py` — analysis (add V0/V8; `_RID` generalization). **DEFERRED** (race_lib.py has another track's WIP). Track-A-owned, low cross-track risk.
-- (NO edits to `markers.py`, `oracle.py`, `fingerprint_guard.py`, `chain_dispatcher.sh`, or any Track-B/sweep file.)
+- `a4/scripts/build_seamb_fix.sh` — fixed-binary build driver (Inc 4).
+- **Analysis = NEW separate folder `a4/runs/iv_pos_9/race/sched_ablation/`** (`sched_ablation_lib.py` + `build_sched_ablation_notebook.py` + notebook). **DEFERRED** until fixed-run DBs exist. Per Ivan's separation directive, the published `race_lib.py`/`race_exploration.*`/`build_race_*` are **NOT edited** — the ablation harness imports `oracle.py`/`markers.py` read-only and reads `fix_thesis_results/` in place.
+- (NO edits to `race_lib.py`, `race_exploration.*`, `build_race_*`, `markers.py`, `oracle.py`, `fingerprint_guard.py`, `chain_dispatcher.sh`, or any Track-B/sweep file.)

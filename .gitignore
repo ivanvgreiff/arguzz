@@ -67,6 +67,9 @@ postfix_bandit_16_1000.*
 # A3 race: raw pulled per-job run-dirs (DBs/logs regenerable from the campaign); keep markers + oracle JSONs
 a4/runs/iv_pos_9/race/smoke_results/pulled/
 a4/runs/iv_pos_9/race/thesis_results/
+# A3 scheduler-ablation re-run (FIXED binary, SEPARATE from the contaminated dirs above)
+a4/runs/iv_pos_9/race/fix_smoke_results/pulled/
+a4/runs/iv_pos_9/race/fix_thesis_results/
 .cursor
 
 ### C++ ###
@@ -369,3 +372,6 @@ workspace/output/methods/Cargo.lock
 workspace/output/methods/guest/Cargo.lock
 # Seam-B host binaries (100MB+, reproducible via ap_verifyopcode_patch.py; archived read-only)
 a4/builds/ap_seamb/*/risc0-host
+# Seam-B FIXED pair (3 dead kinds live; reproducible via build_seamb_fix.sh; fingerprints stay tracked)
+a4/builds/ap_seamb_fix/*/risc0-host
+a4/builds/ap_seamb_fix/build_seamb_fix.log
