@@ -38,6 +38,14 @@ def test_v8_setup_and_picks_valid_on_real_binary(fuzzer):
     sel = fuzzer.selector
     assert sel.step_map.n_user_cycles > 0
     assert len(sel.sched._candidate_instrs) > 0
+    # TARGETING FIDELITY (addresses "membership != targeting"): the step-domain map is a
+    # CLEAN BIJECTION, so `to_user[exec_step]` is the instruction the scheduler actually
+    # picked — not merely *some* valid user_cycle for that kind. This is the real per-pick
+    # guarantee (vs a fragile executor-pc/class assert: the witgen cycle.pc uses a next-pc
+    # convention, and no major->opcode_class map exists to cross-check classes).
+    sm = sel.step_map
+    assert all(sm.to_exec[sm.to_user[e]] == e for e in sm.to_user), "map not a bijection (e->u->e)"
+    assert all(sm.to_user[sm.to_exec[u]] == u for u in sm.to_exec), "map not a bijection (u->e->u)"
     valid = {k: set(fuzzer.data.get_valid_steps_for_kind(k)) for k in fuzzer.MUTATION_KINDS}
     picks = [sel.select_arm_then_step() for _ in range(200)]
     # every pick is a valid (kind, user_cycle): the executor→user_cycle translation is sound

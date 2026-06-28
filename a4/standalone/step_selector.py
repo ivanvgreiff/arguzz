@@ -568,8 +568,10 @@ class ArguzzSchedA4Selector(StepSelector):
     """V8 — A4 mutations under Arguzz's instruction-balanced scheduler (NO arms, NO bandit).
 
     The scheduler-ablation rung with NEITHER arm semantics NOR a bandit. Site selection is
-    Arguzz's `ArguzzScheduler`: balanced round-robin over the distinct RISC-V instruction
-    types in the trace (rare instructions sampled as often as common ones), then a uniform
+    Arguzz's `ArguzzScheduler`: balanced round-robin over the distinct Arguzz-schedulable
+    instruction types in the trace — its candidate set is `INSTR_KINDS ∩ has-valid-injection-
+    kind`, so rare *Arguzz-eligible* instructions are sampled as often as common ones (this
+    is Arguzz's own candidate set, not literally every trace mnemonic) — then a uniform
     executor step within the chosen instruction. The executor `current_step` is translated
     to its witgen `user_cycle` (the step-domain map — MANDATORY, since A4 mutations are
     user_cycle-keyed), and an A4 mutation kind is drawn UNIFORMLY over the A4 kinds valid at

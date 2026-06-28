@@ -19,10 +19,10 @@
 - Wire: `cli.py` (+`V0_uniform` `--selector` choice), `fuzzer.py` (defer branch + `_setup_v0_uniform` building `SemanticArmUniverse.build(data, a4_kinds)` A4-only + a `_run_*` that does NOT call the bandit/`record_bandit_decision`), `variants.py` (`V0_uniform`, launcher=cli, surface=a4, no bandit).
 - **Gate:** (i) new unit test — V0 draws over the A4 semantic arm universe, applies A4 mutations incl. ITM, calls no bandit update; (ii) `test_variant_launch_cmds` green; (iii) local micro-smoke `cli fuzz --selector V0_uniform --num 10` on the existing holed binary records ≥1 applied INSTR_TYPE_MOD, no crash.
 
-## Inc 2 — V8: `v8_arguzz_a4_driver.py` (NO arm semantics, NO bandit)
-- Fork `v6_uniform_driver.py`. Per pick: `ArguzzScheduler.pick()` → `(instr, exec_step, _)`; **translate `U = step_domain_map.to_user(exec_step)`** (skip if None = host ecall); **assert** `class(trace[exec_step]) == class(get_cycle(U))`; choose A4 kind = **uniform over A4 kinds valid at `U`** (option b); build the A4 mutation config; `run_a4_mutation`; `CoverageDB.record_mutation(kind=<chosen>, config=<dict>, outcome='applied', verifier_accepted=<parsed>)`.
-- `variants.py` (`V8_arguzz_sched`, launcher=driver, driver_module=`a4.standalone.v8_arguzz_a4_driver`, surface=a4, no bandit).
-- **Gate:** (i) unit test — the executor→user_cycle translation matches `step_domain_map` on a known trace; the kind choice is uniform over `inspection_data.get_valid_kinds_at(U)` (incl. ITM where major≤6); the recorded row shape satisfies `oracle.extract_accepts` + `is_decode_divergent_itm` + `markers`; (ii) `test_variant_launch_cmds` green; (iii) local micro-smoke `--num 10` records A4 mutations at instruction-balanced sites incl. ≥1 ITM, no crash, no class-mismatch assert.
+## Inc 2 — V8: `ArguzzSchedA4Selector` (cli `--selector a4_arguzz_sched`; NO arm semantics, NO bandit) — AS BUILT
+- A cli selector (NOT a driver). Per `select_arm_then_step()`: `ArguzzScheduler.pick()` → `(instr, exec_step, _)`; **translate `U = step_map.user_cycle_of(exec_step)`** (skip if None = host ecall); **uniform over A4 kinds valid at `U`** (option b); return `(kind, U)` → the existing `_run_single_mutation` builds the A4 config + `run_a4_mutation` + records (same path/schema as V5/V0). Targeting fidelity = the step-domain map is a **verified clean bijection** (asserted in the gated integration test); a `get_cycle(u)` guard re-confirms `u` is real. (NO per-pick pc/class assert — verified the pc field uses a next-pc convention so pc-equality false-fails, and no `major→opcode_class` map exists; see the selector docstring + `00` step-domain bullet.)
+- `variants.py` (`V8_arguzz_sched`, **launcher=cli, selector=`a4_arguzz_sched`**, surface=a4, no bandit). No driver file.
+- **Gate (met):** 7 unit tests (translation/skip/uniform-kind/determinism via fakes) + `test_variant_launch_cmds` + the gated real-binary integration test (200 valid `(kind,user_cycle)` picks, ITM reachable, map bijection asserted). All green.
 
 ## Inc 3 — Analysis harness (6-variant ablation)
 - `race_lib.py`: add `V0_uniform`/`V8_arguzz_sched` to VARIANTS (ladder order: V8, V0, V5, then Hybrid, V6_cTS, V6_uniform) + COLORS/LABEL/SURFACE; **generalize `_RID`** to match the `a3seambfix` slug; add `fig_scheduler_ablation` (the V8→V0→V5 ladder: `P(apply ITM)` + `P(found)` + `conditional_find_density`). `build_race_notebook.py` (+ ablation section, bump `assert imgs`). `build_race_artifact.py` (ON/OFF/SUB + ladder panel).
@@ -30,10 +30,12 @@
 
 ## Inc 4 — Fixed binary + manifest/guard (pre-POS; on the shared risc0-seamb worktree)
 - Cherry-pick `6556e8d7` onto `workspace/risc0-seamb`; rebuild holed+control → `a4/builds/ap_seamb_fix/`; read new head_sha + guest_image_id.
-- Manifest: the `--variants` filter (exists, `61ae36a`); set `EXPECT_HEAD_SHA`=new; slug `a3seambfix`; new result dirs + `.gitignore`.
+- Manifest: the `--variants` filter (added to `generate_race_manifests.py` in `b660820` — NOT the sweep generator's; the race generator had none); set `EXPECT_HEAD_SHA`=new; slug `a3seambfix` (`--run-prefix`); new result dirs + `.gitignore`.
 - **Gate:** `strings` shows the 3 kinds present (were 0) + ITM present; a `TXN_PREV_CYCLE_MOD` replay APPLIES (num_failures>0, not invalid-config); fingerprint guard passes (planted_bug/none, load_rs2=1, new head); Stage-0 ground truth re-run green on the fixed binaries.
 
 ## Inc 5 — POS (USER-GATED)
+- **⚠️ FOOTGUN — `--variants` is REQUIRED, not optional.** The default manifest is **all 6** CANONICAL_VARIANTS (6×seeds). For the ablation you MUST pass
+  `--variants V0_uniform V5_control V8_arguzz_sched Hybrid_cTS` (→ 40 jobs at ×10); omitting it silently generates 60 jobs (re-runs V6 needlessly). Double-check the printed job count + the `variants=` tag in the manifest doc-header before dispatch.
 - Smoke: V0/V5/V8/Hybrid × 3 seeds × N=2000 → confirm V8 launcher on POS, measure per-mut timing, ITM>0 for all four. Then thesis ×10 × N=5000 (40 jobs) into `a3seambfix_race_thesis`; reuse contaminated V6_uniform/V6_cTS (binary-invariant; labelled).
 - **Gate:** user approval + G-SMOKE; resume-safe chain; analysis reads the fixed dataset separately from the contaminated `thesis_results/`.
 
