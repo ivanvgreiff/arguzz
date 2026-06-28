@@ -2,6 +2,14 @@
 
 **Date:** 2026-06-28. Decisions all locked (see `00 ROUND-2`). Each increment ends with a TEST GATE; do not proceed until green. All code lands on the feature branch (`04`).
 
+## STATUS (2026-06-28)
+- **Inc 0 DONE** — branch `cloud2-sched-ablation` off cloud2 `68d90aa` (commit `7e44d57`, planning docs). cloud2 untouched.
+- **Inc 1 DONE (green)** — V0 = `SemanticUniformArmSelector` (commit `d6fe4d5`). 6 unit tests + a holed-binary micro-smoke (applied A4 mutations, diverse kinds, verifier_accepted recorded).
+- **Inc 2 DONE (green)** — V8 = `ArguzzSchedA4Selector` (commit `d6fe4d5`). 7 unit tests + a real-binary setup+selector validation: step-domain map built (3346 real instrs / 19 host ecalls, self-validated), 200 picks all valid `(kind, user_cycle)`, ITM reachable, 0 invalid.
+  - **REFINEMENT vs the earlier docs:** V8 is implemented as a **cli `--selector` (`a4_arguzz_sched`)**, NOT a standalone driver. The selector encapsulates the ArguzzScheduler + step-domain map + uniform-valid-kind choice and returns `(kind, user_cycle)` into the existing `_run_single_mutation` path — so it reuses the A4 execution+recording and its run-DB is analysis-compatible by construction (same schema as V5). This is strictly cleaner than forking `v6_uniform_driver.py` (which would re-implement execution+recording). The "no arms / no bandit" properties hold: it never touches `SemanticArmUniverse`/`ArmKey` and is excluded from `V2_BANDIT_STRATEGIES`.
+- **Inc 3 DEFERRED (coordination)** — the analysis harness (`race_lib.py` add V0/V8 + ablation figure + `_RID` generalization) is **blocked on a cross-track conflict**: `race_lib.py` currently has *another track's uncommitted WIP* (a thesis relabel A4→"A3", a new `DISPLAY` dict). Editing it now would entangle my V0/V8 additions with their relabel. Do Inc 3 AFTER their relabel lands (or coordinate). NOT on the critical path — the analysis only runs post-POS.
+- **Inc 4 / Inc 5** — pending (fixed binary build + POS), as below.
+
 ## Inc 0 — Isolation (feature branch off cloud2)
 - Branch `cloud2-sched-ablation` off `cloud2` HEAD. Work + commit there; keep `cloud2` clean.
 - **Gate:** branch exists; `cloud2` HEAD unchanged; existing test suite green on the branch (baseline).
