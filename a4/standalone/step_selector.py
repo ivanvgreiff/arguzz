@@ -598,7 +598,19 @@ class ArguzzSchedA4Selector(StepSelector):
         self.n_no_kind_skips = 0
 
     def select_arm_then_step(self) -> Tuple[str, int]:
-        """Arguzz-balanced site -> witgen user_cycle -> uniform valid A4 kind."""
+        """Arguzz-balanced site -> witgen user_cycle -> uniform valid A4 kind.
+
+        Targeting correctness (verified, not assumed): `to_user[exec_step]` is the witgen
+        `user_cycle` of the *retired guest instruction* at this executor step — the SAME,
+        production-N1000-validated step-domain map the Arguzz inject path uses (commit
+        `68d90aa`; see `arguzz_step_domain_fix/STEP_DOMAIN_MAPPING_DETAILS.md`, the remu
+        example, and `get_cycle(to_user[step]).major` there). We deliberately do NOT assert
+        `step_map.exec_pc[e] == get_cycle(u).pc`: the witgen `cycle.pc` field uses a *next-pc*
+        convention (empirically +4 from the executor trace pc on sequential code), so a
+        pc-equality check would false-fail on every pick despite correct alignment. The
+        `kinds_here` gate already implies `u` is a real `major<=6` Decode (only such cycles
+        have valid A4 steps); the get_cycle guard re-confirms it on real InspectionData.
+        """
         for _ in range(self._max_retries):
             instr, exec_step, _arguzz_kind = self.sched.pick()
             u = self.step_map.user_cycle_of(exec_step)
@@ -609,6 +621,14 @@ class ArguzzSchedA4Selector(StepSelector):
             if not kinds_here:
                 self.n_no_kind_skips += 1
                 continue  # no A4 mutation kind is valid at this instruction's user_cycle
+            # defense-in-depth (real InspectionData only; unit-test fakes have no get_cycle):
+            # u must resolve to a real witgen cycle — catches a gross step-map regression.
+            _get_cycle = getattr(self.data, "get_cycle", None)
+            if _get_cycle is not None and _get_cycle(u) is None:
+                raise RuntimeError(
+                    f"ArguzzSchedA4Selector: user_cycle {u} (from exec_step {exec_step}) "
+                    f"has no witgen cycle — step-domain map inconsistency"
+                )
             return self.rng.choice(kinds_here), u
         raise RuntimeError(
             "ArguzzSchedA4Selector: no valid (instr, user_cycle, A4-kind) after "

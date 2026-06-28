@@ -24,16 +24,17 @@ A feature branch costs ~nothing and gives a clean merge-when-ready. Even as the 
 
 ## Handoff note (send to the Track-B/sweep + CVE OCPs)
 > **Heads-up — Track A is adding two A4 scheduler variants (V0, V8) on a feature branch, NOT on cloud2.**
-> - Branch `cloud2-sched-ablation` (off cloud2 `68d90aa`) adds: a semantic-uniform A4 selector (V0), a new `v8_arguzz_a4_driver.py` (V8 = Arguzz instruction-balanced site-selection driving A4 INSTR_TYPE_MOD mutations), and `variants.py` entries. It touches `a4/standalone/{fuzzer,cli,step_selector,variants}.py` + a new driver file.
+> - Branch `cloud2-sched-ablation` (off cloud2 `68d90aa`) adds TWO cli `--selector`s in `step_selector.py`: `a4_uniform_semantic` (V0) + `a4_arguzz_sched` (V8 = Arguzz instruction-balanced site → A4 mutation), their `fuzzer.py` wiring, the `cli.py` choices, and `variants.py` entries. It touches `a4/standalone/{fuzzer,cli,step_selector,variants}.py` only (no new driver file; V8 reuses the cli `_run_single_mutation` path).
 > - **`cloud2` is unchanged.** Your running POS campaigns (frozen bundles) are unaffected. If you re-bundle from `cloud2` (e.g. another sweep re-run), you will NOT pick up V0/V8 — by design.
 > - We will **not merge to cloud2** until our fixed-binary campaign validates and you confirm you've finished any cloud2 re-bundling. Tell us if you have a cloud2 build pending so we time the merge around it.
 > - We are also building a FIXED Seam-B binary (cherry-pick `6556e8d7` onto `workspace/risc0-seamb`) — isolated to our worktree; `risc0-clean-28e53771`@`53c21894` (sweep), `risc0-modified`@`6556e8d7` (AP/race), `risc0-a1-vuln`@`088a0753` (CVE) are untouched.
 
-## What we modify (for the handoff record)
-- `a4/standalone/variants.py` — +2 `VariantSpec` (V0, V8).
-- `a4/standalone/cli.py` — +1 `--selector` choice (V0); V8 is a driver (no cli choice).
-- `a4/standalone/step_selector.py` — +`SemanticUniformArmSelector` (V0).
-- `a4/standalone/fuzzer.py` — V0 wiring (frozenset + `_setup_*` + run dispatch; NOT in the bandit frozensets).
-- `a4/standalone/v8_arguzz_a4_driver.py` — NEW (V8; fork of `v6_uniform_driver.py`).
-- `a4/runs/iv_pos_9/race/{race_lib,build_race_notebook,build_race_artifact}.py` — analysis (add V0/V8; the `_RID` regex generalization). These are Track-A-owned, low cross-track risk.
+## What we modify (for the handoff record) — AS BUILT
+- `a4/standalone/variants.py` — +2 `VariantSpec` (`V0_uniform`, `V8_arguzz_sched`).
+- `a4/standalone/cli.py` — +2 `--selector` choices (`a4_uniform_semantic`, `a4_arguzz_sched`).
+- `a4/standalone/step_selector.py` — +`SemanticUniformArmSelector` (V0) + `ArguzzSchedA4Selector` (V8).
+- `a4/standalone/fuzzer.py` — V0 + V8 wiring (defer + `_setup_a4_uniform_semantic`/`_setup_v8_arguzz_sched` + the `is_uniform` run-dispatch; NOT in `V2_BANDIT_STRATEGIES`).
+- `a4/pos/generate_race_manifests.py` — `--variants` filter (so the registry add doesn't balloon the default manifest to 6×seeds).
+- (No new driver file — V8 is a cli selector reusing `_run_single_mutation`.)
+- `a4/runs/iv_pos_9/race/{race_lib,build_race_notebook,build_race_artifact}.py` — analysis (add V0/V8; `_RID` generalization). **DEFERRED** (race_lib.py has another track's WIP). Track-A-owned, low cross-track risk.
 - (NO edits to `markers.py`, `oracle.py`, `fingerprint_guard.py`, `chain_dispatcher.sh`, or any Track-B/sweep file.)

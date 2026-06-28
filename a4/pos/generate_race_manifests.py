@@ -99,12 +99,24 @@ def remote_cmd(variant: str, seed: int, n: int, rid: str) -> str:
 
 
 def batch_rows(seeds: Sequence[int], n: int, batch_prefix: str,
-               nodes: Sequence[str]) -> List[Tuple[str, str, str, str]]:
+               nodes: Sequence[str],
+               variants: Optional[Sequence[str]] = None) -> List[Tuple[str, str, str, str]]:
     """(batch, node, run_id, remote_cmd) rows; one job per node per batch (round-robin
-    over the REAL reserved nodes the operator passes — never hardcoded placeholders)."""
+    over the REAL reserved nodes the operator passes — never hardcoded placeholders).
+
+    `variants` (default None = all CANONICAL_VARIANTS) restricts to a subset in
+    VARIANT_ORDER order — e.g. the V0/V5/V8/Hybrid ablation set, so adding V0/V8 to the
+    registry doesn't silently balloon the default manifest to 6×seeds jobs."""
     if not nodes:
         raise ValueError("nodes required — pass the actual reserved node names")
-    pairs = [(v, s) for s in seeds for v in VARIANT_ORDER]
+    if variants is not None:
+        unknown = [v for v in variants if v not in VARIANT_ORDER]
+        if unknown:
+            raise ValueError(f"unknown variant(s) {unknown}; known: {list(VARIANT_ORDER)}")
+        order = [v for v in VARIANT_ORDER if v in set(variants)]
+    else:
+        order = list(VARIANT_ORDER)
+    pairs = [(v, s) for s in seeds for v in order]
     rows: List[Tuple[str, str, str, str]] = []
     for i, (variant, seed) in enumerate(pairs):
         node = nodes[i % len(nodes)]
@@ -134,6 +146,9 @@ def main() -> int:
     p.add_argument("--guest-id", default=None, help="EXPECT_GUEST_ID override (comma-sep image-id words of the A2 guest)")
     p.add_argument("--host-bin", default=None, help="remote HOST_BIN path override (where the bundle ships the binary)")
     p.add_argument("--run-prefix", default=None, help="run_id/batch/label tag (default a3seamb; use 'cve' for the CVE race)")
+    p.add_argument("--variants", nargs="+", default=None,
+                   help="restrict to these variant names (default: all CANONICAL_VARIANTS); "
+                        "e.g. --variants V0_uniform V5_control V8_arguzz_sched Hybrid_cTS")
     a = p.parse_args()
     # Apply provenance/tag overrides onto the module globals the helpers read.
     global GUARD_PROFILE, EXPECT_HEAD_SHA, EXPECT_GUEST_ID, HOST_BIN, RUN_PREFIX
@@ -150,8 +165,9 @@ def main() -> int:
         seeds = a.seeds or list(range(1234, 1244))  # 10 paired seeds
         n = a.n or 5000  # CAP; real S2 N is set data-driven from S1 (spec §5)
         prefix = f"{RUN_PREFIX}_thesis"
-    rows = batch_rows(seeds, n, prefix, a.nodes)
-    chain = format_chain(rows, doc=f"IV.POS.9 race ({RUN_PREFIX}/{a.stage}): {len(rows)} jobs, N={n}, nodes={','.join(a.nodes)}, guard={GUARD_PROFILE}")
+    rows = batch_rows(seeds, n, prefix, a.nodes, variants=a.variants)
+    vtag = ",".join(a.variants) if a.variants else "ALL"
+    chain = format_chain(rows, doc=f"IV.POS.9 race ({RUN_PREFIX}/{a.stage}): {len(rows)} jobs, N={n}, variants={vtag}, nodes={','.join(a.nodes)}, guard={GUARD_PROFILE}")
     if a.out:
         Path(a.out).write_text(chain)
         print(f"wrote {len(rows)} jobs -> {a.out}")

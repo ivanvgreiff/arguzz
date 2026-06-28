@@ -156,6 +156,23 @@ def test_variant_launch_cmds():
         assert "/h" in argv and "--seed" in argv and "10" in argv
 
 
+# --- 10b: --variants manifest filter (IV.POS.9 ablation: restrict to V0/V5/V8/Hybrid) ---
+def test_variants_filter():
+    # restrict to a 2-variant subset -> exactly those, in VARIANT_ORDER order
+    rows = grm.batch_rows(seeds=[1234], n=5000, batch_prefix="t", nodes=["a", "b"],
+                          variants=["V0_uniform", "V8_arguzz_sched"])
+    assert len(rows) == 2
+    rids = " ".join(r[2] for r in rows)
+    assert "V0_uniform" in rids and "V8_arguzz_sched" in rids
+    assert "V5_control" not in rids and "V6_uniform" not in rids
+    # default (None) = all CANONICAL_VARIANTS
+    assert len(grm.batch_rows(seeds=[1234], n=5000, batch_prefix="t", nodes=["a"])) \
+        == len(grm.VARIANT_ORDER)
+    # unknown variant errors cleanly
+    with pytest.raises(ValueError):
+        grm.batch_rows(seeds=[1234], n=5000, batch_prefix="t", nodes=["a"], variants=["V99_bogus"])
+
+
 # --- 11: propagation_triage reuse smoke -----------------------------------
 def test_triage_reuse_importable():
     from a4.runs.iv_pos_8.d2g import propagation_triage as pt
