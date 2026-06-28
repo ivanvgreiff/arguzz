@@ -522,6 +522,106 @@ class SemanticZoneStepSelector(StepSelector):
         )
 
 
+class SemanticUniformArmSelector(StepSelector):
+    """Pick a `(kind, zone)` arm UNIFORMLY over the SemanticArmUniverse, then a
+    step uniformly inside that arm. The learning-free baseline that shares V5's
+    EXACT arm space (`SemanticArmUniverse`, `ArmKey.v5(kind, zone)`) but with the
+    cTS bandit replaced by a uniform arm draw — i.e. V0 in the scheduler ablation
+    (arm semantics, NO bandit; see a4/docs/cloud3/bug_race_a4_arguzz_scheduler/).
+
+    Distinct from `UniformArmSelector` (which draws over the legacy GEOMETRIC
+    `(kind, bucket)` ArmUniverse): this draws over the SEMANTIC `(kind, zone)`
+    arms so V0 differs from V5 ONLY in the scheduler, not in arm discretization.
+
+    Mirrors `UniformArmSelector`'s coupled-draw contract: exposes
+    `select_arm_then_step() -> (kind, step)`; `select_step` raises so the fuzzer's
+    uniform-dispatch branch is forced to use the arm-coupled API. No reward/update.
+    """
+
+    def __init__(self, arm_universe: 'SemanticArmUniverse', seed: Optional[int] = None):
+        if arm_universe is None:
+            raise ValueError(
+                "SemanticUniformArmSelector requires a non-None SemanticArmUniverse; "
+                "build one with SemanticArmUniverse.build(data, kinds)."
+            )
+        self.au = arm_universe
+        self.rng = random.Random(seed)
+
+    def select_arm_then_step(self) -> Tuple[str, int]:
+        """Return (kind, step) drawn uniformly over the semantic arm universe."""
+        arms = self.au.available_arms
+        if not arms:
+            raise RuntimeError("SemanticUniformArmSelector: arm universe has zero arms")
+        arm = self.rng.choice(arms)          # ArmKey (kind, zone) drawn uniformly
+        steps = self.au.steps_for_arm(arm)
+        step = steps[0] if len(steps) == 1 else self.rng.choice(steps)
+        return arm.kind, step
+
+    def select_step(self, data: 'InspectionData', kind: str) -> Optional[int]:
+        raise NotImplementedError(
+            "SemanticUniformArmSelector uses select_arm_then_step(); the (data, kind) "
+            "contract does not match its arm-coupled uniform sampling."
+        )
+
+
+class ArguzzSchedA4Selector(StepSelector):
+    """V8 — A4 mutations under Arguzz's instruction-balanced scheduler (NO arms, NO bandit).
+
+    The scheduler-ablation rung with NEITHER arm semantics NOR a bandit. Site selection is
+    Arguzz's `ArguzzScheduler`: balanced round-robin over the distinct RISC-V instruction
+    types in the trace (rare instructions sampled as often as common ones), then a uniform
+    executor step within the chosen instruction. The executor `current_step` is translated
+    to its witgen `user_cycle` (the step-domain map — MANDATORY, since A4 mutations are
+    user_cycle-keyed), and an A4 mutation kind is drawn UNIFORMLY over the A4 kinds valid at
+    that `user_cycle` (option b — the A4 analog of Arguzz's uniform-over-valid-injection-
+    kinds). Returns `(kind, user_cycle)` into the standard A4 `_run_single_mutation`
+    execution+recording path. See a4/docs/cloud3/bug_race_a4_arguzz_scheduler/.
+
+    Holds an already-built ArguzzScheduler (`.pick() -> (instr, exec_step, _kind)`) and a
+    StepDomainMap (`.user_cycle_of(exec_step) -> user_cycle | None`); it does NOT import
+    them (the fuzzer setup builds + injects them), keeping this module import-light and
+    arm-universe-free (the V8 "no arms" property).
+    """
+
+    def __init__(self, scheduler, step_map, data, a4_kinds, seed=None, max_retries=256):
+        self.sched = scheduler
+        self.step_map = step_map
+        self.data = data
+        self.a4_kinds = list(a4_kinds)
+        # user_cycle sets per A4 kind (A4 mutations are user_cycle-keyed).
+        self._valid_by_kind = {
+            k: set(data.get_valid_steps_for_kind(k)) for k in self.a4_kinds
+        }
+        self.rng = random.Random((seed or 0) + 7)
+        self._max_retries = max_retries
+        self.n_host_ecall_skips = 0
+        self.n_no_kind_skips = 0
+
+    def select_arm_then_step(self) -> Tuple[str, int]:
+        """Arguzz-balanced site -> witgen user_cycle -> uniform valid A4 kind."""
+        for _ in range(self._max_retries):
+            instr, exec_step, _arguzz_kind = self.sched.pick()
+            u = self.step_map.user_cycle_of(exec_step)
+            if u is None:
+                self.n_host_ecall_skips += 1
+                continue  # host ecall: no witgen-visible instruction at this exec step
+            kinds_here = [k for k in self.a4_kinds if u in self._valid_by_kind[k]]
+            if not kinds_here:
+                self.n_no_kind_skips += 1
+                continue  # no A4 mutation kind is valid at this instruction's user_cycle
+            return self.rng.choice(kinds_here), u
+        raise RuntimeError(
+            "ArguzzSchedA4Selector: no valid (instr, user_cycle, A4-kind) after "
+            f"{self._max_retries} scheduler picks"
+        )
+
+    def select_step(self, data: 'InspectionData', kind: str) -> Optional[int]:
+        raise NotImplementedError(
+            "ArguzzSchedA4Selector uses select_arm_then_step(); it chooses the kind "
+            "(uniform over the A4 kinds valid at the Arguzz-selected site)."
+        )
+
+
 # Late import for type hint above (avoids hard import-time circular dep)
 try:
     from a4.standalone.semantic_arm_universe import SemanticArmUniverse  # noqa: F401

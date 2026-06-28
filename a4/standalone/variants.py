@@ -68,6 +68,34 @@ CANONICAL_VARIANTS: dict[str, VariantSpec] = {
         archive_reuse=False,
         notes="4 selected Arguzz + A4 kinds, cTS, Bernoulli",
     ),
+    # IV.POS.9 scheduler ablation (a4/docs/cloud3/bug_race_a4_arguzz_scheduler/).
+    # V0: A4 surface, semantic-arm UNIFORM, NO bandit — the "arm semantics, no
+    # learning" rung. Same arm space as V5; differs only in the scheduler.
+    "V0_uniform": VariantSpec(
+        name="V0_uniform",
+        launcher="cli",
+        selector="a4_uniform_semantic",
+        driver_module=None,
+        bernoulli_floor=False,
+        applied_accounting=False,
+        surface="a4",
+        archive_reuse=False,
+        notes="A4 surface, semantic-arm uniform (no bandit) — ablation floor (arm semantics, no learning)",
+    ),
+    # V8: A4 surface, Arguzz instruction-balanced scheduler — NO arms, NO bandit.
+    # The "neither arm semantics nor bandit" rung. Runs as a cli selector (reuses the
+    # A4 execution+recording path); step-domain-translated executor->user_cycle.
+    "V8_arguzz_sched": VariantSpec(
+        name="V8_arguzz_sched",
+        launcher="cli",
+        selector="a4_arguzz_sched",
+        driver_module=None,
+        bernoulli_floor=False,
+        applied_accounting=False,
+        surface="a4",
+        archive_reuse=False,
+        notes="A4 surface, Arguzz instruction-balanced scheduler (no arms, no bandit) — ablation baseline",
+    ),
 }
 
 

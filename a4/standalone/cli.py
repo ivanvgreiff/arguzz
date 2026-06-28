@@ -210,6 +210,7 @@ Examples:
                                 "cTS_semantic_v2_decayexp",
                                 "cTS_semantic_v2_decayepoch",
                                 "v6_cTS", "hybrid_cTS",
+                                "a4_uniform_semantic", "a4_arguzz_sched",
                             ],
                             help="Step/selection strategy (default: zoned). "
                                  "IV.POS.7 variants: kindUCB_zoned_v1, "

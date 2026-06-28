@@ -68,7 +68,9 @@ from a4.standalone.compressed_global_extractor import (
     extract_compressed_global_contexts,
     to_storage_rows,
 )
-from a4.standalone.step_selector import SemanticZoneStepSelector
+from a4.standalone.step_selector import (
+    SemanticZoneStepSelector, SemanticUniformArmSelector, ArguzzSchedA4Selector,
+)
 from a4.standalone.zone_classifier import classify_zones
 from a4.standalone.reward_v2 import (
     compute_reward_v2,
@@ -229,6 +231,10 @@ STRATEGY_DISPLAY_NAMES = {
     "cTS_semantic_v2_decayepoch": "cTS_semantic_v2_decayepoch",
     "v6_cTS": "v6_cTS",
     "hybrid_cTS": "hybrid_cTS",
+    # IV.POS.9 scheduler ablation: V0 = A4 surface, semantic-arm UNIFORM, no bandit.
+    "a4_uniform_semantic": "a4_uniform_semantic",
+    # V8 = A4 surface, Arguzz instruction-balanced scheduler, no arms, no bandit.
+    "a4_arguzz_sched": "a4_arguzz_sched",
 }
 
 
@@ -346,8 +352,16 @@ class A4Fuzzer:
         
         # Initialize components
         self.db = CoverageDB(db_path)
-        if selector_strategy in ("bandit", "uniform") or selector_strategy in V2_BANDIT_STRATEGIES:
-            # Deferred: needs InspectionData (and arm universe for uniform / v2 bandit).
+        if (
+            selector_strategy in (
+                "bandit", "uniform", "a4_uniform_semantic", "a4_arguzz_sched",
+            )
+            or selector_strategy in V2_BANDIT_STRATEGIES
+        ):
+            # Deferred: needs InspectionData (+ arm universe for uniform/v2 bandit/V0, and
+            # the baseline trace + step-domain map for a4_arguzz_sched = V8).
+            # a4_uniform_semantic (V0) and a4_arguzz_sched (V8) are deliberately NOT in
+            # V2_BANDIT_STRATEGIES — they have no bandit/reward update (the ablation point).
             self.selector: Optional[StepSelector] = None
         else:
             self.selector = create_selector(selector_strategy, self.seed, self.db)
@@ -1013,6 +1027,68 @@ class A4Fuzzer:
 
         if self.verbose:
             print(f"--- UNIFORM-ARM READY ({self.arm_universe.num_arms} arms) ---\n")
+
+    def _setup_a4_uniform_semantic(self, num_mutations: int) -> None:
+        """IV.POS.9 V0: semantic-arm UNIFORM selector (no bandit).
+
+        Builds the SAME A4 arm space V5 uses — `SemanticArmUniverse.build(data,
+        active_a4_kinds)` (A4-only: no `arguzz_kinds`) — and draws arms uniformly,
+        the learning-free, arm-semantic baseline in the scheduler ablation
+        (V8 → V0 → V5). No bandit / reward update; routes through
+        `_run_single_mutation` (the coupled `select_arm_then_step` path).
+        """
+        if self.verbose:
+            print("\n--- A4 SEMANTIC-UNIFORM (V0) SETUP ---")
+        self.semantic_arm_universe = SemanticArmUniverse.build(
+            self.data, self._active_mutation_kinds(),
+        )
+        self.selector = SemanticUniformArmSelector(
+            self.semantic_arm_universe, seed=self.seed,
+        )
+        self._setup_coverage_tracking()
+        if self.verbose:
+            print(
+                f"--- V0 READY ({self.semantic_arm_universe.num_arms} semantic arms) ---\n"
+            )
+
+    def _setup_v8_arguzz_sched(self, num_mutations: int) -> None:
+        """IV.POS.9 V8: A4 mutations under Arguzz's instruction-balanced scheduler.
+
+        NO arm semantics, NO bandit. Builds the `ArguzzScheduler` (balanced round-robin
+        over the trace's instruction types) + the executor→`user_cycle` step-domain map,
+        and an `ArguzzSchedA4Selector` that: picks a site via the scheduler, translates the
+        executor step to its witgen `user_cycle` (MANDATORY — A4 mutations are user_cycle-
+        keyed), and draws a uniform A4 kind valid there (option b). Routes through
+        `_run_single_mutation` (the coupled `select_arm_then_step` path) — same execution +
+        DB-recording as V0/V5, so the run-DB is analysis-compatible.
+        """
+        if self.verbose:
+            print("\n--- A4 + ARGUZZ-SCHEDULER (V8) SETUP ---")
+        from a4.runs.iv_pos_7.drivers.v6_driver_v2 import ArguzzScheduler, normalize_instr
+        from a4.standalone.step_domain_map import build_step_domain_map
+
+        # baseline `host --trace` → sets self._baseline_traces_full (parsed ArguzzTraces).
+        self._capture_baseline_trace()
+        if not getattr(self, "_baseline_traces_full", None):
+            raise RuntimeError("V8 setup: no baseline traces parsed from host --trace")
+        instr_to_steps: Dict[str, List[int]] = {}
+        for tr in self._baseline_traces_full:
+            instr_to_steps.setdefault(normalize_instr(tr.instruction), []).append(tr.step)
+        compute_uc = {c.step for c in self.data.cycles if c.major <= 6}
+        step_map = build_step_domain_map(
+            self._baseline_traces_full, self.data.total_steps,
+            compute_user_cycles=compute_uc,
+        )
+        sched = ArguzzScheduler(instr_to_steps, random.Random(self.seed))
+        self.selector = ArguzzSchedA4Selector(
+            sched, step_map, self.data, self._active_mutation_kinds(), seed=self.seed,
+        )
+        self._setup_coverage_tracking()
+        if self.verbose:
+            print(
+                f"--- V8 READY ({len(sched._candidate_instrs)} candidate instr kinds, "
+                f"{step_map.n_host_ecalls} host ecalls) ---\n"
+            )
 
     def _run_bandit_mutation(
         self,
@@ -1845,6 +1921,16 @@ class A4Fuzzer:
             self._setup_uniform(num_mutations, stats)
             main_budget = num_mutations
             start_idx = 0
+        elif self.selector_strategy == "a4_uniform_semantic":
+            # IV.POS.9 V0: semantic-arm UNIFORM, no bandit. Same arm space as V5.
+            self._setup_a4_uniform_semantic(num_mutations)
+            main_budget = num_mutations
+            start_idx = 0
+        elif self.selector_strategy == "a4_arguzz_sched":
+            # IV.POS.9 V8: A4 mutations under Arguzz instruction-balanced scheduler.
+            self._setup_v8_arguzz_sched(num_mutations)
+            main_budget = num_mutations
+            start_idx = 0
         elif self.selector_strategy in V2_BANDIT_STRATEGIES:
             self._setup_v2_bandit(num_mutations)
             main_budget = num_mutations
@@ -1890,8 +1976,12 @@ class A4Fuzzer:
     ) -> Optional[MutationResult]:
         """Run a single mutation attempt with retry logic"""
         # Phase III.2: 'uniform' couples kind and step (uniform draw over
-        # the bandit's arm universe) and must re-draw both on retry.
-        is_uniform = self.selector_strategy == "uniform"
+        # the bandit's arm universe) and must re-draw both on retry. IV.POS.9 V0
+        # ('a4_uniform_semantic') uses the same coupled select_arm_then_step() API
+        # over the SEMANTIC arm universe.
+        is_uniform = self.selector_strategy in (
+            "uniform", "a4_uniform_semantic", "a4_arguzz_sched",
+        )
 
         # For non-uniform strategies, pick kind once outside the retry loop.
         if not is_uniform:
