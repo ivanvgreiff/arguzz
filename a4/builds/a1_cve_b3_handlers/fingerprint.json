@@ -1,0 +1,17 @@
+{
+    "planted_bug": "none",
+    "isread_scope": "",
+    "risc0_head_sha": "98387806fe8348d87e32974468c6f35853356ad5",
+    "load_rs2_present": 0,
+    "instrumentation_hash": "unknown",
+    "guest_image_id": [
+        1269974820,
+        3877409867,
+        2420062130,
+        1103492329,
+        1369779205,
+        1529891756,
+        3991262003,
+        3366159770
+    ]
+}

@@ -34,16 +34,19 @@ if str(ROOT) not in sys.path:
 from a4.runs.iv_pos_9.race import oracle, markers  # noqa: E402
 
 # A4-surface variants first (they CAN reach the bug), then pure-Arguzz (structurally cannot).
-VARIANTS = ["V5_control", "Hybrid_cTS", "V6_cTS", "V6_uniform"]
+VARIANTS = ["V5_control", "Hybrid_cTS", "V6_cTS", "V6_uniform"]  # code names = DB-file identifiers
 COLORS = {"V5_control": "#1f77b4", "Hybrid_cTS": "#d62728",
           "V6_cTS": "#ff7f0e", "V6_uniform": "#2ca02c"}
+# Thesis display names — ALL figure/table/legend labels use these, never the code names.
+DISPLAY = {"V5_control": "A3 Bandit", "Hybrid_cTS": "A3+Arguzz Bandit",
+           "V6_cTS": "Arguzz Bandit", "V6_uniform": "Arguzz"}
 LABEL = {
-    "V5_control": "V5_control\n(A4 / post-exec)",
-    "Hybrid_cTS": "Hybrid_cTS\n(A4 + Arguzz)",
-    "V6_cTS": "V6_cTS\n(Arguzz / cTS)",
-    "V6_uniform": "V6_uniform\n(Arguzz / uniform)",
+    "V5_control": "A3 Bandit\n(A3 / post-exec)",
+    "Hybrid_cTS": "A3+Arguzz Bandit\n(A3 + Arguzz)",
+    "V6_cTS": "Arguzz Bandit\n(Arguzz / cTS)",
+    "V6_uniform": "Arguzz\n(uniform)",
 }
-SURFACE = {"V5_control": "A4", "Hybrid_cTS": "A4+Arguzz", "V6_cTS": "Arguzz", "V6_uniform": "Arguzz"}
+SURFACE = {"V5_control": "A3", "Hybrid_cTS": "A3+Arguzz", "V6_cTS": "Arguzz", "V6_uniform": "Arguzz"}
 DEFAULT_RESULTS = "a4/runs/iv_pos_9/race/thesis_results"
 SMOKE_RESULTS = "a4/runs/iv_pos_9/race/smoke_results/pulled"
 
@@ -227,7 +230,7 @@ def fig_cumulative_finds(data: Dict):
             ax.plot(x, c, color=COLORS[v], lw=0.8, alpha=0.25)
         mean = np.vstack(curves).mean(0)
         ax.plot(x, mean, color=COLORS[v], lw=2.4,
-                label=f"{v} ({SURFACE[v]}) — mean {mean[-1]:.0f} finds")
+                label=f"{DISPLAY[v]} ({SURFACE[v]}) — mean {mean[-1]:.0f} finds")
     ax.set_xlabel(f"mutation index (0–{N})"); ax.set_ylabel("cumulative confirmed planted finds")
     ax.set_title("Discovery dynamics: cumulative VerifyOpcode-hole finds over the campaign\n"
                  "(bold = mean over seeds, faint = each seed; Arguzz lines sit on 0)", fontsize=11)
@@ -250,7 +253,7 @@ def fig_discovery_cdf(data: Dict):
         y = [sum(1 for f in ffi if f <= xx) / n for xx in grid]
         n_cens = sum(1 for r in runs if r["censored"])
         ax.plot(grid, y, color=COLORS[v], lw=2.2, drawstyle="steps-post",
-                label=f"{v} ({SURFACE[v]}) — found {n - n_cens}/{n} seeds")
+                label=f"{DISPLAY[v]} ({SURFACE[v]}) — found {n - n_cens}/{n} seeds")
     ax.set_xlabel(f"mutation index (0–{N})")
     ax.set_ylabel("fraction of seeds with ≥1 find by this index")
     ax.set_ylim(-0.03, 1.03)
@@ -278,7 +281,7 @@ def fig_decomposition(data: Dict):
             txt = "0 (off surface)" if (key != "find_density" and raw in (0.0, None) and tbl[vs[i]]["mean_itm_applied"] == 0) \
                 else (f"{val*100:.2f}%" if pct else f"{val*1000:.2f}e-3")
             ax.text(i, val, txt, ha="center", va="bottom", fontsize=8, fontweight="bold")
-        ax.set_xticks(range(len(vs))); ax.set_xticklabels([v for v in vs], rotation=20, ha="right", fontsize=8)
+        ax.set_xticks(range(len(vs))); ax.set_xticklabels([DISPLAY.get(v, v) for v in vs], rotation=20, ha="right", fontsize=8)
         ax.set_title(ttl, fontsize=10); ax.grid(axis="y", alpha=0.3)
     fig.suptitle("Why A4 finds it and Arguzz never can: the first factor P(apply ITM) is identically 0 "
                  "for pure Arguzz (structural)", fontsize=11, y=1.03)

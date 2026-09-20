@@ -1,0 +1,12 @@
+{
+  "track": "B_sweep",
+  "commit_label": "28e53771_clean",
+  "guest_slug": "g2_mem_stress",
+  "risc0_head_sha": "53c21894f7c36b996286dc109a1e24265963aa1b",
+  "load_rs2_present": 1,
+  "planted_bug": "none",
+  "isread_scope": "",
+  "instrumentation_hash": "2992bc2a500179bd658dbe7815d7e42baa25bff3f04bec52d1fabc98664b8c07",
+  "guest_src_sha256": "a2fc0004707765a7be5350f8a2b7472f270c9654f67894246933e88d018212f9",
+  "host_sha256": "58d74710993a59b631d1e709b4bb3592c0b356aaafac420062556dd7114644cb"
+}

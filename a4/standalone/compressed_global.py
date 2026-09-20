@@ -32,8 +32,7 @@ from dataclasses import dataclass
 from typing import Union
 
 
-# Allowed value sets (used by the extractor for validation, and by ChatGPT
-# Pro Round 2 reviewers to see what we actually emit).
+# Allowed value sets (used by the extractor for validation to see what we actually emit).
 
 ADDRESS_REGIONS = (
     "zero_page",

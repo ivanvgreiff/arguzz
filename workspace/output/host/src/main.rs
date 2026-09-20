@@ -42,10 +42,40 @@ struct Args {
     in4: u32,
 }
 
+fn emit_build_fingerprint_if_requested() {
+    if std::env::var("A4_INSPECT_FINGERPRINT").ok().as_deref() != Some("1") {
+        return;
+    }
+    let planted_bug = option_env!("A4_PLANTED_BUG").unwrap_or("none");
+    let isread_scope = option_env!("A4_ISREAD_SCOPE").unwrap_or("");
+    let risc0_head_sha = option_env!("A4_RISC0_HEAD_SHA").unwrap_or("unknown");
+    let load_rs2_present = option_env!("A4_LOAD_RS2_PRESENT").unwrap_or("1");
+    let instrumentation_hash = option_env!("A4_INSTRUMENTATION_HASH").unwrap_or("unknown");
+    let guest_id: Vec<u32> = RISC0_GUEST_ID.to_vec();
+    println!(
+        "<a4_fingerprint>{{\
+            \"planted_bug\":\"{}\",\
+            \"isread_scope\":\"{}\",\
+            \"risc0_head_sha\":\"{}\",\
+            \"load_rs2_present\":{},\
+            \"instrumentation_hash\":\"{}\",\
+            \"guest_image_id\":{:?}\
+        }}</a4_fingerprint>",
+        planted_bug,
+        isread_scope,
+        risc0_head_sha,
+        load_rs2_present,
+        instrumentation_hash,
+        guest_id,
+    );
+}
+
 fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::filter::EnvFilter::from_default_env())
         .init();
+
+    emit_build_fingerprint_if_requested();
 
     let args = Args::parse();
     fuzzer_utils::set_trace_logging(args.trace);

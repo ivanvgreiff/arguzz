@@ -1,0 +1,6 @@
+CVE-VULNERABLE BINARY — DO NOT USE AS A NORMAL RISC ZERO.
+This is the B2 build for CVE-2025-52484 (rs1==rs2 same-cycle double-read). It ACCEPTS proofs
+committing wrong remu/divu results. NOTE: fingerprint.json says planted_bug=none — the vulnerability
+is flagged by load_rs2_present=0. It is also a 7-handler build (missing TXN_PREV_WORD/CYCLE + CYCLE_DIFF
+handlers) -> the current fuzzer silently no-ops those 3 kinds here; use a1_cve_b3_handlers for Hybrid.
+Sound/fixed twin: a4/builds/a1_cve_patched/. See a4/builds/README.md.

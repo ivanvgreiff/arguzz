@@ -1,0 +1,4 @@
+PLANTED-UNSOUND BINARY (planted_bug=verifyopcode) — DO NOT USE AS A NORMAL RISC ZERO.
+The VerifyOpcode decode-equality constraint is deleted, so this prover ACCEPTS proofs whose recorded
+instruction type contradicts the fetched word (result-preserving type substitutions). For the Seam-B
+A3 bug race ONLY. Its clean twin is ../control/. See a4/builds/README.md.

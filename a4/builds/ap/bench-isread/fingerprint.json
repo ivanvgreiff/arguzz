@@ -1,0 +1,11 @@
+{
+  "risc0_head_sha": "6556e8d7626bba03ab5d54dd2f72b28b75659055",
+  "zirgen_head_sha": "df6fb9dda1c20209058d6ee90a8912351b741081",
+  "circuit_source": "surgical",
+  "load_rs2_present": 1,
+  "instrumentation_hash": "39f96884dc01107dd131ca4ed5937f5abc92879b51da876edf6f393f59f01ae6",
+  "planted_bug": "isread",
+  "isread_scope": "reg_only",
+  "host_sha256": "677c54e9ec8dee11825918e887bd4446bbe6dc02c41249beb999669a072557da",
+  "build_label": "isread"
+}

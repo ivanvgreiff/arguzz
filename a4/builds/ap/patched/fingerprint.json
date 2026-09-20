@@ -1,0 +1,11 @@
+{
+  "risc0_head_sha": "6556e8d7626bba03ab5d54dd2f72b28b75659055",
+  "zirgen_head_sha": "df6fb9dda1c20209058d6ee90a8912351b741081",
+  "circuit_source": "committed",
+  "load_rs2_present": 1,
+  "instrumentation_hash": "259cf39be0a6541a60b4b6cb222363508dc1d5bfda8f0ea271c0c3dcb83dc22c",
+  "planted_bug": "none",
+  "isread_scope": "",
+  "host_sha256": "e4e9c4805a2c5a245d25cdee5b5cb9a26edce8fa23870004b5298d8bec5b08a1",
+  "build_label": "none"
+}

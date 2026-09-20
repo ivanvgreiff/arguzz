@@ -17,19 +17,19 @@ Produce **`bench-isread`**: the current patched instrumented `risc0-host` with t
 4. **GP1 source gate** + **smoke proof** evidence.
 
 ## 3. Steps
-1. **Pick the removal route:**
-   - **Route 1 (preferred if zirgen runs):** add `MemoryReadNoIsRead` to `mem.zir` (copy of `MemoryRead`@90 minus the `IsRead(io)` call), point `ReadReg`@`inst.zir:36` at it, regenerate `steps.cpp`/`layout`/`poly_ext` (the #3181-style codegen).
-   - **Route 2 (surgical, no zirgen):** in `steps.cpp`, locate the `IsRead` `EQZ` pairs whose loc traces through `ReadReg` (not `OpLW`/`DecodeInst`) and replace each with a no-op (or `EQZ(0,...)`). Leave RAM/fetch `IsRead` EQZ untouched.
-   - Use whichever **builds + passes GP1**. Document the route.
+1. **Pick the removal route — the hole MUST be cut in the CONSTRAINT POLYNOMIAL, not witgen** (see [`../AP_B2_ROOT_CAUSE.md`](../AP_B2_ROOT_CAUSE.md); the first AP.B2 attempt failed because it only patched `steps.cpp` = witgen, while the proof's `verify_integrity` evaluates `rust_poly_fp_*.cpp` + `poly_ext.rs`, which still had `IsRead`):
+   - **Route 1 (drift-proof, preferred): zirgen regen.** Add `MemoryReadNoIsRead` to `mem.zir` (copy of `MemoryRead`@90 minus `IsRead(io)`), point `ReadReg`@`inst.zir:36` at it, regenerate **all** artifacts (`steps.*`, `rust_poly_fp_{0..3}.cpp` +CUDA, `poly_ext.rs`, `layout`/taps). Caveat: zirgen (`zirgen/Cargo.toml`, Bazel/MLIR) is **not prebuilt** and the build uses committed `.cpp` — a real toolchain lift; attempt first.
+   - **Route 2 (fallback): symmetric surgical patch of the constraint polynomial.** Zero the `IsRead@ReadReg` folded terms in all four `rust_poly_fp_*.cpp` (~66), `poly_ext.rs` (~42), the CUDA poly variants, **and** `steps.*` (for log-parity) — using the loc-comment tags (`// loc(... IsRead ... at ReadReg ...)`). Leave RAM/fetch `IsRead` intact. **`steps.cpp`-only is NOT a valid route.**
+   - Use whichever **builds + passes the hardened GP1 (constraint-poly check) + the mutated smoke (V0b)**. Document the route.
 2. **Build** `bench-isread` (`cargo build --release` in `workspace/output`; guest embeds via `methods/build.rs`).
-3. **GP1 source gate:** confirm ReadReg-path `IsRead` EQZ absent in `bench-isread`, present in `patched`; confirm RAM-load + fetch `IsRead` present in **both**. Record grep/objdump evidence.
-4. **Smoke proof:** an **unmutated** honest guest run **verifies** on both `bench-isread` and `patched` (removing IsRead must not break honest execution).
+3. **GP1 hardened gate (load-bearing):** confirm **zero `IsRead@ReadReg` terms in `rust_poly_fp_{0..3}.cpp` AND `poly_ext.rs`** on `bench-isread` (grep the loc tags) — this is the check that would have caught the AP.B2 failure; confirm they remain in `patched`; confirm RAM-load + fetch `IsRead` present in **both**.
+4. **Smoke proofs — BOTH required:** (a) **honest** unmutated run verifies on both builds (no regression); (b) **V0b mutated smoke** — one known (0,1,0) `PRE_EXEC_REG_MOD next_read` config **verifies on `bench-isread`** and **rejects on `patched`**. Honest-only smoke is what gave false confidence last time — V0b is mandatory.
 5. **Fingerprint (GP2):** extend the build fingerprint with `planted_bug`/`isread_scope`; stamp both builds; emit via the `A4_INSPECT_FINGERPRINT` path (reuse A1.B2's mechanism).
 
 ## 4. Acceptance (GP1, GP2)
-- [ ] `bench-isread` builds; honest guest run verifies.
-- [ ] ReadReg `IsRead` removed; RAM + fetch `IsRead` intact (source/objdump evidence).
-- [ ] `patched` re-stamped, `IsRead` present.
+- [ ] `bench-isread` builds; **honest run verifies AND a (0,1,0) mutated config verifies on bench / rejects on patched** (V0b).
+- [ ] **Zero `IsRead@ReadReg` in `rust_poly_fp_*.cpp` AND `poly_ext.rs`** on bench; RAM + fetch `IsRead` intact in both (evidence).
+- [ ] `patched` re-stamped, `IsRead` present (in poly + witgen).
 - [ ] Both builds emit `planted_bug` (`isread`/`none`) + `isread_scope=reg_only`.
 
 ## 5. Guardrails

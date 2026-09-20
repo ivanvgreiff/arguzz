@@ -375,3 +375,27 @@ a4/builds/ap_seamb/*/risc0-host
 # Seam-B FIXED pair (3 dead kinds live; reproducible via build_seamb_fix.sh; fingerprints stay tracked)
 a4/builds/ap_seamb_fix/*/risc0-host
 a4/builds/ap_seamb_fix/build_seamb_fix.log
+
+# ---- A4 repo handoff (2026-07): heavy / regenerable / machine-specific artifacts ----
+# All compiled host binaries (~86-99 MB each; exceed GitHub's 100 MB limit; reproducible via the
+# build scripts in a4/scripts/. Their fingerprint.json / sha256.txt / README stay tracked so each
+# binary is identifiable + verifiable. Binaries remain on local disk; see a4/builds/README.md.
+a4/builds/**/risc0-host
+# Stale generated-circuit snapshots from the abandoned zirgen-regen (dead Seam-A track)
+a4/builds/ap/regen-snapshots/
+# Extra risc0 submodule WORKTREE checkouts — regenerable via `git worktree add <branch>` once the
+# branches are pushed to the risc0 fork; the binaries they produced are archived under a4/builds/.
+workspace/risc0-seamb/
+workspace/risc0-clean-28e53771/
+workspace/risc0-a1-vuln/
+workspace/risc0-b3-vulnhandlers/
+# Per-binary build workspaces (regenerable; contain machine-specific absolute-path deps).
+# The canonical build harness workspace/output/ stays tracked (rules above).
+workspace/output-trackb/
+workspace/output-seamb/
+workspace/output-a1vuln/
+workspace/output-a1vuln-b3/
+workspace/output-a1patched/
+# Raw stdout capture from the coverage extraction (regenerable; the derived *.csv are tracked)
+a4/runs/iv_pos_9/sweep/campaign_stepdomain_rerun/data_extracted/_capture.txt
+a4/runs/iv_pos_9/sweep/campaign_stepdomain_rerun/data_extracted/_caperr.txt

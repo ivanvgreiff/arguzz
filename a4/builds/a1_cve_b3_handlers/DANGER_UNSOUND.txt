@@ -1,0 +1,3 @@
+CVE-VULNERABLE BINARY (B3 = B2 + the 3 A4 witgen handlers, for the CLEAN Hybrid run).
+Same CVE-2025-52484 as a1_cve (load_rs2_present=0, planted_bug=none). ACCEPTS wrong remu/divu.
+Do NOT use as a normal RISC Zero. Sound/fixed twin: a4/builds/a1_cve_patched/. See a4/builds/README.md.

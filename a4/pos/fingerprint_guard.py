@@ -49,6 +49,31 @@ PROFILES: Dict[str, Dict[str, object]] = {
     "verifyopcode": {"load_rs2_present": 1, "planted_bug": "verifyopcode"},
 }
 
+# The A4 mutation-handler match-arm strings the CURRENT fuzzer emits (a4/standalone/fuzzer.py
+# MUTATION_KINDS → 10 distinct binary `mutation_type` strings). These literals are compiled into
+# the binary, so we can confirm a binary actually handles them by scanning its bytes. The three
+# marked (*) were added in risc0 commit 6556e8d7; a "7-handler" binary lacks them and would
+# SILENTLY NO-OP those mutation kinds (the F35 "3-kind contamination"), scoring false ACCEPTs.
+A4_HANDLERS_CURRENT = (
+    "INSTR_TYPE_MOD", "INSTR_WORD_MOD", "COMP_OUT_MOD", "LOAD_VAL_MOD", "STORE_OUT_MOD",
+    "PRE_EXEC_REG_MOD", "MEM_VAL_MOD",
+    "TXN_PREV_WORD_MOD", "TXN_PREV_CYCLE_MOD", "CYCLE_DIFF_COUNT_MOD",  # (*) the 3-kind set
+)
+A4_HANDLERS_3KIND = ("TXN_PREV_WORD_MOD", "TXN_PREV_CYCLE_MOD", "CYCLE_DIFF_COUNT_MOD")
+
+
+def check_handlers(host_bin: str, required: tuple[str, ...]) -> tuple[bool, List[str]]:
+    """Scan the binary for each required handler-name literal; return (ok, missing).
+
+    The A4_MUTATION_CONFIG dispatcher in witgen/mod.rs matches these names as string literals,
+    so a present handler => the name appears in the compiled binary. A missing name means that
+    mutation kind hits the `invalid config` fallback and silently no-ops.
+    """
+    with open(host_bin, "rb") as f:
+        data = f.read()
+    missing = [name for name in required if name.encode() not in data]
+    return (not missing), missing
+
 
 def read_fingerprint(host_bin: str, timeout: float = 60.0) -> Dict[str, object]:
     """Run the binary with A4_INSPECT_FINGERPRINT=1 (no guest args) and parse the tag."""
@@ -107,6 +132,10 @@ def main() -> int:
     p.add_argument("--profile", choices=sorted(PROFILES), help="intended-build profile")
     p.add_argument("--guest-id", help="comma-separated expected guest_image_id (optional)")
     p.add_argument("--head-sha", help="expected risc0_head_sha (optional)")
+    p.add_argument("--require-handlers", metavar="SPEC",
+                   help="also assert the binary contains the A4 mutation handlers: "
+                        "'current10' (all the current fuzzer emits), '3kind' (the 3 that older "
+                        "binaries silently no-op), or a comma-separated list of handler names")
     p.add_argument("--emit-json", action="store_true", help="print parsed fingerprint and exit 0")
     args = p.parse_args()
 
@@ -125,6 +154,21 @@ def main() -> int:
         expect_guest_id=guest_id,
         expect_head_sha=args.head_sha,
     )
+    # Optional handler-set check (closes the 7-vs-10-handler "3-kind contamination" gap that the
+    # planted_bug/load_rs2 fields cannot see).
+    if args.require_handlers:
+        spec = args.require_handlers
+        if spec == "current10":
+            required = A4_HANDLERS_CURRENT
+        elif spec == "3kind":
+            required = A4_HANDLERS_3KIND
+        else:
+            required = tuple(s.strip() for s in spec.split(",") if s.strip())
+        h_ok, missing = check_handlers(args.host_bin, required)
+        if not h_ok:
+            ok = False
+            msg += f"; MISSING HANDLERS: {', '.join(missing)} (binary would silently no-op these kinds)"
+
     tag = "PASS" if ok else "ABORT"
     print(f"[fingerprint_guard] {tag} ({args.profile}): {msg}")
     print(f"[fingerprint_guard] binary fp: planted_bug={fp.get('planted_bug')} "

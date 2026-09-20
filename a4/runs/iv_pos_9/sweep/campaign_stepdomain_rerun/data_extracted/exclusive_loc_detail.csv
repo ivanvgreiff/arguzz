@@ -1,0 +1,10 @@
+job|loc|mutation_index|major|minor|kind|verifier_accepted
+g0_baseline_Hybrid_cTS_seed1234|ControlMRET@inst_control.zir:93|484|7|3|MEM_VAL_MOD|0
+g0_baseline_Hybrid_cTS_seed1234|ECallHostReadWords@inst_ecall.zir:171|484|8|5|MEM_VAL_MOD|0
+g0_baseline_Hybrid_cTS_seed1234|ECallHostReadWords@inst_ecall.zir:171|1000|8|5|MEM_VAL_MOD|0
+g0_baseline_Hybrid_cTS_seed1234|ECallHostReadWords@inst_ecall.zir:171|1919|8|5|MEM_VAL_MOD|0
+g0_baseline_Hybrid_cTS_seed1234|ECallHostReadWords@inst_ecall.zir:171|2317|8|5|MEM_VAL_MOD|0
+g0_baseline_Hybrid_cTS_seed1234|ECallHostReadWords@inst_ecall.zir:171|3326|8|5|MEM_VAL_MOD|0
+g3_accelerator_Hybrid_cTS_seed1234|ECallHostReadWords@inst_ecall.zir:171|2430|8|5|MEM_VAL_MOD|0
+g3_accelerator_Hybrid_cTS_seed1234|ECallHostReadWords@inst_ecall.zir:171|4039|8|5|MEM_VAL_MOD|0
+g3_accelerator_V6_cTS_seed1234|ECallTerminate@inst_ecall.zir:46|612|8|1|POST_EXEC_MEM_MOD|0

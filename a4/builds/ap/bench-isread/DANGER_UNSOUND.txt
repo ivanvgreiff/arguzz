@@ -1,0 +1,3 @@
+PLANTED-UNSOUND BINARY (planted_bug=isread) — DEAD Seam-A track. DO NOT USE AS A NORMAL RISC ZERO.
+IsRead constraint omitted on register reads; the global memory argument still catches single edits, so
+this track was abandoned. Kept for the record only. Clean twin: ../patched/. See a4/builds/README.md.

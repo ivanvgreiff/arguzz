@@ -15,8 +15,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 N = 5000
-VARIANTS = ["V5_control", "V6_uniform", "V6_cTS", "Hybrid_cTS"]
+VARIANTS = ["V5_control", "V6_uniform", "V6_cTS", "Hybrid_cTS"]  # code names = DB-file identifiers
 COLORS = {"V5_control": "#1f77b4", "V6_uniform": "#2ca02c", "V6_cTS": "#ff7f0e", "Hybrid_cTS": "#d62728"}
+# Thesis display names — ALL figure/table labels use these, never the code names.
+DISPLAY = {"V5_control": "A3 Bandit", "V6_uniform": "Arguzz",
+           "V6_cTS": "Arguzz Bandit", "Hybrid_cTS": "A3+Arguzz Bandit"}
 AN = os.environ.get("AN", "/tmp/claude-0/-root-arguzz/5dab1f71-93ac-4daf-b85a-f22d0f93c4ba/scratchpad/analysis")
 
 def g0_db(v): return f"a4/runs/iv_pos_8/d2f/prod/d2f_prod_b1/pos_iv_pos_8_d2f_{v}_seed1234_n10000/run.db"
@@ -50,7 +53,7 @@ def build(guest):
                                        label=f"g0 baseline (final {int(g0[-1])})")
             if g1 is not None: ax.plot(x, g1, color=COLORS[v], lw=2.4,
                                        label=f"{guest} (final {int(g1[-1])})")
-            ax.set_title(f"{v} — {lbl}", fontsize=11)
+            ax.set_title(f"{DISPLAY[v]} — {lbl}", fontsize=11)
             ax.set_xlabel("mutation index"); ax.set_ylabel(f"distinct {lbl}")
             ax.legend(fontsize=8, loc="lower right"); ax.grid(alpha=0.3); ax.margins(x=0)
             if g0 is not None and g1 is not None:
@@ -64,7 +67,7 @@ if __name__ == "__main__":
     guest = sys.argv[1] if len(sys.argv) > 1 else "g1_ecall_control"
     out = sys.argv[2] if len(sys.argv) > 2 else f"/tmp/{guest}_curves.html"
     img, rows = build(guest)
-    trows = "\n".join(f"<tr><td>{v}</td><td>{lbl}</td><td>{a}</td><td>{b}</td>"
+    trows = "\n".join(f"<tr><td>{DISPLAY.get(v, v)}</td><td>{lbl}</td><td>{a}</td><td>{b}</td>"
                       f"<td style='color:{'#c0392b' if b<a else '#27ae60' if b>a else '#555'}'>{b-a:+d}</td></tr>"
                       for v, lbl, a, b in rows)
     html = f"""<title>{guest} coverage vs sha2 baseline</title>

@@ -1,0 +1,12 @@
+{
+  "track": "B_sweep",
+  "commit_label": "28e53771_clean",
+  "guest_slug": "g1_ecall_control",
+  "risc0_head_sha": "53c21894f7c36b996286dc109a1e24265963aa1b",
+  "load_rs2_present": 1,
+  "planted_bug": "none",
+  "isread_scope": "",
+  "instrumentation_hash": "2992bc2a500179bd658dbe7815d7e42baa25bff3f04bec52d1fabc98664b8c07",
+  "guest_src_sha256": "494211879eff7a7ec5b6584d7318c82d83c5e271f9371a2d28525877c974dc80",
+  "host_sha256": "527d71f584ba94dd98c7caf9a271f07bb949e68f4e5cbacd5a578144dff88acb"
+}
