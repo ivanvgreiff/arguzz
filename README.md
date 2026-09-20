@@ -12,7 +12,26 @@ are the two files to read first.**
 
 > ⚠️ **Some prover binaries in this repo are DELIBERATELY UNSOUND** (they contain a planted underconstraint or
 > a real CVE). Never treat a binary as a normal RISC Zero without checking its fingerprint — see
-> [Binaries & safety](#binaries--safety).
+> [Binaries & safety](#5-binaries--safety).
+
+---
+
+## Quickstart
+
+```bash
+# 1. Clone WITH the instrumented RISC Zero submodule (the instrumentation is committed — no injection step):
+git clone git@github.com:ivanvgreiff/arguzz.git && cd arguzz
+git submodule update --init --recursive          # fetches workspace/risc0-modified @ arguzz/b7-race-instrumentation
+
+# 2. Build a sound coverage binary (prereqs: rustup + rzup — see §3):
+bash a4/scripts/build_sweep_binary.sh g0_baseline   # -> a4/builds/sweep/28e53771_clean__g0_baseline/risc0-host
+
+# 3. Verify the binary is sound, then run a variant (here: A3+Arguzz Bandit):
+HOST=a4/builds/sweep/28e53771_clean__g0_baseline/risc0-host
+python -m a4.pos.fingerprint_guard $HOST --profile sweep --require-handlers current10
+python -m a4.standalone.cli fuzz --host $HOST --db run.db --seed 1234 --num 5000 --selector hybrid_cTS
+```
+All 6 variants + their launch commands are in §2; the full build recipe in §3; **read §5 before using any binary.**
 
 ---
 
@@ -83,7 +102,27 @@ python -m a4.standalone.cli fuzz --host <host> --db run.db --seed 1234 --num 500
 ## 3. Building the instrumented RISC Zero from a clone
 
 **You do NOT need to run any Python "injection" step to add the instrumentation** — it is committed in the
-RISC Zero submodule branch. A clone builds it directly.
+RISC Zero submodule branch, so a clone builds it directly.
+
+> **Why this differs from upstream Arguzz (important — this is a common point of confusion).** Upstream Arguzz
+> fuzzes six zkVMs it does *not* own, so it keeps them as **stock** external repos and **injects** the
+> instrumentation *at install time* with Python (`… install --zkvm-modification`, implemented in
+> `libs/zkvm-fuzzer-utils/`). The A4 work targets **only** RISC Zero, so instead we made a **persistent fork**
+> ([`ivanvgreiff/risc0`](https://github.com/ivanvgreiff/risc0), branch `arguzz/b7-race-instrumentation`) and
+> **committed the instrumentation into it**. Pinning that exact commit as a submodule gives every researcher
+> byte-identical instrumented source with nothing to inject at clone time.
+> [`a4/injection/`](a4/injection/) holds the *same* patcher logic upstream uses, but we ran it **once** and
+> committed the result — it is imported by **nothing** in the fuzzing path and exists only to re-derive the
+> hooks if the fork is ever rebased onto a newer upstream RISC Zero.
+>
+> **Proof:** a fresh `git clone` of the branch already contains every hook — with no build-time patch step:
+> ```bash
+> git clone --depth 1 -b arguzz/b7-race-instrumentation git@github.com:ivanvgreiff/risc0.git /tmp/r0 && \
+> grep -c RV32IMFaultInjectionContext /tmp/r0/risc0/circuit/rv32im/src/execute/rv32im.rs && \
+> grep -c A4_MUTATION_CONFIG        /tmp/r0/risc0/circuit/rv32im/src/prove/witgen/mod.rs && \
+> grep -c a4_touch_mark             /tmp/r0/risc0/circuit/rv32im-sys/kernels/cxx/ffi.cpp && \
+> ls /tmp/r0/fuzzer_utils/src/lib.rs        # all present -> instrumentation is committed, not injected
+> ```
 
 **Prerequisites (once):**
 - **Rust** via `rustup` — toolchains are pinned per-workspace by `rust-toolchain.toml` (auto-selected: `1.88`
@@ -206,6 +245,25 @@ workspace/
 zirgen/                 RISC Zero circuit DSL (submodule; stock for the clean binary)
 projects/, libs/, scripts/, UPSTREAM_README.md   the original multi-zkVM Arguzz framework (see below)
 ```
+
+### Code map — the Python fuzzing architecture (where to look / what to edit)
+
+This is the *host* side (the RISC Zero *instrumentation* side is mapped in §4).
+
+| Concern | File | Role |
+|---|---|---|
+| **Variant registry** | `a4/standalone/variants.py` | the 6 canonical variants + `variant_launch_command()` |
+| **Entry point** | `a4/standalone/cli.py` | the `fuzz` command; `--selector` → variant dispatch |
+| **Baseline driver** | `a4/standalone/v6_uniform_driver.py` | launches `Arguzz` (`V6_uniform`) |
+| **Main fuzz loop** | `a4/standalone/fuzzer.py` | `A4Fuzzer`: runs `risc0-host`, applies the mutation, scores accept/reject + coverage, records the run DB |
+| **Bandit** | `a4/standalone/bandit_ts.py` | `ConstrainedTSScheduler` (cTS) — the learning scheduler |
+| **Arm space** | `a4/standalone/semantic_arm_universe.py` | the `(kind, zone)` arm universe + step-domain map (the `68d90aa` fix) |
+| **Non-bandit selectors** | `a4/standalone/step_selector.py` | the uniform (`V0`) and Arguzz-sched (`V8`) selectors |
+| **Mutation kinds** | `a4/standalone/mutations/` | per-kind config builders; `arguzz_bridge.py` bridges the Arguzz surface |
+| **Coverage & reward** | `a4/standalone/{coverage_state,reward_v2,compressed_global,compressed_global_extractor}.py` | the semantic coverage model (local contexts + CGC) and reward |
+| **Runtime injection glue** | `a4/standalone/arguzz_invoke.py` | builds the `risc0-host --inject …` invocation for the Arguzz surface |
+| **Oracle** | `a4/runs/iv_pos_9/race/oracle.py` | confirms a soundness find (control-replay) |
+| **Binary guard** | `a4/pos/fingerprint_guard.py` | verify a binary's fingerprint + handler set before use |
 
 Key docs: `a4/docs/ARGUZZ_A4_KNOWLEDGE_BASE.md`, `a4/runs/iv_pos_9/a1/BINARY_REGISTRY_AND_NOMENCLATURE.md`,
 `a4/docs/cloud3/SEAMB_PLANTED_UNDERCONSTRAINT_REPORT.md`.
